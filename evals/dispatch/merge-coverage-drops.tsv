@@ -1,8 +1,8 @@
-# evals/resolver-evals/merge-coverage-drops.tsv — acked merge-loss drops ledger (6.5 guard 2)
+# evals/dispatch/merge-coverage-drops.tsv — acked merge-loss drops ledger (6.5 guard 2)
 #
 # When a dissolving card's non-boilerplate token is reworded away by the merge
 # (a faithful synonym swap, not a lost rule), it shows as uncovered in
-# audit-merge-coverage.sh. Such a token may be CLEARED here.
+# merge-coverage.sh. Such a token may be CLEARED here.
 #
 # Format (TAB-separated, 3 columns):
 #   <card-basename><TAB><token><TAB>Indy (YYYY-MM-DD): "<verbatim ack>" — <context>

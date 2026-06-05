@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""merge_coverage.py — frozen token-coverage core for audit-merge-coverage.sh
-(RESOLVER_ARCHITECTURE.md 6.5). Pinned here so the normalization grammar is a
+"""merge_coverage.py — frozen token-coverage core for merge-coverage.sh
+(DISPATCH_ARCHITECTURE.md 6.5). Pinned here so the normalization grammar is a
 first-class, testable artifact rather than a heredoc. The orchestrating .sh
 passes card paths as argv and RES_GLOB / DROPS via the environment.
 
-A card token is covered iff it appears in the resolver corpus OR in the
+A card token is covered iff it appears in the dispatch corpus OR in the
 Indy-acked drops ledger. Exit 1 if any card has an uncovered token or the
 ledger carries a self-certified (un-acked) drop; else exit 0.
 """
@@ -82,7 +82,7 @@ def main():
             print("  🔴 %-22s %d uncovered: %s" % (name, len(uncov), ", ".join(uncov)))
             rc = 1
         else:
-            print("  🟢 %-22s fully covered (every token in resolvers or acked-dropped)" % name)
+            print("  🟢 %-22s fully covered (every token in dispatch or acked-dropped)" % name)
     sys.exit(rc)
 
 

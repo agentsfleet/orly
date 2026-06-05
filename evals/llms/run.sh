@@ -20,8 +20,8 @@ set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 AGENTS="$ROOT/AGENTS.md"
 GATES_DIR="$ROOT/docs/gates"
-RESOLVERS_DIR="$ROOT/resolvers"
-FIXTURES="$ROOT/evals/llmevals/fixtures.jsonl"
+DISPATCH_DIR="$ROOT/dispatch"
+FIXTURES="$ROOT/evals/llms/fixtures.jsonl"
 SIGNOFF="$ROOT/.agents-llmevals-signoff"
 JOURNAL_DIR="$ROOT/.llmevals-journal"
 CALL_TIMEOUT="${LLMEVALS_TIMEOUT:-${COMPREHENSION_TIMEOUT:-180}}"
@@ -90,9 +90,9 @@ build_context() {
     echo "===== BEGIN GATE BODIES (docs/gates/) ====="
     cat "$GATES_DIR"/*.md
     echo "===== END GATE BODIES ====="
-    echo "===== BEGIN RESOLVER FAÇADES (resolvers/) ====="
-    cat "$RESOLVERS_DIR"/*.md
-    echo "===== END RESOLVER FAÇADES ====="
+    echo "===== BEGIN DISPATCH FAÇADES (dispatch/) ====="
+    cat "$DISPATCH_DIR"/*.md
+    echo "===== END DISPATCH FAÇADES ====="
   }
 }
 
