@@ -1,15 +1,13 @@
 {
   "schema_version": 1,
-  "name": "dotfiles",
+  "name": "agentsfleet",
   "packs": [
     "universal.authoring",
     "language.zig",
     "language.typescript",
     "language.javascript",
-    "language.rust",
     "language.python",
     "language.shell",
-    "language.mdx",
     "domain.sql",
     "domain.http",
     "domain.auth",
@@ -21,18 +19,11 @@
     "product.agentsfleet"
   ],
   "commands": {
-    "conform": [
-      [
-        "make",
-        "audit"
-      ]
-    ],
-    "verify.unit": [
-      [
-        "bun",
-        "test",
-        "orly/src"
-      ]
-    ]
+    "conform": [["make", "harness-verify"]],
+    "verify.lint": [["make", "lint-all"]],
+    "verify.unit": [["make", "test-unit-all"]],
+    "verify.integration": [["make", "test-integration"]],
+    "verify.memory": [["make", "memleak"]],
+    "verify.version": [["make", "check-version"]]
   }
 }
