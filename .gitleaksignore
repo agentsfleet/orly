@@ -1,7 +1,21 @@
-# Files and directories to ignore during gitleaks scans
-# This file works alongside .gitignore - gitleaks has its own ignore mechanism
+# Fingerprints gitleaks should not report, one per line, in the form
+#   <commit>:<path>:<rule-id>:<line>
+#
+# Adding an entry here hides a finding, so it is never a unilateral call: a new
+# suppression needs Indy's explicit approval, and the default is to restructure
+# so the scanner passes unassisted. Removing one needs no approval.
+#
+# Cleared Aug 17, 2026. The two entries that used to live here pinned commit
+# df44ade3 in indykish/dotfiles — a commit that does not exist in this
+# repository, so they suppressed nothing and only looked like coverage.
 
-# Historical commits that have been cleaned up
-# Feb 19, 2026: Hardcoded API key that was removed in later commit
-df44ade3c13cfb7b127bcc1a84af1542dabaa0a0:.config/opencode/opencode.json:generic-api-key:187
-df44ade3c13cfb7b127bcc1a84af1542dabaa0a0:.config/opencode/opencode.json:generic-api-key:233
+# Aug 17, 2026, approved by Indy in session. `.oracle/ruleset.lock` was the
+# rule-content ledger: a map of rule path → SHA-256 digest of that rule's
+# bytes. The `generic-api-key` rule matches on entropy alone (3.81 here), so a
+# hex digest reads to it exactly like a credential. Both hits are digests, not
+# secrets. The file itself was deleted in dd6982f, "one render target — the
+# ledger is gone", so the finding is historical and cannot recur.
+#
+# These are commit-pinned, so they suppress nothing beyond this one commit.
+0db1a95e0c2a3f44c7cf0d379af0e2210149eb5d:.oracle/ruleset.lock:generic-api-key:9
+0db1a95e0c2a3f44c7cf0d379af0e2210149eb5d:.oracle/ruleset.lock:generic-api-key:22

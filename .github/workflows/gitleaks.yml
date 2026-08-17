@@ -1,10 +1,17 @@
 name: Gitleaks
 
+# A Pull Request trigger alone scanned nothing: the repository split landed as
+# a direct push to main, so the first two CI runs were `test` and `release` and
+# the scanner had never executed. Merges are scanned too — that is the commit
+# that becomes public history.
 on:
+  push:
+    branches: [main]
   pull_request:
-    branches:
-      - main
-      - main
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
   gitleaks:
@@ -12,8 +19,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          # The scan walks history, not just the diff. A shallow clone reports
+          # clean because the commits carrying a leak were never fetched.
           fetch-depth: 0
       - name: Run gitleaks
         uses: zricethezav/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Required for organization accounts regardless of repository
+          # visibility, and agentsfleet is an organization. Configured at the
+          # organization level; the secret must list this repository under its
+          # access, or the job fails the first time it runs.
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
