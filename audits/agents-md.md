@@ -346,7 +346,7 @@ both must hold in every session, in every worktree, after every restart.
 | # | Question | Expected |
 |---|---|---|
 | 27.1 | Does AGENTS.md state that every `dispatch/…`, `docs/…`, and `audits/…` rule path resolves inside **this** repository, materialised by `orly init`/`update` from the packs its own sources selected — so a path the repository lacks means its sources never selected that pack, not a broken reference? | YES |
-| 27.2 | Is the dotfiles read pre-authorized for every session by the settings allow-rule `Read(~/Projects/dotfiles/**)` (repo template `.claude/settings.json`, propagated to `~/.claude/settings.json`), so reachability never depends on a permission prompt? | YES |
+| 27.2 | Does every rule document an agent is told to read exist inside the repository it is working in — so no read depends on a permission prompt, a second checkout, or a path outside the work tree? | YES |
 | 27.3 | Must rule docs be cited relative to the installing repository — never through the `~/Projects/dotfiles/` anchor — in dispatch façades, `docs/TEMPLATE.md`, `docs/EXECUTE_DOC_READS.md`, and spec Applicable-Rules lists, with `audits/rule-paths.sh` failing `make audit` on an **anchored** reference in any surface `orly init` materialises (engine-only files exempt)? | YES |
 
 ### Scenario 28 — Rule-enforcement ledger & recorded doc reads

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# rule-paths.sh — residence + reachability checks for the federated rule corpus.
+# rule-paths.sh — residence checks: rule citations resolve inside the repository
+# that installed them.
 #
 # The incident this encodes (M143): an agent in an agentsfleet worktree
 # resolved "reads docs/REST_API_DESIGN_GUIDELINES.md" against its own
@@ -23,19 +24,17 @@
 #                  checkout (RULE_PATH_ENGINE_ONLY — governance-editing
 #                  façades genuinely about the engine's own source) are
 #                  exempt; their absolute citations are correct.
-#   reachability — the settings allow-rule Read(~/Projects/dotfiles/**) exists
-#                  in the repo template AND the live ~/.claude copy, so
-#                  Kishore's own machine-level tooling (skills, the
-#                  governance-editing workflow) never dies on a permission
-#                  prompt. Unrelated to residence: reachability is about this
-#                  machine, residence is about what a materialised repository
-#                  carries.
+#   (Reachability was the other half of this file: a settings allow-rule
+#   granting Read(~/Projects/dotfiles/**) so an agent could read rule docs out
+#   of a dotfiles checkout. M03_001 inverted the model — rules resolve inside
+#   the repository that installed them — and the engine now lives in its own
+#   repository, where there is no dotfiles anchor to reach and no personal
+#   settings file to assert against. It went with the split.)
 #
 # Sourced by audits/agents-md.sh (labels: "rule-path residence",
-# "rule-path reachability"). Classifier: DOTFILES_RESIDENT in audits/data.sh.
+# Classifier: DOTFILES_RESIDENT in audits/data.sh.
 #
 #   check_rule_residence <ROOT>     # echoes FAIL lines, returns 0/1
-#   check_rule_reachability <ROOT>  # echoes FAIL lines, returns 0/1
 
 # Non-dispatch surfaces read from consumer-repo CWDs; dispatch/*.md is globbed.
 RULE_PATH_SURFACES=(
@@ -108,19 +107,3 @@ check_rule_residence() {
   return $rc
 }
 
-check_rule_reachability() {
-  local root="$1" rc=0
-  local grant='"Read(~/Projects/dotfiles/**)"'
-
-  grep -qF "$grant" "$root/.claude/settings.json" 2>/dev/null \
-    || { echo "FAIL: reachability — repo template .claude/settings.json lacks $grant"; rc=1; }
-
-  # Live copy on this machine (env-overridable for harness tests).
-  local live="${ORACLE_LIVE_SETTINGS:-$HOME/.claude/settings.json}"
-  if [[ -f "$live" ]]; then
-    grep -qF "$grant" "$live" \
-      || { echo "FAIL: reachability — live $live lacks $grant (re-run the README settings copy step)"; rc=1; }
-  fi
-
-  return $rc
-}

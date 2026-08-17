@@ -3,7 +3,7 @@ name: Gitleaks
 on:
   pull_request:
     branches:
-      - master
+      - main
       - main
 
 jobs:

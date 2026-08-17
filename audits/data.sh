@@ -30,7 +30,6 @@ EXPECTED_LABELS=(
   "identity handles"
   "memory discipline"
   "rule-path residence"
-  "rule-path reachability"
   "lifecycle anchors"
   "size"
 )

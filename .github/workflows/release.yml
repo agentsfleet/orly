@@ -1,13 +1,13 @@
 name: release
 
-# A merge to master releases — no tag to remember, no second motion after the
+# A merge to main releases — no tag to remember, no second motion after the
 # Pull Request. agentsfleet releases from a `v*` tag instead, because it ships
 # cross-compiled binaries and a prod deployment that must be cut deliberately;
 # this package is one npm artifact whose only gate is the same `make audit` the
 # Pull Request already passed.
 on:
   push:
-    branches: [master]
+    branches: [main]
   workflow_dispatch:
 
 # Every merge runs this, and most merges do not change the version. npm
@@ -62,7 +62,7 @@ jobs:
         run: cd orly && bun install --frozen-lockfile --ignore-scripts
 
       # The same gate the Pull Request passed, re-run against the merge commit.
-      # A merge can combine two independently-green branches into a red master,
+      # A merge can combine two independently-green branches into a red main,
       # and this is the last point before an immutable artifact leaves.
       - name: make audit
         if: steps.published.outputs.already == 'false'

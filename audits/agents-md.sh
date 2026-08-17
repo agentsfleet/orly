@@ -296,7 +296,7 @@ grep -qF 'dispatch/<entry>.md' "$AGENTS"       || { fail "memory discipline: dis
 [[ $md_fail -eq 0 ]] && pass "memory discipline (disable flag + never-write + dispatch routing present)"
 
 # ---------------------------------------------------------------------------
-# 15c. Rule-path residence + reachability — federated-read invariants
+# 15c. Rule-path residence — citations resolve inside the installing repo
 #      (audits/rule-paths.sh; incident: an M143 worktree agent resolved a
 #      dotfiles rule doc against the product repo and designed from memory).
 # ---------------------------------------------------------------------------
@@ -304,9 +304,6 @@ grep -qF 'dispatch/<entry>.md' "$AGENTS"       || { fail "memory discipline: dis
 res_out=$(check_rule_residence "$ROOT")
 if [[ $? -eq 0 ]]; then pass "rule-path residence (doctrine + anchors + zero relative hrefs)"; else
   printf '%s\n' "$res_out" >&2; fail "rule-path residence (see FAIL lines above)"; fi
-reach_out=$(check_rule_reachability "$ROOT")
-if [[ $? -eq 0 ]]; then pass "rule-path reachability (Read grant in template + live settings)"; else
-  printf '%s\n' "$reach_out" >&2; fail "rule-path reachability (see FAIL lines above)"; fi
 
 # ---------------------------------------------------------------------------
 # 16. Size cap — soft guard against drift back to bloat.

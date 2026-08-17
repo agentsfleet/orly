@@ -1,11 +1,11 @@
 name: test
 
 on:
-  # Merges to master run too, so the default branch always carries a coverage
+  # Merges to main run too, so the default branch always carries a coverage
   # number Codecov can diff a Pull Request against. Without it the first PR
   # after a merge reports "no base" and the badge goes stale.
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
@@ -15,10 +15,10 @@ permissions:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  # master runs populate the Codecov base; cancelling one leaves the next PR
+  # main runs populate the Codecov base; cancelling one leaves the next PR
   # with nothing to compare against. A superseded PR push has nothing worth
   # finishing.
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   coverage:

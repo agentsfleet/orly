@@ -9,11 +9,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/indykish/dotfiles.git"
+    "url": "git+https://github.com/agentsfleet/orly.git"
   },
-  "homepage": "https://github.com/indykish/dotfiles#readme",
+  "homepage": "https://github.com/agentsfleet/orly#readme",
   "bugs": {
-    "url": "https://github.com/indykish/dotfiles/issues"
+    "url": "https://github.com/agentsfleet/orly/issues"
   },
   "keywords": [
     "agents",
