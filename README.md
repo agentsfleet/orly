@@ -12,8 +12,9 @@
 
 An engineering harness any repository can install with one command: the rules
 an agent reads before it edits, the gates that enforce them, and the git hooks
-that run the gates. Works with Claude Code, Codex, OpenCode, and Amp — the
-rules land in `AGENTS.md`, which every one of them auto-loads.
+that run the gates. Works with Claude Code, Codex, OpenCode, and Amp: the rules
+land in `AGENTS.orly.md`, and `AGENTS.md` — the file those runtimes auto-load —
+gains a pointer to them.
 
 ## Install the harness
 
