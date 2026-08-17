@@ -1,33 +1,43 @@
-name: Gitleaks
+name: gitleaks
 
-# A Pull Request trigger alone scanned nothing: the repository split landed as
-# a direct push to main, so the first two CI runs were `test` and `release` and
-# the scanner had never executed. Merges are scanned too — that is the commit
-# that becomes public history.
+# Merges to main are scanned as well as Pull Requests. agentsfleet runs this on
+# Pull Requests alone, which is sound there because every change reaches main
+# through one. Here the repository split landed as a direct push and the
+# scanner had never executed once — the whole Continuous Integration (CI)
+# history was `test` and `release`. The push trigger closes that.
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   gitleaks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # The scan walks history, not just the diff. A shallow clone reports
           # clean because the commits carrying a leak were never fetched.
           fetch-depth: 0
-      - name: Run gitleaks
-        uses: zricethezav/gitleaks-action@v2
+
+      - name: Run Gitleaks (official action)
+        uses: gitleaks/gitleaks-action@v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Required for organization accounts regardless of repository
-          # visibility, and agentsfleet is an organization. Configured at the
-          # organization level; the secret must list this repository under its
-          # access, or the job fails the first time it runs.
+          # visibility, and agentsfleet is an organization. Without it the job
+          # fails with "[agentsfleet] is an organization. License key is
+          # required."
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          # Use the latest gitleaks binary (action default is 8.24.3).
+          # Ensures config features like [[allowlists]] and modern rule
+          # defaults stay in sync with what developers run locally.
+          GITLEAKS_VERSION: latest
