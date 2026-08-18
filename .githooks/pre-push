@@ -13,6 +13,28 @@ unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_COMMON_DIR GIT_PREFIX \
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT" || exit 1
 
+# AGENTS.md: "Before commit/push: gitleaks must pass." This runs on EVERY push,
+# ahead of the governance branch below — a credential can land in any file, not
+# only in the rule corpus.
+#
+# It reads no stdin (</dev/null keeps it off the ref list the loop below
+# consumes) and walks full history rather than the diff, because a secret is
+# only removed once every commit carrying it is gone.
+#
+# A repository-local `.gitleaks.toml` REPLACES the default ruleset unless it
+# carries `[extend] useDefault = true`. This repository shipped one holding
+# nothing but an `[allowlist]`, so gitleaks loaded zero rules and called every
+# scan clean in about a millisecond. The file is deleted; the defaults apply.
+# If you add one back, extend the defaults — do not replace them.
+if command -v gitleaks >/dev/null 2>&1; then
+  if ! gitleaks detect --no-banner --redact --exit-code 1 </dev/null; then
+    echo "pre-push: gitleaks found a secret — remove it; suppressing needs approval" >&2
+    exit 1
+  fi
+else
+  echo "pre-push: gitleaks NOT INSTALLED — secret scan skipped (mise use -g gitleaks)" >&2
+fi
+
 GOVERNANCE_PATTERN='^(orly/(core|packs|profiles|src)/|orly/(registry|repositories)\.json|AGENTS\.md|SOUL\.md|dispatch/|audits/|docs/(EXECUTE_DOC_READS|ORLY_ARCHITECTURE|HARNESS_VERIFY_OUTPUT|DOCUMENTATION_RULES|TEMPLATE)\.md|evals/|\.githooks/|Makefile|README\.md)'
 
 governance_change=0

@@ -1,7 +1,16 @@
-# Files and directories to ignore during gitleaks scans
-# This file works alongside .gitignore - gitleaks has its own ignore mechanism
-
-# Historical commits that have been cleaned up
-# Feb 19, 2026: Hardcoded API key that was removed in later commit
-df44ade3c13cfb7b127bcc1a84af1542dabaa0a0:.config/opencode/opencode.json:generic-api-key:187
-df44ade3c13cfb7b127bcc1a84af1542dabaa0a0:.config/opencode/opencode.json:generic-api-key:233
+# Fingerprints gitleaks should not report, one per line, in the form
+#   <commit>:<path>:<rule-id>:<line>
+#
+# Prefer a scoped rule allowlist in `.gitleaks.toml` over an entry here. A
+# fingerprint is pinned to one commit, so it silently stops applying the moment
+# history is rewritten, and it records no reason. The allowlist in the config
+# forgives a documented *shape* instead, and survives a rebase.
+#
+# Adding an entry here hides a finding, so it is never a unilateral call: a new
+# suppression needs Indy's explicit approval, and the default is to restructure
+# so the scanner passes unassisted. Removing one needs no approval.
+#
+# Empty as of Aug 17, 2026. Two entries inherited from indykish/dotfiles pinned
+# commit df44ade3, which does not exist in this repository, so they suppressed
+# nothing. The `.oracle/ruleset.lock` digests that replaced them now live in
+# `.gitleaks.toml` as a path-and-line-scoped allowlist on `generic-api-key`.

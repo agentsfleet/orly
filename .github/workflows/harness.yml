@@ -1,10 +1,14 @@
 name: Harness
 
+# Merges to main run the audit too. `release.yml` also runs `make audit`, but
+# only behind `already == 'false'` — a merge that carries no version bump
+# publishes nothing and so audits nothing. This job is what makes the gate
+# unconditional on the default branch.
 on:
+  push:
+    branches: [main]
   pull_request:
-    branches:
-      - main
-      - main
+    branches: [main]
 
 permissions:
   contents: read
