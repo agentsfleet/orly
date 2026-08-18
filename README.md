@@ -13,20 +13,14 @@ when it ignores them.**
 
 </div>
 
-An agent reads your conventions, agrees with them, and then writes whatever it
-wants. Documentation asks. Nothing checks.
+An agent reads your conventions, then writes whatever it wants. Nothing checks.
+orly ships both halves: the rules, and gate scripts wired into git hooks that
+fail the commit when a rule was ignored.
 
-orly ships both halves: the rules the agent reads, and gate scripts that fail
-when it ignored them — wired into git hooks, so nothing lands unchecked.
-
-It began as one engineer's dotfiles. [indykish](https://github.com/indykish)
-built it on macOS while shipping
-[agentsfleet](https://github.com/agentsfleet/agentsfleet) through coding agents,
-hardening it across 500+ merged Pull Requests. It is still changing.
-
-**Opinionated on purpose.** These are one engineer's conventions, taken from
-real work rather than assembled in the abstract. Where you disagree, your own
-`AGENTS.md` wins.
+The rules were derived from gstack and gbrain, then hardened over 500+ merged
+pull requests shipping
+[agentsfleet](https://github.com/agentsfleet/agentsfleet). Where you disagree,
+your own `AGENTS.md` wins.
 
 Works with Claude Code, Codex, OpenCode, and Amp.
 
@@ -36,18 +30,19 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 bunx @agentsfleet/orly init
 ```
 
-One command, run inside the repository you want governed. Nothing to clone
-first, nothing to set up in your `$HOME`.
+Run it inside the repository you want governed. It detects your languages and
+installs only those rules.
 
-It reads the files already in your repository and works out which languages you
-write. A Rust crate gets the Rust rules. It never gets rules for a language you
-do not use.
+```text
+orly init
+  ├─ rules ──► the agent reads them before it edits
+  └─ gates ──► git hooks check every commit
+                 ├─ followed the rules ─► lands
+                 └─ ignored them ───────► blocked
+```
 
-Then commit what it wrote. Your teammates clone, and the rules are simply
-there — nothing for them to install, nothing to remember.
-
-One exception: **git never clones hooks.** Each person runs `orly init` once in
-their own checkout to switch them on.
+Commit what it wrote. Teammates get the rules on clone. One exception: git
+never clones hooks, so each person runs `orly init` once in their own checkout.
 
 ## Two files, always
 
@@ -56,17 +51,13 @@ their own checkout to switch them on.
 | `AGENTS.md` | **yours** | untouched, except one delimited pointer block |
 | `AGENTS.orly.md` | orly | rewritten |
 
-`AGENTS.md` is the file every agent runtime auto-loads, so it stays yours. orly
-writes its rules beside it, then adds a pointer so they get read.
+Every agent runtime auto-loads `AGENTS.md`, so it stays yours. orly writes its
+rules beside it and adds a pointer so they get read.
 
-Three promises:
-
-- **Your rules win.** Where yours and orly's disagree, yours is the answer.
-- **Nothing you wrote is overwritten.** A hook or rule page orly did not write
-  is refused, and the refusal names `--force` and `--no-hooks` as your ways
-  through.
-- **A refused run changes nothing.** There is no half-installed tree to clean
-  up afterwards.
+- **Your rules win** on any disagreement.
+- **Your files are never overwritten.** A hook or rule page orly did not write
+  is refused; `--force` and `--no-hooks` are the ways through.
+- **A refused run changes nothing.**
 
 ## Commands
 
