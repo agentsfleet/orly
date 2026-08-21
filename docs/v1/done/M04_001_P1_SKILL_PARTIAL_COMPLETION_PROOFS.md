@@ -4,7 +4,7 @@
 **Milestone:** M04
 **Workstream:** 001
 **Date:** Aug 21, 2026
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P1 — a missed later interaction can leave durable user state present while its external work has already been cancelled
 **Categories:** SKILL
 **Batch:** B1 — one focused rules change
