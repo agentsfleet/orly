@@ -4,12 +4,12 @@
 **Milestone:** M04
 **Workstream:** 001
 **Date:** Aug 21, 2026
-**Status:** PENDING
+**Status:** IN_PROGRESS
 **Priority:** P1 — a missed later interaction can leave durable user state present while its external work has already been cancelled
 **Categories:** SKILL
 **Batch:** B1 — one focused rules change
-**Branch:** set during CHORE(open)
-**Test Baseline:** captured during CHORE(open)
+**Branch:** `feat/m04-partial-completion-proofs`
+**Test Baseline:** `unit=108 integration=0` (`bun test orly/src`: 108 pass, 0 fail; no integration command is declared in `.oracle/orly.json`)
 **Depends on:** none
 **Provenance:** Agent-drafted from Indy's DELETE-fleet failure case and the current `write-unit-test` allocation-failure ladder
 **Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §Why it's materialised — these skills are distributed as selected-pack files
