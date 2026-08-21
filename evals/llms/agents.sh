@@ -21,19 +21,20 @@ invoke_agent() {
     #   opencode : prompt as a positional ARG to `run` (default format; its
     #              `--format` only accepts default|json). ~100 KB << ARG_MAX.
     # amp/opencode stdout carries ANSI/control bytes — extract_verdict strips
-    # them before matching. stderr is captured INTO $out (2>>) so credit/auth
-    # errors (e.g. amp's 402) are visible to is_unavailable — otherwise a
-    # blocked agent looks like a wrong "?" answer instead of unavailable.
-    claude)   ( timeout "$secs" claude -p < "$prompt" >"$out" 2>>"$out" ) ;;
-    amp)      ( timeout "$secs" amp --execute < "$prompt" >"$out" 2>>"$out" ) ;;
-    opencode) ( timeout "$secs" opencode run "$(cat "$prompt")" >"$out" 2>>"$out" ) ;;
+    # them before matching. Credit/auth stderr stays visible to is_unavailable.
+    # OpenCode buffers stdout until stderr is captured so its answer remains last.
+    claude)   capture_answer_last "$out" timeout "$secs" claude -p < "$prompt" ;;
+    amp)      capture_answer_last "$out" timeout "$secs" amp --execute < "$prompt" ;;
+    opencode) capture_answer_last "$out" timeout "$secs" opencode run "$(cat "$prompt")" ;;
     # codex: answer lands in $msg via --output-last-message; event noise + any
     # error text go to $out so is_unavailable can see them; then the clean
-    # answer is appended (extract_verdict takes the LAST VERDICT line).
-    codex)    local msg="$out.msg"
-              ( timeout "$secs" codex exec - --skip-git-repo-check \
-                  --output-last-message "$msg" < "$prompt" >"$out" 2>>"$out" )
-              [[ -f "$msg" ]] && { cat "$msg" >>"$out"; rm -f "$msg"; } ;;
+    # answer is appended so the verdict remains the final semantic line.
+    codex)    local msg="$out.msg" status
+              capture_answer_last "$out" timeout "$secs" codex exec - --skip-git-repo-check \
+                  --output-last-message "$msg" < "$prompt"
+              status=$?
+              [[ -f "$msg" ]] && { append_file_separated "$out" "$msg"; rm -f "$msg"; }
+              return "$status" ;;
     *) return 127 ;;
   esac
 }
@@ -89,22 +90,109 @@ EOF
 
 # An agent's answer file shows it is UNAVAILABLE (not wrong) when it carries a
 # credit/auth/quota error rather than a verdict — e.g. amp on the free tier:
-# "402 ... require paid credits ... non-interactive". Such an agent is logged
+# "402 ... require paid credits ... non-interactive" or Amp's current
+# "Out of Credits". Such an agent is logged
 # and EXCLUDED from the pass/fail gate, never scored 0 (which would wrongly
 # sink the whole suite). Empty output after a clean timeout counts as a miss,
 # not unavailability — that's a real non-answer.
+UNAVAILABLE_PATTERN='^[[:space:]]*([-*>|][[:space:]]*)?((error|fatal):[[:space:]]*(402([^[:alnum:]]|$)|out of credits([^[:alnum:]]|$)|.*(paid credits|require.*credits|daily free usage limit|purchase additional credits|quota (exceeded|exhausted)|rate.?limit(ed| exceeded)|unauthorized|not (logged in|authenticated)|invalid api key|please (log ?in|sign ?in)))|http[[:space:]]*(401|402|429)([^[:alnum:]]|$)|402([^[:alnum:]]|$)|out of credits([^[:alnum:]]|$)|rate.?limit(ed| exceeded)([^[:alnum:]]|$)|unauthorized([^[:alnum:]]|$)|not (logged in|authenticated)([^[:alnum:]]|$)|invalid api key([^[:alnum:]]|$))'
+ZERO_STATUS_UNAVAILABLE_PATTERN='^[[:space:]]*([-*>|][[:space:]]*)?error:[[:space:]]*out of credits([^[:alnum:]]|$)'
+
 is_unavailable() {
-  LC_ALL=C tr -cd '[:print:]\n' < "$1" \
-    | grep -qiE '402|paid credits|require.*credits|daily free usage limit|purchase additional credits|quota|rate.?limit|unauthorized|not (logged in|authenticated)|invalid api key|please (log ?in|sign ?in)'
+  local status="${2:-0}"
+  [[ "$status" -ne 124 ]] || return 1
+  [[ "$(extract_verdict "$1")" == "?" ]] || return 1
+  if [[ "$status" -eq 0 ]]; then
+    LC_ALL=C tr -cd '[:print:]\n' < "$1" \
+      | sed -E 's/\[[0-9;?]*[[:alpha:]]//g' \
+      | grep -qiE "$ZERO_STATUS_UNAVAILABLE_PATTERN"
+  else
+    LC_ALL=C tr -cd '[:print:]\n' < "$1" \
+      | sed -E 's/\[[0-9;?]*[[:alpha:]]//g' \
+      | grep -qiE "$UNAVAILABLE_PATTERN"
+  fi
+}
+
+capture_answer_last() {
+  local out="$1" answer_file status
+  shift
+  answer_file="$(mktemp)" || return 1
+  "$@" >"$answer_file" 2>"$out"; status=$?
+  append_file_separated "$out" "$answer_file"
+  rm -f "$answer_file"
+  return "$status"
+}
+
+append_file_separated() {
+  local out="$1" input="$2"
+  [[ -s "$input" ]] || return 0
+  [[ -s "$out" ]] && printf '\n' >>"$out"
+  cat "$input" >>"$out"
+}
+
+validate_agent_io() {
+  local sample status
+  sample="$(mktemp)" || return 1
+  printf '%s\n' 'Error: Out of Credits Add credits to keep using Amp.' > "$sample"
+  is_unavailable "$sample" 1 || { rm -f "$sample"; return 1; }
+  is_unavailable "$sample" 0 || { rm -f "$sample"; return 1; }
+  printf '%s\n' 'Error: Out of Credits; unable to produce VERDICT: NO' > "$sample"
+  is_unavailable "$sample" 1 || { rm -f "$sample"; return 1; }
+  printf '\033[31m  Error: Out of Credits\033[0m\n' > "$sample"
+  is_unavailable "$sample" 1 || { rm -f "$sample"; return 1; }
+  printf '%s\n' 'Rate-limit behavior is covered.' > "$sample"
+  if is_unavailable "$sample" 1; then rm -f "$sample"; return 1; fi
+  printf '%s\n' 'The operating model says unauthorized access must be rejected.' > "$sample"
+  if is_unavailable "$sample" 7; then rm -f "$sample"; return 1; fi
+  printf '%s\n' 'Error: Out of Credits' > "$sample"
+  if is_unavailable "$sample" 124; then rm -f "$sample"; return 1; fi
+  printf '%s\n' 'Rate-limit behavior is covered.' 'VERDICT: NO' > "$sample"
+  if is_unavailable "$sample" 1; then rm -f "$sample"; return 1; fi
+  [[ "$(extract_verdict "$sample")" == "NO" ]] || { rm -f "$sample"; return 1; }
+  printf '%s\n' 'Error: Out of Credits' 'VERDICT: NO' > "$sample"
+  if is_unavailable "$sample" 1; then rm -f "$sample"; return 1; fi
+  printf '%s\n' 'VERDICT: NO ' > "$sample"
+  [[ "$(extract_verdict "$sample")" == "NO" ]] || { rm -f "$sample"; return 1; }
+  printf '%s\n' 'VERDICT: YES' > "$sample"
+  [[ "$(extract_verdict "$sample")" == "YES" ]] || { rm -f "$sample"; return 1; }
+  printf '%s\n' 'VERDICT: YES' 'trailing diagnostic' > "$sample"
+  [[ "$(extract_verdict "$sample")" == "?" ]] || { rm -f "$sample"; return 1; }
+  printf '\033[31mVERDICT: NO \033[0m\n\033[0m\n' > "$sample"
+  [[ "$(extract_verdict "$sample")" == "NO" ]] || { rm -f "$sample"; return 1; }
+  capture_answer_last "$sample" sh -c \
+    'printf "%s\n" "diagnostic" >&2; printf "%s\n" "VERDICT: YES"; exit 7'
+  status=$?
+  [[ "$status" -eq 7 ]] || { rm -f "$sample"; return 1; }
+  [[ "$(extract_agent_verdict "$sample" "$status")" == "?" ]] || { rm -f "$sample"; return 1; }
+  printf '%s\n' 'VERDICT: YES' > "$sample"
+  [[ "$(extract_agent_verdict "$sample" 124)" == "?" ]] || { rm -f "$sample"; return 1; }
+  capture_answer_last "$sample" sh -c \
+    'printf "%s" "diagnostic" >&2; printf "%s\n" "VERDICT: YES"'
+  [[ "$(extract_agent_verdict "$sample" 0)" == "YES" ]] || { rm -f "$sample"; return 1; }
+  capture_answer_last "$sample" sh -c 'printf "%s\n" "Error: Out of Credits" >&2; exit 9'
+  status=$?
+  [[ "$status" -eq 9 ]] || { rm -f "$sample"; return 1; }
+  is_unavailable "$sample" "$status" || { rm -f "$sample"; return 1; }
+  rm -f "$sample"
+}
+
+extract_agent_verdict() {
+  local file="$1" status="${2:-0}"
+  [[ "$status" -eq 0 ]] || { printf '?'; return; }
+  extract_verdict "$file"
 }
 
 extract_verdict() {
-  # Last VERDICT: line wins; normalise to YES/NO/?. Strip ANSI/control bytes
-  # first — amp & opencode emit colour codes and spinner glyphs that otherwise
-  # corrupt the match (and, when interpolated, broke `set -u` on a split byte).
+  # The last printable nonempty line must be the verdict. This prevents credit
+  # or auth diagnostics that mention the requested format from becoming answers.
+  # Strip ANSI residue before selecting the final semantic line; some CLIs emit
+  # a standalone reset after their answer.
   local v
   v=$(LC_ALL=C tr -cd '[:print:]\n' < "$1" \
-        | grep -oiE 'VERDICT:[[:space:]]*(YES|NO)' | tail -1 \
+        | sed -E 's/\[[0-9;?]*[[:alpha:]]//g' \
+        | awk 'NF { last = $0 } END { print last }' \
+        | sed -E 's/[[:space:]]+$//' \
+        | grep -oiE '^VERDICT:[[:space:]]*(YES|NO)[[:space:]]*$' \
         | grep -oiE '(YES|NO)$' | tr '[:lower:]' '[:upper:]')
   [[ -n "$v" ]] && printf '%s' "$v" || printf '?'
 }
