@@ -104,7 +104,7 @@ export class RulesModel {
   }
 
   static async load(root: string): Promise<RulesModel> {
-    const registry = await readJsonObject(join(root, "orly/registry.json"));
+    const registry = await readJsonObject(join(root, "registry.json"));
     return new RulesModel(root, registry);
   }
 

@@ -4,6 +4,10 @@
   "description": "Repository-scoped engineering harness: renders agent rules, materialises the gates that enforce them, and proves the PR boundary — for any coding agent.",
   "license": "MIT",
   "type": "module",
+  "scripts": {
+    "test": "bun test src",
+    "typecheck": "tsc --noEmit"
+  },
   "bin": {
     "orly": "bin/orly"
   },
@@ -27,7 +31,7 @@
     "amp"
   ],
   "engines": {
-    "bun": ">=1.3.0"
+    "bun": ">=1.4.0"
   },
   "files": [
     "bin/orly",
@@ -40,16 +44,20 @@
     "skills/write-integration-test/",
     "skills/kishore-spec-new/",
     "skills/kishore-babysit-prs/",
-    "orly/core/",
-    "orly/packs/",
-    "orly/schemas/",
-    "orly/fixtures/",
-    "orly/src/",
-    "orly/registry.json",
+    "core/",
+    "packs/",
+    "schemas/",
+    "fixtures/",
+    "src/",
+    "registry.json",
     "AGENTS.md",
     "SOUL.md"
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.0",
+    "typescript": "7.0.2"
   }
 }

@@ -185,7 +185,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 
 | # | Question | Expected |
 |---|---|---|
-| 13.1 | When the agent edits `orly/**`, generated `AGENTS.md`, `audits/agents-md.md`, governance hooks, or any dispatch entry, does `edit_rules` require the audit and questionnaire before declaring done? | YES |
+| 13.1 | When the agent edits `core/**`, `packs/**`, `schemas/**`, `src/**`, `registry.json`, generated `AGENTS.md`, `audits/agents-md.md`, governance hooks, or any dispatch entry, does `edit_rules` require the audit and questionnaire before declaring done? | YES |
 | 13.2 | Is the agent forbidden from self-overriding the Invariance Suite Gate? (Only the user may bypass at push time via `SKIP_INVARIANCE_PUSH=1`.) | YES |
 | 13.3 | Does generated evidence bind the source commit, registry digest, profile results, and prompt-comprehension result? | YES |
 | 13.4 | Does the pre-push hook run the deterministic chain and regenerate evidence against the pushed commit, with live prompt evaluation deliberately off the push path (the hook records `--llm-result not-required` with its rationale; `make llmevals` is the manual matrix)? | YES |
@@ -326,7 +326,7 @@ siblings.
 
 | # | Question | Expected |
 |---|---|---|
-| 26.1 | Is `orly/registry.json` the canonical profile and pack registry, with `orly/core/operating-model.md` as the global operating-model source? | YES |
+| 26.1 | Is `registry.json` the canonical profile and pack registry, with `core/operating-model.md` as the global operating-model source? | YES |
 | 26.2 | Is every repository's rule set carried by its own commit — `AGENTS.orly.md` beside the repository's own `AGENTS.md` — with **no** symlink from any agent home into this checkout, so a teammate's clone is governed without installing anything? | YES |
 | 26.3 | Do consumer repositories carry their orly-managed files as tracked, committed snapshots — rule pages, gate scripts, skills, hooks, and `.oracle/orly.json` — rather than resolving them from `ORLY_ROOT` or a symlink into dotfiles? | YES |
 | 26.4 | Are `orly sync`, `orly render`, and `orly validate` gone — `orly update` covering this checkout because pack sources living inside the target are skipped, `orly init --dry-run` covering the preview, and `orly verify` validating the registry on its way through — with every verb run from inside the repository it acts on? | YES |

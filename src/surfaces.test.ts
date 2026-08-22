@@ -34,7 +34,7 @@ describe("docs surface", () => {
 
 describe("code classification", () => {
   test("source and test files are code; prose is not", () => {
-    expect(isCode("orly/src/lifecycle.ts")).toBeTrue();
+    expect(isCode("src/lifecycle.ts")).toBeTrue();
     expect(isCode("src/agentsfleetd/tests.zig")).toBeTrue();
     expect(isCode("ui/packages/app/tests/fleet.spec.ts")).toBeTrue();
     expect(isCode("docs/VERIFY_TIERS.md")).toBeFalse();

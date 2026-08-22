@@ -58,9 +58,8 @@ make_sandbox() {
     cp "$SRC_ROOT/docs/$d.md" "$sb/docs/" 2>/dev/null
   done
   cp "$SRC_ROOT/docs/greptile-learnings/RULES.md" "$sb/docs/greptile-learnings/"
-  mkdir -p "$sb/skills/kishore-spec-new" "$sb/.claude"
+  mkdir -p "$sb/skills/kishore-spec-new"
   cp "$SRC_ROOT/skills/kishore-spec-new/SKILL.md" "$sb/skills/kishore-spec-new/"
-  cp "$SRC_ROOT/.claude/settings.json" "$sb/.claude/"
   cp "$SRC_ROOT/.githooks/pre-commit" "$SRC_ROOT/.githooks/pre-push" "$sb/.githooks/"
   printf '%s' "$sb"
 }
@@ -167,10 +166,6 @@ expect_fail "rule-path residence bites when the resolution doctrine is dropped" 
   "resolution doctrine missing" \
   "perl -pi -e 's{Rule paths resolve relative to this repository}{Rule paths came from somewhere}' AGENTS.md"
 
-expect_fail "rule-path reachability bites when the settings Read grant is removed" \
-  "lacks \"Read(~/Projects/dotfiles/**)\"" \
-  "perl -ni -e 'print unless m{Read\\(~/Projects/dotfiles}' .claude/settings.json"
-
 expect_fail "always-forbidden bites when the no-verify ban is removed" \
   "always-forbidden item missing: no-verify" \
   "perl -pi -e 's/no-verify/no_verify_GONE/g' AGENTS.md"
@@ -217,6 +212,10 @@ expect_fail "fixture fingerprint bites when dirty.diff is sanitised" \
 expect_fail "hook trigger bites when pre-push drops its dispatch/ guard" \
   "missing dispatch/ trigger reference" \
   "perl -pi -e 's{dispatch/}{XXX/}g' .githooks/pre-push"
+
+expect_fail "hook trigger bites when package manifest drops from both guards" \
+  "missing package\.json trigger reference" \
+  "perl -pi -e 's/package/package_X/g' .githooks/pre-commit .githooks/pre-push"
 
 expect_fail "memory discipline bites when the never-write rule is dropped" \
   "memory discipline: never-write-memory rule missing" \

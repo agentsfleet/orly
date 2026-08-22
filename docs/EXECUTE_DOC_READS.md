@@ -7,7 +7,7 @@ Every triggered document requires one `📖 DOC READ: <path>` proof-line **per t
 | Trigger | Read |
 |---|---|
 | Always (universal) | `docs/greptile-learnings/RULES.md` — at EXECUTE start read the Rule-code gloss legend + the sections named by the spec's "Applicable Rules" list (canonical); the full file belongs to `/review`, not EXECUTE. On sub-task shape change, section-scan (`grep -n "^## "`) and read only newly-touched sections, cited in the proof-line — never the full file again. |
-| `orly/**`, agent-home instruction links, repository rules synchronization, or governance hooks | `dispatch/edit_rules.md` + `docs/ORLY_ARCHITECTURE.md` — canonical sources, profiles, snapshots, refusal boundaries, and evidence. |
+| `core/**`, `packs/**`, `schemas/**`, `src/**`, `registry.json`, agent-home instruction links, repository rules synchronization, or governance hooks | `dispatch/edit_rules.md` + `docs/ORLY_ARCHITECTURE.md` — canonical sources, profiles, snapshots, refusal boundaries, and evidence. |
 | Lifecycle stage transition (CHORE(open)/PLAN/CHORE(close)/LAND, worktree setup, milestone bootstrap) | `dispatch/lifecycle.md` — the entered stage's runbook section only (section-scan; fires on the transition itself, not on an Edit/Write). |
 | Any source file (cross-cutting authoring) | `dispatch/write_any.md` — length, logging, milestone-id, error-registry, UFS, greptile read, legacy-workaround family. |
 | Spec's "Applicable Rules" | Each rule (canonical). Missing → the cross-cutting codes of `dispatch/write_any.md` are the floor; surface omission. |

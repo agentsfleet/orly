@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { join } from "node:path";
 
 import { branchOverrides, recordOverride, runGate, runGates } from "./gates";
@@ -7,14 +7,11 @@ import {
   names, newRepository, newSpecRepository, orly, temporaryDirectory,
 } from "./gates_test_support";
 
-afterEach(cleanupTemporaryDirectories);
+const GIT_FIXTURE_TIMEOUT_MS = 30_000;
 
-// The end-to-end walk drives the real command-line entry against real git
-// repositories — several dozen spawns, whose wall time tracks machine load
-// rather than anything the gates decide. Bun's 5s default made pre-commit red
-// on a busy laptop while every assertion still held; the clock moves, the
-// assertions do not.
-const END_TO_END_TIMEOUT_MS = 30_000;
+// Every case creates real Git repositories, so wall time follows local process load.
+setDefaultTimeout(GIT_FIXTURE_TIMEOUT_MS);
+afterEach(cleanupTemporaryDirectories);
 
 describe("gate groups", () => {
   test("run in order and stop at the first red group", async () => {
@@ -182,5 +179,5 @@ describe("end to end", () => {
     expect(result.code).toBe(0);
     expect(orly(project, registry, "gate", "pr").code).toBe(0);
     expect(orly(project, registry, "gate", "nope").code).not.toBe(0);
-  }, END_TO_END_TIMEOUT_MS);
+  });
 });

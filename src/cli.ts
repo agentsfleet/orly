@@ -221,7 +221,7 @@ function requireEngineCheckout(model: RulesModel, command: string): void {
 
 function parseRoot(args: string[]): { root: string; arguments: string[] } {
   const index = args.indexOf("--root");
-  if (index < 0) return { root: resolve(import.meta.dir, "../.."), arguments: args };
+  if (index < 0) return { root: resolve(import.meta.dir, ".."), arguments: args };
   const value = args[index + 1];
   if (!value) throw new OrlyError("--root requires a path");
   return { root: resolve(value), arguments: args.filter((_, position) => position !== index && position !== index + 1) };

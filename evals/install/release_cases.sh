@@ -104,7 +104,7 @@ data = json.load(open(path))
 data["version"] = "0.4.1-test"
 json.dump(data, open(path, "w"))
 PY
-  printf '\n<!-- eval: newer engine content -->\n' >> "$pkg/orly/packs/language/rust/rules.md"
+  printf '\n<!-- eval: newer engine content -->\n' >> "$pkg/packs/language/rust/rules.md"
 
   local out; out="$(run_packed "$pkg" "$repo" update)"
   local after; after="$(python3 -c "import json;print(json.load(open('$repo/.oracle/orly.json'))['orly_version'])")"

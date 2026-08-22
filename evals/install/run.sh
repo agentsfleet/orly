@@ -20,7 +20,9 @@ FILTER="${1:-}"
 
 if [[ -t 1 ]]; then G=$'\033[32m'; R=$'\033[31m'; BO=$'\033[1m'; X=$'\033[0m'
 else G=''; R=''; BO=''; X=''; fi
-PASS=0; FAIL=0; SANDBOXES=()
+PASS=0; FAIL=0
+NPM_CACHE="$(mktemp -d)" || exit 1
+SANDBOXES=("$NPM_CACHE")
 cleanup() { local d; for d in "${SANDBOXES[@]+"${SANDBOXES[@]}"}"; do rm -rf "$d"; done; }
 trap cleanup EXIT
 
@@ -41,7 +43,7 @@ TARBALL_ROOT=""
 packed_root() {
   if [[ -n "$TARBALL_ROOT" ]]; then printf '%s' "$TARBALL_ROOT"; return 0; fi
   local sb; sb="$(mk_sandbox)"
-  ( cd "$ROOT" && npm pack --pack-destination "$sb" ) >/dev/null 2>&1 || return 1
+  ( cd "$ROOT" && npm_config_cache="$NPM_CACHE" npm pack --pack-destination "$sb" ) >/dev/null 2>&1 || return 1
   ( cd "$sb" && tar xzf ./*.tgz ) >/dev/null 2>&1 || return 1
   TARBALL_ROOT="$sb/package"
   printf '%s' "$TARBALL_ROOT"
@@ -49,7 +51,7 @@ packed_root() {
 
 # The manifest's file list, one path per line, without unpacking anything.
 packed_paths() {
-  ( cd "$ROOT" && npm pack --dry-run --json 2>/dev/null ) \
+  ( cd "$ROOT" && npm_config_cache="$NPM_CACHE" npm pack --dry-run --json 2>/dev/null ) \
     | grep -oE '"path": *"[^"]+"' | sed -E 's/.*: *"//; s/"$//'
 }
 
@@ -88,6 +90,21 @@ mk_repo() {
 run_packed() {
   local pkg="$1" cwd="$2"; shift 2
   ( cd "$cwd" && env HOME="$cwd/home" PATH="$PATH" bash "$pkg/bin/orly" "$@" 2>&1 )
+}
+
+# Run the installed npm shim rather than the unpacked script. This is the path
+# a user reaches through bunx or npm, so it proves the manifest's bin mapping.
+run_installed() {
+  local pkg="$1" cwd="$2"; shift 2
+  local tarball
+  tarball="$(find "$(dirname "$pkg")" -maxdepth 1 -type f -name '*.tgz' -print -quit)"
+  [[ -n "$tarball" ]] || return 1
+  (
+    cd "$cwd" &&
+      env HOME="$cwd/home" npm_config_cache="$NPM_CACHE" \
+        npm install --ignore-scripts --no-audit --no-fund --no-save --package-lock=false "$tarball" >/dev/null 2>&1 &&
+      env HOME="$cwd/home" "$cwd/node_modules/.bin/orly" "$@" 2>&1
+  )
 }
 
 # shellcheck source=cases.sh

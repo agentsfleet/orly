@@ -23,4 +23,4 @@ if ! command -v bun >/dev/null 2>&1; then
     exit 1
 fi
 
-exec bun "$ROOT/orly/src/cli.ts" --root "$ROOT" "$@"
+exec bun "$ROOT/src/cli.ts" --root "$ROOT" "$@"

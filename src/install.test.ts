@@ -463,13 +463,12 @@ describe("install", () => {
     // whose only managed file cites a dispatch/ path nothing installs.
     const engineRoot = mkdtempSync(join(tmpdir(), "orly-install-broken-engine-"));
     try {
-      mkdirSync(join(engineRoot, "orly"), { recursive: true });
-      await Bun.write(join(engineRoot, "orly/core.md"), "core\n");
+      await Bun.write(join(engineRoot, "core.md"), "core\n");
       await Bun.write(join(engineRoot, "broken.md"), "cites dispatch/missing.md\n");
 
       const registry = {
         schema_version: 1,
-        core_documents: ["orly/core.md"],
+        core_documents: ["core.md"],
         packs: { broken: { extensions: [], managed_files: [{ source: "broken.md", target: "broken.md" }] } },
         rules: [],
       };
@@ -491,14 +490,13 @@ describe("install", () => {
   test("two packs disagreeing on one target's source is a registry error, not a silent pick", async () => {
     const engineRoot = mkdtempSync(join(tmpdir(), "orly-install-conflict-engine-"));
     try {
-      mkdirSync(join(engineRoot, "orly"), { recursive: true });
-      await Bun.write(join(engineRoot, "orly/core.md"), "core\n");
+      await Bun.write(join(engineRoot, "core.md"), "core\n");
       await Bun.write(join(engineRoot, "a.md"), "from pack a\n");
       await Bun.write(join(engineRoot, "b.md"), "from pack b\n");
 
       const registry = {
         schema_version: 1,
-        core_documents: ["orly/core.md"],
+        core_documents: ["core.md"],
         packs: {
           a: { extensions: [], managed_files: [{ source: "a.md", target: "shared.md" }] },
           b: { extensions: [], managed_files: [{ source: "b.md", target: "shared.md" }] },

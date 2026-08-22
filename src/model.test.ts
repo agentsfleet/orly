@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 import { readJsonObject, RulesModel } from "./model";
 
-const ROOT = resolve(import.meta.dir, "../..");
+const ROOT = resolve(import.meta.dir, "..");
 
 describe("RulesModel", () => {
   test("validates the current registry", async () => {
@@ -13,7 +13,7 @@ describe("RulesModel", () => {
   });
 
   test("rejects the declared invalid registry fixture", async () => {
-    const registry = await readJsonObject(resolve(ROOT, "orly/fixtures/registry-invalid.json"));
+    const registry = await readJsonObject(resolve(ROOT, "fixtures/registry-invalid.json"));
     const model = new RulesModel(ROOT, registry);
 
     expect(() => model.validate()).toThrow();
@@ -23,7 +23,7 @@ describe("RulesModel", () => {
     const source = await RulesModel.load(ROOT);
     const registry = structuredClone(source.registry);
     if (!Array.isArray(registry.rules) || typeof registry.rules[0] !== "object" || registry.rules[0] === null) throw new Error("mechanical rule missing");
-    registry.rules[0] = { ...registry.rules[0], fixtures: { pass: ["orly/fixtures/missing.json"], fail: ["orly/fixtures/registry-invalid.json"] } };
+    registry.rules[0] = { ...registry.rules[0], fixtures: { pass: ["fixtures/missing.json"], fail: ["fixtures/registry-invalid.json"] } };
     const model = new RulesModel(source.root, registry);
 
     expect(() => model.validate()).toThrow("fixture source is missing");

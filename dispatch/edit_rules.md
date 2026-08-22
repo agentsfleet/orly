@@ -12,7 +12,7 @@ The deterministic checker is `make audit`. The comprehension questionnaire is
 
 This dispatch fires for edits to:
 
-- `orly/**`
+- `core/**`, `packs/**`, `schemas/**`, `src/**`, or `registry.json`
 - generated `AGENTS.md`
 - `dispatch/**`
 - `audits/agents-md.md`, `audits/agents-md.sh`, or `audits/data.sh`

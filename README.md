@@ -92,7 +92,7 @@ gates identically.
 ```bash
 git clone git@github.com:agentsfleet/orly.git && cd orly
 git config core.hooksPath .githooks
-cd orly && bun install --frozen-lockfile && cd ..
+bun install --frozen-lockfile
 make audit
 ```
 

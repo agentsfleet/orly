@@ -44,11 +44,11 @@ RULE_PATH_SURFACES=(
 )
 
 # Governance-editing façades describe how to edit THIS engine's own source
-# (orly/**, the registry, the rendered AGENTS.md) — a workflow that only ever
+# (core/**, packs/**, schemas/**, src/**, the registry, the rendered AGENTS.md) — a workflow that only ever
 # runs inside this checkout. Their absolute citations are correct, not a
 # residual of the old model; a materialised copy would never satisfy them
 # because there is nothing to materialise (a consumer never receives
-# orly/core/, orly/registry.json, or this checkout's own dispatch/edit_rules.md).
+# core/, registry.json, or this checkout's own dispatch/edit_rules.md).
 RULE_PATH_ENGINE_ONLY=(
   "dispatch/edit_rules.md"
 )
@@ -106,4 +106,3 @@ check_rule_residence() {
 
   return $rc
 }
-

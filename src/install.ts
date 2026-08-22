@@ -305,7 +305,7 @@ async function planFiles(model: RulesModel, packs: string[], commands: Record<st
       // rendering (same path) or plant a second copy that drifts from the
       // original (skills/ into .claude/skills/). Skipping is what the retired
       // sync verb used to buy, generalised past the same-path case.
-      if (isBelow(resolved(path), resolved(targetRoot))) continue;
+      if (resolved(model.root) === resolved(targetRoot)) continue;
       planned.set(entry.target, { target: entry.target, content: await managedContent(path, entry.target, entry.source, packs, known, orlyFile), mode: modeLabel(path) });
     }
   }
