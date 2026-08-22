@@ -40,12 +40,15 @@ const EM_DASH = "—";
 const README = "README.md";
 const CONFIG_RELATIVE_PATH = ".oracle/orly.json";
 const REGISTRY_FILE = "registry.json";
-const MARKDOWN_SUFFIX = ".md";
 const CODE_PLACEHOLDER = "Code";
 const EMPTY = "";
 const CLOSERS = "]\")'";
 const ENDERS = ".!?";
 const SPACE = " ";
+const UTF8 = "utf8";
+const FRONT_MATTER_FENCE = "---";
+// The first capture group, kept when a markdown span is unwrapped.
+const FIRST_GROUP = "$1";
 
 // Enumerated, never stemmed: a stemmer that turns "execute" into "executable"
 // bans a correct English word, and one false positive is what gets a check
@@ -105,7 +108,7 @@ export function documentationSurfaces(root: string): string[] {
   const found = new Set<string>();
   for (const path of [join(root, REGISTRY_FILE), join(root, CONFIG_RELATIVE_PATH)]) {
     if (!existsSync(path)) continue;
-    for (const match of readFileSync(path, "utf8").matchAll(/"([^"\n]+\.md)"/g)) {
+    for (const match of readFileSync(path, UTF8).matchAll(/"([^"\n]+\.md)"/g)) {
       const relative = match[1] ?? EMPTY;
       if (!relative.startsWith("/") && !relative.includes("..")) found.add(relative);
     }
@@ -115,7 +118,7 @@ export function documentationSurfaces(root: string): string[] {
 }
 
 export function scanSurfaces(root: string, surfaces: string[]): DocFinding[] {
-  return surfaces.flatMap((relative) => scanDocument(relative, readFileSync(join(root, relative), "utf8")));
+  return surfaces.flatMap((relative) => scanDocument(relative, readFileSync(join(root, relative), UTF8)));
 }
 
 export function scanDocument(file: string, text: string): DocFinding[] {
@@ -150,12 +153,12 @@ class Reader {
   }
 
   private read(raw: string, lineNumber: number): void {
-    if (lineNumber === 1 && raw === "---") {
+    if (lineNumber === 1 && raw === FRONT_MATTER_FENCE) {
       this.inFrontMatter = true;
       return;
     }
     if (this.inFrontMatter) {
-      if (raw === "---") this.inFrontMatter = false;
+      if (raw === FRONT_MATTER_FENCE) this.inFrontMatter = false;
       return;
     }
     if (/^[ \t]*(```|~~~)/.test(raw)) {
@@ -308,8 +311,8 @@ function clean(line: string): string {
   return line
     .replace(/!\[[^\]]*\]\([^)]*\)/g, SPACE)
     .replace(/`[^`]*`/g, CODE_PLACEHOLDER)
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
-    .replace(/\[([^\]]*)\]\[[^\]]*\]/g, "$1")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, FIRST_GROUP)
+    .replace(/\[([^\]]*)\]\[[^\]]*\]/g, FIRST_GROUP)
     .replace(/https?:\/\/[^\s)>]+/g, SPACE)
     .replace(/<[^>]*>/g, SPACE);
 }
