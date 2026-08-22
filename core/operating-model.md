@@ -84,7 +84,7 @@ Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_A
 <!-- oracle-packs:start persona.indy -->
 - **Vault (1Password `op`).** Resolve secrets via the `op` CLI, never hand-paste/log. Vault names come from the environment, never from a rules file.
 - Check a sibling repository under `$HOME/Projects/` for an existing pattern in the same language before inventing one.
-- **Reference canon (read before designing):** TypeScript → supabase `oss/supabase/apps/studio` (app patterns) + `oss/supabase/packages/{ui,ui-patterns}` (components) + `oss/cli` (clone if absent); Zig → `oss/ghostty/src/`. "Broken for us" → call-site diff first.
+- **Reference canon (read before designing):** TypeScript → supabase `oss/supabase/apps/studio` (app patterns) + `oss/supabase/packages/{ui,ui-patterns}` (components) + `oss/cli` (clone if absent); Zig → `oss/ghostty/src/`; Rust → `oss/exonum` + `oss/core_api-develop` (clone if absent). "Broken for us" → call-site diff first.
 <!-- oracle-packs:end -->
 
 **Forge detection:** `github.com` → `gh`; `gitlab.com` → `glab`. Check `git remote -v`.
