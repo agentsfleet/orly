@@ -39,9 +39,19 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 | a coding agent | something has to read the rules | Claude Code, Codex, OpenCode, or Amp |
 | your own check commands | `orly gate` runs what `.oracle/orly.json` names | whatever your repository already runs |
 
-gstack is not needed to install or run orly. The rules it installs do route the
-review stage through `gstack /review`. Without gstack, record the skip in your
-Pull Request notes and rerun before merge.
+### gstack
+
+[gstack](https://github.com/garrytan/gstack) is **optional**. orly does not
+require it to install or run.
+
+orly's rules route the review stage through `gstack /review` when gstack is
+available. If it is installed, `/review` is detected and runs automatically.
+If not, orly records the skipped review in the Pull Request notes so it can be
+rerun before merge.
+
+**Bottom line:** orly works without gstack. Installing
+[gstack](https://github.com/garrytan/gstack) gives you the automated `/review`
+step.
 
 ```bash
 bunx @agentsfleet/orly init
