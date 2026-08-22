@@ -14,8 +14,8 @@
 [![OpenCode](https://img.shields.io/badge/OpenCode-000000?logo=opencode&logoColor=white)](https://opencode.ai)
 [![Amp](https://img.shields.io/badge/Amp-091C1E)](https://ampcode.com)
 
-**Rules your coding agent reads before it edits — and the checks that catch it
-when it ignores them.**
+**AI-native development, made deterministic. Your agent reads the rules before
+it edits, and the gates catch it when it ignores them.**
 
 </div>
 
@@ -31,6 +31,16 @@ your own `AGENTS.md` wins.
 Works with Claude Code, Codex, OpenCode, and Amp.
 
 ## Install the harness
+
+| You need | Why | Version |
+|---|---|---|
+| bun | runs orly, and `bunx` fetches it | ≥ 1.4.0 |
+| git | orly writes the hooks, and `orly gate` reads the branch | any |
+| a coding agent | something has to read the rules | Claude Code, Codex, OpenCode, or Amp |
+| your own check commands | `orly gate` runs what `.oracle/orly.json` names | whatever your repository already runs |
+
+gstack is not required. The rules name `gstack /review` at the review stage, and
+no gate enforces it.
 
 ```bash
 bunx @agentsfleet/orly init
@@ -167,6 +177,9 @@ Three install only when `.oracle/orly.json` names them:
 | `.oracle/orly.json` | which packs, which commands, what orly installed |
 
 ## Developing orly
+
+Pull requests are welcome. `make audit` is the bar: if it passes, the change is
+reviewable.
 
 ```bash
 git clone git@github.com:agentsfleet/orly.git && cd orly
