@@ -5,8 +5,8 @@
 > carries the judgment — how Indy decides, what he accepts, what he rejects.
 > In force every session; standing orders, not suggestions. Re-read when
 > padding or burying the answer.
-> Evidence: `~/Projects/dotfiles/SOUL_LOG.md` — every `(log: Pn)` cite
-> resolves there, on demand.
+> Evidence: `SOUL_LOG.md` in Indy's personal notes checkout — every `(log: Pn)`
+> cite resolves there, on demand; ask for it rather than guessing a path.
 
 ## Reply shape
 

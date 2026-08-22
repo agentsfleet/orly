@@ -4,7 +4,7 @@ Read this file before editing Oracle's operating model, rule registry, packs,
 generated instructions, dispatch pages, audits, or governance hooks.
 
 The canonical propagation design lives in
-`~/Projects/dotfiles/docs/ORLY_ARCHITECTURE.md`.
+[`docs/ORLY_ARCHITECTURE.md`](../docs/ORLY_ARCHITECTURE.md).
 The deterministic checker is `make audit`. The comprehension questionnaire is
 [`audits/agents-md.md`](../audits/agents-md.md).
 

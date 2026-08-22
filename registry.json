@@ -228,6 +228,10 @@
         {
           "source": "docs/CHANGELOG_VOICE.md",
           "target": "docs/CHANGELOG_VOICE.md"
+        },
+        {
+          "source": "docs/RELEASE_TEMPLATE.md",
+          "target": "docs/RELEASE_TEMPLATE.md"
         }
       ]
     },

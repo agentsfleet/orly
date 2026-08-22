@@ -48,8 +48,8 @@ scripts resolved live from this checkout via `$ORLY_ROOT`.
 
 That traded the storage cost for a distribution cost undiscovered until a
 second engineer tried to install the harness without this checkout present —
-the symlink and `$ORLY_ROOT` both require a copy of `~/Projects/dotfiles` at a
-known path, which is exactly what a fresh machine, a Continuous Integration
+the symlink and `$ORLY_ROOT` both require a copy of the governance checkout at
+a known absolute path, which is exactly what a fresh machine, a Continuous Integration
 (CI) runner, or a remote fleet container does not have. `orly init` (M03)
 restores storage, but not the failure mode that got it removed: `orly update`
 turns a rule change into one command per repository instead of the manual
