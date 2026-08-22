@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "core_documents": ["orly/core/operating-model.md"],
+  "core_documents": ["core/operating-model.md"],
   "packs": {
     "fixture": {
       "extensions": [],

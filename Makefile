@@ -6,7 +6,7 @@
 #   2. Oracle rules unit tests and byte-stable rendering.
 #   3. AGENTS.md invariance and dispatch checks.
 audit:
-	@cd orly && bun run typecheck && bun test src
+	@bun run typecheck && bun test src
 	@bin/orly verify
 	@bash audits/ufs.sh --all
 	@bash audits/agents-md.sh

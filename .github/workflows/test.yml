@@ -29,13 +29,13 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.3.14"
+          bun-version: "1.4.0"
 
       - name: Install orly dependencies
-        run: cd orly && bun install --frozen-lockfile --ignore-scripts
+        run: bun install --frozen-lockfile --ignore-scripts
 
       - name: Run the suite with coverage
-        run: cd orly && bun test src --coverage --coverage-reporter=lcov --coverage-reporter=text
+        run: bun test src --coverage --coverage-reporter=lcov --coverage-reporter=text
 
       # The floor is enforced here, not left to a badge. agentsfleet gates its
       # Zig line coverage the same way: a number nobody fails on is decoration.
@@ -43,7 +43,7 @@ jobs:
       # under it that a real regression still trips.
       - name: Gate line coverage
         run: |
-          LCOV=orly/coverage/lcov.info
+          LCOV=coverage/lcov.info
           test -f "$LCOV" || { echo "✗ no lcov.info — did the coverage reporter run?"; exit 1; }
           HIT=$(grep -c '^DA:[0-9]*,[1-9]' "$LCOV" || true)
           TOTAL=$(grep -c '^DA:' "$LCOV" || true)
@@ -59,7 +59,7 @@ jobs:
       - name: Upload to Codecov
         uses: codecov/codecov-action@v5
         with:
-          files: orly/coverage/lcov.info
+          files: coverage/lcov.info
           # Public repository: tokenless upload is supported. The secret is used
           # when present so a fork or a rate-limited run still reports.
           token: ${{ secrets.CODECOV_TOKEN }}

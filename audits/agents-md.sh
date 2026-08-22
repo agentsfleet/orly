@@ -248,8 +248,11 @@ for hook in "$PRE_COMMIT" "$PRE_PUSH"; do
   fi
   grep -qE 'AGENTS(\\)?\.md' "$hook" || { fail "$name missing AGENTS.md trigger reference"; hook_fail=1; }
   grep -qF "dispatch/"  "$hook" || { fail "$name missing dispatch/ trigger reference"; hook_fail=1; }
+  for token in 'package\.json' 'bun\.lock' 'tsconfig\.json' 'fixtures/'; do
+    grep -qF "$token" "$hook" || { fail "$name missing $token trigger reference"; hook_fail=1; }
+  done
 done
-[[ $hook_fail -eq 0 ]] && pass "hook triggers (.githooks/pre-commit + pre-push both gate AGENTS.md + dispatch/)"
+[[ $hook_fail -eq 0 ]] && pass "hook triggers (.githooks/pre-commit + pre-push both gate rules, package, toolchain, and fixtures)"
 
 # ---------------------------------------------------------------------------
 # 14. Rule extension protocol — AGENTS.md MUST document the 4-step recipe

@@ -35,7 +35,7 @@ else
   echo "pre-push: gitleaks NOT INSTALLED — secret scan skipped (mise use -g gitleaks)" >&2
 fi
 
-GOVERNANCE_PATTERN='^(orly/(core|packs|profiles|src)/|orly/(registry|repositories)\.json|AGENTS\.md|SOUL\.md|dispatch/|audits/|docs/(EXECUTE_DOC_READS|ORLY_ARCHITECTURE|HARNESS_VERIFY_OUTPUT|DOCUMENTATION_RULES|TEMPLATE)\.md|evals/|\.githooks/|Makefile|README\.md)'
+GOVERNANCE_PATTERN='^((core|packs|schemas|src)/|(registry|repositories)\.json|AGENTS\.md|SOUL\.md|dispatch/|audits/|docs/(EXECUTE_DOC_READS|ORLY_ARCHITECTURE|HARNESS_VERIFY_OUTPUT|DOCUMENTATION_RULES|TEMPLATE)\.md|evals/|fixtures/|\.githooks/|Makefile|README\.md|package\.json|bun\.lock|tsconfig\.json)'
 
 governance_change=0
 while read -r local_ref local_sha remote_ref remote_sha; do

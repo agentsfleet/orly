@@ -21,7 +21,7 @@ const FIXTURE = "fixture";
 const AUDITS_DIR = "audits";
 const SPEC_GATE_SCRIPT = `${AUDITS_DIR}/spec-template.sh`;
 
-export const ROOT = resolve(import.meta.dir, "../..");
+export const ROOT = resolve(import.meta.dir, "..");
 export const SPEC_RELATIVE = "docs/v1/active/M99_001_P2_CLI_FIXTURE.md";
 export const FIXTURE_CONFIG = { schema_version: 1, packs: [], commands: { conform: [[TRUE_COMMAND]], "verify.unit": [[TRUE_COMMAND]] } };
 
@@ -47,7 +47,7 @@ export function names(report: { results: Array<{ name: string }> }): string[] {
 }
 
 export function orly(project: string, registry: string, ...args: string[]): { code: number; output: string } {
-  const result = Bun.spawnSync(["bun", join(ROOT, "orly/src/cli.ts"), "--root", registry, ...args], { cwd: project, env: HERMETIC_ENVIRONMENT, stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
+  const result = Bun.spawnSync(["bun", join(ROOT, "src/cli.ts"), "--root", registry, ...args], { cwd: project, env: HERMETIC_ENVIRONMENT, stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
   return { code: result.exitCode, output: `${result.stdout.toString()}${result.stderr.toString()}` };
 }
 
@@ -55,8 +55,7 @@ export function orly(project: string, registry: string, ...args: string[]): { co
 // never render, so the full pack inventory is not needed.
 export function fixtureRegistry(project: string): string {
   const root = temporaryDirectory();
-  mkdirSync(join(root, "orly"), { recursive: true });
-  Bun.write(join(root, "orly/registry.json"), JSON.stringify({ schema_version: 1, core_documents: [], packs: {}, rules: [] }));
+  Bun.write(join(root, "registry.json"), JSON.stringify({ schema_version: 1, core_documents: [], packs: {}, rules: [] }));
   writeFixtureConfig(project);
   return root;
 }

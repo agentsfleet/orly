@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { RulesModel } from "./model";
 import { Renderer } from "./render";
 
-const ROOT = resolve(import.meta.dir, "../..");
+const ROOT = resolve(import.meta.dir, "..");
 
 // Pack sets stand in for the profiles they replaced: the renderer now takes the
 // list directly, so a test names exactly the packs whose filtering it asserts.
@@ -15,7 +15,7 @@ const KERNEL_PACKS = ["universal.authoring", "language.zig", "language.rust", "d
 // This repository's own selection, as `.oracle/orly.json` declares it — the
 // root render must stay current against exactly what `orly update` writes.
 const DOTFILES_PACKS = ["universal.authoring", "language.zig", "language.typescript", "language.javascript", "language.rust", "language.go", "language.python", "language.shell", "language.mdx", "domain.sql", "domain.http", "domain.auth", "domain.documentation", "domain.changelog", "workflow.specifications", "workflow.governance", "product.agentsfleet", "persona.indy", "workflow.skills"];
-const DOTFILES_COMMANDS = { conform: [["make", "audit"]], "verify.unit": [["bun", "test", "orly/src"]] };
+const DOTFILES_COMMANDS = { conform: [["make", "audit"]], "verify.unit": [["bun", "test", "src"]] };
 
 describe("Renderer", () => {
   test("renders byte-stable text for a pack set", async () => {
@@ -52,7 +52,7 @@ describe("Renderer", () => {
   test("an unclosed pack block fails the render", async () => {
     const source = await RulesModel.load(ROOT);
     const registry = structuredClone(source.registry);
-    registry.core_documents = ["orly/fixtures/unclosed-pack-block.md"];
+    registry.core_documents = ["fixtures/unclosed-pack-block.md"];
     const model = new RulesModel(source.root, registry);
 
     expect(new Renderer(model).renderText(KERNEL_PACKS)).rejects.toThrow("unclosed orly pack block");

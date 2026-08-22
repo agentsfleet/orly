@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { RulesModel } from "./model";
 import { verifyRenders } from "./verify";
 
-const ROOT = resolve(import.meta.dir, "../..");
+const ROOT = resolve(import.meta.dir, "..");
 
 test("every profile renders deterministically", async () => {
   const checks = await verifyRenders(await RulesModel.load(ROOT));

@@ -21,7 +21,7 @@ cd "$ROOT" || exit 1
 # The trigger surface stays named here — AGENTS.md, dispatch/, audits/, evals/ —
 # so this hook still says out loud which layer a change touches, and where the
 # proof now happens. Announcing, not gating: the gate is pre-push.
-GOVERNANCE_PATTERN='^(AGENTS\.md|README\.md|Makefile|orly/|dispatch/|audits/|evals/|docs/(EXECUTE_DOC_READS|ORLY_ARCHITECTURE|HARNESS_VERIFY_OUTPUT)\.md|\.githooks/)'
+GOVERNANCE_PATTERN='^(AGENTS\.md|README\.md|Makefile|package\.json|bun\.lock|tsconfig\.json|(core|packs|schemas|src)/|registry\.json|fixtures/|dispatch/|audits/|evals/|docs/(EXECUTE_DOC_READS|ORLY_ARCHITECTURE|HARNESS_VERIFY_OUTPUT)\.md|\.githooks/)'
 
 if git diff --cached --name-only | grep -qE "$GOVERNANCE_PATTERN"; then
   echo "pre-commit: governance staged — make audit runs at push (.githooks/pre-push)" >&2

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "core_documents": [
-    "orly/core/operating-model.md",
+    "core/operating-model.md",
     "SOUL.md"
   ],
   "packs": {
@@ -115,7 +115,7 @@
       ],
       "managed_files": [
         {
-          "source": "orly/packs/language/rust/rules.md",
+          "source": "packs/language/rust/rules.md",
           "target": "dispatch/write_rust.md"
         }
       ]
@@ -126,7 +126,7 @@
       ],
       "managed_files": [
         {
-          "source": "orly/packs/language/go/rules.md",
+          "source": "packs/language/go/rules.md",
           "target": "dispatch/write_go.md"
         }
       ]
@@ -137,7 +137,7 @@
       ],
       "managed_files": [
         {
-          "source": "orly/packs/language/python/rules.md",
+          "source": "packs/language/python/rules.md",
           "target": "dispatch/write_python.md"
         }
       ]
@@ -148,7 +148,7 @@
       ],
       "managed_files": [
         {
-          "source": "orly/packs/language/shell/rules.md",
+          "source": "packs/language/shell/rules.md",
           "target": "dispatch/write_shell.md"
         }
       ]
@@ -159,7 +159,7 @@
       ],
       "managed_files": [
         {
-          "source": "orly/packs/language/mdx/rules.md",
+          "source": "packs/language/mdx/rules.md",
           "target": "dispatch/write_mdx.md"
         }
       ]
@@ -368,10 +368,10 @@
       ],
       "fixtures": {
         "pass": [
-          "orly/fixtures/registry-valid.json"
+          "fixtures/registry-valid.json"
         ],
         "fail": [
-          "orly/fixtures/registry-invalid.json"
+          "fixtures/registry-invalid.json"
         ]
       }
     },
@@ -387,10 +387,10 @@
       ],
       "fixtures": {
         "pass": [
-          "orly/src/render.test.ts"
+          "src/render.test.ts"
         ],
         "fail": [
-          "orly/fixtures/unclosed-pack-block.md"
+          "fixtures/unclosed-pack-block.md"
         ]
       }
     },

@@ -6,7 +6,7 @@ import { join, resolve } from "node:path";
 import { CONFIG_PATH, managedDrift, readConfig, readConfigSync, seedConfig, selectPacks, staleVersion, writeConfig } from "./config";
 import { RulesModel } from "./model";
 
-const ROOT = resolve(import.meta.dir, "../..");
+const ROOT = resolve(import.meta.dir, "..");
 const RUST_SOURCE = "src/lib.rs";
 const SHELL_PACK = "language.shell";
 const RUST_PACK = "language.rust";

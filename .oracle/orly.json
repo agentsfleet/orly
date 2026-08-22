@@ -32,13 +32,13 @@
       [
         "bun",
         "test",
-        "orly/src"
+        "src"
       ]
     ]
   },
   "surfaces": {
     "user": [
-      "orly/src/",
+      "src/",
       "bin/"
     ],
     "docs": [

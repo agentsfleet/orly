@@ -8,7 +8,7 @@ materialised" below; the gates section after it is unaffected.
 ## Topology
 
 ```text
-orly/core/operating-model.md   orly/packs/**   orly/registry.json
+core/operating-model.md   packs/**   registry.json
                               │
                          bin/orly
                               │
