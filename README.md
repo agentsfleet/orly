@@ -44,6 +44,39 @@ orly init
 Commit what it wrote. Teammates get the rules on clone. One exception: git
 never clones hooks, so each person runs `orly init` once in their own checkout.
 
+## What happens when you use it
+
+`orly init` is the setup. This is the loop you actually live in — one task,
+start to merge. Every box is a stage the rules name; every arrow is something
+that can stop you.
+
+```text
+  you ──► "add webhook retries"
+   │
+   ├─ CHORE(open)   spec: pending/ ──► active/, branch + test baseline recorded
+   │                └─ no code until that commit lands
+   │
+   ├─ PLAN          goal · blast radius · which gates this diff will trip
+   │
+   ├─ EXECUTE       each edit trips the rule page for its kind of file
+   │                ├─ *.rs ──► write_rust      *.sql ──► write_sql
+   │                └─ anything ──► length · logging · no-dead-code
+   │
+   ├─ CONFORM       your declared `conform` command
+   ├─ VERIFY        your declared `verify.*` commands, one test per Dimension
+   ├─ REVIEW        adversarial pass over the diff
+   │
+   └─ CHORE(close)  spec ──► done/ · session notes · orphan sweep
+                    │
+                    └─ orly gate pr
+                       ├─ all green ──────► PR opens
+                       └─ one red ────────► back to EXECUTE, nothing ships
+```
+
+The agent cannot skip a stage quietly: the hooks run the gates on every commit
+and push, and `orly gate pr` refuses the Pull Request until each criterion is
+green or carries an override you recorded with a reason.
+
 ## Two files, always
 
 | File | Owner | On `orly update` |
