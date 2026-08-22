@@ -53,6 +53,22 @@ rerun before merge.
 [gstack](https://github.com/garrytan/gstack) gives you the automated `/review`
 step.
 
+gstack also installs skills of its own, one set per agent host. orly neither
+installs nor manages gstack.
+
+The governance skills (`orly-spec-new`, `orly-babysit-prs`,
+`orly-write-unit-test`, `orly-write-integration-test`) come from orly's
+`workflow.skills` pack, per repository. The general-purpose skills come from
+gstack, per agent host.
+
+```bash
+cd ~/.local/share/gstack && ./setup --host auto
+```
+
+`--host auto` covers every agent host gstack finds. Name one to target it
+alone: `claude`, `codex`, `kiro`, `factory`, `opencode`, `openclaw`, `hermes`,
+`gbrain`, or `auto`.
+
 ```bash
 bunx @agentsfleet/orly init
 ```

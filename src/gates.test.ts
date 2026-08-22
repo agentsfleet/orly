@@ -30,7 +30,7 @@ describe("gate groups", () => {
     const model = await modelFor(project);
 
     expect(names(runGate(model, project, "work"))).toEqual(["git.branch", "git.tree", "repo.config"]);
-    expect(names(runGate(model, project, "verify"))).toEqual(["cmd.conform", "cmd.verify.unit", "spec.dimensions"]);
+    expect(names(runGate(model, project, "verify"))).toEqual(["cmd.conform", "cmd.verify.unit", "docs.language", "spec.dimensions"]);
     expect(names(runGate(model, project, "pr"))).toEqual([
       "docs.updated", "git.pushed", "git.tree", "spec.baseline", "spec.deferrals", "spec.dimensions", "spec.gate",
       "spec.moved", "spec.open-questions", "spec.ordering", "spec.product-clarity",

@@ -8,6 +8,7 @@ import {
   openQuestions, productClarity, specBaseline, specDeferrals, specDimensions,
   specGate, specMoved, specOrdering,
 } from "./criteria_spec";
+import { documentationSurfaces, scanSurfaces } from "./doc_rules";
 import { isObject, JsonObject, objectValue, OrlyError, RulesModel } from "./model";
 import { readConfigSync, RepoConfig } from "./config";
 import { classifyBranch, SurfaceReport } from "./surfaces";
@@ -30,6 +31,10 @@ const GIT_TREE = "git.tree";
 const GIT_PUSHED = "git.pushed";
 const REPO_CONFIG = "repo.config";
 const DOCS_UPDATED = "docs.updated";
+const DOCS_LANGUAGE = "docs.language";
+// How many findings a report names before it stops listing them. A criterion
+// line is a summary, not a linter dump.
+const NAMED_FINDINGS = 3;
 
 const FAST_TIER = "fast";
 const SLOW_TIER = "slow";
@@ -44,7 +49,7 @@ const SLOW_COMMANDS = ["verify.integration", "verify.memory"];
 // pr = can this ship (whole-branch checks + the slow suites).
 export function criteriaFor(gate: string, context: CriterionContext): Criterion[] {
   if (gate === "work") return [gitBranch(), gitTree(), repositoryConfig()];
-  if (gate === "verify") return [specDimensions(), ...commandCriteria(context, FAST_TIER)];
+  if (gate === "verify") return [specDimensions(), docsLanguage(), ...commandCriteria(context, FAST_TIER)];
   if (gate === "pr") {
     return [
       gitTree(), gitPushed(), specGate(), openQuestions(), productClarity(), specDimensions(),
@@ -135,6 +140,34 @@ function docsUpdated(): Criterion {
     return {
       ok: false,
       detail: `${surfaces.userSurface.length} user-surface file(s) changed (first: ${surfaces.userSurface[0] ?? ""}) with no docs change — update the docs page, or record: orly override ${DOCS_UPDATED} --reason <REASON>`,
+    };
+  });
+}
+
+// docs/DOCUMENTATION_RULES.md, read back against the pages orly renders here.
+// The scope rule is the document's own: any documentation orly writes or
+// renders, README.md included.
+//
+// REPORTING ONLY, and deliberately so. The rule document landed against a
+// corpus that predates it, and the corpus does not obey it yet: this
+// repository alone carries hundreds of pre-existing findings. A red gate on
+// day one would be switched off by the end of the week, and grandfathering
+// them into a baseline file would be a list of chores wearing a gate's badge.
+// So the check reports what it found and leaves the verdict green until a
+// human has decided how the debt gets paid. Partial mechanization stated
+// honestly beats a red that means nothing (the same call audits/doc-read.sh
+// makes when its record is missing). Flipping this to a gate is a one-line
+// change: return ok on `findings.length === 0`.
+function docsLanguage(): Criterion {
+  return criterion(DOCS_LANGUAGE, (context) => {
+    const surfaces = documentationSurfaces(context.root);
+    if (surfaces.length === 0) return { ok: true, detail: "no documentation surface here" };
+    const findings = scanSurfaces(context.root, surfaces);
+    if (findings.length === 0) return { ok: true, detail: `${surfaces.length} page(s) clean` };
+    const named = findings.slice(0, NAMED_FINDINGS).map((finding) => `${finding.file}:${finding.line} ${finding.code}`);
+    return {
+      ok: true,
+      detail: `${findings.length} finding(s) across ${surfaces.length} page(s), reporting only: ${named.join(", ")}`,
     };
   });
 }
