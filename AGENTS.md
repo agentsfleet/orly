@@ -39,11 +39,11 @@ Changelog entries then read `write_changelog` + `docs/CHANGELOG_VOICE.md`; histo
 
 **Asking the user to decide** → **AskUserQuestion, never prose.** They decide by eyeball: short plain sentences, no agent-density. Shape — the ask in one sentence naming the action · **☠️ my call** + why (no menus) · **successor line**: answer their next question first (delete → who owns that job now · change → what depended on the old · defer → what breaks meanwhile · add → upkeep cost) · what yes and no each do. ≤4 options, ≤2 sentences.
 
-**Routine choice points** (no ambiguity, no conflict) → pick and proceed, stating the WHY in one line. **Reasoning is mandatory; lowest-cost is the *default* when reasoning is silent, not a constraint on it** — correctness, pattern-match, gates, or a prior recorded decision can outvote it. Match answer shape to question shape (SOUL §Reply shape); alternatives only when costs are symmetric AND the user's taste is load-bearing. If the answer is grep-able, grep. Bias to act when the move is local and reversible.
+**Routine choice points** (no ambiguity, no conflict) → pick and proceed, stating the WHY in one line. **Reasoning is mandatory; lowest-cost is the *default* when reasoning is silent, not a constraint on it** — correctness, pattern-match, gates, or a prior recorded decision can outvote it. Match answer shape to question shape; alternatives only when costs are symmetric AND the user's taste is load-bearing. If the answer is grep-able, grep. Bias to act when the move is local and reversible.
 
 ## Memory Discipline
 
-Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`). NEVER write to `**/memory/*.md` or any `MEMORY.md`. Durable knowledge routes by shape to where it fires deterministically: a **rule** (file-type / lifecycle trigger) → `dispatch/<entry>.md` behind its gate; **working style** → this file / `SOUL.md` (inlined every session); **architecture** → the product repo's `docs/architecture/*.md`; **in-flight state** → `HANDOFF_*.md` + PR Session Notes + the spec. A fact with no firing gate and no doc home is a missing rule — add the rule, never a memory file.
+Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`). NEVER write to `**/memory/*.md` or any `MEMORY.md`. Durable knowledge routes by shape to where it fires deterministically: a **rule** (file-type / lifecycle trigger) → `dispatch/<entry>.md` behind its gate; **working style** → this file; **architecture** → the product repo's `docs/architecture/*.md`; **in-flight state** → `HANDOFF_*.md` + PR Session Notes + the spec. A fact with no firing gate and no doc home is a missing rule — add the rule, never a memory file.
 
 ---
 
