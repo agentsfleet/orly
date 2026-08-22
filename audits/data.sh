@@ -74,8 +74,9 @@ CONFORM_KEYS=(
 # dissolved into dispatch/write_zig.md and dispatch/write_ts_adhere_bun.md
 # respectively. The dispatch façades are listed so the AGENTS.md dispatch-table
 # refs are checked. The docs/* entries double as the residence classifier for
-# check 15c (audits/rule-paths.sh): these paths are cited through the
-# ~/Projects/dotfiles/ anchor in every consumer-facing surface.
+# check 15c (audits/rule-paths.sh): these paths must be cited relative to the
+# installing repository in every consumer-facing surface, never through an
+# absolute home-directory anchor.
 DOTFILES_RESIDENT=(
   "docs/TEMPLATE.md"
   "docs/REST_API_DESIGN_GUIDELINES.md"
@@ -84,6 +85,7 @@ DOTFILES_RESIDENT=(
   "docs/DOCUMENTATION_RULES.md"
   "docs/ORLY_ARCHITECTURE.md"
   "docs/CHANGELOG_VOICE.md"
+  "docs/RELEASE_TEMPLATE.md"
   "docs/EXECUTE_DOC_READS.md"
   "docs/VERIFY_TIERS.md"
   "docs/HARNESS_VERIFY_OUTPUT.md"

@@ -75,7 +75,7 @@ Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_A
 ### Operational defaults
 
 - Workspace `~/Projects`. `gh`/`glab` not browsers. `trash` not `rm`. Conventional Commits. Process decisions → repo docs, not chat. "Make a note" → update `AGENTS.md`/repo docs.
-- **Symlinked dotfiles edits.** File `readlink`-resolving under `~/Projects/dotfiles/` is a dotfiles edit. Detect via `readlink` BEFORE editing. After: `cd ~/Projects/dotfiles && git add <files> && git commit && git push origin master`. Never leave uncommitted. <!-- oracle-packs:persona.indy -->
+- **Symlinked edits land in the repository that owns the file.** A file whose `readlink` resolves outside this checkout — into a dotfiles or config repository — is an edit to *that* repository, not this one. Detect via `readlink` BEFORE editing. After: `cd` to the resolved repository, `git add <files> && git commit && git push` on its default branch. Never leave uncommitted. <!-- oracle-packs:persona.indy -->
 - **Docs-repo edits on own branch.** `~/Projects/docs/` is shared across milestones: check `git status` first; from `main` (checkout or worktree off `main`) commit on `chore/m{N}-{slug}-changelog`; recovery = stash, re-apply on a fresh branch.
 - Other dotfiles (`.zshrc`/`.gitconfig`/etc.): timestamped backup; minimal edits. <!-- oracle-packs:persona.indy -->
 - Before commit/push: `gitleaks` must pass.
