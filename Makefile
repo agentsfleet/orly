@@ -1,3 +1,6 @@
+# The audit recipe uses bash arrays and a here-string; /bin/sh has neither.
+SHELL := /bin/bash
+
 .PHONY: audit test-audit llmevals ledger install-evals \
         dispatch-coverage dispatch-evals dispatch-parity ledger-evals
 
@@ -5,16 +8,44 @@
 #   1. Registry and profile validation.
 #   2. Oracle rules unit tests and byte-stable rendering.
 #   3. AGENTS.md invariance and dispatch checks.
+#
+# The steps do not touch each other: each reads the tree or works inside its own
+# mktemp sandbox, and none writes back into the repository. So they run at once
+# and their output is replayed in declaration order — a parallel chain that
+# still reads like a serial one. The fan-out lives in the recipe because macOS
+# ships GNU make 3.81, which has no --output-sync to keep `make -j` legible.
+#
+# `evals/install/run.sh` is deliberately NOT in this list. It packs a tarball
+# and installs it into a scratch HOME once per case, and cost 35s of the chain's
+# 66s — more than half the wall, for a proof about DISTRIBUTION that no branch
+# push can break for anyone. It runs unconditionally in CI
+# (.github/workflows/harness.yml) and by hand as `make install-evals`.
+# `%` separates the steps, so no step command may contain one.
+AUDIT_STEPS := \
+	bun run typecheck && bun test src%bin/orly verify%bash audits/ufs.sh --all%bash audits/agents-md.sh%bash evals/dispatch/coverage.sh%bash evals/dispatch/run.sh%bash evals/ledger/run.sh%bash audits/rule-ledger.sh --check
+
 audit:
-	@bun run typecheck && bun test src
-	@bin/orly verify
-	@bash audits/ufs.sh --all
-	@bash audits/agents-md.sh
-	@bash evals/dispatch/coverage.sh
-	@bash evals/dispatch/run.sh
-	@bash evals/ledger/run.sh
-	@bash audits/rule-ledger.sh --check
-	@bash evals/install/run.sh
+	@set -uo pipefail; \
+	IFS='%' read -r -a steps <<< "$(AUDIT_STEPS)"; \
+	logs="$$(mktemp -d)"; pids=(); \
+	trap 'rm -rf "$$logs"' EXIT; \
+	for i in "$${!steps[@]}"; do \
+	  ( eval "$${steps[$$i]}" ) > "$$logs/$$i.log" 2>&1 & \
+	  pids+=("$$!"); \
+	done; \
+	rc=0; failed=(); \
+	for i in "$${!pids[@]}"; do \
+	  if ! wait "$${pids[$$i]}"; then rc=1; failed+=("$${steps[$$i]}"); fi; \
+	done; \
+	for i in "$${!steps[@]}"; do \
+	  printf '\n\033[1m--- %s\033[0m\n' "$${steps[$$i]}"; \
+	  cat "$$logs/$$i.log"; \
+	done; \
+	if [ "$$rc" -ne 0 ]; then \
+	  printf '\n\033[31maudit FAILED:\033[0m\n'; \
+	  for f in "$${failed[@]}"; do printf '  %s\n' "$$f"; done; \
+	fi; \
+	exit $$rc
 
 # Installability in isolation — the payload boundary and a packed tarball
 # proving itself against a scratch HOME with no dotfiles checkout in reach.
