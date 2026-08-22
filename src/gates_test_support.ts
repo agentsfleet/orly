@@ -17,6 +17,7 @@ const ADD = "add";
 const MESSAGE = "-m";
 const PIPE_OUTPUT = "pipe";
 const TRUE_COMMAND = "true";
+const ACCEPTANCE_RUBRIC_HEADING = "Acceptance Rubric";
 const FIXTURE = "fixture";
 const AUDITS_DIR = "audits";
 const SPEC_GATE_SCRIPT = `${AUDITS_DIR}/spec-template.sh`;
@@ -137,12 +138,20 @@ export function specFixture(status = "IN_PROGRESS", branch?: string, extraLines:
     "Invariants",
     "Metrics & Observability",
     "Test Specification (tiered)",
-    "Acceptance Rubric",
+    ACCEPTANCE_RUBRIC_HEADING,
     "Out of Scope",
     "Product Clarity (authoring record)",
     "Decomposition & alternatives",
     "Discovery (consult log)",
-  ].map((heading) => `## ${heading}\n\nFixture content for ${heading}.\n`);
+  ].map((heading) =>
+    // The Acceptance Rubric must quote the declared conform + verify.unit
+    // commands verbatim (declared-command parity, audits/spec-template.sh
+    // Family 2b) — the fixture models a compliant spec, so its rubric carries
+    // them the way a real spec's S-rows do.
+    heading === ACCEPTANCE_RUBRIC_HEADING
+      ? `## ${heading}\n\n| S1 | Conform gates green | \`${TRUE_COMMAND}\` | exit 0 | P0 | |\n| S2 | Unit tests pass | \`${TRUE_COMMAND}\` | exit 0 | P0 | |\n`
+      : `## ${heading}\n\nFixture content for ${heading}.\n`,
+  );
   return [
     "# M99_001: Fixture milestone",
     "",

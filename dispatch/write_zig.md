@@ -839,7 +839,7 @@ The init/deinit pairing audit treats all of `deinit`, `close`, `release`, `destr
 
 Two non-blocking informational flags the pairing audit surfaces: (1) `init` body empty AND `deinit` body empty — likely a pair-for-shape that isn't actually needed; (2) an arena-allocated slice stored in a long-lived struct — the reviewer must either restructure the ownership or explicitly acknowledge the arena-lifetime mismatch. Neither blocks mechanically; both demand a reviewer decision rather than silent acceptance.
 
-### Scope (M70): full-tree audit, staged content satisfies the same hook run
+### Scope: full-tree audit, staged content satisfies the same hook run
 
 > [DETERMINISTIC → DEINIT]
 

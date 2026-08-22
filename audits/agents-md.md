@@ -55,14 +55,14 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 3.4 | Must Legacy-Design Consult **block on user reply** (not silently patch/keep)? | YES |
 | 3.5 | If the user says "review this" / "look at this", does the agent treat it as investigation, not authorization? | YES |
 
-### Scenario 4 — Executing on UI, Zig, TS/JS, shell, or CI files
+### Scenario 4 — Executing on UI, Zig, TS/JS, Rust, Go, Python, shell, Markdown JSX, or CI files
 
 | # | Question | Expected |
 |---|---|---|
 | 4.1 (UI) | For every `*.tsx`/`*.jsx` under `ui/packages/app/`, must raw HTML be substituted with a design-system primitive when one exists? | YES |
 | 4.1a (UI) | For every `*.tsx`/`*.jsx` under `ui/packages/{app,website}/`, does DESIGN TOKEN GATE block arbitrary `*-[...]` Tailwind classes (`text-[Npx]`, `leading-[...]`, `tracking-[...]`, `max-w-[Npx|Nch]`, `text-[clamp(...)]`, raw palette colours) when an equivalent token utility exists in `ui/packages/design-system/src/theme.css`? | YES |
 | 4.1b (UI) | Is the DESIGN TOKEN GATE override `// DESIGN TOKEN: SKIPPED per user override (reason: ...)` user-only — i.e. auto-mode does NOT cover it, and reasons must cite a concrete external constraint (not "looks the same" / "shorter to write")? | YES |
-| 4.1c (UI) | Does the project-side `audits/design-tokens.sh` audit run as part of `make lint` (`_website_lint` + `_app_lint`) and block on any arbitrary that has a token equivalent? (Default scope: full ui/packages working tree via `git ls-files` after M70 retired `--diff`.) | YES |
+| 4.1c (UI) | Does the project-side `audits/design-tokens.sh` audit run as part of `make lint` (`_website_lint` + `_app_lint`) and block on any arbitrary that has a token equivalent? (Default scope: full ui/packages working tree via `git ls-files`; the diff-scoped mode is retired.) | YES |
 | 4.2 (Zig) | For every `*.zig` Edit/Write outside `vendor/`/`third_party/`/`.zig-cache/`, does ZIG GATE fire? | YES |
 | 4.3 (Zig) | Must FILE SHAPE DECISION print before the first Write to a new `*.zig` under `src/` — and is that override **not** covered by auto-mode? | YES |
 | 4.4 (Zig) | Does PUB GATE delegate mechanical consumer-grep to `zlint`'s `unused-decls: error` rule (run by `make lint`), leaving the gate body to enforce shape verdict + no-inheritance + per-edit proof? | YES |
@@ -95,6 +95,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 4.23 (Documentation) | Before published Markdown JSX (MDX), reusable snippets, customer readme, or public OpenAPI prose, must the agent read `dispatch/write_documentation.md` and `docs/DOCUMENTATION_RULES.md` before any narrower guide? | YES |
 | 4.24 (Documentation) | Are page, snippet, generated API, and changelog scopes distinct, with repository-owned pre-commit checks enforcing the mechanical rules? | YES |
 | 4.25 (Rust) | Do `*.rs` edits route to `dispatch/write_rust.md`, with ownership, error variants, feature combinations, and deterministic contention tests preserved? | YES | <!-- oracle-packs:language.rust -->
+| 4.25a (Go) | Do `*.go` edits route to `dispatch/write_go.md`, with wrapped errors, goroutine exit paths, context-first signatures, defer-at-acquire, and `-race` verification? | YES | <!-- oracle-packs:language.go -->
 | 4.26 (Python) | Do `*.py` edits route to `dispatch/write_python.md`, with parse-boundary validation and context-managed resources? | YES |
 | 4.27 (Shell) | Do `*.sh` edits route to `dispatch/write_shell.md`, with quoted expansions, array arguments, cleanup, and compatibility requirements? | YES |
 | 4.28 (Markdown JSX) | Do `*.mdx` edits route to `dispatch/write_mdx.md`, with structure, link, accessibility, and Mintlify-isolation requirements? | YES | <!-- oracle-packs:language.mdx -->
@@ -116,11 +117,11 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 6.2 | Does any remaining violation in CONFORM return the lifecycle to EXECUTE without advancing? | YES |
 | 6.3 | Is `/write-unit-test` the FIRST verify action, with skipping = CHORE(close) violation? | YES |
 | 6.4 | Are `make lint` + `make test` always required (tier 1)? | YES |
-| 6.5 | Is `make test-integration` required when diff touches HTTP/schema/DB/Redis or `_integration_test.zig`? | YES |
-| 6.6 | Is at least one tier-3 `make test-integration` from clean state required per branch before ship-ready? | YES |
+| 6.5 | Is the repository's declared `verify.integration` required when the diff touches HTTP/schema/DB/Redis or integration-test surfaces? | YES |
+| 6.6 | Is at least one declared `verify.integration` run from clean state required per branch before ship-ready (where the repository declares one)? | YES |
 | 6.7 | Are package-scoped runners (`bun run test`, `vitest <file>`, `zig build test` w/o integration) explicitly **not** verification? | YES |
 | 6.8 | Must memleak evidence (last 3 lines verbatim) appear in PR Session Notes when touching `src/http/**` / `src/cmd/serve.zig` / allocator wiring? | YES |
-| 6.9 | Does CHORE(open) record a `Test Baseline:` line (unit + integration counts from `make _lint_zig_test_depth`) in the spec header? | YES |
+| 6.9 | Does CHORE(open) record a `Test Baseline:` line (unit + integration counts from the repository's declared `verify.*` commands; a product pack may name a dedicated counter) in the spec header? | YES |
 | 6.10 | Does VERIFY end with a Test Delta row (growth vs the CHORE(open) baseline) plus a lacking-areas verdict, with zero/negative unit delta on a code-adding diff requiring justification or a return to EXECUTE? | YES |
 | 6.11 | Do the lifecycle stage runbooks (CHORE(open/close) checklists, PLAN expansions, deferral quote format, pre-PR gates, LAND) resolve from `dispatch/lifecycle.md`, with AGENTS.md keeping each stage's binding essence? | YES |
 
@@ -255,14 +256,14 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 21.2 | Does the rule require the ask to include: (a) symbol/file/line flagged, (b) fix scope (files, lines, follow-on), (c) what we gain, (d) what happens if not fixed? | YES |
 | 21.3 | Does the rule explicitly forbid the agent from unilaterally classifying a flag as a false-positive (declaring the gate wrong), as distinct from auto-fixing a mechanical violation? | YES |
 
-### Scenario 22 — Pre-commit audit scope (M70)
+### Scenario 22 — Pre-commit audit scope
 
 | # | Question | Expected |
 |---|---|---|
 | 22.1 | When `make harness-verify` (the pre-commit ceremony) invokes `ufs.sh`, `design-tokens.sh`, `deinit-pairs.sh`, `error-codes.sh`, `logging.sh`, or `spec-template.sh`, do those scripts default to scanning the full working tree via `git ls-files` — so staged-but-not-yet-committed content is in scope? | YES |
 | 22.2 | Is the `--diff` (BASE...HEAD) mode of `ufs.sh` and `design-tokens.sh` retired — explicitly rejected with exit 2 and a pointer to the gate body? | YES |
 | 22.3 | Does `msid-ui.sh` (renamed from `combined.sh` after the PUB clause moved to zlint + agent chat-output discipline) remain the lone diff-shaped audit (still default `--staged`) — because its sub-checks (MS-ID / UI substitution) assert on *added* lines, not file state, and `git diff --cached` reads the index? | YES |
-| 22.4 | Does every dispatch façade that absorbed a converted full-codebase leaf audit (`dispatch/write_any.md` ← logging/error-registry/UFS, `dispatch/write_ts_adhere_bun.md` ← design-token, `dispatch/write_zig.md` ← lifecycle/deinit, `dispatch/write_spec.md` ← spec-template) carry a "Scope (M70)" section documenting full-codebase semantics + the M68 `02c1f3cf` forcing function? | YES |
+| 22.4 | Does every dispatch façade that absorbed a converted full-codebase leaf audit (`dispatch/write_any.md` ← logging/error-registry/UFS, `dispatch/write_ts_adhere_bun.md` ← design-token, `dispatch/write_zig.md` ← lifecycle/deinit, `dispatch/write_spec.md` ← spec-template) carry a "Scope" section documenting full-codebase semantics and the staged-content forcing function? | YES |
 
 ### Scenario 23 — Agent comprehension robustness
 
@@ -450,7 +451,7 @@ Scenario verdicts:
 | 19 | CONFORM combined audit                  | <N/M YES>       |
 | 20 | Rule extension protocol                 | <N/M YES>       |
 | 21 | Gate-flag triage                        | <N/M YES>       |
-| 22 | Pre-commit audit scope (M70)            | <N/M YES>       |
+| 22 | Pre-commit audit scope                  | <N/M YES>       |
 | 23 | Agent comprehension                     | <N/M YES>       |
 | 24 | Memory routing                          | <N/M YES>       |
 | 25 | Allocator and concurrency discipline    | <N/M YES>       |

@@ -421,7 +421,7 @@ DESIGN TOKEN GATE: <file>
     ...
 ```
 
-#### Scope (M70)
+#### Scope
 
 > [DETERMINISTIC → DTK]
 

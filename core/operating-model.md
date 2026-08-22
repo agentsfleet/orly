@@ -151,7 +151,7 @@ Guards fire pre-hoc regardless of lifecycle stage. Override: `<GATE>: SKIPPED pe
 <!-- oracle-packs:start workflow.specifications -->
 ## Specification Standards
 
-**Canonical template:** `docs/TEMPLATE.md` — consumer repos carry no copy. Never look for `project_spec.md`.
+**Canonical template:** `docs/TEMPLATE.md`, materialised into every repository by `workflow.specifications` — read the local copy. Never look for `project_spec.md`.
 
 **Creating a spec:** invoke `kishore-spec-new` — owns naming, terminology, layout (`docs/v{N}/{pending,active,done}/`). Triggers: "create a spec", "new milestone", "spec out X", any `TODO.md` attempt (forbidden).
 
@@ -185,7 +185,7 @@ Non-trivial (full lifecycle) if it: touches >1 file · new abstraction · data m
 <!-- oracle-packs:start workflow.specifications -->
 ### CHORE (open)
 
-Spec `pending/`→`active/`; `Status: IN_PROGRESS`; `Branch:` set; **`Test Baseline:` recorded** (`make _lint_zig_test_depth` → `**Test Baseline:** unit=<N> integration=<M>` in the spec header; VERIFY's Test Delta compares against it); committed. Worktree created, CWD inside (verify `pwd` + `git worktree list`). No code until the 4 steps are committed.
+Spec `pending/`→`active/`; `Status: IN_PROGRESS`; `Branch:` set; **`Test Baseline:` recorded** (declared `verify.*` counts → `**Test Baseline:** unit=<N> integration=<M>` in the spec header; VERIFY's Test Delta compares against it); committed. Worktree created, CWD inside (verify `pwd` + `git worktree list`). No code until the 4 steps are committed.
 <!-- oracle-packs:end -->
 
 ### PLAN

@@ -13,10 +13,11 @@ are entering, not the whole file.
 ## CHORE (open) — runbook
 
 1. Spec `docs/v*/pending/` → `active/`; `Status: IN_PROGRESS`; `Branch:` set.
-2. **Test Baseline** — run `make _lint_zig_test_depth`; copy the counts into the
-   spec header as `**Test Baseline:** unit=<N> integration=<M>` (VERIFY's Test
-   Delta row compares against it; the product's verify-tiers reference, when
-   the repository carries one, names the §Test delta rule).
+2. **Test Baseline** — run the repository's declared `verify.unit` (and
+   `verify.integration` where declared) from `.oracle/orly.json`; copy the
+   reported counts into the spec header as `**Test Baseline:** unit=<N>
+   integration=<M>` (VERIFY's Test Delta row compares against it; a product
+   pack may name a dedicated counter — see the product block below).
 3. Create the worktree; verify CWD is inside it (`pwd` + `git worktree list`).
 4. Commit the four steps on the feature branch. No code until the commit lands.
 
@@ -29,6 +30,15 @@ own Bun project needing install + build. `git worktree add` fires
 `.githooks/post-checkout` → symlinks `~/.config/agentsfleet/{ui,runner}.env.local`
 into the tree; on 🟠 run `provision-env-1password`, re-link. Post-merge:
 `git worktree remove ../agentsfleet-mNN-name`.
+
+**agentsfleet Test Baseline counter:** `make _lint_zig_test_depth`.
+
+**agentsfleet CHORE(close) paths:** the `<Update>` lands in
+`~/Projects/docs/changelog.mdx` (template + version-bump matrix:
+`skills/release-template.md` in the governance checkout — re-source each
+release, never paraphrase). Version sync: `VERSION` touched → `make
+sync-version`; commit propagated `build.zig.zon` / `agentsfleet/package.json` /
+`agentsfleet/src/cli.js`; `make check-version` passes.
 
 **dotfiles takes NO worktree — feature branches in the main checkout.** Every
 agent-home symlink and every consumer's `ORLY_ROOT` resolves to
@@ -113,11 +123,12 @@ spec-vs-rules conflict (amend spec).
 
 - All Dimensions/Sections `DONE` (`IN_PROGRESS` if parked); spec moved
   `docs/v*/active/` → `docs/v*/done/` iff complete.
-- New `<Update>` in `~/Projects/docs/changelog.mdx` (template + version-bump
-  matrix in `~/Projects/dotfiles/skills/release-template.md` — re-source each
-  release, never paraphrase) **AND, re-reading the spec, the affected
-  `~/Projects/docs/` pages revised to match (endpoints/CLI/flags/behavior)** —
-  an `<Update>` alone is insufficient when documented behavior changes.
+- Changelog: a new entry on the repository's declared docs surface
+  (`surfaces.docs`; `write_changelog` façade where materialised) for
+  user-visible changes **AND, re-reading the spec, the affected published docs
+  pages revised to match (endpoints/CLI/flags/behavior)** — an entry alone is
+  insufficient when documented behavior changes. Product-specific paths: the
+  product pack block above.
 - `docs/architecture/**` carries a non-empty diff for flow-defining changes, or
   Session Notes says why not (`dispatch/name_architecture.md` covers both homes).
 - PR `## Session notes`: decisions, assumptions, dead ends, deferrals,
@@ -130,9 +141,8 @@ spec-vs-rules conflict (amend spec).
   conflict-resolved/hook-managed file staged into the CHORE(close) commit, or
   documented-as-excluded with reason in the commit body; `git status` MUST be
   empty post-commit before opening/updating the PR.
-- Version sync: `VERSION` touched → `make sync-version`; commit propagated
-  `build.zig.zon`/`agentsfleet/package.json`/`agentsfleet/src/cli.js`;
-  `make check-version` passes.
+- Version sync where the repository defines it: declared version targets green
+  before the PR. Product-specific targets: the product pack block above.
 
 ## Deferral discipline — expansion
 
@@ -148,11 +158,11 @@ before continuing.
 
 ## Pre-PR gates
 
-Spec in `docs/v*/done/` in diff (skip iff parked); `changelog.mdx` has a new
-`<Update>` in diff (skip iff internal-only or parked); `Status: DONE` but spec
-not in `done/` → do not open PR; `make check-version` passes; branch contains
-`origin/main` HEAD (rebase pre-push / merge post-push —
-never force-push an open PR branch).
+Spec in `docs/v*/done/` in diff (skip iff parked); the repository's changelog
+surface carries a new entry in diff (skip iff internal-only or parked);
+`Status: DONE` but spec not in `done/` → do not open PR; the repository's
+version-sync check passes where defined; branch contains `origin/main` HEAD
+(rebase pre-push / merge post-push — never force-push an open PR branch).
 
 **`orly gate pr` follows the spec through the close.** A spec moved to `done/`
 on this branch is still discovered — its `Branch:` header names the branch —
