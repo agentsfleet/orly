@@ -128,4 +128,13 @@ jobs:
             printf '```\n\n'
             printf 'Published: https://www.npmjs.com/package/@agentsfleet/orly/v/%s\n' "${{ steps.version.outputs.value }}"
           } > /tmp/release-notes.md
-          gh release create "$TAG" --title "$TAG" --notes-file /tmp/release-notes.md --verify-tag
+          # `--generate-notes` asks GitHub for the merged Pull Requests since the
+          # previous tag, so the release page lists what actually changed rather
+          # than an install snippet alone. The snippet is prepended via
+          # `--notes`, which is the flag GitHub documents as composing with
+          # generated notes; `--notes-file` replaces them instead.
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes "$(cat /tmp/release-notes.md)" \
+            --generate-notes \
+            --verify-tag
