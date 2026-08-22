@@ -137,8 +137,8 @@ require_skill_markers() {
 }
 
 validate_partial_completion_rules() {
-  local integration="$ROOT/skills/write-integration-test/SKILL.md"
-  local unit="$ROOT/skills/write-unit-test/SKILL.md"
+  local integration="$ROOT/skills/orly-write-integration-test/SKILL.md"
+  local unit="$ROOT/skills/orly-write-unit-test/SKILL.md"
   local -a markers=(
     'Write the matrix before the tests:'
     'Failure timing / remote outcome'

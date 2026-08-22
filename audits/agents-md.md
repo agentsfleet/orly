@@ -32,7 +32,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 |---|---|---|
 | 1.1 | Does AGENTS.md require the new spec to land in `docs/v{N}/pending/` with `Status: PENDING`? | YES |
 | 1.2 | Is writing a `TODO.md` explicitly forbidden? | YES |
-| 1.3 | Must `spec-new` be invoked rather than hand-rolling the spec file? | YES |
+| 1.3 | Must `orly-spec-new` be invoked rather than hand-rolling the spec file? | YES |
 | 1.4 | Is the agent forbidden from writing code before CHORE(open) completes its 4 steps? | YES |
 | 1.5 | When a spec contradicts a rule, must the spec be amended (not the rule weakened)? | YES |
 
@@ -115,7 +115,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 |---|---|---|
 | 6.1 | Does CONFORM enumerate every gate as a row in its verdict block and invoke the active profile's `conform` commands? | YES |
 | 6.2 | Does any remaining violation in CONFORM return the lifecycle to EXECUTE without advancing? | YES |
-| 6.3 | Is `/write-unit-test` the FIRST verify action, with skipping = CHORE(close) violation? | YES |
+| 6.3 | Is `/orly-write-unit-test` the FIRST verify action, with skipping = CHORE(close) violation? | YES |
 | 6.4 | Are `make lint` + `make test` always required (tier 1)? | YES |
 | 6.5 | Is the repository's declared `verify.integration` required when the diff touches HTTP/schema/DB/Redis or integration-test surfaces? | YES |
 | 6.6 | Is at least one declared `verify.integration` run from clean state required per branch before ship-ready (where the repository declares one)? | YES |
@@ -129,10 +129,10 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 
 | # | Question | Expected |
 |---|---|---|
-| 7.1 | Is the skill chain order `/write-unit-test` → runtime review → `babysit-prs` preserved? | YES |
+| 7.1 | Is the skill chain order `/orly-write-unit-test` → runtime review → `orly-babysit-prs` preserved? | YES |
 | 7.2 | Is REVIEW an explicit stage after VERIFY and before DOCUMENT, with the runtime's review route required there? | YES |
 | 7.3 | Is gstack `/review` the single review route for every runtime (Claude, Codex, OpenCode, Amp) — local and pre-commit, distinct from post-push reviewer triage? | YES |
-| 7.4 | Does `babysit-prs` run after every push and stop only on two consecutive empty polls? | YES |
+| 7.4 | Does `orly-babysit-prs` run after every push and stop only on two consecutive empty polls? | YES |
 | 7.5 | Is using `gh pr checks --watch` for greptile explicitly disallowed? | YES |
 | 7.6 | If an MCP-backed skill is unavailable, must PR Session Notes record the skip + a "rerun before merge" note? | YES |
 | 7.7 | Is merging/closing/ready-from-draft of another user's PR forbidden without explicit approval? | YES |
@@ -140,7 +140,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 7.9 | Does AGENTS.md treat `HANDOFF.md` (or `HANDOFF_*.md` at any depth) as a faithful state report — i.e. must a pickup agent reading a HANDOFF that claims items were deferred without ack-quotes treat those items as in-scope and surface the contradiction to Kishore before continuing? | YES |
 | 7.10 (Architecture) | Does the `name_architecture` dispatch façade (`dispatch/name_architecture.md`) explicitly name "chat brainstorming counts" — i.e. multi-turn chat designing a new pattern fires the dispatch even before code touches, and capturing the brainstorm as a "punchlist task to land after the code ships" is forbidden (a pickup agent reading such a task must rewrite it to same-commit or doc-only-now)? | YES |
 
-### Scenario 8 — Conducting `/write-unit-test` while a human steers
+### Scenario 8 — Conducting `/orly-write-unit-test` while a human steers
 
 | # | Question | Expected |
 |---|---|---|
@@ -437,7 +437,7 @@ Scenario verdicts:
 | 5  | Handover pickup                         | <N/M YES>       |
 | 6  | Conformance and verification            | <N/M YES>       |
 | 7  | Review discipline before merge          | <N/M YES>       |
-| 8  | /write-unit-test with human steering    | <N/M YES>       |
+| 8  | /orly-write-unit-test with human steering    | <N/M YES>       |
 | 9  | Hot-fix / emergency                     | <N/M YES>       |
 | 10 | Dotfiles / docs-repo                    | <N/M YES>       |
 | 11 | Schema / migration                      | <N/M YES>       |

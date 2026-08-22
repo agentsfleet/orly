@@ -306,52 +306,52 @@
       "extensions": [],
       "managed_files": [
         {
-          "source": "skills/spec-new/SKILL.md",
-          "target": ".claude/skills/spec-new/SKILL.md"
+          "source": "skills/orly-spec-new/SKILL.md",
+          "target": ".claude/skills/orly-spec-new/SKILL.md"
         },
         {
-          "source": "skills/spec-new/SKILL.md",
-          "target": ".agents/skills/spec-new/SKILL.md"
+          "source": "skills/orly-spec-new/SKILL.md",
+          "target": ".agents/skills/orly-spec-new/SKILL.md"
         },
         {
-          "source": "skills/spec-new/SKILL.md",
-          "target": ".opencode/skills/spec-new/SKILL.md"
+          "source": "skills/orly-spec-new/SKILL.md",
+          "target": ".opencode/skills/orly-spec-new/SKILL.md"
         },
         {
-          "source": "skills/write-unit-test/SKILL.md",
-          "target": ".claude/skills/write-unit-test/SKILL.md"
+          "source": "skills/orly-write-unit-test/SKILL.md",
+          "target": ".claude/skills/orly-write-unit-test/SKILL.md"
         },
         {
-          "source": "skills/write-unit-test/SKILL.md",
-          "target": ".agents/skills/write-unit-test/SKILL.md"
+          "source": "skills/orly-write-unit-test/SKILL.md",
+          "target": ".agents/skills/orly-write-unit-test/SKILL.md"
         },
         {
-          "source": "skills/write-unit-test/SKILL.md",
-          "target": ".opencode/skills/write-unit-test/SKILL.md"
+          "source": "skills/orly-write-unit-test/SKILL.md",
+          "target": ".opencode/skills/orly-write-unit-test/SKILL.md"
         },
         {
-          "source": "skills/write-integration-test/SKILL.md",
-          "target": ".claude/skills/write-integration-test/SKILL.md"
+          "source": "skills/orly-write-integration-test/SKILL.md",
+          "target": ".claude/skills/orly-write-integration-test/SKILL.md"
         },
         {
-          "source": "skills/write-integration-test/SKILL.md",
-          "target": ".agents/skills/write-integration-test/SKILL.md"
+          "source": "skills/orly-write-integration-test/SKILL.md",
+          "target": ".agents/skills/orly-write-integration-test/SKILL.md"
         },
         {
-          "source": "skills/write-integration-test/SKILL.md",
-          "target": ".opencode/skills/write-integration-test/SKILL.md"
+          "source": "skills/orly-write-integration-test/SKILL.md",
+          "target": ".opencode/skills/orly-write-integration-test/SKILL.md"
         },
         {
-          "source": "skills/babysit-prs/SKILL.md",
-          "target": ".claude/skills/babysit-prs/SKILL.md"
+          "source": "skills/orly-babysit-prs/SKILL.md",
+          "target": ".claude/skills/orly-babysit-prs/SKILL.md"
         },
         {
-          "source": "skills/babysit-prs/SKILL.md",
-          "target": ".agents/skills/babysit-prs/SKILL.md"
+          "source": "skills/orly-babysit-prs/SKILL.md",
+          "target": ".agents/skills/orly-babysit-prs/SKILL.md"
         },
         {
-          "source": "skills/babysit-prs/SKILL.md",
-          "target": ".opencode/skills/babysit-prs/SKILL.md"
+          "source": "skills/orly-babysit-prs/SKILL.md",
+          "target": ".opencode/skills/orly-babysit-prs/SKILL.md"
         }
       ]
     }

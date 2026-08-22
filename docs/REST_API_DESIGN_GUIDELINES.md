@@ -11,7 +11,7 @@ This is a goal-oriented instruction set. Each rule states the goal it serves so 
 
 This doc binds **whoever ships the change** — Kishore directly, OR an agent acting on Kishore's behalf in auto mode under a start-instruction (per `~/.claude/CLAUDE.md` autonomy rules). Concretely:
 
-- **The agent** runs the Quick checklist below as part of `CHORE(close)` and the §10 pre-PR gate, opens the PR via `gh pr create`, and answers `babysit-prs` review feedback. The agent is the primary enforcer.
+- **The agent** runs the Quick checklist below as part of `CHORE(close)` and the §10 pre-PR gate, opens the PR via `gh pr create`, and answers `orly-babysit-prs` review feedback. The agent is the primary enforcer.
 - **Kishore** opens the PR directly when working without an agent. Same checklist applies.
 - **A reviewer** (human or `/review`) checks the PR against this doc adversarially. A red box on the checklist that's not justified in the PR description is grounds to block merge.
 
@@ -695,7 +695,7 @@ Every new response field added in a PR MUST declare a class. Default is `stable`
 
 ### PR-level surface diff
 
-Every PR that changes the HTTP surface MUST open its description with a "Surface diff" section listing added / renamed / removed `(method, path)` pairs and added / renamed / removed schema fields. This is how reviewers and the babysit-prs loop detect breaking changes that the diff itself buries.
+Every PR that changes the HTTP surface MUST open its description with a "Surface diff" section listing added / renamed / removed `(method, path)` pairs and added / renamed / removed schema fields. This is how reviewers and the orly-babysit-prs loop detect breaking changes that the diff itself buries.
 
 ---
 

@@ -1,12 +1,12 @@
 ---
-name: write-integration-test
+name: orly-write-integration-test
 description: >
   Service-layer integration tests against real dependencies (Postgres, Redis,
   full HTTP router + middleware) with deterministic failure injection,
   per-test isolation, drain + leak audits, and 100-or-more-connection parallelism
-  proofs. Sister of write-unit-test. Use for handlers, repos, services, or
+  proofs. Sister of orly-write-unit-test. Use for handlers, repos, services, or
   any real-I/O module-boundary crossing. Not for browser E2E (gstack /qa) or
-  pure logic (write-unit-test).
+  pure logic (orly-write-unit-test).
 ---
 
 # Write Integration Test
@@ -45,7 +45,7 @@ A test belongs in the integration suite (`make test-integration` / `pytest -m in
 
 A test does **NOT** belong here if it:
 
-- Tests pure logic / codec / parser → `write-unit-test`
+- Tests pure logic / codec / parser → `orly-write-unit-test`
 - Drives a browser / asserts UI → gstack `/qa` or `/e2e-qa-playwright`
 - Mocks the DB or Redis → demote to unit
 - Hits a deployed environment (`api-dev.agentsfleet.net`) → that's a probe/canary

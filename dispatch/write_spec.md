@@ -101,5 +101,5 @@ Incident-derived rules the deterministic half can't check — apply while writin
 ## Family
 
 - `docs/TEMPLATE.md` — canonical Prohibited section + required sections.
-- `spec-new` skill — creates specs from the template; inserts the banner.
+- `orly-spec-new` skill — creates specs from the template; inserts the banner.
 - `audits/spec-template.sh` — mechanical regex enforcement, runs in `make lint`.

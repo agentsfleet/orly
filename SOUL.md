@@ -51,7 +51,7 @@
   (log: P12).
 - **Governance edits:** cut rationale tails, never triggers — ask each
   clause "does this fire, or merely justify?" `make audit` caps the
-  rendered `AGENTS.md` (this file inlined) at 32,768 bytes; adding a rule
+  rendered `AGENTS.md` (this file inlined) at 40,960 bytes; adding a rule
   means making room.
 - **Corrections route by shape** (`AGENTS.md` §Memory Discipline): rule →
   dispatch façade; behaviour → a row in `SOUL_LOG.md` at the moment it

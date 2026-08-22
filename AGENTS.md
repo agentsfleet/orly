@@ -150,7 +150,7 @@ Guards fire pre-hoc regardless of lifecycle stage. Override: `<GATE>: SKIPPED pe
 
 **Canonical template:** `docs/TEMPLATE.md` (materialised per-repo by `workflow.specifications`). Never look for `project_spec.md`.
 
-**Creating a spec:** invoke `spec-new` — owns naming, terminology, layout (`docs/v{N}/{pending,active,done}/`). Triggers: "create a spec", "new milestone", "spec out X", any `TODO.md` attempt (forbidden).
+**Creating a spec:** invoke `orly-spec-new` — owns naming, terminology, layout (`docs/v{N}/{pending,active,done}/`). Triggers: "create a spec", "new milestone", "spec out X", any `TODO.md` attempt (forbidden).
 
 **Spec is an instance, rules are the constant.** Spec contradicts a rule → amend spec.
 
@@ -158,7 +158,7 @@ Guards fire pre-hoc regardless of lifecycle stage. Override: `<GATE>: SKIPPED pe
 
 | Event | Action |
 |---|---|
-| New milestone, plan-{eng,ceo,design}-review, `TODO.md` attempt | Invoke `spec-new`. Land in `docs/v{N}/pending/`, `Status: PENDING`, commit on main. |
+| New milestone, plan-{eng,ceo,design}-review, `TODO.md` attempt | Invoke `orly-spec-new`. Land in `docs/v{N}/pending/`, `Status: PENDING`, commit on main. |
 | Begin implementation OR branch carries spec changes in `pending/` | CHORE(open): `pending/`→`active/`, `Status: IN_PROGRESS` + `Branch:`, create worktree, commit on feature branch. **No code until 4 steps committed.** |
 | Every commit during implementation | Mark completed Dimensions/Sections `DONE` same commit as the code. |
 | All work complete, before PR | CHORE(close). |
@@ -193,17 +193,17 @@ The full `agentsfleet` trigger map lives in `docs/EXECUTE_DOC_READS.md`. At EXEC
 
 Edit only approved scope; no opportunistic refactors. Stay in active worktree. Cross-repo writes to `~/Projects/docs/` need explicit per-session ask.
 
-**Spec discipline** (full alignment rules: `dispatch/lifecycle.md`): **Golden-path before PLAN approval** — any `[?]` blocks the spec. **DONE = called in production + tested.** **Changelog claim challenge** — "Would this be true if the test file vanished?" Every Dimension → test case; every Error Table row → negative test; no code commits without tests (`/write-unit-test`).
+**Spec discipline** (full alignment rules: `dispatch/lifecycle.md`): **Golden-path before PLAN approval** — any `[?]` blocks the spec. **DONE = called in production + tested.** **Changelog claim challenge** — "Would this be true if the test file vanished?" Every Dimension → test case; every Error Table row → negative test; no code commits without tests (`/orly-write-unit-test`).
 
 ### CONFORM
 
 Runs after EXECUTE, before VERIFY. Invokes the `conform` commands the repository declares in `.oracle/orly.json` and aggregates every gate verdict. Any 🔴 returns to EXECUTE; the lifecycle does not advance.
-In `agentsfleet` this stage is `make harness-verify`; its output block and end-of-turn audit detail live in `docs/HARNESS_VERIFY_OUTPUT.md`. Required rows: FILE SHAPE, PUB GATE, LENGTH GATE, MILESTONE-ID GATE, ZIG GATE, UI GATE, DESIGN TOKEN GATE, UFS GATE, SCHEMA GUARD, GREPTILE GATE, Architecture consult, Coverage, and `/write-unit-test`.
+In `agentsfleet` this stage is `make harness-verify`; its output block and end-of-turn audit detail live in `docs/HARNESS_VERIFY_OUTPUT.md`. Required rows: FILE SHAPE, PUB GATE, LENGTH GATE, MILESTONE-ID GATE, ZIG GATE, UI GATE, DESIGN TOKEN GATE, UFS GATE, SCHEMA GUARD, GREPTILE GATE, Architecture consult, Coverage, and `/orly-write-unit-test`.
 
 ### VERIFY
 
 Run the repository's declared `verify.*` commands from `.oracle/orly.json`. A package-scoped command never replaces a listed one.
-The `agentsfleet` output block and exact tiers live in `docs/VERIFY_TIERS.md`. **FIRST: `/write-unit-test`** audits diff coverage. **LAST: the Test Delta row** compares against the CHORE(open) baseline; zero or negative unit growth on a code-adding diff needs justification or a return to EXECUTE. Paste memory-leak evidence into PR Session Notes or cite its Continuous Integration (CI) URL. After refactors, list newly dead code before removing it.
+The `agentsfleet` output block and exact tiers live in `docs/VERIFY_TIERS.md`. **FIRST: `/orly-write-unit-test`** audits diff coverage. **LAST: the Test Delta row** compares against the CHORE(open) baseline; zero or negative unit growth on a code-adding diff needs justification or a return to EXECUTE. Paste memory-leak evidence into PR Session Notes or cite its Continuous Integration (CI) URL. After refactors, list newly dead code before removing it.
 
 ### REVIEW
 
@@ -227,9 +227,9 @@ Required when spec involved — after last COMMIT, before PR. Also runs when par
 
 | # | When | Skill |
 |---|---|---|
-| 1 | VERIFY | `/write-unit-test`, then `/write-integration-test` — both before the PR, never skipped, never deferred |
+| 1 | VERIFY | `/orly-write-unit-test`, then `/orly-write-integration-test` — both before the PR, never skipped, never deferred |
 | 2 | REVIEW | gstack `/review` — every runtime, same route; address findings or record a user-acked deferral; reviewer unavailable → Session Notes: *"skipped — <reason> <ts>; rerun before merge"* |
-| 3 | After every push | `babysit-prs` — CI check runs + greptile inline threads + PR-level summary; stops on two consecutive empty polls with CI green; never `gh pr checks --watch` for greptile |
+| 3 | After every push | `orly-babysit-prs` — CI check runs + greptile inline threads + PR-level summary; stops on two consecutive empty polls with CI green; never `gh pr checks --watch` for greptile |
 
 **PR budget — one per milestone.** One ready PR plus one follow-up is the ceiling. Fold new scope into the open PR (reopen `done/`→`active/` if needed), not a third.
 
@@ -293,7 +293,7 @@ Required when spec involved — after last COMMIT, before PR. Also runs when par
   (log: P12).
 - **Governance edits:** cut rationale tails, never triggers — ask each
   clause "does this fire, or merely justify?" `make audit` caps the
-  rendered `AGENTS.md` (this file inlined) at 32,768 bytes; adding a rule
+  rendered `AGENTS.md` (this file inlined) at 40,960 bytes; adding a rule
   means making room.
 - **Corrections route by shape** (`AGENTS.md` §Memory Discipline): rule →
   dispatch façade; behaviour → a row in `SOUL_LOG.md` at the moment it

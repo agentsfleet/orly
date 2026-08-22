@@ -1,5 +1,5 @@
 ---
-name: spec-new
+name: orly-spec-new
 description: |
   Author a milestone/workstream spec the executing agent (Orly) ships into a
   deterministic, review-clean, reported Pull Request — intent capture and
@@ -9,7 +9,7 @@ description: |
   self-contained markdown.
 ---
 
-# spec-new
+# orly-spec-new
 
 A spec is the **rulebook** the executing agent (Orly) plans and ships from. This
 skill makes me author one whose Pull Request (PR) lands **deterministic, review-clean, and
@@ -66,7 +66,7 @@ This is the step that prevents greptile findings — the spec becomes a pre-comm
 
 ## Step 3 — Make it provable & reported
 
-- Decompose **Sections** into numbered **Dimensions** (3.1, 3.2 …) — the unit of DONE. **Every Dimension → one Test** (tiered: unit/integration/e2e per `/write-unit-test`; any user-facing Category gets a user-centric `test-e2e*` scenario).
+- Decompose **Sections** into numbered **Dimensions** (3.1, 3.2 …) — the unit of DONE. **Every Dimension → one Test** (tiered: unit/integration/e2e per `/orly-write-unit-test`; any user-facing Category gets a user-centric `test-e2e*` scenario).
 - **Every Failure Mode → a negative test.** **Every Invariant → enforced by code** (compiler, lint, comptime assertion, runtime check) — never by review discipline.
 - **Every Metrics row → event/test proof.** User-facing or operator-facing specs declare product/operator signals, privacy guards, and analytics/funnel playbook updates; internal-only cleanup explicitly says no signal changed.
 - **Rubric = 5–12 outcome rows** — one per Section outcome, failure class, or hygiene gate (never per Dimension); each with a copy-paste Verify command and a mechanically checkable Expected (exit code / literal substring / match count). Standard rows come pre-filled in the template — prune to the touched surface.
