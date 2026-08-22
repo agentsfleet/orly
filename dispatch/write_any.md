@@ -145,7 +145,7 @@ shebang and is the authoritative check.
 | Pattern | Rule |
 |---|---|
 | New `logging.scoped(.tag)` call | Scope is a Zig enum literal — adding a new tag is freeform. `event` must be snake_case `verb_noun`. |
-| New `err`/`warn` log mapping to a domain failure | `error_code=UZ-XXX-NNN` field required. Registry entry must land in same commit. |
+| New `err`/`warn` log mapping to a domain failure | registry-scheme `error_code=` field required (agentsfleet: `UZ-XXX-NNN`). Registry entry must land in same commit. |
 | Per-iteration / hot-loop log | Use `debug` (hidden by default), not `info`. |
 | `info` level | No allow-list — `info` is open (§4 rule 2). Two checks instead: a boundary-crossing operation needs its `_started`/`_completed`\|`_failed` pair on every exit path (rule 1), and a per-iteration path is `debug` (rule 3). |
 | `console.log`/`std.debug.print` in non-test source | Forbidden. Convert to logger or delete before commit. |
@@ -256,12 +256,12 @@ Covered by the combined awk audit in the AGENTS.md CONFORM section.
 > [DETERMINISTIC → ERR]
 
 
-**Family:** Observability discipline. **Source:** `docs/LOGGING_STANDARD.md` §5; canonical registry in `src/errors/error_registry.zig` (per-project, not in dotfiles).
+**Family:** Observability discipline. **Source:** `docs/LOGGING_STANDARD.md` §5; canonical registry per-project (agentsfleet: `src/errors/error_registry.zig`).
 
 **Triggers** — every `Edit`/`Write` that:
 
-- Adds or modifies `error_code=UZ-XXX-NNN` in any source file under `src/**` or `agentsfleet/**`.
-- Edits `src/errors/error_registry.zig`.
+- Adds or modifies a registry-scheme `error_code=` in any source file (agentsfleet: `UZ-XXX-NNN`).
+- Edits the repository's error registry.
 - Touches HTTP error responses, executor frames, or CLI error surfaces.
 
 **Override:** `ERROR REGISTRY GATE: SKIPPED per user override (reason: ...)`. **User-invokable only.** Auto-mode does NOT cover this override.

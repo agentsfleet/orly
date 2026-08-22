@@ -96,12 +96,15 @@ bun install --frozen-lockfile
 make audit
 ```
 
-`make audit` is the whole suite:
+`make audit` is the fast suite — its steps run in parallel (~20s):
 
 - **typecheck and unit tests**
 - **render determinism** — the same sources always produce the same rules
 - **gate fixtures** — every gate proved against one passing and one failing case
-- **install evals** — real installs into throwaway repositories
+
+Install evals — real installs into throwaway repositories — moved off the
+local chain for costing half its wall-clock: `make install-evals` runs them on
+demand, and CI runs them on every pull request and release.
 
 Coverage is gated at a 90% line floor. The workflow fails below it.
 
