@@ -37,7 +37,7 @@ Triggers on every `Edit`/`Write` to a source file in any language: `*.zig`, `*.t
 
 **Per-file lens.** This is the EXECUTE/CONFORM early-warning: it dispatches over the source files actually touched or `--staged`, so a turn that stages no in-scope source short-circuits with nothing to check. The full-tree audits (`audit-ufs` etc.) still fire unconditionally via the product repo's conformance command — `make harness-verify` in `agentsfleet` — so the dispatch is the per-edit lens, not the codebase-wide backstop.
 
-**"Green deferred" defers only the build gate.** When the user grants "free to break, green later" on a multi-slice cutover, the per-edit gates in this façade (UFS, LENGTH, and the language façade's PUB / LIFECYCLE / BUFFER) still run on every Write/Edit — with no compile until late convergence they are the *only* correctness signal, and a big-bang build will not retro-catch speculative `pub`s, re-spelled literals, or missing `errdefer`s (M80 B3 drifted exactly this way).
+**"Green deferred" defers only the build gate.** When the user grants "free to break, green later" on a multi-slice cutover, the per-edit gates in this façade (UFS, LENGTH, and the language façade's PUB / LIFECYCLE / BUFFER) still run on every Write/Edit — with no compile until late convergence they are the *only* correctness signal, and a big-bang build will not retro-catch speculative `pub`s, re-spelled literals, or missing `errdefer`s (a multi-slice cutover drifted exactly this way).
 
 ## Merged from dissolved gate cards
 
@@ -145,7 +145,7 @@ shebang and is the authoritative check.
 | Pattern | Rule |
 |---|---|
 | New `logging.scoped(.tag)` call | Scope is a Zig enum literal — adding a new tag is freeform. `event` must be snake_case `verb_noun`. |
-| New `err`/`warn` log mapping to a domain failure | `error_code=UZ-XXX-NNN` field required. Registry entry must land in same commit. |
+| New `err`/`warn` log mapping to a domain failure | registry-scheme `error_code=` field required (agentsfleet: `UZ-XXX-NNN`). Registry entry must land in same commit. |
 | Per-iteration / hot-loop log | Use `debug` (hidden by default), not `info`. |
 | `info` level | No allow-list — `info` is open (§4 rule 2). Two checks instead: a boundary-crossing operation needs its `_started`/`_completed`\|`_failed` pair on every exit path (rule 1), and a per-iteration path is `debug` (rule 3). |
 | `console.log`/`std.debug.print` in non-test source | Forbidden. Convert to logger or delete before commit. |
@@ -184,7 +184,7 @@ LOGGING GATE: <file>
   Audit script: <logging.sh on staged diff: 0 findings ✓ | N findings>
 ```
 
-#### Scope (M70)
+#### Scope
 
 > [DETERMINISTIC → LOG]
 
@@ -256,12 +256,12 @@ Covered by the combined awk audit in the AGENTS.md CONFORM section.
 > [DETERMINISTIC → ERR]
 
 
-**Family:** Observability discipline. **Source:** `docs/LOGGING_STANDARD.md` §5; canonical registry in `src/errors/error_registry.zig` (per-project, not in dotfiles).
+**Family:** Observability discipline. **Source:** `docs/LOGGING_STANDARD.md` §5; canonical registry per-project (agentsfleet: `src/errors/error_registry.zig`).
 
 **Triggers** — every `Edit`/`Write` that:
 
-- Adds or modifies `error_code=UZ-XXX-NNN` in any source file under `src/**` or `agentsfleet/**`.
-- Edits `src/errors/error_registry.zig`.
+- Adds or modifies a registry-scheme `error_code=` in any source file (agentsfleet: `UZ-XXX-NNN`).
+- Edits the repository's error registry.
 - Touches HTTP error responses, executor frames, or CLI error surfaces.
 
 **Override:** `ERROR REGISTRY GATE: SKIPPED per user override (reason: ...)`. **User-invokable only.** Auto-mode does NOT cover this override.
@@ -313,7 +313,7 @@ ERROR REGISTRY GATE: <file>
   Audit script: <error-codes.sh on staged diff: 0 findings ✓ | N findings>
 ```
 
-#### Scope (M70)
+#### Scope
 
 > [DETERMINISTIC → ERR]
 
@@ -401,7 +401,7 @@ UFS GATE: <file>
   Cross-runtime parity: <status — e.g. "NANOS_PER_USD added to Zig+TS+JS this commit" or "n/a — runtime-internal constant">
 ```
 
-#### Scope (M70)
+#### Scope
 
 > [DETERMINISTIC → UFS]
 
@@ -445,7 +445,7 @@ Violations resolve by either (1) extracting to a named const + replacing all sit
 
 > [DETERMINISTIC → UFS]
 
-Indy's M66_001 §3 tail surfaced the failure clearly: `RULE UFS` lived as a single bullet in the former Bun rules §2 with no audit, no CONFORM row, and no per-edit ceremony. Across an 800-LOC session the agent introduced ~20 inline literals (`"platform"`, `"self_managed"`, `"receive"`, `"stage"`, `mode: "byok"`, `1e9`, `1_000_000_000`, etc.) that the rule already covered but no mechanism caught. The rule is fine; the enforcement was missing. This gate adds the enforcement.
+A real session surfaced the failure clearly: `RULE UFS` lived as a single bullet in the former Bun rules §2 with no audit, no CONFORM row, and no per-edit ceremony. Across an 800-LOC session the agent introduced ~20 inline literals (`"platform"`, `"self_managed"`, `"receive"`, `"stage"`, `mode: "byok"`, `1e9`, `1_000_000_000`, etc.) that the rule already covered but no mechanism caught. The rule is fine; the enforcement was missing. This gate adds the enforcement.
 
 ### Greptile Gate (GREPTILE GATE)
 

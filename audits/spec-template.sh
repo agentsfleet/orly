@@ -12,6 +12,10 @@
 #      no surviving "tpl:" guidance comments (template fill grammar). A spec
 #      that omits them forces the executing agent to guess intent. This is the
 #      half that makes a spec "built for the agent".
+#   2b. DECLARED-COMMAND PARITY — a pending/active spec's Acceptance Rubric
+#      must quote the repository's declared conform + verify.unit commands
+#      (.oracle/orly.json) verbatim: the rubric and `orly gate` grade one
+#      boundary. Staged/file scope only; done/ specs stay historical.
 #
 # Dispatch façade: dispatch/write_spec.md (SPEC TEMPLATE GATE)
 # Fires in: make lint (after audit-logging, before audit-error-codes).
@@ -145,7 +149,53 @@ PLACEHOLDER_SENTINELS=(
   'why this is the right pattern to mirror'
   '{outcome the user can observe}'
   '{exit 0 / substring / 0 matches}'
+  'path/to/spec_or_doc.md'
+  '{path/to/old_file.ext}'
+  '{old_symbol}'
+  '{one sentence that could be a test name}'
+  '{smallest verifiable behaviour}'
+  '{one-line behavioural claim}'
+  '{conform command from .oracle/orly.json'
+  '{verify.unit command from .oracle/orly.json'
+  "{gate from this repository's AGENTS.md dispatch index}"
 )
+
+# ---------------------------------------------------------------------------
+# Family 2b — declared-command parity (TEMPLATE.md "Command source rule").
+# A pending/active spec's Acceptance Rubric must quote the repository's
+# declared conform + verify.unit commands VERBATIM — the same set `orly gate`
+# runs — so the spec's ship gate and the mechanical PR gate grade one
+# boundary. Reads .oracle/orly.json with bun (orly's own runtime). Done specs
+# are historical records and are never retrofitted. No config, no bun, or no
+# declared commands → NOTE and skip; this check never guesses.
+# ---------------------------------------------------------------------------
+scan_commands() {
+  local spec="$1" cfg=".oracle/orly.json" cmds
+  case "$spec" in
+    */pending/*|*/active/*) ;;
+    *) return 0 ;;
+  esac
+  [[ -f "$cfg" ]] || { note "$spec — no $cfg; declared-command parity skipped"; return 0; }
+  command -v bun >/dev/null 2>&1 || { note "$spec — bun unavailable; declared-command parity skipped"; return 0; }
+  cmds="$(bun -e '
+    const cfg = await Bun.file(".oracle/orly.json").json().catch(() => null);
+    const commands = cfg && typeof cfg.commands === "object" && cfg.commands !== null ? cfg.commands : {};
+    for (const key of ["conform", "verify.unit"]) {
+      for (const argv of Array.isArray(commands[key]) ? commands[key] : []) {
+        if (Array.isArray(argv) && argv.length > 0) console.log(argv.join(" "));
+      }
+    }' 2>/dev/null || true)"
+  [[ -n "$cmds" ]] || { note "$spec — no declared conform/verify.unit commands; parity skipped"; return 0; }
+  local miss=0 cmd
+  while IFS= read -r cmd; do
+    [[ -z "$cmd" ]] && continue
+    grep -qF "$cmd" "$spec" && continue
+    fail "$spec — rubric misses declared command verbatim: \"$cmd\" (.oracle/orly.json — the set orly gate runs)"
+    miss=$((miss + 1))
+  done <<<"$cmds"
+  if [[ $miss -eq 0 ]]; then ok "$spec — rubric quotes the declared conform/verify.unit commands"; fi
+  return 0
+}
 
 scan_spec() {
   local spec="$1"
@@ -196,7 +246,7 @@ scan_required() {
 for spec in "${SPECS[@]}"; do
   [[ -f "$spec" ]] || continue
   scan_spec "$spec"
-  case "$MODE" in --staged|staged|--file|file) scan_required "$spec" ;; esac
+  case "$MODE" in --staged|staged|--file|file) scan_required "$spec"; scan_commands "$spec" ;; esac
 done
 
 if [[ $FAIL -ne 0 ]]; then

@@ -86,20 +86,20 @@ done
 [[ $missing_bans -eq 0 ]] && pass "always-forbidden list (${#FORBIDDEN_KEYS[@]} bans present)"
 
 # ---------------------------------------------------------------------------
-# 5. Skill-chain order — /write-unit-test → runtime review → babysit.
+# 5. Skill-chain order — /orly-write-unit-test → runtime review → babysit.
 #    Anchored to within the CHORE(close) section so a stray earlier mention
 #    cannot satisfy the check.
 # ---------------------------------------------------------------------------
 awk '
   /^### CHORE \(close\)/                  { in_section=1; next }
   /^### |^## /                            { if (in_section) in_section=0 }
-  in_section && /\/write-unit-test/  && !a { a=NR }
+  in_section && /\/orly-write-unit-test/  && !a { a=NR }
   in_section && /gstack/           && a && !b { b=NR }
-  in_section && /kishore-babysit-prs/&& b && !c { c=NR }
+  in_section && /orly-babysit-prs/&& b && !c { c=NR }
   END { exit (a && b && c && a<b && b<c) ? 0 : 1 }
 ' "$AGENTS" \
   && pass "skill-chain ordering (anchored to CHORE(close))" \
-  || fail "skill chain not in order within CHORE(close): /write-unit-test → gstack /review → kishore-babysit-prs"
+  || fail "skill chain not in order within CHORE(close): /orly-write-unit-test → gstack /review → orly-babysit-prs"
 
 # One route for every runtime. A per-runtime split re-introduces the
 # collapsing-two-near-named-steps failure SOUL.md records; assert the
@@ -107,8 +107,8 @@ awk '
 review_routes_missing=0
 grep -qF 'One route, every runtime: gstack `/review`.' "$AGENTS" \
   || { fail "single gstack review route missing"; review_routes_missing=1; }
-grep -qF '/write-integration-test' "$AGENTS" \
-  || { fail "/write-integration-test missing from the pre-PR skill chain"; review_routes_missing=1; }
+grep -qF '/orly-write-integration-test' "$AGENTS" \
+  || { fail "/orly-write-integration-test missing from the pre-PR skill chain"; review_routes_missing=1; }
 [[ $review_routes_missing -eq 0 ]] && pass "unified review route + both test skills"
 
 # ---------------------------------------------------------------------------
@@ -311,9 +311,15 @@ if [[ $? -eq 0 ]]; then pass "rule-path residence (doctrine + anchors + zero rel
 # ---------------------------------------------------------------------------
 # 16. Size cap — soft guard against drift back to bloat.
 #     Generated metadata is included in the measured file.
+#
+#     40 KiB, raised from 32 KiB (Aug 22, 2026) on Indy's call: the render had
+#     reached the old cap exactly, so every new rule cost an existing one, and
+#     the next thing to cut would have been triggers rather than gloss. The cap
+#     exists for attention, not capacity — a rule the agent skims past enforces
+#     nothing — so it stays a real ceiling, just one with room to work in.
 # ---------------------------------------------------------------------------
 SIZE=$(wc -c < "$AGENTS" | tr -d ' ')
-LIMIT=${AGENTS_MD_SIZE_LIMIT:-32768}
+LIMIT=${AGENTS_MD_SIZE_LIMIT:-40960}
 if [[ $SIZE -le $LIMIT ]]; then
   pass "size $SIZE bytes (limit $LIMIT)"
 else

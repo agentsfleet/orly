@@ -1,12 +1,12 @@
 ---
-name: write-integration-test
+name: orly-write-integration-test
 description: >
   Service-layer integration tests against real dependencies (Postgres, Redis,
   full HTTP router + middleware) with deterministic failure injection,
-  per-test isolation, drain + leak audits, and >=100-connection parallelism
-  proofs. Sister of write-unit-test. Use for handlers, repos, services, or
+  per-test isolation, drain + leak audits, and 100-or-more-connection parallelism
+  proofs. Sister of orly-write-unit-test. Use for handlers, repos, services, or
   any real-I/O module-boundary crossing. Not for browser E2E (gstack /qa) or
-  pure logic (write-unit-test).
+  pure logic (orly-write-unit-test).
 ---
 
 # Write Integration Test
@@ -45,7 +45,7 @@ A test belongs in the integration suite (`make test-integration` / `pytest -m in
 
 A test does **NOT** belong here if it:
 
-- Tests pure logic / codec / parser → `write-unit-test`
+- Tests pure logic / codec / parser → `orly-write-unit-test`
 - Drives a browser / asserts UI → gstack `/qa` or `/e2e-qa-playwright`
 - Mocks the DB or Redis → demote to unit
 - Hits a deployed environment (`api-dev.agentsfleet.net`) → that's a probe/canary
@@ -66,17 +66,19 @@ Spec asserts "503 on Redis down", code returns 200 → test the spec, flag the c
 2. **Read `docs/greptile-learnings/RULES.md`** — every rule maps to a regression test.
 3. **Bring up real deps** — `make up` (or stack equivalent). Verify health before writing tests.
 4. **Run the existing integration suite** — establish green baseline; rule out flakes before adding tests.
-5. **Map the request path** — list every dep the request touches and every `catch`/`orelse`/`except`/`Err` in the chain. That list seeds T4.
+5. **Map the ordered request path** — list every dependency interaction in execution order, including repeated acquisitions of the same resource, plus every `catch`/`orelse`/`except`/`Err` in the chain. That list seeds T4 and its partial-completion matrix.
 
 ## Three execution modes
 
 | Mode | When | Required tiers |
 |---|---|---|
-| **Smoke** | New CRUD endpoint backed by existing patterns; trivial schema add | T1 + T2 + T3 |
+| **Smoke** | New Create, Read, Update, Delete (CRUD) endpoint backed by existing patterns; trivial schema add | T1 + T2 + T3 |
 | **Standard** | New service method, new Redis stream/key, schema change with logic | + T4 + T5 + T6 |
 | **Hardening** | Auth / payment / lease / migration / streaming / anything in the data-loss radius | + T7 (if applicable) + T8 + chaos pass |
 
 Auto-detect from diff: `src/auth/**`, `src/agent/leases/**`, `src/runner/**` + `src/agentsfleetd/fleet/**` (the lease/reclaim/fence + client-daemon surface → T9), schema migrations, streaming handlers → Hardening. CRUD-only against existing schema → Smoke. Default → Standard.
+
+Any operation that touches multiple systems or acquires the same resource more than once is **Standard at minimum** and must run T4, even when the endpoint is otherwise CRUD-only.
 
 **A client daemon (no router, no datastore — e.g. `agentsfleet-runner`) is always Hardening + T9**, regardless of diff size: its public surface *is* the process lifecycle (kill / restart / reclaim / fence), and that is exactly the surface a happy-path loop test misses.
 
@@ -85,7 +87,7 @@ Auto-detect from diff: `src/auth/**`, `src/agent/leases/**`, `src/runner/**` + `
 Within a mode, write tests in this order. Stop when the surface is covered.
 
 1. **State-changing happy path with real deps** (T1 + T2 + T3 together)
-2. **Each downstream-failure branch** (T4) — every `catch`/`orelse`/`except`/`Err` in handler/service/repo
+2. **Each downstream-failure branch** (T4) — every `catch`/`orelse`/`except`/`Err` in handler/service/repo; test release-then-reacquire windows first
 3. **Concurrency under contention** (T5) — same row, same lease, same idempotency key
 4. **Resource lifecycle** (T6) — drain after every query, leak across N requests, pool exhaustion
 5. **Edge-of-spec rule checks** (T8) — OpenAPI breaking-change
@@ -112,7 +114,7 @@ Full HTTP request → response, asserting:
 - Pagination headers / cursors when applicable
 - HEAD/OPTIONS behaviour when API rules require
 
-### T3 — State assertions (the part most teams skip)
+### T3 — State assertions (success and injected failure)
 
 After the request, assert side-effects:
 - **DB rows** — queried back, content matches; `updated_at` advanced; FK rows created; soft-delete flag set
@@ -122,23 +124,61 @@ After the request, assert side-effects:
 - **Logs** — structured log line emitted with right level + fields (use a capturing logger; assert structured fields, not string match)
 - **Metrics** — counter incremented (where exposed in test mode)
 
-A test asserting only the response body is half-done.
+A test asserting only the response body is half-done. After an injected failure,
+assert the residual state: which durable rows survive, which external state changed,
+what the user sees, and whether a retry heals the operation.
 
 ### T4 — Failure injection per dependency
 
 Vague claim "503 on Redis failure" → real test with deterministic injection. Every `catch`/`orelse`/`except`/`Err` in the request path needs ≥1 injection-driven test.
+
+**Partial completion.** This applies whenever one operation touches more than one
+system or acquires the same resource more than once. Enumerate interactions in
+execution order and inject failure at **each selected pair of workflow and boundary-call ordinals**, not only the first.
+Draining a resource pool proves the first acquisition and nothing after it. If code
+acquires twice, the test needs a seam that can fail acquisition 1, then acquisition
+2, with the same exhaustive shape as `std.testing.checkAllAllocationFailures`.
+
+Record both ordinals. The workflow ordinal locates the interaction in the whole
+operation; the boundary-call ordinal selects a repeated call at one dependency.
+Scope the failpoint to the test and operation or request identifier, reset it per
+test, make its counter concurrency-safe, and assert it fired exactly once.
+
+Write the matrix before the tests:
+
+| Workflow N | Boundary call N | Dependency / resource | Interaction | Prior completed actions | Injection seam | Operation / request scope | Response | Failure timing / remote outcome | Durable residual state | External residual state | User-visible state | Retry outcome | Design finding |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1..N | 1..M | named boundary | exact call | side effects already committed | ordinal-selecting mechanism | test plus operation ID | exact surface | before effect / remote committed, acknowledgement lost / after durable write | rows and transactions | remote effects | next user read | heals or stays broken | ordering defect or none |
+
+For every row, assert all residual-state columns. A response-only assertion is an
+incomplete T4 test. Every external mutation gets rows for failure before the effect,
+remote commit with acknowledgement-loss, and failure after the following durable
+write. For acknowledgement-loss, inspect remote state or a provider status query,
+assert the idempotency or reconciliation record, and prove retry reaches exactly one
+effect. Durable intent or an outbox makes repair observable; it does not by itself
+prove a retry cannot reissue the remote mutation. Treat **release → network or external action → reacquire** as the
+highest-risk injection window: the later acquisition competes with work admitted
+during the gap and is commonly the least tested. Classify each external interaction
+as a read-only prerequisite, reversible reservation, idempotent mutation, or
+irreversible side effect. A read-only prerequisite is not an ordering defect. For a
+mutation, prefer durable intent or an outbox before the effect when possible. If the
+effect can complete before any durable record makes it observable and repairable,
+report a design defect. When required sequencing puts the mutation first, require
+idempotency, compensation, reconciliation, and failure tests for each residual state.
 
 | Failure | Injection technique | What to assert |
 |---|---|---|
 | PG: connection drop mid-tx | `SELECT pg_terminate_backend(pid)` from sibling conn | 503 (not 500), tx rolled back, no orphan row |
 | PG: deadlock | Two concurrent tx grabbing rows in opposite order | One retries, other succeeds, no data loss |
 | PG: lock timeout | `SET lock_timeout = '50ms'` on test conn | Specific error code, no busy-loop |
-| PG: pool exhausted | `pool_size=1`, hold conn from sibling test | 503 or queue, not crash |
+| PG: first acquisition pool exhausted | `pool_size=1`, hold conn from sibling test | 503 or queue, not crash; proves acquisition 1 only |
+| PG: chosen acquisition unavailable | Operation-scoped pool failpoint fails the selected boundary call | Residual rows and external effects match that matrix row; retry outcome asserted |
 | Redis: down | `toxiproxy` disable, or `docker pause` redis | Fallback executes; no busy-loop on reset |
 | Redis: slow | `toxiproxy` latency 5s | Timeout path triggers, request fails fast |
 | Redis: partition mid-stream | `toxiproxy` cut after N bytes | Reconnect with `Last-Event-ID`, no duplicate processing |
 | External 5xx (Stripe/OpenAI) | Mock HTTP server returns 502 | Retry budget honoured, eventual surface to user |
 | External timeout | Mock HTTP server delays past `timeout_ms` | Caller times out, doesn't propagate hang |
+| External acknowledgement lost | Mock server commits then drops the response | Remote status confirms one effect; idempotency or reconciliation fences retry |
 | TCP half-open | Raw socket `SO_LINGER 0` close | Detected within `SO_RCVTIMEO`, not silent hang |
 | Disk: ENOSPC on tmp | tmpfs with size cap | Surface error, no partial-write corruption |
 | Clock skew | Fake clock past lease TTL | Lease re-issued, no stale-holder state |
@@ -258,6 +298,12 @@ Both make every downstream test a lie — fix them before adding coverage. A gre
 - **Tier may be env-gated, not binary-gated.** Many projects ship one test binary that runs both unit and integration tests, with env vars / build tags / pytest markers / Zig comptime flags switching the live-deps tier on. That's fine — but the env interface that flips the gate must be documented in the suite README and surfaced in Continuous Integration (CI), not folklore.
 - **Specific error contracts.** Status code + error code + message + structured fields. Bare `expect 500` is a smell.
 - **Failure injection is deterministic.** If you can't reproduce a failure on demand, the test is fiction.
+- **Inject at the selected ordinals, not only the first interaction.** Exhausting a resource pool tests the first acquisition and nothing after it. Repeated acquisitions require a seam that selects both the workflow ordinal and boundary-call ordinal, exhaustively.
+- **Instrument real dependencies without replacing them.** An operation-scoped failpoint may wrap a real client or pool only when every unselected call delegates to the real dependency, the selected call fails before acquisition, and a separate real-dependency test proves production error mapping. Replacing the pool or client with synthetic behavior disqualifies the integration proof.
+- **Partial failure proves residual state.** For every injected failure, assert durable rows, external state, what the user sees next, and whether retry heals it. A status code alone cannot complete T4.
+- **Unsafe external mutation ordering is a design defect.** Read-only prerequisites are valid. If a mutation can complete before any durable intent or repair record, report it; prefer durable intent first, or require idempotency, compensation, and reconciliation when sequencing cannot change.
+- **Acknowledgement loss needs a remote-state proof.** For every external mutation, make the remote effect succeed while its acknowledgement is lost; inspect remote state, assert the idempotency or reconciliation record, and prove retry reaches exactly one effect. A durable record alone is not an exactly-once proof.
+- **Record the partial-completion matrix.** Paste the completed rows into PR Session Notes. A checked box without the rows is indistinguishable from a skipped proof.
 - **Drain + leak proofs are required, not optional.** Once per suite, recorded in PR Session Notes.
 - **No hitting deployed environments.** Integration tests run against `make up` containers, never `api-dev`/`api`.
 - **Test names read as documentation.** `should_503_when_redis_down`, `should_release_lease_on_handler_panic`, `should_not_double_charge_on_idempotency_replay`.
@@ -276,6 +322,9 @@ Both make every downstream test a lie — fix them before adding coverage. A gre
 - ❌ Skipping drain/leak audits because "it's just a test"
 - ❌ Asserting on log lines via string matching instead of structured fields
 - ❌ Calling the handler function directly, bypassing router + middleware
+- ❌ Draining an entire pool and calling it pool-exhaustion coverage for later acquisitions
+- ❌ Asserting a failure status without asserting what the operation left behind and whether retry heals it
+- ❌ Treating a durable intent row as proof that acknowledgement-loss cannot reissue a remote effect
 
 ## CI execution strategy
 
@@ -295,6 +344,7 @@ When the spec has these tables, treat them as authoritative test sources:
 | Spec table | Generates |
 |---|---|
 | Failure Modes | One T4 test per row with deterministic injection |
+| Partial Completion | One matrix row per ordered failure point, with workflow-ordinal and boundary-call-ordinal injection plus residual-state assertions |
 | Error Contracts | One T2 test per row with specific status + error code |
 | Concurrency Contracts | T5 tests for stated isolation level + idempotency keys |
 | Resource Limits | T6 tests for pool size, timeout, rate-limit |
@@ -354,7 +404,8 @@ For each test write:
 2. Tier(s) it satisfies
 3. The integration bug it catches that a unit test could not
 4. Failure-injection mechanism (required for T4 / T7)
-5. The test code
+5. Residual-state and retry assertions (required for T4 partial-completion rows)
+6. The test code
 
 After the suite, produce:
 
@@ -381,6 +432,7 @@ Clean run:   ✅ pass after make down && make up
 100-conn:    ✅ exactly-once + parallel (peak in-flight 64/100, lock-wait 3ms)
 Complexity:  ✅ round-trips constant n→10n; p95 42ms < 50ms budget vs baseline
 Refactor proposals surfaced: none (or "1 — <one-line summary>")
+Partial completion: ✅ <rows complete>/<ordered failure points> · residual state + retry asserted per row
 ```
 
 Legend: `✅` met · `🟡` partially met (specify gaps) · `🔴` missing required (block) · `🟣` not applicable (state why)
@@ -401,6 +453,7 @@ Block the change if any are missing on touched surface:
 - [ ] OpenAPI / protobuf breaking-change check (`oasdiff` / `buf breaking`) clean
 - [ ] If streaming touched: T7 incremental-delivery test present
 - [ ] Failure-injection mechanism named for every T4/T7 test (no fiction)
+- [ ] **Partial completion:** every operation touching multiple systems or acquiring the same resource more than once carries a matrix with one row per ordered failure point; each row selects workflow and boundary-call ordinals, failure timing / remote outcome, scopes a concurrency-safe failpoint to one operation, and asserts durable, external, user-visible, and retry residual state; every external mutation proves acknowledgement-loss remote state plus exactly one effect on retry; the completed matrix is pasted into PR Session Notes
 - [ ] PR Session Notes paste final `make test-integration` + `make memleak` lines
 - [ ] **≥100-connection** test proves exactly-once + parallelism (peak-concurrency/lock-wait counter, or wall-time < R×), passes K runs
 - [ ] **Zig error-path leak:** allocating handlers/repos proven by `std.testing.checkAllAllocationFailures`; no cross-request high-water growth over N requests

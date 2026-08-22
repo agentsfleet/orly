@@ -25,3 +25,11 @@ jobs:
         run: bun install --frozen-lockfile --ignore-scripts
       - name: make audit
         run: make audit
+
+      # The install evals left the pre-push chain (see the Makefile): they pack
+      # a tarball and install it into a scratch HOME once per case, which was
+      # more than half a local audit's wall-clock. What they prove is
+      # DISTRIBUTION, and a branch push cannot break that for anyone — so the
+      # proof belongs here, where it still runs before anything merges.
+      - name: make install-evals
+        run: make install-evals

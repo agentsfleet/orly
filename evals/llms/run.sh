@@ -64,6 +64,7 @@ source "$HERE/fixtures.sh"
 printf '%s🧲 AGENTS.md cross-agent Large Language Model (LLM) evaluation%s  (mode=%s threshold=%s%%)\n\n' "$B$BO" "$X" "$MODE" "$THRESHOLD"
 
 [[ -f "$FIXTURES" ]] || { echo "${R}FAIL${X}: fixtures missing: $FIXTURES" >&2; exit 2; }
+validate_agent_io || { echo "${R}FAIL${X}: agent input/output validation failed" >&2; exit 2; }
 validate_fixtures || { echo "${R}FAIL${X}: fixture validation failed" >&2; exit 2; }
 
 mapfile -t AVAIL < <(list_available)
@@ -145,16 +146,17 @@ for agent in "${TARGETS[@]}"; do
   for id in "${IDS[@]}"; do
     pf="$(mktemp)"; out="$(mktemp)"
     build_prompt "${QTEXT[$id]}" "${CTXS[$id]:-__FULL__}" > "$pf"
-    invoke_agent "$agent" "$pf" "$out"
+    invoke_status=0
+    invoke_agent "$agent" "$pf" "$out" || invoke_status=$?
     # An availability/credit/auth error means this agent can't run headless —
     # log + exclude from the gate (don't score it 0 and sink the suite).
-    if is_unavailable "$out"; then
+    if is_unavailable "$out" "$invoke_status"; then
       unavailable=1; rm -f "$pf" "$out"
       printf '  %s🟠 unavailable%s: %s emitted a credit/auth/quota error — excluded from gate\n' "$Y" "$X" "$agent"
       break
     fi
     total=$((total+1))
-    got="$(extract_verdict "$out")"; got="${got:-?}"; rm -f "$pf" "$out"
+    got="$(extract_agent_verdict "$out" "$invoke_status")"; got="${got:-?}"; rm -f "$pf" "$out"
     want="${EXPECT[$id]}"
     if [[ "$got" == "$want" ]]; then
       correct=$((correct+1)); printf '  %s✓%s %-34s %s\n' "$G" "$X" "$id" "$got"

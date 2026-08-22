@@ -16,7 +16,7 @@ install_package_allowlist_excludes_personal_files() {
   # Only the skills the workflow.skills pack materialises may ship; any other
   # skills/ entry is this laptop's, not the product's.
   local straySkills
-  straySkills="$(printf '%s\n' "$paths" | grep -E '^skills/' | grep -vE '^skills/(write-unit-test|write-integration-test|kishore-spec-new|kishore-babysit-prs)/' || true)"
+  straySkills="$(printf '%s\n' "$paths" | grep -E '^skills/' | grep -vE '^skills/(orly-write-unit-test|orly-write-integration-test|orly-spec-new|orly-babysit-prs)/' || true)"
   if [[ -n "$straySkills" ]]; then
     bad "$name" "personal skills in payload: $(printf '%s' "$straySkills" | tr '\n' ' ')"; return
   fi

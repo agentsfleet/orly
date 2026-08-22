@@ -375,7 +375,7 @@ against `feat/dispatch-architecture`:
 | `docs/TEMPLATE.md` | `:139,142,154,356` | ZIG/BUN doc-read rows | →façades |
 | `docs/ZIG_RULES.md` | `:415` | refs BUN_RULES §2 | `git rm` (deleted; cross-ref already resolved in the merged `write_zig.md`) |
 | `audits/logging.sh` | `:152` | fail message cites `BUN_RULES §10` | →`write_ts_adhere_bun.md §logging` |
-| `skills/kishore-spec-new/SKILL.md` | `:63` | names `ZIG_RULES.md`/`BUN_RULES.md` as per-surface rule files | →façades (verify sync scope before assuming it ships to product repos) |
+| `skills/orly-spec-new/SKILL.md` | `:63` | names `ZIG_RULES.md`/`BUN_RULES.md` as per-surface rule files | →façades (verify sync scope before assuming it ships to product repos) |
 | `docs/HARNESS_VERIFY_OUTPUT.md` | `:19,26-36` | `🟡 = violations addressed` | add `🤔 DECIDE` legend + JUDGMENT row (§11) |
 
 **Magnitude:** ~30+ edits across ~16 files, all in one atomic commit. This is the

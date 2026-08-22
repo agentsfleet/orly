@@ -2,7 +2,7 @@
 
 > Parent: [`../AGENTS.md`](../AGENTS.md) §VERIFY. Verification Gate (`dispatch/verify.md`) enforces; `make` targets are canonical.
 
-**FIRST: `/write-unit-test`** — audits diff coverage vs spec's Test Specification (or changed surface when no spec). Iterate until clean. Skipping = CHORE(close) violation.
+**FIRST: `/orly-write-unit-test`** — audits diff coverage vs spec's Test Specification (or changed surface when no spec). Iterate until clean. Skipping = CHORE(close) violation.
 
 ## Correctness tiers (do not skip)
 

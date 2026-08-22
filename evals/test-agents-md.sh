@@ -58,8 +58,8 @@ make_sandbox() {
     cp "$SRC_ROOT/docs/$d.md" "$sb/docs/" 2>/dev/null
   done
   cp "$SRC_ROOT/docs/greptile-learnings/RULES.md" "$sb/docs/greptile-learnings/"
-  mkdir -p "$sb/skills/kishore-spec-new"
-  cp "$SRC_ROOT/skills/kishore-spec-new/SKILL.md" "$sb/skills/kishore-spec-new/"
+  mkdir -p "$sb/skills/orly-spec-new"
+  cp "$SRC_ROOT/skills/orly-spec-new/SKILL.md" "$sb/skills/orly-spec-new/"
   cp "$SRC_ROOT/.githooks/pre-commit" "$SRC_ROOT/.githooks/pre-push" "$sb/.githooks/"
   printf '%s' "$sb"
 }
@@ -146,17 +146,17 @@ expect_fail "trigger surface bites when an extension is dropped" \
   "trigger surface missing extension: .sql" \
   "perl -pi -e 's/\.sql//g' AGENTS.md"
 
-expect_fail "skill-chain bites when kishore-babysit-prs is removed from CHORE(close)" \
+expect_fail "skill-chain bites when orly-babysit-prs is removed from CHORE(close)" \
   "skill chain not in order" \
-  "perl -ni -e 'print unless m{kishore-babysit-prs}' AGENTS.md"
+  "perl -ni -e 'print unless m{orly-babysit-prs}' AGENTS.md"
 
 expect_fail "review routing bites when the single gstack route is removed" \
   "single gstack review route missing" \
   "perl -pi -e 's{One route, every runtime: gstack \\x60/review\\x60\\.}{Review removed.}' AGENTS.md"
 
-expect_fail "review routing bites when /write-integration-test drops from the chain" \
-  "/write-integration-test missing" \
-  "perl -pi -e 's{/write-integration-test}{/wit-removed}g' AGENTS.md"
+expect_fail "review routing bites when /orly-write-integration-test drops from the chain" \
+  "/orly-write-integration-test missing" \
+  "perl -pi -e 's{/orly-write-integration-test}{/wit-removed}g' AGENTS.md"
 
 expect_fail "rule-path residence bites when a façade cites the absolute anchor" \
   "anchored citation" \

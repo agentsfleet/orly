@@ -68,6 +68,15 @@ jobs:
         if: steps.published.outputs.already == 'false'
         run: make audit
 
+      # The install evals no longer ride inside `make audit` — they left the
+      # pre-push chain for costing more than half its wall-clock (see the
+      # Makefile). They stay on the release path: this is the last gate before
+      # an immutable artifact leaves, and they cover init, update, and the pack
+      # allowlist, which the single tarball probe below does not.
+      - name: make install-evals
+        if: steps.published.outputs.already == 'false'
+        run: make install-evals
+
       # Proves the payload installs from a real tarball rather than from this
       # checkout. A file missing from the `files` allowlist passes every local
       # test and dies on a stranger's first command — it has happened once

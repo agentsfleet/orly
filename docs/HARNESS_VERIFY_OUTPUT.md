@@ -34,7 +34,7 @@ Verdict cells use ✅ pass · 🟣 n/a · 🔴 fail · 🟡 violations addressed
 | GREPTILE GATE        | ✅ pass | 🟡 N violations addressed |
 | Architecture consult | ✅ doc updated same commit | 🟣 n/a |
 | Coverage             | ✅ backend N% ≥ min · UI N% ≥ min | 🟣 n/a |
-| /write-unit-test     | ✅ clean | 🟡 N tests added   |
+| /orly-write-unit-test     | ✅ clean | 🟡 N tests added   |
 ```
 
 Any 🔴 in the table → return to EXECUTE; the lifecycle does NOT advance.

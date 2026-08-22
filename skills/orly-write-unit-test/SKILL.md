@@ -1,11 +1,11 @@
 ---
-name: write-unit-test
+name: orly-write-unit-test
 description: >
   Risk-weighted, failure-injecting test generation across 8 stacks (Python,
   Python SDK, OpenAPI, JS/TS CLI, React/TS, Zig, Rust, Shell) enforcing behaviour +
   failure + invariant + integration + regression coverage with a
   Definition-of-Done gate; deterministic production-safety proofs (Zig
-  zero-leak, >=100-connection concurrency, complexity/latency budgets) live
+  zero-leak, 100-or-more-connection concurrency, complexity/latency budgets) live
   in the skill body. Use during implementation, not after.
 ---
 
@@ -61,6 +61,7 @@ codebase, and it's the artifact that makes "is the skill applied?" auditable.
    - every new or modified **branch** (`if`/`switch`/`match`/`?`/ternary)
    - every new **error construction** (`catch`/`orelse`/`try`/`Err`/`raise`/`throw`)
    - every new **public symbol** (export, `pub`, `__all__`, header signature)
+   - every ordered boundary interaction when one operation touches multiple systems or acquires the same resource more than once; repeated acquisitions are separate rows
 2. Each row gets a required test type and a status:
 
 ```
@@ -73,7 +74,7 @@ codebase, and it's the artifact that makes "is the skill applied?" auditable.
 
 3. The ledger is **done only when every row is ✅ or carries an explicit
    `won't-test: <reason>` / `needs-infra`**. A bare gap is a defect, not a deferral.
-4. **Paste the resolved ledger into PR Session Notes** so `/review`, `kishore-babysit-prs`,
+4. **Paste the resolved ledger into PR Session Notes** so `/review`, `orly-babysit-prs`,
    and a human can audit it — the check becomes reviewable, not merely claimed.
 
 ## Three execution modes
@@ -93,7 +94,7 @@ Auto-detect from diff: auth/payment/migration/concurrency/streaming files → Ha
 Within each mode, write tests in this order. Stop when you've covered the surface.
 
 1. **State transitions** — PENDING→RUNNING, idempotent vs not, monotonic
-2. **External boundaries** — I/O, network, DB, FS, IPC
+2. **External boundaries** — I/O, network, DB, FS, IPC; test release-then-reacquire windows first
 3. **Concurrency paths** — races, ordering, double-fire
 4. **Error handling branches** — every `catch`, `orelse`, `?`, `Result::Err`, `try/except`
 5. **Pure functions** — last; usually low bug density
@@ -113,6 +114,25 @@ Input → exact output shape AND side effects. Assert *both*. Asserting only the
 - **Expected vs fatal distinction** — a function returning null for both timeout (expected) and connection-reset (fatal) causes busy-loops. Test that they take different paths.
 - **Auth failures** — no token, expired, wrong role, revoked, rate limited.
 - **Downstream errors** — 4xx, 5xx, timeout, DNS, TLS, partial UTF-8, broken pipe.
+- **Partial completion** — when one operation touches multiple systems or acquires the same resource more than once, enumerate every ordered connection, transaction, and external call; select each workflow ordinal and boundary-call ordinal for failure, record failure timing / remote outcome, then assert the residual durable state, external state, user-visible state, and retry outcome.
+
+Write the matrix before the tests:
+
+| Workflow N | Boundary call N | Dependency / resource | Interaction | Prior completed actions | Injection seam | Operation / request scope | Response | Failure timing / remote outcome | Durable residual state | External residual state | User-visible state | Retry outcome | Design finding |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1..N | 1..M | named boundary | exact call | side effects already committed | ordinal-selecting mechanism | test plus operation ID | exact surface | before effect / remote committed, acknowledgement lost / after durable write | rows and transactions | remote effects | next user read | heals or stays broken | ordering defect or none |
+
+The workflow ordinal locates the interaction in the whole operation. The
+boundary-call ordinal selects a repeated call at one dependency. Scope the
+failpoint to the test and operation or request identifier, reset it per test,
+make its counter concurrency-safe, and assert it fired exactly once.
+
+Every external mutation gets rows for failure before the effect, remote commit with
+acknowledgement-loss, and failure after the following durable write. For
+acknowledgement-loss, inspect remote state or a provider status query, assert the
+idempotency or reconciliation record, and prove retry reaches exactly one effect.
+Durable intent or an outbox makes repair observable; it does not by itself prove a
+retry cannot reissue the remote mutation.
 
 ### 3. Invariant
 Properties that must hold across all valid inputs. Use property-based testing (`hypothesis`/`proptest`/`fast-check`) when input domain is large.
@@ -153,6 +173,11 @@ Pin behaviour that must not silently change.
 - **No duplicating implementation logic in tests.** A test that re-implements the function under test proves nothing.
 - **Tests favour clarity over DRY.** Independence and explicitness beat reuse. Extract a helper only when ≥3 tests share non-trivial setup AND the helper has no logic worth hiding.
 - **Untestable claims are flagged**, not silently skipped. Mark `needs infra` in the claim-tracing table.
+- **Inject at the selected ordinals, not only the first interaction.** A boundary fake must select both the workflow ordinal and boundary-call ordinal. Draining a whole resource pool proves only the first acquisition and cannot cover a later one.
+- **Residual state is the failure assertion.** For each injected interaction, assert what survived, what external state changed, what the user sees next, and whether retry heals it. The response alone is incomplete.
+- **Unsafe external mutation ordering is a design defect.** Read-only prerequisites are valid. If a mutation can complete before any durable intent or repair record, report it; prefer durable intent first, or require idempotency, compensation, and reconciliation when sequencing cannot change.
+- **Acknowledgement loss needs a remote-state proof.** For every external mutation, make the remote effect succeed while its acknowledgement is lost; inspect remote state, assert the idempotency or reconciliation record, and prove retry reaches exactly one effect. A durable record alone is not an exactly-once proof.
+- **Record the partial-completion matrix.** Paste the completed rows into PR Session Notes. A checked box without the rows is indistinguishable from a skipped proof.
 
 ## Anti-patterns (reject in review)
 
@@ -167,6 +192,9 @@ Pin behaviour that must not silently change.
 - ❌ Coverage padding — line coverage with no behavioural claim
 - ❌ Hand-wavy performance assertions ("not too slow")
 - ❌ Silent golden-file re-blessing on snapshot drift
+- ❌ Draining an entire pool and calling it coverage of every acquisition
+- ❌ Asserting a failure response without asserting the operation's residual state and retry outcome
+- ❌ Treating a durable intent row as proof that acknowledgement-loss cannot reissue a remote effect
 
 ---
 
@@ -186,6 +214,7 @@ Vague claim: "handles connection reset". Real test: deterministic injection. If 
 | OOM | `FixedBufferAllocator` (Zig), small heap caps |
 | Concurrency races | `loom` (Rust), `std.Thread` + barrier (Zig) |
 | Network partition | `iptables`/`pfctl` block, `toxiproxy` down |
+| Selected workflow and boundary-call ordinals | Counter-controlled boundary fake fails the selected interaction |
 
 Every failure mode named in the spec or code (`catch`, `orelse`, retry loop) needs at least one injection-driven test.
 
@@ -245,6 +274,7 @@ When a spec exists with these tables, treat them as authoritative test sources:
 | Test Specification | One test per row, name = `dim X.Y: <name>` |
 | Error Contracts | One negative test per row asserting exact error |
 | Failure Modes | One integration test per row with deterministic injection |
+| Partial Completion | One row per ordered failure point with workflow-ordinal and boundary-call-ordinal injection plus residual-state assertions |
 | Implementation Constraints | Verification command run + result reported |
 
 If the spec has none of these, build a claim-tracing table from spec prose / PR description:
@@ -272,6 +302,7 @@ Reject the change if any are missing on touched code:
 - [ ] State isolation: tests pass under random execution order
 - [ ] Integration test through real stack for any spec claim involving transport/streaming/real-time
 - [ ] Failure-injection test for every failure mode named in code
+- [ ] **Partial completion:** every operation touching multiple systems or acquiring the same resource more than once has one matrix row per ordered failure point; each row selects workflow and boundary-call ordinals, failure timing / remote outcome, scopes a concurrency-safe failpoint to one operation, and asserts durable, external, user-visible, and retry residual state; every external mutation proves acknowledgement-loss remote state plus exactly one effect on retry; the completed matrix is pasted into PR Session Notes
 - [ ] Test names read as documentation
 - [ ] No mocking of internal modules
 - [ ] Golden-file drift, if any, has a written explanation
@@ -476,6 +507,7 @@ After the suite produce:
 Categories: Behaviour ✅ · Failure ✅ · Invariant ✅ · Integration ✅ · Regression ✅
 Production-safety: Zig-leak ✅ 0 (incl. checkAllAllocationFailures) · Concurrency ✅ 100-conn exactly-once + parallel · Perf ✅ O(n) counter + p95 vs baseline
 Refactor proposals surfaced: <n> (or "none — no structural finding")
+Partial completion: <rows complete>/<ordered failure points> · residual state + retry asserted per row
 Diff ledger: 7/7 rows resolved (5 tested · 2 won't-test w/ reason)
 Mutation (changed lines): 18/19 killed · 1 justified equivalent
 Red-green (fix PRs): ✅ fails on parent, passes on HEAD

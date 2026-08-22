@@ -1,8 +1,9 @@
 # Milestone Specification Template
 
 > **CANONICAL TEMPLATE — two agents consume this file, in different ways.**
-> The **authoring agent** (via the `kishore-spec-new` skill) copies the body below the divider into `docs/v{N}/pending/M{N}_{NNN}_….md` and fills it — authoring order lives in the skill, not in this file. The **executing agent** reads the filled spec **top-to-bottom**: the body is physically ordered by execution need (understand → prepare → build → prove → record).
+> The **authoring agent** (via the `orly-spec-new` skill) copies the body below the divider into `docs/v{N}/pending/M{N}_{NNN}_….md` and fills it — authoring order lives in the skill, not in this file. The **executing agent** reads the filled spec **top-to-bottom**: the body is physically ordered by execution need (understand → prepare → build → prove → record).
 > Enforced by `audits/spec-template.sh` (SPEC TEMPLATE GATE, façade `dispatch/write_spec.md`): required sections present, zero template residue, prohibited patterns absent. Lifecycle: `AGENTS.md → Specification Standards`.
+> A shipped instance outranks guidance: when `docs/v{N}/done/` holds specs, read the newest first and pattern-match.
 
 ---
 
@@ -78,7 +79,7 @@ A milestone is not complete until evidence is captured: commands, logs, screensh
 
 <!--
 SPEC AUTHORING RULES (load-bearing — the one comment that survives):
-- Body order = the executing agent's read order. Fill via the kishore-spec-new
+- Body order = the executing agent's read order. Fill via the orly-spec-new
   skill (authoring order lives there); after filling, DELETE every "tpl:"
   guidance comment — the SPEC TEMPLATE GATE blocks tpl residue, unfilled
   {slots}, and missing required sections (audits/spec-template.sh --staged).
@@ -99,7 +100,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Categories:** {API | CLI | UI | SKILL | DOCS | OBS | INFRA — alphabetised, one or more}
 **Batch:** B{1-4} — {parallel execution context}
 **Branch:** {feat/mNN-name — added at CHORE(open)}
-**Test Baseline:** set at CHORE(open) — `unit=<N> integration=<M>` via `make _lint_zig_test_depth`
+**Test Baseline:** set at CHORE(open) — `unit=<N> integration=<M>` from the repository's declared `verify.*` commands (`.oracle/orly.json`)
 **Depends on:** {M{N}_{NNN} (one-line reason), …}
 **Provenance:** human-written | LLM-drafted ({model}, {date}) | agent-generated (pre-spec, {source doc})
 **Canonical architecture:** `docs/architecture/{relevant-doc}.md` §{N}
@@ -140,7 +141,9 @@ don't have a foo handler"). Implementation steps belong in Sections, not here. -
 agent repeats it); more than 5 = a tutorial (trim). This is where judgment is
 preserved without pseudocode: point at code/docs to read BEFORE touching any
 file. Greenfield (no existing pattern)? Say so explicitly and point at the
-docs/architecture/ doc that defines the shape. -->
+docs/architecture/ doc that defines the shape. Every pointer must resolve
+in THIS repository (`test -f` each) or be a URL — a pack this repository
+never selected materialised nothing here. -->
 
 ## Files Changed (blast radius)
 
@@ -163,29 +166,26 @@ no path filter (dispatch/write_spec.md, Authoring discipline). -->
 <!-- tpl: The rule files the executing agent re-reads BEFORE EXECUTE and
 re-checks during VERIFY. Name the exact rule IDs the diff will trip — generic
 "follow RULES.md" earns a greptile finding; named IDs are obeyed by
-construction. Per-surface menu: dispatch/write_zig.md (*.zig — pg-drain,
-tagged-union results, errdefer, cross-compile) · docs/REST_API_DESIGN_GUIDELINES.md
-(handlers/OpenAPI — name the §) · docs/SCHEMA_CONVENTIONS.md (schema/*.sql,
-schema/embed.zig) · dispatch/write_ts_adhere_bun.md / docs/LOGGING_STANDARD.md /
-docs/LIFECYCLE_PATTERNS.md (when touched). Fully greenfield → write "Standard
+construction. Per-surface menu = the dispatch table in THIS repository's
+generated AGENTS.md plus the docs/ rule files those façades cite — all
+materialised locally by the selected packs; a rule file absent from this
+repository is not applicable by definition. Fully greenfield → write "Standard
 set only — docs/greptile-learnings/RULES.md; no other rule files apply." -->
 
 ## Applicable Gates
 
 | Gate | Fires? | Satisfaction strategy |
 |------|--------|-----------------------|
-| ZIG GATE | {yes/no — why} | {e.g. cross-compile both linux targets} |
-| PUB / Struct-Shape | {yes/no} | {shape verdict per new pub surface} |
+| {gate from this repository's AGENTS.md dispatch index} | {yes/no — why} | {how the diff stays clean} |
 | File & Function Length (≤350/≤50/≤70) | {yes/no} | {split plan if a file approaches the cap} |
-| UFS (repeated/semantic literals) | {yes/no} | {named constants; cross-runtime identifier shared verbatim} |
-| UI Substitution / DESIGN TOKEN | {yes/no} | {design-system primitive; theme.css token} |
-| LOGGING / LIFECYCLE / ERROR REGISTRY / SCHEMA | {yes/no} | {per applicable surface} |
 
-<!-- tpl: Which Action-Triggered Guards (AGENTS.md dispatch index) this PR WILL
-trip, and how each stays clean — pre-declared so the agent plans for them
-instead of stalling mid-EXECUTE. Rules ≠ Gates: rules are knowledge to read;
-gates are guards that fire on edits. Touch nothing a gate watches → replace the
-table with "N/A — docs/markdown only." -->
+<!-- tpl: Which Action-Triggered Guards this Pull Request (PR) WILL trip, and
+how each stays clean — pre-declared so the agent plans for them instead of
+stalling mid-EXECUTE. The menu is THIS repository's generated AGENTS.md
+dispatch index — one row per materialised gate the diff can trip; never cite a
+gate from a pack this repository lacks. Rules ≠ Gates: rules are knowledge to
+read; gates are guards that fire on edits. Touch nothing a gate watches →
+replace the table with "N/A — docs/markdown only." -->
 
 ## Prior-Art / Reference Implementations
 
@@ -202,7 +202,8 @@ pyramid (handler unit / in-process integration / subprocess e2e); auto-JSON when
 stdout is piped (LLM-native) — state which pillars this spec aligns with and any
 divergence. API → docs/REST_API_DESIGN_GUIDELINES.md + the closest existing
 handler. Schema → the nearest migration + docs/SCHEMA_CONVENTIONS.md. UI →
-design-system primitives + theme.css tokens. Greenfield → "no prior art; shape
+design-system primitives + theme.css tokens. Cite each doc only where this
+repository materialises it. Greenfield → "no prior art; shape
 defined in docs/architecture/{doc}.md." -->
 
 ## Sections (implementation slices)
@@ -285,7 +286,7 @@ are implementation gaps, not notes for later. -->
 | 1.1 | {unit / integration / e2e} | `test_<short_name>` | {one-line behavioural claim} |
 
 <!-- tpl: Prose-and-assertions only — no test code. One row per Dimension;
-bound to the /write-unit-test skill; ≥50% negative paths; every Failure Mode
+bound to the /orly-write-unit-test skill; ≥50% negative paths; every Failure Mode
 row and every Metrics row gets a test. Tiers: unit (pure logic, handlers,
 boundaries — empty/null/max/malformed/unicode) · integration (real stack, mock
 only at system boundaries, deterministic failure injection per Failure Mode) ·
@@ -305,22 +306,23 @@ table. -->
 |---|--------------------------------|---------------------|----------|----------|-----------------|
 | R1 | {outcome the user can observe} (§1) | `{command}` | {exit 0 / substring / 0 matches} | P0 | |
 | R2 | Diff stays inside Files Changed | `git diff --name-only origin/main...HEAD` | 0 paths missing from the Files Changed table | P0 | |
-| S1 | Unit tests pass | `make test` | exit 0 | P0 | |
-| S2 | Lint clean | `{repo lint umbrella, e.g. make lint-all}` | exit 0 | P0 | |
-| S3 | Integration passes (HTTP/schema/Redis touched) | `make test-integration` | exit 0 | P0 | |
-| S4 | e2e walks the user path (user-facing Category) | `{test-e2e command}` | exit 0 | P0 | |
-| S5 | No leaks (allocator wiring touched) | `make memleak` | exit 0 | P0 | |
-| S6 | Cross-compile (Zig touched) | `zig build -Dtarget=x86_64-linux && zig build -Dtarget=aarch64-linux` | exit 0 | P0 | |
-| S7 | No secrets | `gitleaks detect` | exit 0 | P0 | |
-| S8 | No oversize source file | `git diff --name-only origin/main...HEAD \| grep -v '\.md$' \| xargs wc -l 2>/dev/null \| awk '$1>350 && $2!="total"'` | no output | P0 | |
-| S9 | Orphan sweep | Dead Code Sweep greps | 0 matches | P0 | |
+| S1 | Conform gates green | `{conform command from .oracle/orly.json, verbatim}` | exit 0 | P0 | |
+| S2 | Unit tests pass | `{verify.unit command from .oracle/orly.json, verbatim}` | exit 0 | P0 | |
+| S3 | Slow tier green (code-carrying branch) | `{one row per declared slow verify.* the diff's surface needs — integration / e2e / memory / cross-compile — verbatim}` | exit 0 | P0 | |
+| S4 | No secrets | `gitleaks detect` | exit 0 | P0 | |
+| S5 | No oversize source file | `git diff --name-only origin/main...HEAD \| grep -v '\.md$' \| xargs wc -l 2>/dev/null \| awk '$1>350 && $2!="total"'` | no output | P0 | |
+| S6 | Orphan sweep | Dead Code Sweep greps | 0 matches | P0 | |
+
+**Command source rule:** every S-row Verify command is copied **verbatim from `.oracle/orly.json`** (`conform`, `verify.*`) — the same set `orly gate` runs, so the rubric and the mechanical PR gate grade one boundary. The gate BLOCKs a staged pending/active spec whose rubric omits the declared `conform` or `verify.unit` command; a rubric naming a runner the repository does not declare is wrong by construction. `.oracle/orly.json` still a seed → complete it first (`dispatch/lifecycle.md` §Bootstrap); authoring against an unseeded config is the nondeterminism this rule exists to kill.
 
 **Grading protocol (VERIFY):** run the Verify command verbatim; grade ONLY from its output. Graded = ✅/❌ + the one decisive output line (`342 passed`); long evidence goes to PR Session Notes with a pointer here. **Ship gate:** every row graded, every P0 ✅ → eligible for CHORE(close); any ❌ or empty cell → return to EXECUTE; a P1 ❌ ships only with an Indy-acked deferral quote in Discovery.
 
 <!-- tpl: The single scoring surface — no other scoreboard. 5–12 rows after
 pruning: one per Section outcome, failure class, or hygiene gate — never one
-per Dimension (that ledger is the Test Specification). Keep the standard S-rows
-whose surface is touched; delete the rest. Expected litmus: every Expected is
+per Dimension (that ledger is the Test Specification). S-row commands come verbatim from
+`.oracle/orly.json`; expand S3 to one row per declared slow `verify.*` the
+diff's surface needs; delete rows whose command this repository does not
+declare. Expected litmus: every Expected is
 mechanically checkable — an exit code, a literal substring, or a match count;
 can't write it that way → the criterion is fuzzy — fix the criterion, not the
 grading. Authoring fills every column except Graded; VERIFY fills Graded. -->
@@ -401,7 +403,7 @@ platform constants (docs/architecture/direction.md). -->
 
 - **Consults** — Architecture / Legacy-Design / gate-flag triage: the question asked + Indy's decision.
 - **Metrics review** — events added, extra events found during `/review`, analytics/funnel playbook update or the explicit no-change reason.
-- **Skill-chain outcomes** — `/write-unit-test`, `/review`, `kishore-babysit-prs` results (order per `AGENTS.md` CHORE(close); iteration counts, findings dispositioned).
+- **Skill-chain outcomes** — `/orly-write-unit-test`, `/review`, `orly-babysit-prs` results (order per `AGENTS.md` CHORE(close); iteration counts, findings dispositioned).
 - **Deferrals** — every "deferred to follow-up" needs an **Indy-acked verbatim quote** here, format `> Indy (YYYY-MM-DD HH:MM): "<quote>" — context: <which item, why>`. An agent-unilateral deferral is **incomplete scope, not deferral**, and blocks CHORE(close) until the item lands or the quote is captured.
 
 <!-- tpl: Empty at creation (keep the four bullet headers). This is the spec's
