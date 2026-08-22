@@ -18,7 +18,7 @@
 
 ## Overview
 
-**Goal (testable):** When an operation touches more than one system or acquires the same resource more than once, both test skills require an ordered failure-point matrix, deterministic failure selected by workflow and boundary-call ordinals, residual-state assertions, retry assertions, and a design finding when an external mutation can complete before any durable record makes it observable and repairable.
+**Goal (testable):** When an operation touches more than one system or acquires the same resource more than once, both test skills require an ordered failure-point matrix, deterministic failure selected by workflow and boundary-call ordinals, residual-state assertions, retry assertions, acknowledgement-loss remote-state proof for every external mutation, and a design finding when an external mutation can complete before any durable record makes it observable and repairable.
 
 **Problem:** The integration skill currently maps dependencies and requires one injected test per downstream branch. Its PostgreSQL pool-exhaustion example drains the pool, so the first acquisition fails and every later acquisition is unreachable. Its state assertions sit under the success-path tier. A handler can therefore release a connection, change QStash state, fail its second connection acquisition, return an expected error, and leave the fleet visible but permanently idle while the test stays green.
 
@@ -48,6 +48,7 @@ The eventual Pull Request (PR) carries only this method correction.
 | `skills/write-unit-test/SKILL.md` | EDIT | Carry the same exhaustive interaction model into unit-test planning and completion |
 | `evals/llms/agents.sh` | EDIT | Recognize Amp's current credit-exhaustion response as unavailable |
 | `evals/llms/run.sh` | EDIT | Run the availability-classifier regression check before live calls |
+| `evals/llms/fixtures.jsonl` | EDIT | Exercise acknowledgement-loss behavior against both test skills |
 
 ## Applicable Rules
 
@@ -84,10 +85,11 @@ T4 starts from an ordered interaction list, including repeated acquisitions of t
 
 ### §2 — Prove residual state and surface unsafe ordering
 
-Every injected failure asserts durable rows, external state, user-visible state, and whether retry heals the operation. A response code is supporting evidence. A release-network-reacquire window is the highest-risk injection point because the second acquisition competes with work that arrived during the network gap. The test classifies external interactions and reports a design defect when a mutation can complete before any durable record makes it observable and repairable.
+Every injected failure asserts durable rows, external state, user-visible state, and whether retry heals the operation. A response code is supporting evidence. Every external mutation also proves the ambiguous case where the remote effect commits but its acknowledgement is lost: remote state is inspected, the idempotency or reconciliation record is asserted, and retry reaches exactly one effect. A durable intent helps recovery but does not prove duplicate reissue impossible. A release-network-reacquire window is the highest-risk injection point because the second acquisition competes with work that arrived during the network gap. The test classifies external interactions and reports a design defect when a mutation can complete before any durable record makes it observable and repairable.
 
 - **Dimension 2.1** — DONE — T3 state assertions apply to every T4 failure row and require retry behavior → Test `should_reject_status_only_failure_proof`
 - **Dimension 2.2** — DONE — release-then-reacquire is ranked first; valid read-only prerequisites remain allowed; unrecorded external mutation becomes a design finding → Test `should_report_external_before_durable_ordering`
+- **Dimension 2.3** — DONE — every external mutation covers acknowledgement loss with a remote-state, reconciliation, and exactly-one-effect retry proof → Test `should_prove_acknowledgement_loss_without_duplicate_effect`
 
 ### §3 — Keep unit and integration methods aligned
 
@@ -109,7 +111,7 @@ No code API changes. The instruction interface added to both skills is one matri
 ```text
 workflow ordinal | boundary-call ordinal | dependency/resource | interaction |
 prior completed actions | injection seam | operation/request scope | expected response |
-durable residual state |
+failure timing / remote outcome | durable residual state |
 external residual state | user-visible state | retry outcome | design finding
 ```
 
@@ -123,6 +125,7 @@ The integration skill proves rows against real internal dependencies. The unit s
 | Response-only assertion | The test checks `503` and stops | Reject the test; require durable, external, user-visible, and retry-state assertions |
 | Missing repeated acquisition | The request map lists dependencies but collapses two database acquisitions into one | Require ordered interactions, not unique dependency names |
 | Silent unsafe ordering | An external cancellation completes before any durable intent or repair record | Report a design defect; prefer durable intent first, or require idempotency, compensation, and reconciliation |
+| Lost external acknowledgement | The remote mutation commits but its response never reaches the caller | Inspect remote state, assert idempotency or reconciliation, and prove retry has exactly one effect |
 | Unit-only proof | A fake proves the branch but real resource behavior differs | Keep the unit proof and add the integration row against real internal dependencies |
 | Amp credit response graded wrong | `Out of Credits` is absent from the unavailable matcher | Recognize the observed wording and prove a real `VERDICT: NO` is not excluded |
 
@@ -134,6 +137,7 @@ The integration skill proves rows against real internal dependencies. The unit s
 4. Pool draining can satisfy only a first-acquisition row.
 5. External mutation without durable intent or a repair record is reported as a design defect; read-only prerequisites remain valid.
 6. Integration tests retain real internal dependencies; unit tests inject through explicit boundaries.
+7. A durable intent or outbox alone cannot satisfy acknowledgement-loss coverage; remote state and exactly-one-effect retry are required.
 
 ## Metrics & Observability
 
@@ -151,6 +155,7 @@ The integration skill proves rows against real internal dependencies. The unit s
 | 1.2 | behavior evaluation | `should_fail_each_ordered_interaction` | The second database acquisition gets workflow and boundary-call ordinals plus an operation-scoped failpoint; whole-pool exhaustion is rejected as proof of that row |
 | 2.1 | behavior evaluation | `should_reject_status_only_failure_proof` | A proposal asserting only `503` is incomplete until rows, schedules, visible fleet state, and retry outcome are asserted |
 | 2.2 | behavior evaluation | `should_report_external_before_durable_ordering` | The release-network-reacquire window is highest risk; read-only prerequisites are valid; cancel-before-recording durable intent is reported as a design defect |
+| 2.3 | behavior evaluation | `should_prove_acknowledgement_loss_without_duplicate_effect` | A remote cancellation commits while its acknowledgement is lost; the edited skill requires remote-state inspection, reconciliation or idempotency proof, and exactly one effect after retry |
 | 3.1 | content validation | `should_require_dual_ordinal_unit_seam` | Unit hard rules and anti-patterns name workflow-ordinal and boundary-call-ordinal injection and reject whole-pool exhaustion as exhaustive proof |
 | 3.2 | content validation | `should_block_incomplete_partial_completion_matrix` | Both Definition of Done lists require one row per failure point with a residual-state assertion |
 | 4.1 | regression | `should_distinguish_unavailable_from_no_verdict` | `Out of Credits` matches unavailable; `VERDICT: NO` does not |
@@ -167,11 +172,12 @@ The integration skill proves rows against real internal dependencies. The unit s
 | R4 | Unsafe ordering produces a design finding | `rg -n "design defect|external.*durable" skills/write-integration-test/SKILL.md` | explicit rule present | P0 | ✅ PASS — unrecorded external mutation is a design defect |
 | R5 | Existing tier numbering is unchanged | `rg -n '^### T[0-9]' skills/write-integration-test/SKILL.md` | exactly T1 through T9 | P0 | ✅ PASS — T1 through T9 appear once each |
 | R6 | Parent/new behavior evaluation proves the change bites | Discovery transcript | parent incomplete; edited complete | P0 | ✅ PASS — parent omitted required proof; edited skill passed all six behaviors |
-| R7 | Availability matching recognizes the observed Amp response without swallowing a verdict | `make llmevals CHECK=1` | classifier validation and 53 fixtures pass | P0 | ✅ PASS — 53 fixtures; live smoke passed with Amp correctly unavailable |
+| R7 | Availability matching recognizes the observed Amp response without swallowing a verdict | `make llmevals CHECK=1` | classifier validation and 54 fixtures pass | P0 | ✅ PASS — 54 fixtures; smoke passed Claude, Codex, Amp, and OpenCode at 1/1 |
+| R8 | Every external mutation gets acknowledgement-loss remote-state and exactly-one-effect retry proof | `bash evals/llms/run.sh --ids partial-completion-acknowledgement-loss` | all available agents return `NO` | P0 | ✅ PASS — Claude, Codex, Amp, and OpenCode returned `NO` |
 | S1 | Both skill files validate | `quick_validate.py skills/write-integration-test && quick_validate.py skills/write-unit-test` | both valid | P0 | ✅ PASS — both validators reported `Skill is valid!` |
-| S2 | Governance audit passes | `make audit` | `ALL CHECKS PASSED` | P0 | ✅ PASS — Bun 1.3.14: 108 unit, 12 dispatch, 23 ledger, and 22 install checks passed |
-| S3 | No secrets | `gitleaks detect` | exit 0 | P0 | ✅ PASS — 497 commits scanned; no leaks found |
-| S4 | Diff stays inside Files Changed | `git diff --name-only "$(git merge-base origin/main HEAD)"` | only the five listed paths | P0 | ✅ PASS — exactly the five listed paths |
+| S2 | Governance audit passes | `make audit` | `ALL CHECKS PASSED` | P0 | ✅ PASS — Bun 1.4.0: 109 unit, 12 dispatch, 23 ledger, and 23 install checks passed |
+| S3 | No secrets | `gitleaks detect` | exit 0 | P0 | ✅ PASS — gitleaks found no leaks |
+| S4 | Diff stays inside Files Changed | `git diff --name-only "$(git merge-base origin/main HEAD)"` | only the six listed paths | P0 | ✅ PASS — exactly the six listed paths |
 
 **Grading protocol:** Run each command from the repository root. Every row must carry a decisive output line before CHORE(close). Any failure returns to EXECUTE.
 
@@ -221,3 +227,5 @@ The integration skill proves rows against real internal dependencies. The unit s
 - Aug 21, 2026 — Final live smoke passed Claude, Codex, and OpenCode at 1/1. Amp's exact zero-exit credit diagnostic was classified unavailable. Classifier checks reject timeouts, crashed answers, trailing diagnostics, and ordinary prose containing authentication terms.
 - Aug 21, 2026 — Adversarial, red-team, and maintainability reviews returned clean after fixes to stream ordering, exit-status grading, error-shape matching, dual-ordinal naming, and matrix eligibility.
 - Aug 21, 2026 — The final Bun 1.3.14 audit passed 108 unit tests, 12 dispatch checks, 23 ledger checks, and 22 install checks. Gitleaks scanned 497 commits and found no leaks.
+- Aug 22, 2026 — Final review added acknowledgement-loss coverage, deterministic skill anchors, complete fake-adapter checks, and a scoped behavior fixture. The targeted fixture returned `NO` from Claude, Codex, Amp, and OpenCode.
+- Aug 22, 2026 — Bun 1.4.0 audit passed 109 unit tests, 12 dispatch checks, 23 ledger checks, and 23 install checks; gitleaks found no leaks.

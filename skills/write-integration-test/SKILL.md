@@ -146,12 +146,17 @@ test, make its counter concurrency-safe, and assert it fired exactly once.
 
 Write the matrix before the tests:
 
-| Workflow N | Boundary call N | Dependency / resource | Interaction | Prior completed actions | Injection seam | Operation / request scope | Response | Durable residual state | External residual state | User-visible state | Retry outcome | Design finding |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1..N | 1..M | named boundary | exact call | side effects already committed | ordinal-selecting mechanism | test plus operation ID | exact surface | rows and transactions | remote effects | next user read | heals or stays broken | ordering defect or none |
+| Workflow N | Boundary call N | Dependency / resource | Interaction | Prior completed actions | Injection seam | Operation / request scope | Response | Failure timing / remote outcome | Durable residual state | External residual state | User-visible state | Retry outcome | Design finding |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1..N | 1..M | named boundary | exact call | side effects already committed | ordinal-selecting mechanism | test plus operation ID | exact surface | before effect / remote committed, acknowledgement lost / after durable write | rows and transactions | remote effects | next user read | heals or stays broken | ordering defect or none |
 
 For every row, assert all residual-state columns. A response-only assertion is an
-incomplete T4 test. Treat **release → network or external action → reacquire** as the
+incomplete T4 test. Every external mutation gets rows for failure before the effect,
+remote commit with acknowledgement-loss, and failure after the following durable
+write. For acknowledgement-loss, inspect remote state or a provider status query,
+assert the idempotency or reconciliation record, and prove retry reaches exactly one
+effect. Durable intent or an outbox makes repair observable; it does not by itself
+prove a retry cannot reissue the remote mutation. Treat **release → network or external action → reacquire** as the
 highest-risk injection window: the later acquisition competes with work admitted
 during the gap and is commonly the least tested. Classify each external interaction
 as a read-only prerequisite, reversible reservation, idempotent mutation, or
@@ -173,6 +178,7 @@ idempotency, compensation, reconciliation, and failure tests for each residual s
 | Redis: partition mid-stream | `toxiproxy` cut after N bytes | Reconnect with `Last-Event-ID`, no duplicate processing |
 | External 5xx (Stripe/OpenAI) | Mock HTTP server returns 502 | Retry budget honoured, eventual surface to user |
 | External timeout | Mock HTTP server delays past `timeout_ms` | Caller times out, doesn't propagate hang |
+| External acknowledgement lost | Mock server commits then drops the response | Remote status confirms one effect; idempotency or reconciliation fences retry |
 | TCP half-open | Raw socket `SO_LINGER 0` close | Detected within `SO_RCVTIMEO`, not silent hang |
 | Disk: ENOSPC on tmp | tmpfs with size cap | Surface error, no partial-write corruption |
 | Clock skew | Fake clock past lease TTL | Lease re-issued, no stale-holder state |
@@ -296,6 +302,7 @@ Both make every downstream test a lie — fix them before adding coverage. A gre
 - **Instrument real dependencies without replacing them.** An operation-scoped failpoint may wrap a real client or pool only when every unselected call delegates to the real dependency, the selected call fails before acquisition, and a separate real-dependency test proves production error mapping. Replacing the pool or client with synthetic behavior disqualifies the integration proof.
 - **Partial failure proves residual state.** For every injected failure, assert durable rows, external state, what the user sees next, and whether retry heals it. A status code alone cannot complete T4.
 - **Unsafe external mutation ordering is a design defect.** Read-only prerequisites are valid. If a mutation can complete before any durable intent or repair record, report it; prefer durable intent first, or require idempotency, compensation, and reconciliation when sequencing cannot change.
+- **Acknowledgement loss needs a remote-state proof.** For every external mutation, make the remote effect succeed while its acknowledgement is lost; inspect remote state, assert the idempotency or reconciliation record, and prove retry reaches exactly one effect. A durable record alone is not an exactly-once proof.
 - **Record the partial-completion matrix.** Paste the completed rows into PR Session Notes. A checked box without the rows is indistinguishable from a skipped proof.
 - **Drain + leak proofs are required, not optional.** Once per suite, recorded in PR Session Notes.
 - **No hitting deployed environments.** Integration tests run against `make up` containers, never `api-dev`/`api`.
@@ -317,6 +324,7 @@ Both make every downstream test a lie — fix them before adding coverage. A gre
 - ❌ Calling the handler function directly, bypassing router + middleware
 - ❌ Draining an entire pool and calling it pool-exhaustion coverage for later acquisitions
 - ❌ Asserting a failure status without asserting what the operation left behind and whether retry heals it
+- ❌ Treating a durable intent row as proof that acknowledgement-loss cannot reissue a remote effect
 
 ## CI execution strategy
 
@@ -445,7 +453,7 @@ Block the change if any are missing on touched surface:
 - [ ] OpenAPI / protobuf breaking-change check (`oasdiff` / `buf breaking`) clean
 - [ ] If streaming touched: T7 incremental-delivery test present
 - [ ] Failure-injection mechanism named for every T4/T7 test (no fiction)
-- [ ] **Partial completion:** every operation touching multiple systems or acquiring the same resource more than once carries a matrix with one row per ordered failure point; each row selects workflow and boundary-call ordinals, scopes a concurrency-safe failpoint to one operation, and asserts durable, external, user-visible, and retry residual state; the completed matrix is pasted into PR Session Notes
+- [ ] **Partial completion:** every operation touching multiple systems or acquiring the same resource more than once carries a matrix with one row per ordered failure point; each row selects workflow and boundary-call ordinals, failure timing / remote outcome, scopes a concurrency-safe failpoint to one operation, and asserts durable, external, user-visible, and retry residual state; every external mutation proves acknowledgement-loss remote state plus exactly one effect on retry; the completed matrix is pasted into PR Session Notes
 - [ ] PR Session Notes paste final `make test-integration` + `make memleak` lines
 - [ ] **≥100-connection** test proves exactly-once + parallelism (peak-concurrency/lock-wait counter, or wall-time < R×), passes K runs
 - [ ] **Zig error-path leak:** allocating handlers/repos proven by `std.testing.checkAllAllocationFailures`; no cross-request high-water growth over N requests

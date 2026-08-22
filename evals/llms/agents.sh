@@ -130,6 +130,102 @@ append_file_separated() {
   cat "$input" >>"$out"
 }
 
+require_skill_markers() {
+  local skill="$1" marker
+  shift
+  for marker in "$@"; do grep -Fq "$marker" "$skill" || return 1; done
+}
+
+validate_partial_completion_rules() {
+  local integration="$ROOT/skills/write-integration-test/SKILL.md"
+  local unit="$ROOT/skills/write-unit-test/SKILL.md"
+  local -a markers=(
+    'Write the matrix before the tests:'
+    'Failure timing / remote outcome'
+    'acknowledgement-loss'
+    'exactly one effect'
+    'workflow ordinal'
+    'boundary-call ordinal'
+    'residual state'
+    'retry'
+    'Unsafe external mutation ordering is a design defect.'
+    '**Partial completion:**'
+  )
+  require_skill_markers "$integration" "${markers[@]}" \
+    'Any operation that touches multiple systems or acquires the same resource more than once is **Standard at minimum** and must run T4' \
+    'Draining a resource pool proves the first acquisition and nothing after it.' || return 1
+  require_skill_markers "$unit" "${markers[@]}" \
+    'when one operation touches multiple systems or acquires the same resource more than once' \
+    'Draining a whole resource pool proves only the first acquisition and cannot cover a later one.' || return 1
+  printf '✓ partial-completion skill rules valid\n'
+}
+
+write_fake_agent() {
+  local path="$1"
+  cat >"$path" <<'EOF'
+#!/usr/bin/env bash
+set -u
+agent="$(basename "$0")"
+prompt="${ORLY_FAKE_PROMPT:?}"
+case "$agent" in
+  claude) [[ "$#" -eq 1 && "$1" == '-p' ]] || exit 31; [[ "$(cat)" == "$prompt" ]] || exit 32 ;;
+  amp) [[ "$#" -eq 1 && "$1" == '--execute' ]] || exit 33; [[ "$(cat)" == "$prompt" ]] || exit 34 ;;
+  opencode) [[ "$#" -eq 2 && "$1" == 'run' && "$2" == "$prompt" ]] || exit 35 ;;
+  codex)
+    [[ "$#" -eq 5 ]] || exit 36
+    [[ "$1" == 'exec' && "$2" == '-' && "$3" == '--skip-git-repo-check' && "$4" == '--output-last-message' ]] || exit 37
+    [[ "$(cat)" == "$prompt" ]] || exit 38
+    printf '%s\n' 'VERDICT: YES' > "$5"
+    ;;
+  *) exit 39 ;;
+esac
+printf '%s\n' 'diagnostic before verdict' >&2
+if [[ "$agent" == 'codex' ]]; then
+  printf '%s\n' 'event stream noise'
+else
+  printf '%s\n' 'event stream noise' 'VERDICT: YES'
+fi
+exit "${ORLY_FAKE_AGENT_STATUS:-0}"
+EOF
+  chmod +x "$path"
+}
+
+validate_fake_agent_success() {
+  local agent="$1" prompt="$2" out="$3" status
+  invoke_agent "$agent" "$prompt" "$out"; status=$?
+  [[ "$status" -eq 0 ]] || return 1
+  [[ "$(extract_agent_verdict "$out" "$status")" == 'YES' ]] || return 1
+  [[ "$agent" != 'codex' || ! -e "$out.msg" ]]
+}
+
+validate_fake_agent_failure() {
+  local agent="$1" prompt="$2" out="$3" status
+  ORLY_FAKE_AGENT_STATUS=7 invoke_agent "$agent" "$prompt" "$out"; status=$?
+  [[ "$status" -eq 7 ]] || return 1
+  [[ "$(extract_agent_verdict "$out" "$status")" == '?' ]] || return 1
+  [[ "$agent" != 'codex' || ! -e "$out.msg" ]]
+}
+
+validate_agent_adapters() {
+  local fixture_dir fake_agent prompt out agent expected_prompt='adapter prompt'
+  local ORLY_FAKE_PROMPT="$expected_prompt"
+  export ORLY_FAKE_PROMPT
+  fixture_dir="$(mktemp -d)" || return 1
+  fake_agent="$fixture_dir/fake-agent"; prompt="$fixture_dir/prompt"
+  printf '%s' "$ORLY_FAKE_PROMPT" > "$prompt"
+  write_fake_agent "$fake_agent" || { rm -rf "$fixture_dir"; return 1; }
+  for agent in "${AGENTS_ALL[@]}"; do
+    ln -s "$fake_agent" "$fixture_dir/$agent" || { rm -rf "$fixture_dir"; return 1; }
+  done
+  local PATH="$fixture_dir:$PATH"
+  for agent in "${AGENTS_ALL[@]}"; do
+    out="$fixture_dir/$agent.out"
+    validate_fake_agent_success "$agent" "$prompt" "$out" || { rm -rf "$fixture_dir"; return 1; }
+    validate_fake_agent_failure "$agent" "$prompt" "$out" || { rm -rf "$fixture_dir"; return 1; }
+  done
+  rm -rf "$fixture_dir"
+}
+
 validate_agent_io() {
   local sample status
   sample="$(mktemp)" || return 1
@@ -173,6 +269,8 @@ validate_agent_io() {
   status=$?
   [[ "$status" -eq 9 ]] || { rm -f "$sample"; return 1; }
   is_unavailable "$sample" "$status" || { rm -f "$sample"; return 1; }
+  validate_agent_adapters || { rm -f "$sample"; return 1; }
+  validate_partial_completion_rules || { rm -f "$sample"; return 1; }
   rm -f "$sample"
 }
 

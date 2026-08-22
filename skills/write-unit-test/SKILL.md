@@ -114,18 +114,25 @@ Input → exact output shape AND side effects. Assert *both*. Asserting only the
 - **Expected vs fatal distinction** — a function returning null for both timeout (expected) and connection-reset (fatal) causes busy-loops. Test that they take different paths.
 - **Auth failures** — no token, expired, wrong role, revoked, rate limited.
 - **Downstream errors** — 4xx, 5xx, timeout, DNS, TLS, partial UTF-8, broken pipe.
-- **Partial completion** — when one operation touches multiple systems or acquires the same resource more than once, enumerate every ordered connection, transaction, and external call; select each workflow ordinal and boundary-call ordinal for failure, then assert the residual durable state, external state, user-visible state, and retry outcome.
+- **Partial completion** — when one operation touches multiple systems or acquires the same resource more than once, enumerate every ordered connection, transaction, and external call; select each workflow ordinal and boundary-call ordinal for failure, record failure timing / remote outcome, then assert the residual durable state, external state, user-visible state, and retry outcome.
 
 Write the matrix before the tests:
 
-| Workflow N | Boundary call N | Dependency / resource | Interaction | Prior completed actions | Injection seam | Operation / request scope | Response | Durable residual state | External residual state | User-visible state | Retry outcome | Design finding |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1..N | 1..M | named boundary | exact call | side effects already committed | ordinal-selecting mechanism | test plus operation ID | exact surface | rows and transactions | remote effects | next user read | heals or stays broken | ordering defect or none |
+| Workflow N | Boundary call N | Dependency / resource | Interaction | Prior completed actions | Injection seam | Operation / request scope | Response | Failure timing / remote outcome | Durable residual state | External residual state | User-visible state | Retry outcome | Design finding |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1..N | 1..M | named boundary | exact call | side effects already committed | ordinal-selecting mechanism | test plus operation ID | exact surface | before effect / remote committed, acknowledgement lost / after durable write | rows and transactions | remote effects | next user read | heals or stays broken | ordering defect or none |
 
 The workflow ordinal locates the interaction in the whole operation. The
 boundary-call ordinal selects a repeated call at one dependency. Scope the
 failpoint to the test and operation or request identifier, reset it per test,
 make its counter concurrency-safe, and assert it fired exactly once.
+
+Every external mutation gets rows for failure before the effect, remote commit with
+acknowledgement-loss, and failure after the following durable write. For
+acknowledgement-loss, inspect remote state or a provider status query, assert the
+idempotency or reconciliation record, and prove retry reaches exactly one effect.
+Durable intent or an outbox makes repair observable; it does not by itself prove a
+retry cannot reissue the remote mutation.
 
 ### 3. Invariant
 Properties that must hold across all valid inputs. Use property-based testing (`hypothesis`/`proptest`/`fast-check`) when input domain is large.
@@ -169,6 +176,7 @@ Pin behaviour that must not silently change.
 - **Inject at the selected ordinals, not only the first interaction.** A boundary fake must select both the workflow ordinal and boundary-call ordinal. Draining a whole resource pool proves only the first acquisition and cannot cover a later one.
 - **Residual state is the failure assertion.** For each injected interaction, assert what survived, what external state changed, what the user sees next, and whether retry heals it. The response alone is incomplete.
 - **Unsafe external mutation ordering is a design defect.** Read-only prerequisites are valid. If a mutation can complete before any durable intent or repair record, report it; prefer durable intent first, or require idempotency, compensation, and reconciliation when sequencing cannot change.
+- **Acknowledgement loss needs a remote-state proof.** For every external mutation, make the remote effect succeed while its acknowledgement is lost; inspect remote state, assert the idempotency or reconciliation record, and prove retry reaches exactly one effect. A durable record alone is not an exactly-once proof.
 - **Record the partial-completion matrix.** Paste the completed rows into PR Session Notes. A checked box without the rows is indistinguishable from a skipped proof.
 
 ## Anti-patterns (reject in review)
@@ -186,6 +194,7 @@ Pin behaviour that must not silently change.
 - ❌ Silent golden-file re-blessing on snapshot drift
 - ❌ Draining an entire pool and calling it coverage of every acquisition
 - ❌ Asserting a failure response without asserting the operation's residual state and retry outcome
+- ❌ Treating a durable intent row as proof that acknowledgement-loss cannot reissue a remote effect
 
 ---
 
@@ -293,7 +302,7 @@ Reject the change if any are missing on touched code:
 - [ ] State isolation: tests pass under random execution order
 - [ ] Integration test through real stack for any spec claim involving transport/streaming/real-time
 - [ ] Failure-injection test for every failure mode named in code
-- [ ] **Partial completion:** every operation touching multiple systems or acquiring the same resource more than once has one matrix row per ordered failure point; each row selects workflow and boundary-call ordinals, scopes a concurrency-safe failpoint to one operation, and asserts durable, external, user-visible, and retry residual state; the completed matrix is pasted into PR Session Notes
+- [ ] **Partial completion:** every operation touching multiple systems or acquiring the same resource more than once has one matrix row per ordered failure point; each row selects workflow and boundary-call ordinals, failure timing / remote outcome, scopes a concurrency-safe failpoint to one operation, and asserts durable, external, user-visible, and retry residual state; every external mutation proves acknowledgement-loss remote state plus exactly one effect on retry; the completed matrix is pasted into PR Session Notes
 - [ ] Test names read as documentation
 - [ ] No mocking of internal modules
 - [ ] Golden-file drift, if any, has a written explanation
