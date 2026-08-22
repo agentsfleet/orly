@@ -153,7 +153,7 @@ Guards fire pre-hoc regardless of lifecycle stage. Override: `<GATE>: SKIPPED pe
 
 **Canonical template:** `docs/TEMPLATE.md` (materialised per-repo by `workflow.specifications`). Never look for `project_spec.md`.
 
-**Creating a spec:** invoke `kishore-spec-new` — owns naming, terminology, layout (`docs/v{N}/{pending,active,done}/`). Triggers: "create a spec", "new milestone", "spec out X", any `TODO.md` attempt (forbidden).
+**Creating a spec:** invoke `spec-new` — owns naming, terminology, layout (`docs/v{N}/{pending,active,done}/`). Triggers: "create a spec", "new milestone", "spec out X", any `TODO.md` attempt (forbidden).
 
 **Spec is an instance, rules are the constant.** Spec contradicts a rule → amend spec.
 
@@ -161,7 +161,7 @@ Guards fire pre-hoc regardless of lifecycle stage. Override: `<GATE>: SKIPPED pe
 
 | Event | Action |
 |---|---|
-| New milestone, plan-{eng,ceo,design}-review, `TODO.md` attempt | Invoke `kishore-spec-new`. Land in `docs/v{N}/pending/`, `Status: PENDING`, commit on main. |
+| New milestone, plan-{eng,ceo,design}-review, `TODO.md` attempt | Invoke `spec-new`. Land in `docs/v{N}/pending/`, `Status: PENDING`, commit on main. |
 | Begin implementation OR branch carries spec changes in `pending/` | CHORE(open): `pending/`→`active/`, `Status: IN_PROGRESS` + `Branch:`, create worktree, commit on feature branch. **No code until 4 steps committed.** |
 | Every commit during implementation | Mark completed Dimensions/Sections `DONE` same commit as the code. |
 | All work complete, before PR | CHORE(close). |
@@ -242,7 +242,7 @@ Required when spec involved — after last COMMIT, before PR. Also runs when par
 |---|---|---|
 | 1 | VERIFY | `/write-unit-test`, then `/write-integration-test` — both before the PR, never skipped, never deferred |
 | 2 | REVIEW | gstack `/review` — every runtime, same route; address findings or record a user-acked deferral; reviewer unavailable → Session Notes: *"skipped — <reason> <ts>; rerun before merge"* |
-| 3 | After every push | `kishore-babysit-prs` — CI check runs + greptile inline threads + PR-level summary; stops on two consecutive empty polls with CI green; never `gh pr checks --watch` for greptile |
+| 3 | After every push | `babysit-prs` — CI check runs + greptile inline threads + PR-level summary; stops on two consecutive empty polls with CI green; never `gh pr checks --watch` for greptile |
 
 **PR budget — one per milestone.** One ready PR plus one follow-up is the ceiling. Fold new scope into the open PR (reopen `done/`→`active/` if needed), not a third.
 

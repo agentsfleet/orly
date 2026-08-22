@@ -32,7 +32,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 |---|---|---|
 | 1.1 | Does AGENTS.md require the new spec to land in `docs/v{N}/pending/` with `Status: PENDING`? | YES |
 | 1.2 | Is writing a `TODO.md` explicitly forbidden? | YES |
-| 1.3 | Must `kishore-spec-new` be invoked rather than hand-rolling the spec file? | YES |
+| 1.3 | Must `spec-new` be invoked rather than hand-rolling the spec file? | YES |
 | 1.4 | Is the agent forbidden from writing code before CHORE(open) completes its 4 steps? | YES |
 | 1.5 | When a spec contradicts a rule, must the spec be amended (not the rule weakened)? | YES |
 
@@ -129,10 +129,10 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 
 | # | Question | Expected |
 |---|---|---|
-| 7.1 | Is the skill chain order `/write-unit-test` → runtime review → `kishore-babysit-prs` preserved? | YES |
+| 7.1 | Is the skill chain order `/write-unit-test` → runtime review → `babysit-prs` preserved? | YES |
 | 7.2 | Is REVIEW an explicit stage after VERIFY and before DOCUMENT, with the runtime's review route required there? | YES |
 | 7.3 | Is gstack `/review` the single review route for every runtime (Claude, Codex, OpenCode, Amp) — local and pre-commit, distinct from post-push reviewer triage? | YES |
-| 7.4 | Does `kishore-babysit-prs` run after every push and stop only on two consecutive empty polls? | YES |
+| 7.4 | Does `babysit-prs` run after every push and stop only on two consecutive empty polls? | YES |
 | 7.5 | Is using `gh pr checks --watch` for greptile explicitly disallowed? | YES |
 | 7.6 | If an MCP-backed skill is unavailable, must PR Session Notes record the skip + a "rerun before merge" note? | YES |
 | 7.7 | Is merging/closing/ready-from-draft of another user's PR forbidden without explicit approval? | YES |

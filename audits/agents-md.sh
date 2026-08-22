@@ -95,11 +95,11 @@ awk '
   /^### |^## /                            { if (in_section) in_section=0 }
   in_section && /\/write-unit-test/  && !a { a=NR }
   in_section && /gstack/           && a && !b { b=NR }
-  in_section && /kishore-babysit-prs/&& b && !c { c=NR }
+  in_section && /babysit-prs/&& b && !c { c=NR }
   END { exit (a && b && c && a<b && b<c) ? 0 : 1 }
 ' "$AGENTS" \
   && pass "skill-chain ordering (anchored to CHORE(close))" \
-  || fail "skill chain not in order within CHORE(close): /write-unit-test → gstack /review → kishore-babysit-prs"
+  || fail "skill chain not in order within CHORE(close): /write-unit-test → gstack /review → babysit-prs"
 
 # One route for every runtime. A per-runtime split re-introduces the
 # collapsing-two-near-named-steps failure SOUL.md records; assert the

@@ -1,5 +1,5 @@
 ---
-name: kishore-babysit-prs
+name: babysit-prs
 description: |
   Post-push follow-up for PRs/MRs: backoff-cadence polls over CI check runs
   (fix every failure your diff caused), every greptile inline thread, and the
@@ -11,7 +11,7 @@ description: |
   feedback". Cross-agent: Claude, Codex, OpenCode, Amp.
 ---
 
-# kishore-babysit-prs
+# babysit-prs
 
 Review bots (greptile on GitHub; greptile or another review bot on GitLab)
 post auto-reviews **asynchronously**. They land as PR review comments / MR

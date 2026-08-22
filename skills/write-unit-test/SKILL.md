@@ -74,7 +74,7 @@ codebase, and it's the artifact that makes "is the skill applied?" auditable.
 
 3. The ledger is **done only when every row is ✅ or carries an explicit
    `won't-test: <reason>` / `needs-infra`**. A bare gap is a defect, not a deferral.
-4. **Paste the resolved ledger into PR Session Notes** so `/review`, `kishore-babysit-prs`,
+4. **Paste the resolved ledger into PR Session Notes** so `/review`, `babysit-prs`,
    and a human can audit it — the check becomes reviewable, not merely claimed.
 
 ## Three execution modes

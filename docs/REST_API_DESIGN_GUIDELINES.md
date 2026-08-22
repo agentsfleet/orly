@@ -11,7 +11,7 @@ This is a goal-oriented instruction set. Each rule states the goal it serves so 
 
 This doc binds **whoever ships the change** — Kishore directly, OR an agent acting on Kishore's behalf in auto mode under a start-instruction (per `~/.claude/CLAUDE.md` autonomy rules). Concretely:
 
-- **The agent** runs the Quick checklist below as part of `CHORE(close)` and the §10 pre-PR gate, opens the PR via `gh pr create`, and answers `kishore-babysit-prs` review feedback. The agent is the primary enforcer.
+- **The agent** runs the Quick checklist below as part of `CHORE(close)` and the §10 pre-PR gate, opens the PR via `gh pr create`, and answers `babysit-prs` review feedback. The agent is the primary enforcer.
 - **Kishore** opens the PR directly when working without an agent. Same checklist applies.
 - **A reviewer** (human or `/review`) checks the PR against this doc adversarially. A red box on the checklist that's not justified in the PR description is grounds to block merge.
 

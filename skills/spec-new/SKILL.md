@@ -1,5 +1,5 @@
 ---
-name: kishore-spec-new
+name: spec-new
 description: |
   Author a milestone/workstream spec the executing agent (Orly) ships into a
   deterministic, review-clean, reported Pull Request — intent capture and
@@ -9,7 +9,7 @@ description: |
   self-contained markdown.
 ---
 
-# kishore-spec-new
+# spec-new
 
 A spec is the **rulebook** the executing agent (Orly) plans and ships from. This
 skill makes me author one whose Pull Request (PR) lands **deterministic, review-clean, and

@@ -1,7 +1,7 @@
 # Milestone Specification Template
 
 > **CANONICAL TEMPLATE — two agents consume this file, in different ways.**
-> The **authoring agent** (via the `kishore-spec-new` skill) copies the body below the divider into `docs/v{N}/pending/M{N}_{NNN}_….md` and fills it — authoring order lives in the skill, not in this file. The **executing agent** reads the filled spec **top-to-bottom**: the body is physically ordered by execution need (understand → prepare → build → prove → record).
+> The **authoring agent** (via the `spec-new` skill) copies the body below the divider into `docs/v{N}/pending/M{N}_{NNN}_….md` and fills it — authoring order lives in the skill, not in this file. The **executing agent** reads the filled spec **top-to-bottom**: the body is physically ordered by execution need (understand → prepare → build → prove → record).
 > Enforced by `audits/spec-template.sh` (SPEC TEMPLATE GATE, façade `dispatch/write_spec.md`): required sections present, zero template residue, prohibited patterns absent. Lifecycle: `AGENTS.md → Specification Standards`.
 > A shipped instance outranks guidance: when `docs/v{N}/done/` holds specs, read the newest first and pattern-match.
 
@@ -79,7 +79,7 @@ A milestone is not complete until evidence is captured: commands, logs, screensh
 
 <!--
 SPEC AUTHORING RULES (load-bearing — the one comment that survives):
-- Body order = the executing agent's read order. Fill via the kishore-spec-new
+- Body order = the executing agent's read order. Fill via the spec-new
   skill (authoring order lives there); after filling, DELETE every "tpl:"
   guidance comment — the SPEC TEMPLATE GATE blocks tpl residue, unfilled
   {slots}, and missing required sections (audits/spec-template.sh --staged).
@@ -403,7 +403,7 @@ platform constants (docs/architecture/direction.md). -->
 
 - **Consults** — Architecture / Legacy-Design / gate-flag triage: the question asked + Indy's decision.
 - **Metrics review** — events added, extra events found during `/review`, analytics/funnel playbook update or the explicit no-change reason.
-- **Skill-chain outcomes** — `/write-unit-test`, `/review`, `kishore-babysit-prs` results (order per `AGENTS.md` CHORE(close); iteration counts, findings dispositioned).
+- **Skill-chain outcomes** — `/write-unit-test`, `/review`, `babysit-prs` results (order per `AGENTS.md` CHORE(close); iteration counts, findings dispositioned).
 - **Deferrals** — every "deferred to follow-up" needs an **Indy-acked verbatim quote** here, format `> Indy (YYYY-MM-DD HH:MM): "<quote>" — context: <which item, why>`. An agent-unilateral deferral is **incomplete scope, not deferral**, and blocks CHORE(close) until the item lands or the quote is captured.
 
 <!-- tpl: Empty at creation (keep the four bullet headers). This is the spec's

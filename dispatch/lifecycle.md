@@ -132,7 +132,7 @@ spec-vs-rules conflict (amend spec).
 - `docs/architecture/**` carries a non-empty diff for flow-defining changes, or
   Session Notes says why not (`dispatch/name_architecture.md` covers both homes).
 - PR `## Session notes`: decisions, assumptions, dead ends, deferrals,
-  `/write-unit-test` + runtime review outcomes, `kishore-babysit-prs` final
+  `/write-unit-test` + runtime review outcomes, `babysit-prs` final
   report.
 - Orphan sweep complete (RULE ORP); ephemeral handoff docs deleted
   (`docs/**/HANDOFF_*.md`, `docs/**/handoff*.md`, `HANDOFF.md` at any depth —
@@ -175,7 +175,7 @@ claim needs the `> Indy (` ack quote in the spec). An Indy-acked deferral that
 leaves a Dimension open ships via `orly override spec.dimensions --reason
 "<the ack>"` — visible in the PR, dead after the merge.
 
-**Babysit detail:** `kishore-babysit-prs` covers all three surfaces — CI check
+**Babysit detail:** `babysit-prs` covers all three surfaces — CI check
 runs (fix every failure your diff caused), greptile inline comments, and the
 PR-level summary thread — and stops on two consecutive empty polls with CI
 green. Never `gh pr checks --watch` for greptile.
