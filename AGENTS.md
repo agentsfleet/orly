@@ -83,7 +83,7 @@ Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_A
 - `conn.query()` requires `.drain()` in same fn before `deinit()`. Verify `make lint-governance`. Use `conn.exec()` for no-rows.
 - **Vault (1Password `op`).** Resolve secrets via the `op` CLI, never hand-paste/log. Vault names come from the environment, never from a rules file.
 - Check a sibling repository under `$HOME/Projects/` for an existing pattern in the same language before inventing one.
-- **Reference canon (read before designing):** TypeScript → `oss/supabase/apps/studio` + `oss/supabase/packages/{ui,ui-patterns}` + `oss/cli`; Zig → `oss/ghostty/src/`; Rust → `oss/exonum` + `oss/core_api-develop` + Microsoft's Rust guidelines (`oss/rust-guidelines/all.txt`, fetch if absent; mandatory in Rust review). Missing canon checkout → ask, then clone into `~/Projects/oss/`. "Broken for us" → call-site diff first.
+- **Reference canon (read before designing):** TypeScript → `oss/supabase/apps/studio` + `oss/supabase/packages/{ui,ui-patterns}` + `oss/cli`; Zig → `oss/ghostty/src/`; Rust → `oss/bun/src/` + `oss/exonum` + `oss/core_api-develop` + Microsoft's Rust guidelines (`oss/rust-guidelines/all.txt`, fetch if absent; mandatory in review). Missing checkout → ask, then clone into `~/Projects/oss/`. "Broken for us" → call-site diff first.
 
 **Forge detection:** `github.com` → `gh`; `gitlab.com` → `glab`. Check `git remote -v`.
 
@@ -178,7 +178,7 @@ Non-trivial (full lifecycle) if it: touches >1 file · new abstraction · data m
 
 ### CHORE (open)
 
-Spec `pending/`→`active/`; `Status: IN_PROGRESS`; `Branch:` set; **`Test Baseline:` recorded** (declared `verify.*` counts → `**Test Baseline:** unit=<N> integration=<M>` in the spec header; VERIFY's Test Delta compares against it); committed. Worktree created, CWD inside (verify `pwd` + `git worktree list`). No code until the 4 steps are committed.
+Spec `pending/`→`active/`; `Status: IN_PROGRESS`; `Branch:` set; **`Test Baseline:` recorded** (declared `verify.*` counts → `**Test Baseline:** unit=<N> integration=<M>`; VERIFY's Test Delta compares against it); committed. Worktree created, CWD inside (verify `pwd` + `git worktree list`). No code until the 4 steps are committed.
 
 ### PLAN
 
