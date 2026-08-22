@@ -7,7 +7,10 @@ import { install } from "./install";
 import { RulesModel } from "./model";
 
 const SOURCE_EXTENSIONS = ["rs", "ts", "tsx", "js", "jsx", "py", "sh", "sql", "zig", "mdx"];
-const ENGINE_VERSION = "0.5.2";
+// Read from package.json rather than restated here: a hand-synced copy goes
+// stale at the next release and the test then proves an install at a version
+// that no longer ships.
+const ENGINE_VERSION = (await Bun.file(join(ROOT, "package.json")).json()).version;
 
 afterEach(cleanupTemporaryDirectories);
 
