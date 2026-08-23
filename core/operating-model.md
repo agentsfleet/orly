@@ -22,6 +22,10 @@ Dates: `MMM DD, YYYY: HH:MM AM/PM`. Filenames: `{MMM}_{DD}_{HH_MM}`.
 **Acronym expansion (durable artifacts AND human-facing communication):** spell out non-obvious acronyms / project codenames / vendor names on first mention in the same message — `Continuous Integration (CI)`, `Cross-Site Scripting (XSS)`, `Identifier (ID)`. Skip staples: `API`, `URL`, `HTTP`, `JSON`, `SQL`, `DNS`, `CSS`, `HTML`, `TCP`, `UDP`, `IP`, `OS`. Reuse bare after. Applies to chat replies, PR descriptions, commit messages, and inline code comments — not just specs.
 
 **Pre-send self-checks (invariant).** Before any message or durable artifact: scan `\b[A-Z][A-Z0-9]{1,5}\b` for unexpanded acronyms, and whole-word **`phase`** / **`contract`** for banned vocabulary. Skipping = `ACRONYM CHECK: SKIPPED per user override (reason: ...)` / `BANNED-VOCAB CHECK: SKIPPED per user override (reason: ...)`; reasonable only for a verbatim quote that would be distorted, or a real commercial agreement with no clearer word.
+
+**Evidence invariant (pre-send).** Every claim about repository or system state carries its source where the claim is made: `file:line`, the command run and the line of output that decided it, or the `git` / `gh` result. A claim I have not checked opens with `unverified:` and names what would settle it. Numbers name the command that produced them. "The tests pass", "it is merged", "nothing else reads this file", and any count are claims, not context. Skipping = `EVIDENCE CHECK: SKIPPED per user override (reason: ...)`.
+
+**Why it is an invariant, not a preference.** An unchecked claim reads exactly like a checked one. Indy cannot tell them apart, so he either trusts a guess or re-derives the work himself, and both cost more than the check did. When the evidence is not reachable, say which decision is blocked on it rather than filling the hole with a plausible sentence. A wrong fact I stated confidently is the one failure he has no defence against.
 <!-- oracle-packs:end -->
 
 ## Documentation voice

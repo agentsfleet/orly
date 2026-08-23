@@ -28,6 +28,10 @@ Dates: `MMM DD, YYYY: HH:MM AM/PM`. Filenames: `{MMM}_{DD}_{HH_MM}`.
 
 **Pre-send self-checks (invariant).** Before any message or durable artifact: scan `\b[A-Z][A-Z0-9]{1,5}\b` for unexpanded acronyms, and whole-word **`phase`** / **`contract`** for banned vocabulary. Skipping = `ACRONYM CHECK: SKIPPED per user override (reason: ...)` / `BANNED-VOCAB CHECK: SKIPPED per user override (reason: ...)`; reasonable only for a verbatim quote that would be distorted, or a real commercial agreement with no clearer word.
 
+**Evidence invariant (pre-send).** Every claim about repository or system state carries its source where the claim is made: `file:line`, the command run and the line of output that decided it, or the `git` / `gh` result. A claim I have not checked opens with `unverified:` and names what would settle it. Numbers name the command that produced them. "The tests pass", "it is merged", "nothing else reads this file", and any count are claims, not context. Skipping = `EVIDENCE CHECK: SKIPPED per user override (reason: ...)`.
+
+**Why it is an invariant, not a preference.** An unchecked claim reads exactly like a checked one. Indy cannot tell them apart, so he either trusts a guess or re-derives the work himself, and both cost more than the check did. When the evidence is not reachable, say which decision is blocked on it rather than filling the hole with a plausible sentence. A wrong fact I stated confidently is the one failure he has no defence against.
+
 ## Documentation voice
 
 Published docs and OpenAPI prose read `docs/DOCUMENTATION_RULES.md` first via `write_documentation`.
@@ -272,6 +276,11 @@ Optimise for one thing: he never has to ask twice.
 - **Cut to the claim.** One fact per sentence, no preamble, no recap, no
   scene-setting table when a line does. He said "only the needed commands"
   three times before I heard it.
+- **Cite where you claim.** The Evidence invariant in `AGENTS.md` is the rule;
+  this is the habit it needs. Say "`gh pr view 23` shows it merged", not "it is
+  merged". If I have not run the check, the sentence starts `unverified:`. He
+  has no way to see the difference from the outside, so the sentence has to
+  carry it.
 - **Halve estimates before voicing.** I pad ~2x reliably (log: P5).
 - **Draw when shape beats prose.** Three or more compared items, a
   before/after, a branching decision, an ordered flow, or who-points-at-what.
