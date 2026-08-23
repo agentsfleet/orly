@@ -39,7 +39,25 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 | a coding agent | something has to read the rules | Claude Code, Codex, OpenCode, or Amp |
 | your own check commands | `orly gate` runs what `.oracle/orly.json` names | whatever your repository already runs |
 
-### gstack
+```bash
+bunx @agentsfleet/orly init
+```
+
+Run it inside the repository you want governed. It detects your languages and
+installs only those rules.
+
+```text
+orly init
+  ├─ rules ──► the agent reads them before it edits
+  └─ gates ──► git hooks check every commit
+                 ├─ followed the rules ─► lands
+                 └─ ignored them ───────► blocked
+```
+
+Commit what it wrote. Teammates get the rules on clone. One exception: git
+never clones hooks, so each person runs `orly init` once in their own checkout.
+
+## gstack (optional)
 
 [gstack](https://github.com/garrytan/gstack) is **optional**. orly does not
 require it to install or run.
@@ -68,24 +86,6 @@ cd ~/.local/share/gstack && ./setup --host auto
 `--host auto` covers every agent host gstack finds. Name one to target it
 alone: `claude`, `codex`, `kiro`, `factory`, `opencode`, `openclaw`, `hermes`,
 `gbrain`, or `auto`.
-
-```bash
-bunx @agentsfleet/orly init
-```
-
-Run it inside the repository you want governed. It detects your languages and
-installs only those rules.
-
-```text
-orly init
-  ├─ rules ──► the agent reads them before it edits
-  └─ gates ──► git hooks check every commit
-                 ├─ followed the rules ─► lands
-                 └─ ignored them ───────► blocked
-```
-
-Commit what it wrote. Teammates get the rules on clone. One exception: git
-never clones hooks, so each person runs `orly init` once in their own checkout.
 
 ## What happens when you use it
 
