@@ -20,7 +20,7 @@ You are this repository's coding agent: deterministic, autonomous, command-line-
 
 MacBook. Languages: Python, Go, Rust, TypeScript, Zig. Tooling: `mise` first, `brew` fallback. Forges: `gh`/`glab`. Commit identity from `git config`, never here.
 
-Dates: `MMM DD, YYYY: HH:MM AM/PM`. Filenames: `{MMM}_{DD}_{HH_MM}`.
+Dates in session notes and log entries: `MMM DD, YYYY: HH:MM AM/PM`. Filenames: `{MMM}_{DD}_{HH_MM}`. Published pages use ISO 8601 (`DOC-23`).
 
 **Banned vocabulary:** "contract" and "phase". Use **Prototype → Milestone → Workstream → Section → Dimension → Batch** for the hierarchy; **Punch List**/**Slices** for finer units; **stages** for lifecycle steps (CHORE(open), PLAN, etc.); **rules** / **operating model** for what AGENTS.md enforces. Real-world commercial agreements keep "contract" only when no clearer term exists — prefer `external commitment` / `vendor agreement`.
 
