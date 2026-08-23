@@ -138,7 +138,7 @@ flowchart TB
     agent --> pending
     pending -->|"CHORE(open)"| plan
 
-    subgraph factory["⚙️ docs/v1/active/ · FACTORY"]
+    subgraph active["⚙️ docs/v1/active/"]
         direction TB
 
         plan["PLAN<br/><small>understand spec · record baseline</small>"]
@@ -171,16 +171,16 @@ flowchart TB
 | `docs/v1/active/` | branch cut, baseline recorded, no code until it commits |
 | `docs/v1/done/` | gates green, Pull Request opens |
 
-Inside `active/`, orly runs the **factory**: **PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT**.
+Inside `active/`, work runs through the stages: **PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT**.
 
-The factory is not another status. `active/` is the status. The factory is the controlled loop that runs on the active spec.
+The stages are not a status. `active/` is the status. The stages are the loop that runs on the spec sitting there.
 
 Three things do three different jobs, and keeping them apart is what makes the lifecycle mechanical:
 
 | | Job |
 |---|---|
 | **Directories** | lifecycle state — where the spec sits |
-| **Factory** | execution machinery — what moves the work |
+| **Stages** | execution machinery — what moves the work |
 | **Gates** | transition authority — whether it may advance |
 
 Each edit activates the rule page for that file kind. A gate proves whether the work may advance, and any red returns the agent to EXECUTE. No stage can be skipped quietly.
