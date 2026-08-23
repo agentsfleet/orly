@@ -218,6 +218,8 @@ Run an adversarial diff review after verification and before documentation. Comp
 
 **One route, every runtime: gstack `/review`.** Local and pre-commit, distinct from post-push reviewer triage.
 
+**gstack skill names carry a `gstack-` prefix outside Claude Code.** Claude reads them at their short name; Codex and Amp read the generated `.agents/skills/` tree, where every entry is prefixed. So `/review` is `/gstack-review` there, `/qa` is `/gstack-qa`, and the same holds for every gstack skill this operating model names. Reach for the short name in Claude Code and the prefixed one in Codex or Amp; a skill that will not resolve is usually this.
+
 ### DOCUMENT
 
 Update user-visible docs for behavior/process changes. Changelog only for user-visible changes. Durable decisions → repo docs. No commit yet unless user asked.
