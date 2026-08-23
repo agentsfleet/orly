@@ -39,20 +39,6 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 | a coding agent | something has to read the rules | Claude Code, Codex, OpenCode, or Amp |
 | your own check commands | `orly gate` runs what `.oracle/orly.json` names | whatever your repository already runs |
 
-### gstack
-
-[gstack](https://github.com/garrytan/gstack) is **optional**. orly does not
-require it to install or run.
-
-orly's rules route the review stage through `gstack /review` when gstack is
-available. If it is installed, `/review` is detected and runs automatically.
-If not, orly records the skipped review in the Pull Request notes so it can be
-rerun before merge.
-
-**Bottom line:** orly works without gstack. Installing
-[gstack](https://github.com/garrytan/gstack) gives you the automated `/review`
-step.
-
 ```bash
 bunx @agentsfleet/orly init
 ```
@@ -70,6 +56,36 @@ orly init
 
 Commit what it wrote. Teammates get the rules on clone. One exception: git
 never clones hooks, so each person runs `orly init` once in their own checkout.
+
+## gstack (optional)
+
+[gstack](https://github.com/garrytan/gstack) is **optional**. orly does not
+require it to install or run.
+
+orly's rules route the review stage through `gstack /review` when gstack is
+available. If it is installed, `/review` is detected and runs automatically.
+If not, orly records the skipped review in the Pull Request notes so it can be
+rerun before merge.
+
+**Bottom line:** orly works without gstack. Installing
+[gstack](https://github.com/garrytan/gstack) gives you the automated `/review`
+step.
+
+gstack also installs skills of its own, one set per agent host. orly neither
+installs nor manages gstack.
+
+The governance skills (`orly-spec-new`, `orly-babysit-prs`,
+`orly-write-unit-test`, `orly-write-integration-test`) come from orly's
+`workflow.skills` pack, per repository. The general-purpose skills come from
+gstack, per agent host.
+
+```bash
+cd ~/.local/share/gstack && ./setup --host auto
+```
+
+`--host auto` covers every agent host gstack finds. Name one to target it
+alone: `claude`, `codex`, `kiro`, `factory`, `opencode`, `openclaw`, `hermes`,
+`gbrain`, or `auto`.
 
 ## What happens when you use it
 

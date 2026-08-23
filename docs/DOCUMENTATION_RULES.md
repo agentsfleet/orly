@@ -4,14 +4,16 @@
 > any narrower guide such as `CHANGELOG_VOICE.md` or before editing documentation
 > about the dispatch model.
 
-These rules govern customer-facing `agentsfleet` documentation. They keep pages
+These rules govern any documentation orly writes or renders. They keep pages
 short, accurate, and usable by a first-day reader. Compliance is binary. A
 rejection cites the Documentation (DOC) rule identifier that failed.
 
 ## Scope and precedence
 
-- **DOC-S1 — Published pages.** A standalone Markdown JSX (MDX) file listed in
-  `docs.json` follows every applicable rule in this document.
+- **DOC-S1 — Any page orly writes.** Every Markdown or Markdown JSX (MDX) file
+  orly writes, renders, or materialises follows every applicable rule in this
+  document. A published page listed in `docs.json`, a rule page installed into
+  a repository, a skill page, and a `README.md` are all in scope.
 - **DOC-S2 — Generated API pages.** OpenAPI source follows the reference-page
   intent through summaries, descriptions, parameters, examples, responses, and
   stable errors. Generated pages do not need MDX front matter.
@@ -26,6 +28,9 @@ rejection cites the Documentation (DOC) rule identifier that failed.
 - **DOC-S6 — Source wins.** Runtime code is the source of truth. OpenAPI and the
   command-line interface follow runtime behavior. Published pages follow all
   three.
+- **DOC-S7 — Records stay as written.** A historical record keeps its original
+  wording. Spec records under `docs/v1/` and closed changelog entries are read,
+  never rewritten to a later rule.
 
 ## Required front matter
 
