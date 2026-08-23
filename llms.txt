@@ -1,0 +1,223 @@
+# orly — agent instructions
+
+> You are an autonomous coding agent. This file is the authoritative setup and
+> operating guide for orly. Read it in full before running any command.
+> Do not infer behaviour from README.md; that page is written for humans.
+
+orly installs two things into a repository: rules you must read before editing,
+and gate scripts wired into git hooks that fail the commit when a rule was
+ignored. Hosts supported: Claude Code, Codex, OpenCode, Amp.
+
+Package: `@agentsfleet/orly` (npm)
+Source: https://github.com/agentsfleet/orly
+License: MIT
+
+---
+
+## 1. Preconditions
+
+Verify all of these before acting. If a check fails, stop and report it to the
+user rather than working around it.
+
+| Check | Command | Required |
+|---|---|---|
+| bun present | `bun --version` | ≥ 1.4.0 |
+| git present | `git --version` | any |
+| inside a repository | `git rev-parse --show-toplevel` | must succeed |
+| working tree clean | `git status --porcelain` | should be empty |
+
+Do not install bun, git, or any package manager yourself unless the user asks.
+
+---
+
+## 2. Install sequence
+
+Run from the repository root. Execute these in order and stop at the first
+non-zero exit.
+
+```bash
+# 1. preview — writes nothing
+bunx @agentsfleet/orly init --dry-run
+
+# 2. install
+bunx @agentsfleet/orly init
+
+# 3. confirm installed state matches what orly would write today
+bunx @agentsfleet/orly doctor
+```
+
+Then commit the result. Teammates receive the rules on clone.
+
+IMPORTANT: git does not clone hooks. Each checkout must run `orly init` once.
+If a human reports that gates are not firing, this is the first thing to check.
+
+---
+
+## 3. What the install writes
+
+| Path | Contents | Owner |
+|---|---|---|
+| `AGENTS.md` | your host auto-loads this | the user — never rewrite it |
+| `AGENTS.orly.md` | generated rules: safety, dispatch router, lifecycle | orly — rewritten on update |
+| `dispatch/*.md` | one rule page per kind of work | orly |
+| `audits/*.sh` | the deterministic gates | orly |
+| `docs/*.md` | the standards those rules cite | orly |
+| `.claude/skills/`, `.agents/skills/`, `.opencode/skills/` | skills materialised per host | orly |
+| `.githooks/` | pre-commit and pre-push, wired to `orly gate` | orly |
+| `.oracle/orly.json` | packs, gate commands, install record | shared — edit the commands |
+
+`orly init` seeds `.oracle/orly.json` with gate commands found in `Makefile` or
+`package.json`. If commands are missing, ask the user which ones to add. Do not
+invent check commands.
+
+---
+
+## 4. Read order before you edit anything
+
+1. `AGENTS.md` — the user's own rules. **These win on any conflict.**
+2. `AGENTS.orly.md` — the generated rules and the dispatch router.
+3. The `dispatch/*.md` page that matches the kind of file you are about to edit.
+4. Any `docs/*.md` standard those pages cite.
+
+Re-read step 3 for each new file kind you touch in the same task.
+
+---
+
+## 5. The task lifecycle
+
+The spec is a file on disk. Its directory is the status. Only the named stages
+move it. `orly gate pr` reads where it ended up.
+
+```
+docs/v1/pending/   spec written, committed on main
+      │
+      │  CHORE(open)   branch cut, baseline recorded, NO CODE until it commits
+      ▼
+docs/v1/active/    PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT
+      │
+      │  CHORE(close)  session notes, orphan sweep
+      ▼
+docs/v1/done/      orly gate pr green → Pull Request opens
+```
+
+Rules for you:
+
+- Write the spec yourself before any code exists.
+- Do not write code before `CHORE(open)` has committed.
+- Do not skip a stage. The hooks run gates on every commit and push.
+- A red gate returns you to EXECUTE. Fix the cause; do not retry unchanged.
+
+---
+
+## 6. Failure decision table
+
+| Situation | Do this |
+|---|---|
+| `orly gate` fails a check | return to EXECUTE, fix the cause, re-run `orly gate` |
+| same gate fails twice on the same cause | stop, report the gate name and output to the user |
+| `orly init` refuses a file | orly did not write that file. Report it. Do **not** pass `--force` on your own initiative |
+| hooks not firing | run `git config core.hooksPath` and confirm `orly init` was run in this checkout |
+| gate command missing from `.oracle/orly.json` | ask the user for the command; do not invent one |
+| `orly gate pr` red and the failure is genuinely inapplicable | ask the user; only they authorise `orly override` |
+| gstack `/review` unavailable | continue; orly records the skipped review in the PR notes |
+
+Overrides are recorded as an empty commit that rides into the Pull Request:
+
+```bash
+bunx @agentsfleet/orly override <criterion> --reason "<why>"
+```
+
+Never record an override without an explicit instruction from the user, and
+never with a placeholder reason.
+
+---
+
+## 7. Hard rules
+
+- Never rewrite `AGENTS.md`. orly adds one delimited pointer block; leave the
+  rest alone.
+- Never edit or delete files under `.githooks/` or `audits/` to make a gate pass.
+- Never pass `--force` or `--no-hooks` unless the user asks for it by name.
+- Never disable a check in `.oracle/orly.json` to get green.
+- When the user's `AGENTS.md` and orly's rules disagree, the user's file wins.
+- A refused run changes nothing. Report the refusal; do not retry with flags.
+
+---
+
+## 8. Command reference
+
+| Command | Effect |
+|---|---|
+| `orly init` | write rules, gates, skills, and hooks |
+| `orly init --dry-run` | print what would be written; change nothing |
+| `orly update` | re-materialise at a newer engine version |
+| `orly update --with <pack>` | add an opt-in pack, recorded for every clone |
+| `orly gate` | run declared checks in order, stopping at the first failure |
+| `orly gate pr` | the Pull Request criteria check |
+| `orly override <criterion> --reason <why>` | record a gate exception (user-authorised only) |
+| `orly doctor` | diff installed state against what orly would write today |
+
+---
+
+## 9. Packs
+
+Nine language packs are selected from file extensions in the user's source.
+orly scans four directories deep and skips `node_modules`, `target`, `.venv`,
+and other dependency trees.
+
+`.zig` → `language.zig` · `.ts`/`.tsx` → `language.typescript` ·
+`.js`/`.jsx` → `language.javascript` · `.rs` → `language.rust` ·
+`.go` → `language.go` · `.py` → `language.python` · `.sh` → `language.shell` ·
+`.mdx` → `language.mdx` · `.sql` → `domain.sql`
+
+Seven install in every repository: `universal.authoring`, `domain.http`,
+`domain.auth`, `domain.documentation`, `domain.changelog`,
+`workflow.specifications`, `workflow.skills`.
+
+Three install only when `.oracle/orly.json` names them: `workflow.governance`
+(editing orly's own rules), `product.agentsfleet` (agentsfleet-specific audits
+and docs), `persona.indy` (tone and address handles only, no files).
+
+Skills provided by `workflow.skills`, per repository: `orly-spec-new`,
+`orly-babysit-prs`, `orly-write-unit-test`, `orly-write-integration-test`.
+General-purpose skills come from gstack, per agent host — orly neither installs
+nor manages gstack.
+
+---
+
+## 10. Working on orly itself
+
+Only relevant if the task is a change to this repository.
+
+```bash
+git clone git@github.com:agentsfleet/orly.git && cd orly
+git config core.hooksPath .githooks
+bun install --frozen-lockfile
+make audit
+```
+
+- `make audit` is the bar: typecheck and unit tests, render determinism, and
+  gate fixtures (each gate proved against one passing and one failing case).
+  Runs in parallel, under half a minute.
+- Coverage floor is 90% lines. Below it, the workflow fails.
+- `make install-evals` runs real installs into throwaway repositories. Run on
+  demand; CI runs them on every pull request and release.
+- Render orly's own rules with `bin/orly update --no-hooks`. The `--no-hooks`
+  flag is required here because this checkout hand-wrote its `.githooks/`.
+- Release: merge to `main` with a new `package.json` version. That publishes,
+  tags, and cuts the GitHub release. No second command.
+
+---
+
+## 11. Self-check prompt
+
+After install, verify your own understanding by answering this from the
+repository, without guessing:
+
+```
+Read AGENTS.orly.md. Name which of the last ten commits would have tripped a
+gate, and the rule that caught each one.
+```
+
+If you cannot answer it from the installed files, re-read section 4 before
+continuing.

@@ -51,6 +51,7 @@
     "src/",
     "registry.json",
     "AGENTS.md",
+    "llms.txt",
     "SOUL.md"
   ],
   "publishConfig": {
