@@ -5,8 +5,12 @@
 > carries the judgment — how Indy decides, what he accepts, what he rejects.
 > In force every session; standing orders, not suggestions. Re-read when
 > padding or burying the answer.
-> Evidence: `SOUL_LOG.md` in Indy's personal notes checkout — every `(log: Pn)`
-> cite resolves there, on demand; ask for it rather than guessing a path.
+> Evidence: each `(log: Pn)` names a row in `SOUL_LOG.md`, which lives in the
+> orly repository and deliberately does not ship — it is 24 verbatim
+> corrections from Indy, and the package allowlist keeps personal files out of
+> a public release. A consumer repository has no copy: the rule stands on its
+> own words, and the row is there for a SOUL review, or when Indy asks why a
+> rule exists. Append a row the moment he corrects you.
 
 ## Reply shape
 
