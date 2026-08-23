@@ -118,6 +118,13 @@ Cut these on sight. They read as machine prose and they hide the point.
 Also banned, on top of DOC-05 and DOC-07: delve, foster, elevate, supercharge,
 embark, ever-evolving, tapestry, realm, paradigm shift, game changer.
 
+"contract" and "phase" are banned too. That ban is not new here: the operating
+model states it and names the replacements, so read it there rather than
+twice. Use Prototype, Milestone, Workstream, Section, Dimension, and Batch for
+the hierarchy, "stages" for lifecycle steps, and "rules" for what `AGENTS.md`
+enforces. A real commercial agreement keeps "contract" only where no clearer
+term exists.
+
 "harness" is not banned. It is this product's own word for what orly installs,
 and it reaches every consumer through the rendered `AGENTS.md`. A word the
 product uses for itself is vocabulary, not slop.

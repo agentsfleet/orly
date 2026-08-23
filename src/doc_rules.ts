@@ -89,6 +89,12 @@ const BANNED_WORDS = new Set([
   "supercharge", "supercharges", "supercharged", "supercharging",
   "embark", "embarks", "embarked", "embarking",
   "ever-evolving", "tapestry", "realm", "realms",
+  // core/operating-model.md already bans these two and names the
+  // replacements: Prototype/Milestone/Workstream/Section/Dimension/Batch for
+  // the hierarchy, "stages" for lifecycle steps, "rules" for what AGENTS.md
+  // enforces. The rule shipped to every consumer with nothing enforcing it.
+  "contract", "contracts", "contracted", "contracting",
+  "phase", "phases", "phased", "phasing",
 ]);
 
 const BANNED_PHRASES = ["paradigm shift", "game changer", "game-changer"];
