@@ -116,7 +116,16 @@ Cut these on sight. They read as machine prose and they hide the point.
 | Summary recap | "In conclusion", "Overall" | Stop. The reader was just there. |
 
 Also banned, on top of DOC-05 and DOC-07: delve, foster, elevate, supercharge,
-embark, ever-evolving, tapestry, realm, paradigm shift, game changer.
+embark, ever-evolving, tapestry, realm, paradigm shift, game changer, deep
+dive, blazing fast, streamline, empower, journey, landscape, testament,
+pivotal, notably, moreover, furthermore, myriad, plethora, aforementioned,
+meticulous, boasts, cornerstone, best-in-class, industry-leading,
+state-of-the-art, unparalleled, effortless, turnkey, battle-tested,
+rock-solid, and innovative.
+
+DOC-05 covers "utilize" as well as "utilise". The checker always enforced
+both; this page named only one. A rule readers cannot read is a rule that
+drifts.
 
 "contract" and "phase" are banned too. That ban is not new here: the operating
 model states it and names the replacements, so read it there rather than

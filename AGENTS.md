@@ -266,9 +266,11 @@ Required when spec involved — after last COMMIT, before PR. Also runs when par
   X, it's Y" — say Y), throat-clearing openers, faux-insight setups, colon
   reveals, trailing `-ing` justification clauses, importance puffery,
   em-dash rhythm crutches, fake-profound kickers — end on the clearest
-  concrete sentence. Banned words: delve, foster, leverage, utilize,
-  facilitate, streamline, robust, seamless, powerful, cutting-edge, elevate,
-  harness, ever-evolving. Published pages add `docs/DOCUMENTATION_RULES.md`.
+  concrete sentence. The banned-word list lives in
+  `docs/DOCUMENTATION_RULES.md` §DOC-05, §DOC-07, and §DOC-14b, and
+  `orly gate verify` enforces it. Restating it here is how the two drifted:
+  this list banned "utilize" while DOC-05 banned only "utilise", and it
+  banned "harness", which is what this product calls itself.
 
 ## Reading Indy
 

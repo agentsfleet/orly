@@ -89,6 +89,17 @@ const BANNED_WORDS = new Set([
   "supercharge", "supercharges", "supercharged", "supercharging",
   "embark", "embarks", "embarked", "embarking",
   "ever-evolving", "tapestry", "realm", "realms",
+  // SOUL.md's reply-shape list restated these and drifted from this one. The
+  // prose in DOCUMENTATION_RULES.md named only the British "utilise" while
+  // the American forms above were already enforced here.
+  "streamline", "streamlines", "streamlined", "streamlining",
+  "empower", "empowers", "empowered", "empowering",
+  "journey", "journeys", "landscape", "landscapes", "testament",
+  "pivotal", "notably", "moreover", "furthermore", "myriad", "plethora",
+  "aforementioned", "meticulous", "meticulously", "boasts", "cornerstone",
+  "best-in-class", "industry-leading", "state-of-the-art", "unparalleled",
+  "effortless", "effortlessly", "turnkey", "battle-tested", "rock-solid",
+  "innovative",
   // core/operating-model.md already bans these two and names the
   // replacements: Prototype/Milestone/Workstream/Section/Dimension/Batch for
   // the hierarchy, "stages" for lifecycle steps, "rules" for what AGENTS.md
@@ -97,7 +108,7 @@ const BANNED_WORDS = new Set([
   "phase", "phases", "phased", "phasing",
 ]);
 
-const BANNED_PHRASES = ["paradigm shift", "game changer", "game-changer"];
+const BANNED_PHRASES = ["paradigm shift", "game changer", "game-changer", "deep dive", "blazing fast", "blazingly fast"];
 
 // Forms that end in a period without ending a sentence.
 const ABBREVIATIONS = new Set(["e.g.", "i.e.", "etc.", "vs.", "cf.", "no.", "fig.", "approx."]);
