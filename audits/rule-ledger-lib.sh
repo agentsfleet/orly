@@ -31,6 +31,7 @@ EXCLUDED_DOCS=(
   "docs/DISPATCH_ARCHITECTURE.md"
   "docs/ORLY_ARCHITECTURE.md"
   "docs/TEMPLATE.md"
+  "docs/RELEASE_TEMPLATE.md"
   "docs/EXECUTE_DOC_READS.md"
   "docs/HARNESS_VERIFY_OUTPUT.md"
   "docs/AUTH.md"

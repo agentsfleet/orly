@@ -22,7 +22,7 @@ SHELL := /bin/bash
 # (.github/workflows/harness.yml) and by hand as `make install-evals`.
 # `%` separates the steps, so no step command may contain one.
 AUDIT_STEPS := \
-	bun run typecheck && bun test src%bin/orly verify%bash audits/ufs.sh --all%bash audits/agents-md.sh%bash evals/dispatch/coverage.sh%bash evals/dispatch/run.sh%bash evals/ledger/run.sh%bash audits/rule-ledger.sh --check
+	bun run typecheck && bun test src%bin/orly verify%bash audits/ufs.sh --all%bash audits/agents-md.sh%bash evals/dispatch/coverage.sh%bash evals/dispatch/run.sh%bash evals/ledger/run.sh%bash audits/rule-ledger.sh --check%bash audits/rule-ledger.sh --census
 
 audit:
 	@set -uo pipefail; \
