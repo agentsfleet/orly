@@ -182,6 +182,33 @@ describe("managedDrift", () => {
     expect(findings[1]).toContain("zzz.md");
     expect(findings[0]).toContain("orly update");
   });
+
+  // The failure this pair exists for: agentsfleet ignored .claude/skills/ while
+  // .oracle/orly.json declared four files under it managed. Every local
+  // checkout passed `orly doctor` because the files sat on disk, and CI failed
+  // against a clone that never received them.
+  test("a managed file git refuses to track is drift, even though it is present", async () => {
+    const root = scratch();
+    Bun.spawnSync(["git", "init"], { cwd: root });
+    mkdirSync(join(root, ".claude/skills/orly-spec-new"), { recursive: true });
+    writeFileSync(join(root, ".claude/skills/orly-spec-new/SKILL.md"), "skill\n");
+    writeFileSync(join(root, ".gitignore"), ".claude/skills/\n");
+    const config = { ...(await seedConfig(root)), managed: [".claude/skills/orly-spec-new/SKILL.md"] };
+    const findings = managedDrift(root, config);
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toContain("ignored by git");
+    expect(findings[0]).toContain(".claude/skills/orly-spec-new/SKILL.md");
+  });
+
+  test("the same file reports nothing once the ignore is scoped to spare it", async () => {
+    const root = scratch();
+    Bun.spawnSync(["git", "init"], { cwd: root });
+    mkdirSync(join(root, ".claude/skills/orly-spec-new"), { recursive: true });
+    writeFileSync(join(root, ".claude/skills/orly-spec-new/SKILL.md"), "skill\n");
+    writeFileSync(join(root, ".gitignore"), ".claude/skills/*\n!.claude/skills/orly-spec-new/\n");
+    const config = { ...(await seedConfig(root)), managed: [".claude/skills/orly-spec-new/SKILL.md"] };
+    expect(managedDrift(root, config)).toEqual([]);
+  });
 });
 
 describe("writeConfig", () => {
