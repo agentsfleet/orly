@@ -222,7 +222,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 
 | # | Question | Expected |
 |---|---|---|
-| 17.1 | Does `conn.query()` require `.drain()` in the same function before `deinit()`, with `make lint-governance` verifying (it wraps `_lint_zig_pg_drain`, the drain check that actually exists)? | YES |
+| 17.1 | Does `conn.query()` require `.drain()` in the same function before `deinit()`, with the repository's own convention gate verifying it? | YES |
 | 17.2 | Is `conn.exec()` the prescribed alternative when no rows are needed? | YES |
 
 ### Scenario 18 — Commit/push hygiene & worktree isolation
