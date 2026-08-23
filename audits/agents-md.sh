@@ -312,14 +312,17 @@ if [[ $? -eq 0 ]]; then pass "rule-path residence (doctrine + anchors + zero rel
 # 16. Size cap — soft guard against drift back to bloat.
 #     Generated metadata is included in the measured file.
 #
-#     40 KiB, raised from 32 KiB (Aug 22, 2026) on Indy's call: the render had
+#     37 KiB, lowered from 40 KiB (Aug 23, 2026) on Indy's call: one session
+#     spent 4 KiB of the 8 KiB the raise had just bought, and a ceiling only
+#     fires on the last straw. A tight cap makes the next rule pay for itself.
+#     Previously 40 KiB, raised from 32 KiB (Aug 22, 2026): the render had
 #     reached the old cap exactly, so every new rule cost an existing one, and
 #     the next thing to cut would have been triggers rather than gloss. The cap
 #     exists for attention, not capacity — a rule the agent skims past enforces
 #     nothing — so it stays a real ceiling, just one with room to work in.
 # ---------------------------------------------------------------------------
 SIZE=$(wc -c < "$AGENTS" | tr -d ' ')
-LIMIT=${AGENTS_MD_SIZE_LIMIT:-40960}
+LIMIT=${AGENTS_MD_SIZE_LIMIT:-37888}
 if [[ $SIZE -le $LIMIT ]]; then
   pass "size $SIZE bytes (limit $LIMIT)"
 else
