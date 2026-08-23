@@ -1,7 +1,7 @@
 {
   "name": "@agentsfleet/orly",
-  "version": "0.6.4",
-  "description": "Repository-scoped engineering harness: renders agent rules, materialises the gates that enforce them, and proves the PR boundary — for any coding agent.",
+  "version": "0.6.5",
+  "description": "Repository-scoped engineering harness: renders agent rules, materialises the gates that enforce them, and proves the PR boundary \u2014 for any coding agent.",
   "license": "MIT",
   "type": "module",
   "scripts": {
