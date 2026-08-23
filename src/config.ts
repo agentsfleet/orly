@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
 
 import { assertWritableInside, isObject, isString, JsonObject, objectValue, OrlyError, readJsonObject, RulesModel, stringArray } from "./model";
+import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { validateCommands, validateSurfaces } from "./validation";
 
 const ORACLE_DIRECTORY = ".oracle";
@@ -117,14 +118,41 @@ export function staleVersion(config: RepoConfig, installedVersion: string): stri
   return `ruleset was installed by orly ${config.orly_version || "an unrecorded version"}, installed engine is ${installedVersion} — run \`orly update\``;
 }
 
-// A managed file that is gone. Edits are not drift: the tree is a git
-// repository, so `git diff` shows a hand edit and shows `orly update` replacing
-// it, both before either is committed.
+const PIPE_OUTPUT = "pipe";
+
+// Which of these paths git refuses to track. `check-ignore` prints one ignored
+// path per line and exits 1 when none match, which is not an error here.
+function ignoredPaths(targetRoot: string, paths: string[]): Set<string> {
+  if (paths.length === 0) return new Set();
+  const result = Bun.spawnSync(["git", "check-ignore", "--", ...paths], {
+    cwd: targetRoot,
+    env: UNSCOPED_ENVIRONMENT,
+    stdout: PIPE_OUTPUT,
+    stderr: PIPE_OUTPUT,
+  });
+  const printed = result.stdout.toString().trim();
+  if (printed.length === 0) return new Set();
+  return new Set(printed.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
+}
+
+// A managed file that is gone, or one git will not carry. Edits are not drift:
+// the tree is a git repository, so `git diff` shows a hand edit and shows
+// `orly update` replacing it, both before either is committed.
+//
+// An ignored file is drift even though it sits right there on disk. orly wrote
+// it, the local checkout gates on it, and a clone never receives it — so the
+// author passes and everybody else fails, which is the one failure the install
+// record exists to rule out.
 export function managedDrift(targetRoot: string, config: RepoConfig): string[] {
-  return config.managed
-    .filter((relativePath) => !existsSync(join(targetRoot, relativePath)))
-    .map((relativePath) => `managed file is missing: ${relativePath} — run \`orly update\` to restore it`)
-    .sort();
+  const missing = config.managed.filter((relativePath) => !existsSync(join(targetRoot, relativePath)));
+  const present = config.managed.filter((relativePath) => !missing.includes(relativePath));
+  const ignored = ignoredPaths(targetRoot, present);
+  return [
+    ...missing.map((relativePath) => `managed file is missing: ${relativePath} — run \`orly update\` to restore it`),
+    ...present
+      .filter((relativePath) => ignored.has(relativePath))
+      .map((relativePath) => `managed file is ignored by git: ${relativePath} — orly wrote it and a clone will not receive it; scope the .gitignore rule that excludes it`),
+  ].sort();
 }
 
 // Key order is fixed so a rewrite produces a reviewable diff: orly's own two
