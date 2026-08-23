@@ -9,12 +9,12 @@ regenerates this file and fails on any difference. To update it, run
 | `docs/LOGGING_STANDARD.md` | `LOG` → `logging.sh` | 10 | 13 | 26/26 | mechanical |
 | `docs/REST_API_DESIGN_GUIDELINES.md` | — | 0 | 0 | 0/74 | mechanical |
 | `docs/SCHEMA_CONVENTIONS.md` | — | 0 | 0 | 0/16 | mechanical |
-| `docs/DOCUMENTATION_RULES.md` | — | 0 | 0 | 0/21 | latent |
+| `docs/DOCUMENTATION_RULES.md` | — | 0 | 0 | 0/22 | latent |
 | `docs/LIFECYCLE_PATTERNS.md` | — | 0 | 0 | 0/22 | mechanical |
 | `docs/CHANGELOG_VOICE.md` | — | 0 | 0 | 0/3 | latent |
 | `docs/VERIFY_TIERS.md` | — | 0 | 0 | 0/4 | uncited |
 | `docs/greptile-learnings/RULES.md` | — | 0 | 0 | 0/113 | mechanical |
-| **corpus** | | | | **26/279** | |
+| **corpus** | | | | **26/280** | |
 
 ## How to read this
 
