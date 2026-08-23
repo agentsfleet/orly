@@ -323,6 +323,6 @@ gate, and name the rule that caught each one.
 
 [![from agentsfleet](https://img.shields.io/badge/from-agentsfleet-5EEAD4?labelColor=0A0D0E)](https://github.com/agentsfleet/agentsfleet)
 
-Made by 🤠 [Indy](https://github.com/indykish) · written with 🦉 Eywa
+Made by 🤠 [Indy](https://github.com/indykish) · written with 🦉 Orly
 
 </div>
