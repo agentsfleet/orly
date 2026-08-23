@@ -124,8 +124,10 @@ PY
 install_readme_harness_section_is_one_command() {
   local name="README's harness-install section is a single command block"
   local section
-  section="$(awk '/^## Install the harness/{flag=1; next} /^## /{flag=0} flag' "$ROOT/README.md")"
-  if [[ -z "$section" ]]; then bad "$name" "no '## Install the harness' section found"; return; fi
+  # Matches "## Install" and "## Install the harness": the claim under test is
+  # that the section holds one command, not how the heading is worded.
+  section="$(awk '/^## Install/{flag=1; next} /^## /{flag=0} flag' "$ROOT/README.md")"
+  if [[ -z "$section" ]]; then bad "$name" "no '## Install' section found"; return; fi
 
   local blocks
   blocks="$(printf '%s\n' "$section" | grep -c '^```bash$')"

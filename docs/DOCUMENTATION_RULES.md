@@ -115,10 +115,36 @@ Cut these on sight. They read as machine prose and they hide the point.
 | Fake-profound kicker | a closing metaphor or mic-drop | End on the last concrete sentence. |
 | Summary recap | "In conclusion", "Overall" | Stop. The reader was just there. |
 
-Also banned, on top of DOC-05 and DOC-07: delve, foster, elevate, harness,
-supercharge, embark, ever-evolving, tapestry, realm, paradigm shift, game
-changer. Em dashes are not a rhythm crutch: none in short copy, at most two per
-long page, and only where they beat a comma or a period.
+Also banned, on top of DOC-05 and DOC-07: delve, foster, elevate, supercharge,
+embark, ever-evolving, tapestry, realm, paradigm shift, game changer, deep
+dive, blazing fast, streamline, empower, journey, landscape, testament,
+pivotal, notably, moreover, furthermore, myriad, plethora, aforementioned,
+meticulous, boasts, cornerstone, best-in-class, industry-leading,
+state-of-the-art, unparalleled, effortless, turnkey, battle-tested,
+rock-solid, and innovative.
+
+DOC-05 covers "utilize" as well as "utilise". The checker always enforced
+both; this page named only one. A rule readers cannot read is a rule that
+drifts.
+
+"contract" and "phase" are banned too. That ban is not new here: the operating
+model states it and names the replacements, so read it there rather than
+twice. Use Prototype, Milestone, Workstream, Section, Dimension, and Batch for
+the hierarchy, "stages" for lifecycle steps, and "rules" for what `AGENTS.md`
+enforces. A real commercial agreement keeps "contract" only where no clearer
+term exists.
+
+"harness" is not banned. It is this product's own word for what orly installs,
+and it reaches every consumer through the rendered `AGENTS.md`. A word the
+product uses for itself is vocabulary, not slop.
+
+Em dashes are not a rhythm crutch: none in short copy, at most two per long
+page, and only where they beat a comma or a period. The rule corpus is exempt
+from that budget — `dispatch/`, `core/`, `audits/`, `skills/`, `AGENTS.md`,
+`AGENTS.orly.md`, `SOUL.md`, and any `RULES.md`. Those pages are dense
+reference text where the dash separates a claim from its consequence. Measured
+across the corpus the budget flagged 36 of 39 pages, which is a rule mis-fit,
+not 36 defects. They keep every other rule.
 
 ## Content
 
