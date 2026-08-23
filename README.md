@@ -129,11 +129,39 @@ Three checkpoints, all running your own declared commands:
 The spec is a file on disk, and **its directory is the status**. Only the stages named in the rules move it.
 
 ```mermaid
-flowchart LR
-    you["🤠 you: add webhook retries"] --> agent["🦉 agent writes the spec"]
-    agent --> pending["docs/v1/pending/"]
-    pending -->|"CHORE(open)"| active["docs/v1/active/"]
-    active -->|"CHORE(close)"| done["docs/v1/done/"]
+flowchart TB
+    you["🤠 you<br/>add webhook retries"]
+    agent["🦉 agent<br/>writes the spec"]
+    pending["📄 docs/v1/pending/<br/><small>spec committed on main</small>"]
+
+    you --> agent
+    agent --> pending
+    pending -->|"CHORE(open)"| plan
+
+    subgraph active["⚙️ docs/v1/active/"]
+        direction TB
+
+        plan["PLAN<br/><small>understand spec · record baseline</small>"]
+        execute["EXECUTE<br/><small>make the change</small>"]
+        conform["CONFORM<br/><small>apply matching rule pages</small>"]
+        verify["VERIFY<br/><small>run deterministic gates</small>"]
+        review["REVIEW<br/><small>review the resulting diff</small>"]
+        document["DOCUMENT<br/><small>update docs / evidence</small>"]
+        commit["COMMIT<br/><small>record the completed unit</small>"]
+
+        plan --> execute
+        execute --> conform
+        conform --> verify
+        verify --> review
+        review --> document
+        document --> commit
+
+        conform -. "gate fails" .-> execute
+        verify -. "gate fails" .-> execute
+        review -. "changes required" .-> execute
+    end
+
+    commit -->|"CHORE(close)"| done["✅ docs/v1/done/<br/><small>all gates green</small>"]
     done --> pr["Pull Request"]
 ```
 
@@ -143,11 +171,19 @@ flowchart LR
 | `docs/v1/active/` | branch cut, baseline recorded, no code until it commits |
 | `docs/v1/done/` | gates green, Pull Request opens |
 
-Inside `active/`, work runs through: **PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT**.
+Inside `active/`, work runs through the stages: **PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT**.
 
-Each edit trips the rule page for its file kind. A red gate sends the agent back to EXECUTE. No stage can be skipped quietly.
+The stages are not a status. `active/` is the status. The stages are the loop that runs on the spec sitting there.
 
----
+Three things do three different jobs, and keeping them apart is what makes the lifecycle mechanical:
+
+| | Job |
+|---|---|
+| **Directories** | lifecycle state — where the spec sits |
+| **Stages** | execution machinery — what moves the work |
+| **Gates** | transition authority — whether it may advance |
+
+Each edit activates the rule page for that file kind. A gate proves whether the work may advance, and any red returns the agent to EXECUTE. No stage can be skipped quietly.
 
 ## Your files stay yours
 
