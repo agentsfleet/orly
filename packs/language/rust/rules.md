@@ -31,6 +31,25 @@ Local convention wins on conflict, but the divergence is named in the review
 output. Refresh the copy when the user asks or a cited rule looks stale
 (re-run the fetch; upstream updates continuously).
 
+## Constant discipline (RULE UFS)
+
+`audits/ufs.sh` reads `*.rs`. It did not until this pack said so, and the cost
+was concrete: a crate spelled a wire verb inline twice — `pong == "PONG" ||
+pong.contains("PONG")` — while `write_any.sh` printed a green UFS row over the
+file, because the façade had always declared `*.rs` and the leaf had never read
+it. Bind the repeated literal to a `const` or `static` and use the name.
+
+Three Rust shapes are held out of the count, because no rename can fix them:
+
+- **`#[cfg(test)]` and `#[test]` blocks.** Rust keeps unit tests inside the file
+  they cover, so fixture keys would otherwise read as that file's worst debt.
+- **Attribute literals** — `#[serde(rename = "…")]`, `#[cfg(feature = "…")]`,
+  `#[doc = "…"]`. An attribute takes a literal token by language rule; a const
+  is not accepted in that position.
+- **`tests/` and `benches/`** at the crate root, which are fixture trees.
+
+Everything else counts, including `examples/`, which ships and compiles.
+
 ## Evolution
 
 This pack is young next to the Zig façade and grows the same way: a Rust

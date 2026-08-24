@@ -343,7 +343,7 @@ ERROR REGISTRY GATE: <file>
 **Family:** Constant discipline. **Source:** `AGENTS.md` conformance enforcement
 + the selected language façade's Uniform Free Strings (UFS) clauses.
 
-**Triggers** — every `Edit`/`Write` to source files under `src/`, `ui/packages/*/src/`, `ui/packages/*/app/`, `ui/packages/*/lib/`, `ui/packages/*/components/`, `ui/packages/*/pages/`, `ui/packages/*/tests/`, `agentsfleet/src/`, `agentsfleet/test/` matching `*.zig`, `*.ts`, `*.tsx`, `*.js`, `*.jsx`. Excluded: `vendor/`, `third_party/`, `.zig-cache/`, `node_modules/`, `*.tsbuildinfo`.
+**Triggers** — every `Edit`/`Write` to source files under `src/`, `ui/packages/*/src/`, `ui/packages/*/app/`, `ui/packages/*/lib/`, `ui/packages/*/components/`, `ui/packages/*/pages/`, `ui/packages/*/tests/`, `agentsfleet/src/`, `agentsfleet/test/` matching `*.zig`, `*.ts`, `*.tsx`, `*.js`, `*.jsx`, `*.rs`, `*.go`. Excluded: `vendor/`, `third_party/`, `.zig-cache/`, `node_modules/`, `*.tsbuildinfo`. `*.py` and `*.sh` fire this façade but are held out of the UFS leaf — see Scope.
 
 **Override:** `UFS GATE: SKIPPED per user override (reason: ...)` immediately preceding the edit. **User-only**; auto-mode does not cover.
 
@@ -410,6 +410,17 @@ UFS GATE: <file>
 The previous `--diff` (`BASE...HEAD`) default was retired with M70. The forcing function was M68 commit `02c1f3cf`: pre-commit's `HEAD` is the prior commit, so `BASE...HEAD` was blind to nine cross-runtime mismatches the agent had staged but not yet committed. The full-codebase scope removes that blindspot.
 
 `--all` is accepted as a back-compat alias for the default. `--diff` is rejected with exit 2 + a pointer to this section.
+
+**Languages the leaf reads.** Zig, TypeScript, JavaScript, Rust and Go. The rule is one rule, but each language hides its literals differently, so each gets a lane in `is_source` + the string-dup pass:
+
+| Language | Held out of the count, and why |
+|---|---|
+| Rust | `#[cfg(test)]` / `#[test]` blocks (unit tests live *inside* the file they cover), `#[…]` attribute literals (`#[serde(rename = "…")]` takes a literal token by language rule — no const is legal there), `static` bindings alongside `const` |
+| Go | `const ( … )` group members (the keyword is stated once, on the opening line), backtick struct tags (`json:"id"` is read by reflection; a const cannot appear inside one) |
+
+`*.py` and `*.sh` are **out of scope on purpose**, and the engine pins the reason in its own dispatch-coverage audit: Python writes ~14% of its literals in single quotes the matcher does not read, so it would report partial coverage as full; and a repeated `"$var"` in shell is interpolation, not a magic string — 59% of hits on a real tree, with no `const` to bind to. Adding either means building its lane first, not widening the glob.
+
+**A façade that fires on a language its leaf cannot read is a silent green.** `write_any.sh` has declared `*.rs` and `*.go` since those packs existed while `ufs.sh` read neither, so the gate printed a green UFS row over a file it never opened — and a Rust crate shipped a bare, twice-spelled wire verb under it. The engine now fails its dispatch-coverage audit on that divergence: every extension the façade claims is read by the leaf, or carries a written reason it is not.
 
 #### Self-audit (end-of-turn / CONFORM)
 

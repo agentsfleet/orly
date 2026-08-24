@@ -91,7 +91,10 @@ check_tag_to_check() {
 # ---- check (b) — run-enforced code has pass+fail fixture --------------------
 check_fixture_coverage() {
   sec "(b) run-enforced DETERMINISTIC code → pass+fail fixture (delegated exempt)"
-  local specs; specs="$(grep -oE '"[^"]+\.zig\|[^"]+\|[01]\|[A-Z0-9_-]+"' "$EVALS" | tr -d '"')"
+  # Any fixture extension, not just .zig: pinning the extractor to one language
+  # is how a Rust or Go fixture row lands in run.sh and the coverage audit never
+  # counts it — the same class of blindness check (h) below exists to catch.
+  local specs; specs="$(grep -oE '"[^"]+\.[a-z]+\|[^"]+\|[01]\|[A-Z0-9_-]+"' "$EVALS" | tr -d '"')"
   local code has0 has1 line ex c
   while IFS= read -r code; do
     [ -z "$code" ] && continue
@@ -169,6 +172,54 @@ check_gloss_divergence() {
   else fail "gloss divergence between lib.sh and RULES.md:"; printf '%s\n' "$d" | sed 's/^/        /'; fi
 }
 
+# ---- check (h) — façade extension scope ⊆ UFS leaf scope -------------------
+# The gap this exists for: write_any.sh has declared `*.rs`, `*.go`, `*.py` and
+# `*.sh` for as long as those packs have existed, so the façade FIRED on a Rust
+# file, printed a green UFS row, and handed off to a leaf whose `is_source`
+# listed only zig/ts/tsx/js/jsx. The file was never read. A gate that reports on
+# a language it cannot open is worse than an absent one — it is a green light
+# over an unscanned file, and a real crate shipped `const S_PING = "PING"` under
+# exactly that light. Every extension the façade claims must therefore be in the
+# leaf, or named here with the reason it is held out.
+#
+# Held out on purpose — ext<TAB>reason. An entry here must be ABSENT from the
+# leaf: adding a language to ufs.sh means deleting its row, so the two can never
+# both claim it.
+UFS_OUT_OF_SCOPE=(
+  $'.py\tsingle-quoted literals are ~14% of a real tree and the matcher reads only double quotes; partial coverage reported as full is the bug this check exists to prevent'
+  $'.sh\ta repeated "$var" is interpolation, not a magic string — 59% of hits on a real tree, and shell has no const to bind to'
+  $'.sql\towns a separate façade and leaf (dispatch/write_sql.sh)'
+)
+facade_exts() { grep -E '^dispatch_init +"ANY"' "$RES/write_any.sh" \
+  | grep -oE "\*\.[a-z]+" | sed 's/^\*//' | sort -u; }
+ufs_exts() { grep -E '^[[:space:]]*\*\.[a-z]' "$SCR/ufs.sh" | grep -F 'return 0' \
+  | grep -oE '\*\.[a-z]+' | sed 's/^\*//' | sort -u; }
+check_ufs_scope() {
+  sec "(h) write_any façade extension → audits/ufs.sh is_source (silent-green scope hole)"
+  local leaf ext row held reason
+  leaf="$(ufs_exts)"
+  if [ -z "$leaf" ]; then
+    fail "audits/ufs.sh is_source parsed to 0 extensions — case arm reshaped? empty≠covered"
+    return
+  fi
+  while IFS= read -r ext; do
+    [ -z "$ext" ] && continue
+    if printf '%s\n' "$leaf" | in_list "$ext"; then okln "$ext — read by audits/ufs.sh"; continue; fi
+    held=""
+    for row in "${UFS_OUT_OF_SCOPE[@]}"; do
+      [ "${row%%$'\t'*}" = "$ext" ] && held="${row#*$'\t'}"
+    done
+    if [ -n "$held" ]; then okln "$ext — held out: $held"
+    else fail "$ext — write_any.sh fires on it, audits/ufs.sh cannot read it, and no UFS_OUT_OF_SCOPE row says why (silent green over an unscanned file)"; fi
+  done < <(facade_exts)
+  for row in "${UFS_OUT_OF_SCOPE[@]}"; do
+    ext="${row%%$'\t'*}"
+    if printf '%s\n' "$leaf" | in_list "$ext"; then
+      fail "$ext — claimed by audits/ufs.sh AND listed in UFS_OUT_OF_SCOPE; drop the exclusion row"
+    fi
+  done
+}
+
 printf '%sDISPATCH COVERAGE AUDIT — façade-pair coherence (6.3 + 6.4)%s\n' "$BO" "$X"
 check_tag_to_check
 check_fixture_coverage
@@ -177,6 +228,7 @@ check_orphan
 check_leaf_presence
 check_gloss_presence
 check_gloss_divergence
+check_ufs_scope
 
 if [ "$RC" -eq 0 ]; then printf '\n%s✅ DISPATCH COVERAGE: ALL CHECKS PASSED%s\n' "$G$BO" "$X"
 else printf '\n%s❌ DISPATCH COVERAGE: coherence gaps above — fix before commit%s\n' "$R$BO" "$X"; fi

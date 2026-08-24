@@ -4,6 +4,12 @@
 # Dispatch façade: dispatch/write_any.md (UFS Gate)
 # Fires in: make lint, CONFORM.
 #
+# Languages read: Zig, TypeScript, JavaScript, Rust, Go (see `is_source`, which
+# carries the pack that owns each extension and the reasons `.py` / `.sh` are
+# held out). The set is pinned against the dispatch facade by the engine
+# dispatch-coverage audit — a facade that fires on a language its leaf cannot
+# read is a gate that prints green over an unscanned file.
+#
 # Generic detection — no manifest of known literals, so the audit scales
 # as the codebase grows. Three classes of violation:
 #
@@ -15,9 +21,11 @@
 #
 # Carve-out: any `// pin test: literal is the contract` comment on or
 # above the offending line excludes that line from numeric-suspect.
-# A `const` / `pub const` / `export const` declaration line is likewise
-# exempt for both per-file checks (is_const_decl + its string-dup mirror
-# below) — binding the literal to a name on a const line clears the hit.
+# A `const` / `pub const` / `export const` / `static` declaration line is
+# likewise exempt for both per-file checks (is_const_decl + its string-dup
+# mirror below) — binding the literal to a name on that line clears the hit.
+# Go states the keyword once for a whole `const ( ... )` group; the string-dup
+# lane tracks the group so its members are read as the declarations they are.
 #
 # Staged-scope semantics: --staged narrows WHICH FILES are scanned, not
 # how much of each — a staged file is audited in FULL, so staging a file
@@ -69,14 +77,34 @@ ok()     { printf "OK:   %s\n" "$*"; }
 
 # ── File scope ──────────────────────────────────────────────────────────────
 
+# The extension set is the CONTRACT the dispatch façade already advertises:
+# dispatch/write_any.sh's `dispatch_init "ANY" ...` list is what fires the gate,
+# and this list is what the gate then reads. When the two disagree the façade
+# runs, prints green, and has scanned nothing — which is exactly how a Rust
+# crate carried `const S_PING = "PING"` past a gate that claimed to cover it.
+# The engine fails its own dispatch-coverage audit on that drift now, so a
+# language added to the façade must land here, or be named out of scope with a
+# reason, before that audit goes green again.
+#
+#   .zig                     language.zig
+#   .ts .tsx                 language.typescript
+#   .js .jsx                 language.javascript
+#   .rs                      language.rust
+#   .go                      language.go
+#
+# Out of scope, deliberately — the engine keeps the machine-readable twin of
+# this list: `.py` (single-quoted literals dominate and the
+# double-quote matcher below would report partial coverage as full), `.sh`
+# (a repeated `"$var"` is interpolation, not a magic string — measured at 59%
+# of hits on a real tree), `.sql` (its own gate, dispatch/write_sql.sh).
 is_source() {
   local f="$1"
   case "$f" in
     vendor/*|third_party/*|.zig-cache/*|*/node_modules/*|evals/dispatch/fixtures/*|*.tsbuildinfo) return 1 ;;
-    *_test.zig|*.test.ts|*.test.tsx|*.test.js|*.test.jsx|*.unit.test.js|*.spec.ts) ;; # tests in scope
+    *_test.zig|*.test.ts|*.test.tsx|*.test.js|*.test.jsx|*.unit.test.js|*.spec.ts|*_test.go) ;; # tests in scope
   esac
   case "$f" in
-    *.zig|*.ts|*.tsx|*.js|*.jsx) return 0 ;;
+    *.zig|*.ts|*.tsx|*.js|*.jsx|*.rs|*.go) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -112,9 +140,21 @@ while IFS= read -r row; do
 done < <(awk '
   FNR == 1 {
     prev_file = FILENAME
+    # Language lane. Each lane below carves out what its syntax makes
+    # UNFIXABLE — a literal a named const cannot legally replace. Anything
+    # a const CAN replace stays in scope, in every language.
+    lang = "other"
+    if (FILENAME ~ /\.zig$/)             lang = "zig"
+    else if (FILENAME ~ /\.rs$/)         lang = "rust"
+    else if (FILENAME ~ /\.go$/)         lang = "go"
     # Test files: repetition is fixture data, not magic strings.
     # Skip string-dup-file for tests; other checks still apply.
-    is_test = (FILENAME ~ /(_test\.zig|\.test\.|\.spec\.|\.unit\.test|\.integration\.test|\/test\/|\/tests\/)/)
+    is_test = (FILENAME ~ /(_test\.zig|_test\.go|\.test\.|\.spec\.|\.unit\.test|\.integration\.test|\/test\/|\/tests\/)/)
+    # Directory-shaped test and benchmark trees. Rust puts both at the CRATE
+    # ROOT (`tests/`, `benches/`) with no leading slash, so the `\/tests\/`
+    # form above — which needs a parent directory — walked straight past them
+    # and audited 100 fixture hits as production literals.
+    if (FILENAME ~ "(^|/)(test|tests|benches|__tests__)/") is_test = 1
   }
   is_test { next }
   # ui/ files: extracting class-strings or short literals to file-local
@@ -126,7 +166,7 @@ done < <(awk '
   # ("nonterminated character class"); use a dynamic-regex STRING — identical
   # match on gawk, portable on BWK awk (the macOS default). Do not re-inline.
   FILENAME ~ "^ui/packages/[^/]+/(src|app|tests|components|lib|hooks)/" { next }
-  FNR == 1 { in_test_block = 0; test_depth = 0; in_block_comment = 0 }
+  FNR == 1 { in_test_block = 0; test_depth = 0; in_block_comment = 0; in_rs_test = 0; rs_open = 0; rs_depth = 0; in_go_const = 0 }
   {
     line = $0
     # Block-comment exclusion (TS/JS/Zig non-applicable): skip lines inside /* ... */
@@ -139,9 +179,9 @@ done < <(awk '
       next
     }
     # Zig multi-line string literal — lines start with `\\` after whitespace.
-    if (FILENAME ~ /\.zig$/ && line ~ /^[[:space:]]*\\\\/) next
+    if (lang == "zig" && line ~ /^[[:space:]]*\\\\/) next
     # Inline-test exclusion (Zig): track depth across `test "..." {` blocks.
-    if (FILENAME ~ /\.zig$/) {
+    if (lang == "zig") {
       if (in_test_block) {
         test_depth += gsub(/\{/, "{", line) - gsub(/\}/, "}", line)
         if (test_depth <= 0) in_test_block = 0
@@ -155,6 +195,43 @@ done < <(awk '
         if (test_depth <= 0) in_test_block = 0
         next
       }
+    }
+    # Inline-test exclusion (Rust): Rust keeps its unit tests INSIDE the file
+    # they cover, under `#[cfg(test)] mod tests { ... }`, so without this the
+    # fixture keys of a well-tested module read as the worst literal debt in
+    # the production half of that same file — a real crate reported `"key1"`
+    # 15 times from one such block. Same brace-depth shape as the Zig branch.
+    if (lang == "rust") {
+      if (in_rs_test) {
+        tmp = line
+        rs_depth += gsub(/\{/, "{", tmp) - gsub(/\}/, "}", tmp)
+        if (!rs_open && index(line, "{") > 0) rs_open = 1
+        if (rs_open && rs_depth <= 0) in_rs_test = 0
+        else if (!rs_open && line ~ /;[[:space:]]*$/) in_rs_test = 0
+        next
+      }
+      if (line ~ /^[[:space:]]*#\[cfg\(test\)\]/ || line ~ /^[[:space:]]*#\[[A-Za-z_:]*test\]/) {
+        in_rs_test = 1; rs_open = 0; rs_depth = 0
+        next
+      }
+      # Attribute literals are UNFIXABLE, not undisciplined. `#[serde(rename =
+      # "...")]`, `#[cfg(feature = "...")]` and `#[doc = "..."]` take a literal
+      # token by language rule — a const is not accepted there, so naming one
+      # cannot resolve the hit and reporting it only teaches people to ignore
+      # the gate. Ordered after the cfg(test) branch, which is also a `#[`.
+      if (line ~ /^[[:space:]]*#!?\[/) next
+    }
+    # Grouped-const exclusion (Go): `const ( ... )` states the binding keyword
+    # ONCE, on the opening line, so a member like `metaKeyQoS = "conf_..."` is
+    # a definition carrying no `const` for the binding carve-out below to see.
+    # `var (` groups are deliberately NOT tracked — the carve-out is const-only
+    # in every other language and widening it here would be a silent divergence.
+    if (lang == "go") {
+      if (in_go_const) {
+        if (line ~ /^[[:space:]]*\)/) { in_go_const = 0; next }
+        if (line ~ /^[[:space:]]*[A-Za-z_][A-Za-z0-9_]*([[:space:]]+[A-Za-z0-9_.\[\]*]+)?[[:space:]]*=/) next
+      }
+      else if (line ~ /^[[:space:]]*const[[:space:]]*\([[:space:]]*$/) { in_go_const = 1; next }
     }
     sub(/\/\/.*$/, "", line)
     # Strip single-line /* ... */ inline block comments (jsdoc/etc) so
@@ -171,11 +248,23 @@ done < <(awk '
     # like any other use. (A prior line-level skip exempted those too and silently
     # gutted the check for most Zig code; the ufs_dup_string eval fixture pins the
     # binding-level semantic.)
-    if (line ~ /(^|[[:space:]])(pub[[:space:]]+const|export[[:space:]]+const|const)[[:space:]]+[A-Za-z_$][A-Za-z0-9_$]*([[:space:]]*:[^=]*)?[[:space:]]*=[[:space:]]*"((\\.)|[^\\"])+"[[:space:]]*(as[[:space:]]+const)?[[:space:]]*[;,]?[[:space:]]*$/) next
+    # `static` joins the keyword set for Rust: `static NAME: &str = "..."` binds
+    # a literal to a name exactly as `const` does, and the leading
+    # `(^|[[:space:]])` anchor already carries the `pub`/`pub(crate)` prefixes.
+    # The second type slot belongs to Go, which spells the type with no colon
+    # (`const name string = "..."`), which the colon-only slot could not see.
+    if (line ~ /(^|[[:space:]])(pub[[:space:]]+const|export[[:space:]]+const|const|static)[[:space:]]+[A-Za-z_$][A-Za-z0-9_$]*([[:space:]]*:[^=]*|[[:space:]]+[A-Za-z_][A-Za-z0-9_.\[\]*]*)?[[:space:]]*=[[:space:]]*"((\\.)|[^\\"])+"[[:space:]]*(as[[:space:]]+const)?[[:space:]]*[;,]?[[:space:]]*$/) next
     rest = line
     # Strip Zig identifier-escape syntax @"name" — body is an identifier,
     # not a string literal, but the regex below would otherwise match it.
     gsub(/@"[^"]*"/, "", rest)
+    # Strip Go backtick runs. They are overwhelmingly struct tags
+    # (`json:"id" yaml:"id"`), whose quoted halves are tag SYNTAX addressed by
+    # reflection — a const cannot appear inside one, so the repeat is unfixable.
+    # This also drops single-line Go raw strings, which is the accepted cost:
+    # the alternative reports every `json:"id"` in a wire struct as a violation.
+    # A backtick run spanning lines is not tracked (best-effort, as documented).
+    if (lang == "go") gsub(/`[^`]*`/, "", rest)
     # Strip empty string literals so the regex below cannot fuse
     # two adjacent Zig literals through their inner gap.
     gsub(/""/, "", rest)
@@ -229,7 +318,7 @@ done < <(awk -v re="$NUMERIC_RE" '
     line = $0
     is_pin_now   = (line ~ /pin test: literal is the contract/)
     is_pin_above = (prev ~ /pin test: literal is the contract/)
-    is_const_decl = (line ~ /(^|[[:space:]])(pub[[:space:]]+const|export[[:space:]]+const|const)[[:space:]]/)
+    is_const_decl = (line ~ /(^|[[:space:]])(pub[[:space:]]+const|export[[:space:]]+const|const|static)[[:space:]]/)
     stripped = line
     sub(/\/\/.*$/, "", stripped)
     sub(/#.*$/, "", stripped)
