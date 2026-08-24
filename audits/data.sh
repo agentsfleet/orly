@@ -45,7 +45,7 @@ REQUIRED_DISPATCH=(
   "write_spec" "write_http" "write_auth" "write_changelog"
   "write_documentation" "verify" "name_architecture" "edit_rules"
   "write_rust" "write_go" "write_python" "write_shell" "write_mdx"
-  "lifecycle"
+  "write_pr_description" "lifecycle"
 )
 
 # Check 2 — every source/config language has at least one mention.
@@ -105,6 +105,7 @@ DOTFILES_RESIDENT=(
   "dispatch/write_auth.md"
   "dispatch/write_changelog.md"
   "dispatch/write_documentation.md"
+  "dispatch/write_pr_description.md"
   "dispatch/verify.md"
   "dispatch/name_architecture.md"
   "dispatch/edit_rules.md"
@@ -169,6 +170,7 @@ NAMED_SCENARIOS=(
   "Rules propagation"        # Scenario 26
   "Rule-path"                # Scenario 27
   "Rule-enforcement ledger"  # Scenario 28
+  "Pull-request and merge-request descriptions"  # Scenario 29
 )
 
 # Check 14 — the Rule-extension protocol must enumerate all four wiring steps.

@@ -269,7 +269,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 
 This scenario exists because the most likely failure of the operating model is
 not a missing rule — it's the *agent misreading a rule that is present*.
-AGENTS.md is ~32 KB of table-dense, exception-laden prose (SOUL.md inlined); the conditions
+AGENTS.md is byte-capped, table-dense prose (SOUL.md inlined); the conditions
 below are where an LLM reading it tends to drift, conflate, or confabulate.
 The questions force *proof of reading* over *recall*.
 
@@ -366,6 +366,18 @@ than only the one with a Read hook.
 | 28.3 | Does the DOC READ GATE require recording each triggered read with `bash audits/doc-read.sh log <path>` — runnable in every runtime, automatic in Claude Code via the `PostToolUse` Read hook — with `.githooks/pre-commit` comparing the record against the staged diff? | YES |
 | 28.4 | When no read record exists (a runtime without hook support, before the command is run), does `audits/doc-read.sh check` warn 🟠 and exit 0 rather than red — because a check that fires where it cannot work teaches people to ignore it? | YES |
 
+### Scenario 29 — Pull-request and merge-request descriptions
+
+Pull Request (PR) and Merge Request (MR) bodies use the same shape on both
+forges.
+
+| # | Question | Expected |
+|---|---|---|
+| 29.1 | Does writing or updating a PR/MR body through either `gh` or `glab` route to `dispatch/write_pr_description.md`? | YES |
+| 29.2 | Must each working session re-read the forge body, append the highest numbered `## Session notes <N>` plus one followed by `## Review` and `## Make`, and preserve every earlier unit? | YES |
+| 29.3 | Does the façade require two or three outcome-first prose lines, useful fenced ASCII diagrams at most 78 columns using measured values, P0/P1/P2 review dispositions, and commands paired with actual output? | YES |
+| 29.4 | Must clean review say `No findings.`, skipped review and verification name why, and unverified claims identify what would verify them? | YES |
+
 ## Comprehension layer
 
 The deterministic audit proves the rules are *present*; it cannot prove an
@@ -457,6 +469,8 @@ Scenario verdicts:
 | 25 | Allocator and concurrency discipline    | <N/M YES>       |
 | 26 | Rules propagation                       | <N/M YES>       |
 | 27 | Rule-path residence and reachability    | <N/M YES>       |
+| 28 | Rule-enforcement ledger and doc reads   | <N/M YES>       |
+| 29 | PR and MR descriptions                  | <N/M YES>       |
 
 OVERALL: PASS | FAIL — <reason if fail>
 ```
