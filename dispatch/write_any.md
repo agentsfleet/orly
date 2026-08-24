@@ -415,8 +415,10 @@ The previous `--diff` (`BASE...HEAD`) default was retired with M70. The forcing 
 
 | Language | Held out of the count, and why |
 |---|---|
-| Rust | `#[cfg(test)]` / `#[test]` blocks (unit tests live *inside* the file they cover), `#[…]` attribute literals (`#[serde(rename = "…")]` takes a literal token by language rule — no const is legal there), `static` bindings alongside `const` |
+| Rust | `#[cfg(test)]` / `#[test]` blocks (unit tests live *inside* the file they cover), feature-gated test seams (`#[cfg(feature = "test-util")]` — a helper that must compile into the crate so a sibling integration test can call it), `#[…]` attribute literals (`#[serde(rename = "…")]` takes a literal token by language rule — no const is legal there), `static` bindings alongside `const` |
 | Go | `const ( … )` group members (the keyword is stated once, on the opening line), backtick struct tags (`json:"id"` is read by reflection; a const cannot appear inside one) |
+
+The test-seam match is deliberately narrow — `test` as a whole word or a `-`/`_` segment — so a production gate like `#[cfg(feature = "redis")]` still counts and `"latest"` is not mistaken for a seam. `ufs_feature_gate.rs` pins that: widening it turns the fixture green.
 
 `*.py` and `*.sh` are **out of scope on purpose**, and the engine pins the reason in its own dispatch-coverage audit: Python writes ~14% of its literals in single quotes the matcher does not read, so it would report partial coverage as full; and a repeated `"$var"` in shell is interpolation, not a magic string — 59% of hits on a real tree, with no `const` to bind to. Adding either means building its lane first, not widening the glob.
 

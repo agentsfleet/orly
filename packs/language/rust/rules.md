@@ -39,10 +39,15 @@ pong.contains("PONG")` — while `write_any.sh` printed a green UFS row over the
 file, because the façade had always declared `*.rs` and the leaf had never read
 it. Bind the repeated literal to a `const` or `static` and use the name.
 
-Three Rust shapes are held out of the count, because no rename can fix them:
+Four Rust shapes are held out of the count, because no rename can fix them:
 
 - **`#[cfg(test)]` and `#[test]` blocks.** Rust keeps unit tests inside the file
   they cover, so fixture keys would otherwise read as that file's worst debt.
+- **Feature-gated test seams** — `#[cfg(feature = "test-util")]`. A helper that
+  hands a sibling integration test one of each error kind has to compile into
+  the crate, which is the only reason it is not behind `cfg(test)`; its contents
+  are fixture data all the same. The match is narrow on purpose: `test` as a
+  whole word or a `-`/`_` segment, so `#[cfg(feature = "redis")]` still counts.
 - **Attribute literals** — `#[serde(rename = "…")]`, `#[cfg(feature = "…")]`,
   `#[doc = "…"]`. An attribute takes a literal token by language rule; a const
   is not accepted in that position.

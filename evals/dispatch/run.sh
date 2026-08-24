@@ -36,6 +36,7 @@ SPECS=(
   "ufs_dup_string.zig|write_any|src/ufs_dup_string.zig|1|UFS"
   "ufs_ok.rs|write_any|src/ufs_ok.rs|0|UFS"
   "ufs_dup_string.rs|write_any|src/ufs_dup_string.rs|1|UFS"
+  "ufs_feature_gate.rs|write_any|src/ufs_feature_gate.rs|1|UFS"
   "ufs_ok.go|write_any|src/ufs_ok.go|0|UFS"
   "ufs_dup_string.go|write_any|src/ufs_dup_string.go|1|UFS"
   "log_ok.zig|write_any|src/log_ok.zig|0|LOG"

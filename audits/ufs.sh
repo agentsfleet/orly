@@ -210,7 +210,18 @@ done < <(awk '
         else if (!rs_open && line ~ /;[[:space:]]*$/) in_rs_test = 0
         next
       }
-      if (line ~ /^[[:space:]]*#\[cfg\(test\)\]/ || line ~ /^[[:space:]]*#\[[A-Za-z_:]*test\]/) {
+      # Three ways Rust marks a block as fixture data, not shipped behaviour:
+      # `#[cfg(test)]`, a `#[test]`/`#[tokio::test]` function, and a
+      # FEATURE-GATED test seam — `#[cfg(feature = "test-util")]`, the
+      # convention for a helper that must compile into the crate so an
+      # integration test in a sibling file can call it (a `one_of_each_kind`
+      # error-surface enumerator is the usual shape). The feature name is
+      # matched narrowly, `test` as a whole word or a `-`/`_` segment, so a
+      # production gate like `#[cfg(feature = "redis")]` still counts and
+      # `"latest"` is not mistaken for a test seam.
+      if (line ~ /^[[:space:]]*#\[cfg\(test\)\]/ ||
+          line ~ /^[[:space:]]*#\[[A-Za-z_:]*test\]/ ||
+          line ~ /^[[:space:]]*#\[cfg\(.*feature[[:space:]]*=[[:space:]]*"([A-Za-z0-9]+[-_])?test(ing)?([-_][A-Za-z0-9_-]+)?"/) {
         in_rs_test = 1; rs_open = 0; rs_depth = 0
         next
       }
