@@ -20,5 +20,13 @@ a working value.
 Table-driven tests are the default shape. Concurrency work needs a `-race` run,
 and a deterministic contention test rather than a sleep.
 
+A string literal repeated in one file becomes a named constant — `audits/ufs.sh`
+reads `*.go` and enforces it. Two Go shapes are held out, because no rename can
+fix them: members of a `const ( … )` group, which state the binding keyword once
+on the opening line rather than per member, and backtick struct tags, whose
+quoted halves (`json:"id"`) are addressed by reflection and cannot hold a const.
+Both are carve-outs for what the *language* makes unfixable, not permission —
+a flag name or a label spelled inline twice is still the rule.
+
 The repository owns formatting, vet, lint, build, and test commands — it
 declares them in `.oracle/orly.json`.
