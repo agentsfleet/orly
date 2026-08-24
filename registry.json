@@ -33,6 +33,10 @@
           "target": "dispatch/name_architecture.md"
         },
         {
+          "source": "dispatch/write_pr_description.md",
+          "target": "dispatch/write_pr_description.md"
+        },
+        {
           "source": "audits/ufs.sh",
           "target": "audits/ufs.sh"
         },
