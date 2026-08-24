@@ -343,7 +343,13 @@ ERROR REGISTRY GATE: <file>
 **Family:** Constant discipline. **Source:** `AGENTS.md` conformance enforcement
 + the selected language façade's Uniform Free Strings (UFS) clauses.
 
-**Triggers** — every `Edit`/`Write` to source files under `src/`, `ui/packages/*/src/`, `ui/packages/*/app/`, `ui/packages/*/lib/`, `ui/packages/*/components/`, `ui/packages/*/pages/`, `ui/packages/*/tests/`, `agentsfleet/src/`, `agentsfleet/test/` matching `*.zig`, `*.ts`, `*.tsx`, `*.js`, `*.jsx`, `*.rs`, `*.go`. Excluded: `vendor/`, `third_party/`, `.zig-cache/`, `node_modules/`, `*.tsbuildinfo`. `*.py` and `*.sh` fire this façade but are held out of the UFS leaf — see Scope.
+**Triggers** — every `Edit`/`Write` to a source file under the repository's own source surfaces — the `surfaces.user` prefixes it declares in `.oracle/orly.json`, or its source roots where it declares none — matching `*.zig`, `*.ts`, `*.tsx`, `*.js`, `*.jsx`, `*.rs`, `*.go`. Excluded: `vendor/`, `third_party/`, `.zig-cache/`, `node_modules/`, `*.tsbuildinfo`. `*.py` and `*.sh` fire this façade but are held out of the UFS leaf — see Scope. Each repository binds its own prefixes; naming one repository's layout here is what sends every other repository a trigger list it cannot match.
+
+<!-- oracle-packs:start product.agentsfleet -->
+In this repository those surfaces are `src/` (Zig), `rustd/crates/*/src/` (Rust), `cli/src/` and `ui/packages/*/{src,app,lib,components,pages,tests}/` (TypeScript).
+
+`agentsfleet/src/` and `agentsfleet/test/` were listed here until they stopped existing. A trigger path that resolves to nothing is the same silent green this card's gate exists to prevent — and the identical stale prefix in `ufs.sh`'s cross-runtime parity scan means its JavaScript half reads zero files today.
+<!-- oracle-packs:end -->
 
 **Override:** `UFS GATE: SKIPPED per user override (reason: ...)` immediately preceding the edit. **User-only**; auto-mode does not cover.
 
@@ -376,11 +382,15 @@ Before saving an edit that introduces or relocates a literal:
 
 1. **Same-file repeat?** Grep within the file for the literal value. If it appears ≥1 time already, define a const at the top of the file (or in the module's `constants.ts`/`constants.zig`) and replace all occurrences.
 
-2. **Same-module repeat?** Grep within the module/package (`ui/packages/app/`, `agentsfleet/src/`, `src/`). If repeated, define in the module's canonical types/constants file (`lib/types.ts`, `src/state/<topic>.zig`, `agentsfleet/src/constants/<topic>.js`).
+2. **Same-module repeat?** Grep within the module or package that owns the file. If repeated, define it in that module's canonical constants file and replace every occurrence.
 
-3. **Cross-runtime sibling?** When the literal is a wire-format string or unit-conversion numeric, grep all three runtimes for an existing matching name. If found, reuse the name. If not, define in every runtime that uses the same value, same commit.
+3. **Cross-runtime sibling?** When the literal is a wire-format string or unit-conversion numeric, grep **every runtime this repository ships** for an existing matching name. If found, reuse it verbatim. If not, define it in each runtime that carries the value, same commit. A single-runtime repository answers this in one grep — the check is about the runtimes that exist, not a fixed count.
 
 4. **Carve-out check?** If the literal IS the contract a pin test verifies, write the `// pin test: literal is the contract` comment on or above the line. Otherwise, name it.
+
+<!-- oracle-packs:start product.agentsfleet -->
+Concretely here: modules are `src/` (Zig), `rustd/crates/*/` (Rust), `cli/src/` and `ui/packages/*/` (TypeScript), and their canonical constants files are `src/state/<topic>.zig`, the crate's own `constants.rs`, and `lib/types.ts`. The runtimes to grep in step 3 are Zig, TypeScript and Rust.
+<!-- oracle-packs:end -->
 
 #### Required output (per Edit/Write — one line by default)
 
