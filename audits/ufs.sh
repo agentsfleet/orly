@@ -343,48 +343,57 @@ done < <(awk -v re="$NUMERIC_RE" '
 ' "${FILES[@]}")
 
 # ── 3. cross-runtime-orphan ─────────────────────────────────────────────────
-# Full-codebase ERR_* parity check. Scoped to ERR_* prefix because that's
-# the cross-runtime contract surface (server error codes consumed by
-# clients). Server (Zig) is the source of truth — every JS/TS ERR_* must
-# have a matching Zig pub const ERR_*. Zig-only ERR_* consts are fine
-# (server-internal codes don't need a client mirror).
+# Full-tree ERR_* parity. Scoped to the ERR_* prefix because that is the
+# cross-runtime contract surface — server error codes a client consumes. Zig is
+# the source of truth: every client-side ERR_* must have a matching Zig
+# `pub const ERR_*`. Zig-only codes are fine; a server-internal code needs no
+# client mirror.
 #
-# Scans the *working tree* via `git ls-files` — sees staged content even
-# before it lands in HEAD, closing the previous diff-mode blindspot where
-# a fix staged in pre-commit couldn't satisfy a check that only read
-# committed history.
+# Scoped BY RUNTIME, not by one repository's directory names. The previous form
+# globbed `src/*.zig`, `agentsfleet/src/*.{js,jsx,ts,tsx}` and
+# `ui/packages/*/src/*.ts{,x}` — one repository's layout inside a gate every
+# repository receives, and it aged exactly as badly as that implies.
+# `agentsfleet/src/` stopped existing, so the JavaScript half globbed ZERO
+# files and "every JS ERR_* has a Zig twin" passed by scanning nothing, while
+# three real codes one directory over went uncompared. A check aimed at a path
+# that resolves to nothing is the same silent green this audit exists to catch.
 #
-# Perf (M70): batched `xargs grep` (single process across all files)
-# instead of `xargs -I{} grep` (one process per file). On agentsfleet the
-# server-side scan dropped from ~30s to <2s.
+# Zig is the source of truth WHERE ZIG EXISTS. A repository with no Zig has
+# nothing to compare against, so the check reports that it skipped rather than
+# passing vacuously — and, more to the point, does not turn every error code in
+# a pure-TypeScript repository into an orphan the moment the globs get fixed.
+#
+# Perf (M70): batched `xargs grep` (single process across all files) instead of
+# `xargs -I{} grep` (one process per file). The server-side scan dropped from
+# ~30s to <2s on a 1000-file Zig tree; scoping by runtime keeps that shape.
 
-zig_err=$(git ls-files -z -- 'src/*.zig' 2>/dev/null \
-  | { grep -zvE '_test\.zig$|^src/zbench_fixtures\.zig$' || true; } \
-  | xargs -0 grep -hE '^pub const ERR_[A-Z][A-Z0-9_]+[[:space:]]*=' 2>/dev/null \
-  | grep -oE 'ERR_[A-Z][A-Z0-9_]+' | sort -u || true)
+# Test and fixture trees are excluded DIRECTORY-shaped, not by `.test.` infix
+# alone. `cli/test/acceptance/fixtures/install-negatives-ops.ts` declares codes
+# that are INPUTS to a negative test — an infix-only filter walked straight
+# past it and would have reported two fixtures as production orphans.
+PARITY_EXCLUDE='(^|/)(test|tests|__tests__|fixtures)/|_test\.zig$|\.test\.|\.spec\.|(^|/)node_modules/|^vendor/|^third_party/|^src/zbench_fixtures\.zig$'
 
-js_err=$(git ls-files -z -- 'agentsfleet/src/*.js' 'agentsfleet/src/*.jsx' 'agentsfleet/src/*.ts' 'agentsfleet/src/*.tsx' 2>/dev/null \
-  | { grep -zvE '\.test\.|\.spec\.' || true; } \
-  | xargs -0 grep -hE '^export const ERR_[A-Z][A-Z0-9_]+[[:space:]]*=' 2>/dev/null \
-  | grep -oE 'ERR_[A-Z][A-Z0-9_]+' | sort -u || true)
+parity_codes() {
+  local declaration="$1"; shift
+  git ls-files -z -- "$@" 2>/dev/null \
+    | { grep -zvE "$PARITY_EXCLUDE" || true; } \
+    | { xargs -0 grep -hE "$declaration" 2>/dev/null || true; } \
+    | grep -oE 'ERR_[A-Z][A-Z0-9_]+' | sort -u || true
+}
 
-ui_err=$(git ls-files -z -- 'ui/packages/*/src/*.ts' 'ui/packages/*/src/*.tsx' 2>/dev/null \
-  | { grep -zvE '\.test\.|\.spec\.' || true; } \
-  | xargs -0 grep -hE '^export const ERR_[A-Z][A-Z0-9_]+[[:space:]]*=' 2>/dev/null \
-  | grep -oE 'ERR_[A-Z][A-Z0-9_]+' | sort -u || true)
+zig_err=$(parity_codes '^pub const ERR_[A-Z][A-Z0-9_]+[[:space:]]*=' '*.zig')
+client_err=$(parity_codes '^export const ERR_[A-Z][A-Z0-9_]+[[:space:]]*=' '*.js' '*.jsx' '*.ts' '*.tsx')
 
-# Every JS ERR_* must exist in Zig.
-for c in $js_err; do
-  if ! echo "$zig_err" | grep -qx "$c"; then
-    record "cross-runtime-orphan $c absent-in-zig"
-  fi
-done
-# Every TS (UI) ERR_* must exist in Zig.
-for c in $ui_err; do
-  if ! echo "$zig_err" | grep -qx "$c"; then
-    record "cross-runtime-orphan $c absent-in-zig"
-  fi
-done
+if [ -z "$zig_err" ]; then
+  ok "audit-ufs: cross-runtime parity skipped — no Zig ERR_* declared, so this repository has no source of truth to compare against"
+else
+  # Every client-side ERR_* must exist in Zig.
+  for c in $client_err; do
+    if ! echo "$zig_err" | grep -qx "$c"; then
+      record "cross-runtime-orphan $c absent-in-zig"
+    fi
+  done
+fi
 
 # ── Report ──────────────────────────────────────────────────────────────────
 

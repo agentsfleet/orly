@@ -2,7 +2,7 @@
 SHELL := /bin/bash
 
 .PHONY: audit test-audit llmevals ledger install-evals \
-        dispatch-coverage dispatch-evals dispatch-parity ledger-evals
+        dispatch-coverage dispatch-evals dispatch-parity dispatch-parity-evals ledger-evals
 
 # Run the deterministic audit chain (all green):
 #   1. Registry and profile validation.
@@ -22,7 +22,7 @@ SHELL := /bin/bash
 # (.github/workflows/harness.yml) and by hand as `make install-evals`.
 # `%` separates the steps, so no step command may contain one.
 AUDIT_STEPS := \
-	bun run typecheck && bun test src%bin/orly verify%bash audits/ufs.sh --all%bash audits/agents-md.sh%bash evals/dispatch/coverage.sh%bash evals/dispatch/run.sh%bash evals/ledger/run.sh%bash audits/rule-ledger.sh --check%bash audits/rule-ledger.sh --census
+	bun run typecheck && bun test src%bin/orly verify%bash audits/ufs.sh --all%bash audits/agents-md.sh%bash evals/dispatch/coverage.sh%bash evals/dispatch/run.sh%bash evals/dispatch/parity.sh%bash evals/ledger/run.sh%bash audits/rule-ledger.sh --check%bash audits/rule-ledger.sh --census
 
 audit:
 	@set -uo pipefail; \
@@ -69,6 +69,12 @@ dispatch-coverage:
 # Deterministic dispatch evals in isolation — pass+fail fixture per code.
 dispatch-evals:
 	@bash evals/dispatch/run.sh
+
+# Cross-runtime ERR_* parity in isolation. Every case asserts what the check
+# FOUND, not just its exit code — a vacuous pass and a real pass look identical
+# from the outside, which is how a glob aimed at a dead path went unnoticed.
+dispatch-parity-evals:
+	@bash evals/dispatch/parity.sh
 
 # Negative-test the audit itself — prove every check still FAILS on a bad
 # tree (conformance + determinism). Run whenever agents-md.sh changes.
