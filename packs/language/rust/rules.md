@@ -53,7 +53,12 @@ Four Rust shapes are held out of the count, because no rename can fix them:
   is not accepted in that position.
 - **`tests/` and `benches/`** at the crate root, which are fixture trees.
 
-Everything else counts, including `examples/`, which ships and compiles.
+Everything else counts, including `examples/` — not because it compiles, but
+because what repeats there is coupling, not demonstration. A cache namespace
+declared at the top of a walkthrough and matched ninety lines below it, or a
+fixture id that is both the fake store's match arm and the key five call sites
+pass, breaks silently when one end moves. That is the drift RULE UFS exists to
+catch, and example code is where a reader copies it from.
 
 ## Evolution
 
