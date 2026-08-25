@@ -1,5 +1,7 @@
 # Go authoring
 
+<!-- oracle-scope: *.go -->
+
 Return errors, do not panic across a package boundary. Wrap with `%w` so the
 caller can still match the cause, and add context the caller does not already
 have — never re-wrap the same fact twice.

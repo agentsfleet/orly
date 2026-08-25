@@ -187,6 +187,40 @@ ledger_has_prefix() {
 DISPATCH_LIB_BASENAME="lib.sh"
 
 # The executable façades: dispatch/*.sh minus the shared library.
+# A façade's trigger surface, declared where it belongs: in the façade. The tag
+# is one HTML comment, invisible in rendered markdown, e.g.
+#   <!-- oracle-scope: *.rs -->
+# Scope used to be readable ONLY from a leaf's dispatch_init line, so the five
+# façades carrying deterministic checks had a voice and the other fourteen had
+# none — a Rust author was never asked to read the Rust rules, because
+# write_rust.md has no .sh. The page wins; the leaf remains the fallback so the
+# mechanised façades keep the scope they already declare, in one place.
+FACADE_SCOPE_TAG='^[[:space:]]*<!--[[:space:]]*oracle-scope:[^>]*-->[[:space:]]*$'
+
+ledger_facade_pages() {
+  local file
+  for file in "$LEDGER_ROOT"/dispatch/*.md; do
+    [ -f "$file" ] || continue
+    printf '%s\n' "$file"
+  done
+}
+
+# Space-separated, trailing space — same shape ledger_facade_globs returns, so
+# ledger_match_count reads either without knowing which declared it.
+ledger_facade_scope() {
+  local page="$1" tag stem leaf
+  tag="$(grep -hE "$FACADE_SCOPE_TAG" "$page" 2>/dev/null | head -1)"
+  if [ -n "$tag" ]; then
+    printf '%s' "$tag" \
+      | sed -e 's/.*oracle-scope:[[:space:]]*//' -e 's/[[:space:]]*-->.*//' \
+            -e 's/[[:space:]][[:space:]]*/ /g' -e 's/[[:space:]]*$/ /'
+    return 0
+  fi
+  stem="$(basename "$page" .md)"
+  leaf="$(dirname "$page")/$stem.sh"
+  [ -f "$leaf" ] && ledger_facade_globs "$leaf"
+}
+
 ledger_facade_scripts() {
   local file
   for file in "$LEDGER_ROOT"/dispatch/*.sh; do

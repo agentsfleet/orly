@@ -101,12 +101,24 @@ check_registry_parity() {
 # is answerable from the tree — unlike "has this fired lately", which depends on
 # what happened to get committed recently and gates nothing.
 check_facade_scopes() {
-  local script stem
+  local script stem page
+  # Iterates LEAVES, not pages: a leaf is a promise that something mechanical
+  # fires, so one declaring no scope is dead weight whether or not a page sits
+  # beside it. A façade with no leaf and no tag is situational — a lifecycle
+  # stage transition, a "tests pass" claim, writing a PR body — and has no
+  # staged-diff trigger to declare, so it is not a finding.
   while IFS= read -r script; do
     [ -n "$script" ] || continue
-    [ -n "$(ledger_facade_globs "$script")" ] && continue
     stem="$(basename "$script" .sh)"
-    fail "facade=$stem declares no dispatch_init scope — dispatch/$stem.sh (nothing it carries can ever fire)"
+    page="$LEDGER_ROOT/dispatch/$stem.md"
+    # Either surface may carry the scope; ledger_facade_scope prefers the page
+    # and falls back to this leaf, so both spellings satisfy the same check.
+    if [ -f "$page" ]; then
+      [ -n "$(ledger_facade_scope "$page")" ] && continue
+    else
+      [ -n "$(ledger_facade_globs "$script")" ] && continue
+    fi
+    fail "facade=$stem declares no scope — no oracle-scope tag in dispatch/$stem.md and no dispatch_init in dispatch/$stem.sh (nothing it carries can ever fire)"
   done < <(ledger_facade_scripts)
 }
 
