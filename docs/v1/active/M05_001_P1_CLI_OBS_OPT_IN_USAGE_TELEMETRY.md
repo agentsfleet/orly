@@ -10,31 +10,31 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
   sequencing signal. A section that contradicts these rules loses — delete it.
 -->
 
-# M05_001: Opt-in usage telemetry reaches agentsfleet
+# M05_001: Opt-in usage telemetry reaches PostHog
 
 **Prototype:** v1.0.0
 **Milestone:** M05
 **Workstream:** 001
 **Date:** Aug 25, 2026
-**Status:** PENDING
+**Status:** IN_PROGRESS
 **Priority:** P1 — without consented usage signals, installation and gate friction remain invisible
 **Categories:** CLI, OBS
-**Batch:** B1 — one telemetry path from command completion to a mocked fleet ingestion boundary
-**Branch:** added at CHORE(open)
-**Test Baseline:** set at CHORE(open) — `unit=<N> integration=0` from `bun test src`; no integration command is declared
+**Batch:** B1 — one telemetry path from command completion to a mocked PostHog capture boundary
+**Branch:** `feat/m05-opt-in-telemetry`
+**Test Baseline:** unit=128 integration=0
 **Depends on:** none
 **Provenance:** LLM-drafted (Amp, Aug 25, 2026) from Indy's gstack consent and storage direction
-**Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §Topology and §Gates
+**Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §Topology, §Gates, and §Usage telemetry
 
 ---
 
 ## Overview
 
-**Goal (testable):** A direct interactive `orly` run asks once whether to keep telemetry off or enable anonymous telemetry; consented commands append privacy-bounded events under the agentsfleet state root at `~/.config/agentsfleet/orly/` by default; and anonymous events retry safely against the agentsfleet fleet telemetry boundary without changing command output or exit status.
+**Goal (testable):** A direct interactive `orly` run asks once whether to keep telemetry off or enable anonymous telemetry. Consented commands append privacy-bounded events under `~/.config/agentsfleet/orly/` by default and retry against PostHog without changing command output or exit status. A fixed retention window and byte ceiling bound local storage.
 
 **Problem:** `orly` cannot currently count installations, distinguish active installs from one-time setup, or see which gate criterion repeatedly stops a workflow. Adding a general analytics platform would create more machinery than the Command-Line Interface (CLI) needs, while prompting from generated hooks could block commits and agent automation.
 
-**Solution summary:** Follow gstack's small local-first path with only two choices. Resolve the agentsfleet state root exactly like the sibling CLI (`AGENTSFLEET_STATE_DIR`, otherwise `~/.config/agentsfleet`), store Orly's consent in the isolated `orly/.orly.json` child, ask once only during eligible direct interactive use, append one controlled JSON Lines (JSONL) event per anonymous command, and start a best-effort background sender. Anonymous events carry a random persistent installation identifier so a multi-command journey can be understood without identifying a person, machine, or repository. The sender batches unsent records, writes an egress receipt before transmission, and posts to the agentsfleet fleet telemetry URL through a fetch boundary mocked in tests. Off means no event is written and no network call is attempted.
+**Solution summary:** Follow gstack's small local-first path with only two choices, but close its unbounded-file gap. Resolve the agentsfleet state root exactly like the sibling CLI (`AGENTSFLEET_STATE_DIR`, otherwise `~/.config/agentsfleet`). Store Orly's consent in the isolated `orly/.orly.json` child and ask once only during eligible direct interactive use. Anonymous commands append one controlled JSON Lines (JSONL) event with a random installation identifier. The sender writes an egress receipt, posts a bounded batch to PostHog with the existing agentsfleet public project token, and compacts acknowledged records. Events expire after seven days, and the queue drops its oldest records before exceeding 10 MiB. Off means no event is written and no network call is attempted.
 
 ## PR Intent & comprehension handshake
 
@@ -47,8 +47,8 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 1. `src/cli.ts` — owns command dispatch, outcomes, help, and exit status.
 2. `src/install.ts` — owns generated hook invocation and can mark hook-originated commands without changing gate behavior.
 3. `docs/ORLY_ARCHITECTURE.md` — defines the CLI, installation, and gate boundaries this signal follows.
-4. gstack `bin/gstack-telemetry-log` and `bin/gstack-telemetry-sync` — prior art for consent gating, local JSONL, cursor retry, and background upload.
-5. agentsfleet CLI `src/lib/config-dir.ts` and `src/services/telemetry/consent.ts` — source of truth for the shared state-root default, environment override, and ownership of the sibling CLI's root-level `telemetry.json`.
+4. gstack `bin/gstack-telemetry-log` and `bin/gstack-telemetry-sync` — prior art for consent gating, local JSONL, receipt-first upload, and the accumulation gap this work closes.
+5. agentsfleet CLI `src/lib/config-dir.ts`, `src/services/telemetry/consent.ts`, and `src/services/telemetry/analytics.layer.ts` — source of truth for the shared state root and the existing public PostHog destination.
 
 ## Files Changed (blast radius)
 
@@ -56,14 +56,14 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 |------|--------|-----|
 | `docs/v1/pending/M05_001_P1_CLI_OBS_OPT_IN_USAGE_TELEMETRY.md` | CREATE, then MOVE through lifecycle directories | Record intent, tests, and evidence |
 | `src/telemetry.ts` | CREATE | Own consent, identity, event validation, and best-effort local append |
-| `src/telemetry_sync.ts` | CREATE | Own cursor-based batching, egress receipt, and fleet upload |
+| `src/telemetry_sync.ts` | CREATE | Own bounded batching, egress receipt, PostHog upload, and queue compaction |
 | `src/telemetry.test.ts` | CREATE | Prove consent, schema, privacy, failure isolation, and retry behavior |
 | `src/cli.ts` | EDIT | Time command runs, classify outcomes, prompt when eligible, append, and trigger sync |
 | `src/cli.test.ts` | EDIT | Prove help text and command exit status stay stable |
 | `src/install.ts` | EDIT | Mark generated-hook invocations so they never prompt |
 | `src/install.test.ts` | EDIT | Prove generated hooks carry the invocation marker |
 | `README.md` | EDIT | Publish consent choices, collected fields, excluded fields, and disable commands |
-| `docs/ORLY_ARCHITECTURE.md` | EDIT | Record the local-to-fleet data flow and failure boundary |
+| `docs/ORLY_ARCHITECTURE.md` | EDIT | Record the local-to-PostHog data flow, retention, and future Fleet boundary |
 
 ## Applicable Rules
 
@@ -88,8 +88,9 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ## Prior-Art / Reference Implementations
 
-- **gstack logger and sender:** `bin/gstack-telemetry-log` and `bin/gstack-telemetry-sync` provide the consent gate, random installation identifier, local JSONL, receipt-before-send, and cursor-on-success shape. Orly intentionally collapses gstack's anonymous and community choices into one clearly described anonymous mode with a random installation identifier.
+- **gstack logger and sender:** `bin/gstack-telemetry-log` and `bin/gstack-telemetry-sync` provide the consent gate, random installation identifier, local JSONL, receipt-before-send, and cursor-on-success shape. Orly keeps one anonymous mode and adds retention plus compaction because gstack's acknowledged local records remain forever.
 - **agentsfleet CLI state path:** `src/lib/config-dir.ts` in `~/Projects/agentsfleet/cli` resolves `AGENTSFLEET_STATE_DIR` first and otherwise uses `~/.config/agentsfleet`; its telemetry service owns root-level `telemetry.json`, so Orly uses an `orly/` child instead of sharing that file.
+- **agentsfleet PostHog sender:** `src/services/config.ts` and `src/services/telemetry/analytics.layer.ts` ship a public capture-only PostHog project token and send product events without user authentication. Orly uses the same destination with an `orly_command_run` event name and a closed property set.
 - **Existing CLI boundary:** `src/cli.ts` already converts every command to one numeric outcome; telemetry observes that result rather than changing handlers.
 - **Existing test style:** `src/cli.test.ts` and `src/install.test.ts` use subprocess and temporary repository boundaries that preserve real CLI behavior while isolating the network mock.
 
@@ -102,7 +103,7 @@ Consent has exactly two values: `off` and `anonymous`. Missing or malformed conf
 The prompt must use this disclosure rather than a generic analytics question:
 
 ```text
-Help improve Orly by sharing anonymous usage telemetry?
+Help improve Orly by sharing anonymous usage telemetry with PostHog?
 
 If enabled, Orly records and sends only:
 - command and gate names
@@ -137,14 +138,14 @@ After command completion, anonymous runs append one schema-versioned event. Allo
 - **Dimension 2.3** — telemetry storage failure and malformed local state cannot print, throw through the command, or alter its exit status → Test `telemetry_failure_never_changes_command_result`
 - **Dimension 2.4** — event serialization cannot contain command arguments, working directory, repository, branch, or environment values → Test `event_schema_rejects_private_context`
 
-### §3 — Push consented records through the fleet boundary
+### §3 — Push consented records to PostHog and bound local storage
 
-After a local append, a background sender may process unsent records. It reads a cursor next to the JSONL file, builds a bounded batch, and writes a receipt containing destination, consent tier, payload hash, byte length, and attempted timestamp before fetch. Receipt failure blocks the send. A confirmed successful response advances the cursor atomically; timeout, rejection, or malformed response leaves it unchanged for retry. Telemetry work remains silent and detached from command completion.
+After a local append, a background sender may process unsent records. It builds a bounded PostHog batch and writes a receipt containing destination, consent tier, payload hash, byte length, and attempted timestamp before fetch. Receipt failure blocks the send. A successful PostHog response removes the exact acknowledged prefix atomically. Timeout or rejection leaves those records unchanged for retry. Queue maintenance removes records older than seven days and drops the oldest records before the file exceeds 10 MiB. Telemetry work remains silent and detached from command completion.
 
 - **Dimension 3.1** — off consent performs zero fetches and anonymous consent sends only allowlisted fields → Test `sync_is_consent_gated_and_schema_safe`
 - **Dimension 3.2** — every fetch is preceded by a receipt for the exact payload bytes and receipt failure prevents fetch → Test `sync_receipts_exact_payload_before_send`
-- **Dimension 3.3** — only confirmed success advances the cursor; network and response failures retry the same event identifiers → Test `sync_retries_without_losing_or_renaming_events`
-- **Dimension 3.4** — the agentsfleet fleet endpoint is exercised through a deterministic fetch mock with no live network dependency → Test `sync_posts_expected_batch_to_mock_fleet_endpoint`
+- **Dimension 3.3** — only confirmed success compacts acknowledged records; network and response failures retry the same event identifiers → Test `sync_retries_without_losing_or_renaming_events`
+- **Dimension 3.4** — retention and byte limits bound acknowledged and unsent records without live network access → Test `sync_compacts_and_bounds_local_queue`
 
 ### §4 — Make collection legible and command behavior stable
 
@@ -162,19 +163,19 @@ Consent:    <state root>/.orly.json
 Marker:     <state root>/.telemetry-prompted
 Identity:   <state root>/installation-id
 Events:     <state root>/analytics/orly-usage.jsonl
-Cursor:     <state root>/analytics/.sync-state
 Receipts:   <state root>/analytics/egress-receipts.jsonl
 
-POST https://api.agentsfleet.net/fleets/telemetry
-Request: JSON array of no more than 100 allowlisted telemetry events
-Success: 2xx JSON response confirming the accepted event count
-Failure: non-2xx, timeout, invalid response, or receipt refusal retains the cursor
+POST https://us.i.posthog.com/batch
+Request: PostHog batch of no more than 100 `orly_command_run` events using the public agentsfleet project token
+Success: 2xx response removes the exact sent prefix
+Failure: non-2xx, timeout, or receipt refusal retains the same records
+Retention: seven days and 10 MiB maximum local event storage
 
 Configuration: {"telemetry":"off|anonymous"}
-Overrides: ORLY_TELEMETRY=off|anonymous; ORLY_TELEMETRY_OFF=1
+Overrides: ORLY_TELEMETRY=off|anonymous; ORLY_TELEMETRY_OFF=1; ORLY_POSTHOG_HOST=<URL>; ORLY_POSTHOG_KEY=<PUBLIC_PROJECT_TOKEN>
 ```
 
-The fleet endpoint is a client boundary in this repository. Tests replace fetch with a deterministic mock; deploying or changing the agentsfleet service is not part of this workstream.
+The PostHog project token is public and capture-only. Tests replace fetch with a deterministic mock and make no live network request. A future Orly Insights Fleet may query PostHog with a private key; creating that Fleet is not part of this workstream.
 
 ## Failure Modes
 
@@ -182,10 +183,10 @@ The fleet endpoint is a client boundary in this repository. Tests replace fetch 
 |------|-------|--------------------------------------------------------|
 | Consent unavailable | Config, marker, or prompt cannot be read or written | Resolve to off, do not ask repeatedly, and preserve the command result |
 | Local append unavailable | State directory or JSONL file is unwritable | Drop the event silently; no sender starts; command output and exit status stay unchanged |
-| Receipt unavailable | Receipt cannot be durably appended before fetch | Refuse the send and retain the cursor |
-| Fleet unavailable | Fetch times out, rejects, or returns non-success | Retain the cursor and retry on a later eligible run |
-| Response ambiguous | Fleet returns success without the expected accepted count | Treat as failure and retain the cursor |
-| Cursor unavailable | A successful send cannot persist the next offset | Re-send stable event identifiers later so ingestion can remain idempotent |
+| Receipt unavailable | Receipt cannot be durably appended before fetch | Refuse the send and retain the same records |
+| PostHog unavailable | Fetch times out, rejects, or returns non-success | Retain the same records and retry on a later eligible run |
+| Compaction unavailable | A successful send cannot replace the queue atomically | Keep stable event identifiers so PostHog can deduplicate a later retry by `$insert_id` |
+| Queue at limit | Unsent records reach seven days or 10 MiB | Drop oldest records until both bounds hold; preserve command behavior |
 | Automation prompt | A hook or automated process reaches consent code | Invocation eligibility returns false before prompt access |
 
 ## Invariants
@@ -196,14 +197,15 @@ The fleet endpoint is a client boundary in this repository. Tests replace fetch 
 4. Every network attempt has a durable receipt for the exact bytes first — enforced by sender ordering and refusal tests.
 5. Telemetry cannot print, throw through CLI dispatch, or change an `orly` exit code — enforced by the top-level best-effort boundary and subprocess tests.
 6. Private context is absent by construction rather than redacted later — enforced by a closed event type and serialization tests.
+7. Local telemetry storage is bounded by age and bytes — enforced before append and after acknowledged upload.
 
 ## Metrics & Observability
 
 | Metric / event | Owner | Fires when | Properties allowed | Privacy guard | Test proof |
 |----------------|-------|------------|--------------------|---------------|------------|
-| `command_run` | product | an anonymous CLI command finishes | command, gate, outcome, failed criterion, duration, version, operating system, architecture, invocation, session, random installation ID | closed schema; no paths, repositories, arguments, prompts, output, hostname, username, environment, or raw errors | `appends_one_valid_event_per_command` and `event_schema_rejects_private_context` |
+| `orly_command_run` | product | an anonymous CLI command finishes | command, gate, outcome, failed criterion, duration, version, operating system, architecture, invocation, session, random installation ID | closed schema; no paths, repositories, arguments, prompts, output, hostname, username, environment, or raw errors | `appends_one_valid_event_per_command` and `event_schema_rejects_private_context` |
 
-The first funnel is installation → first gate → verify gate → PR gate, grouped by the random anonymous installation identifier. Review-specific events and a dashboard remain outside this workstream.
+The first funnel is installation → first gate → verify gate → PR gate, grouped by the random anonymous installation identifier in PostHog. Review-specific events, dashboards, and the Orly Insights Fleet remain outside this workstream.
 
 ## Test Specification (tiered)
 
@@ -219,8 +221,8 @@ The first funnel is installation → first gate → verify gate → PR gate, gro
 | 2.4 | unit | `event_schema_rejects_private_context` | sentinel path, argument, repository, branch, and environment values are absent from serialized bytes |
 | 3.1 | unit | `sync_is_consent_gated_and_schema_safe` | off yields zero fetches; anonymous payloads contain only the allowed schema |
 | 3.2 | unit | `sync_receipts_exact_payload_before_send` | fetch observes an existing matching receipt; receipt rejection yields zero fetches |
-| 3.3 | unit | `sync_retries_without_losing_or_renaming_events` | failure retains offset and stable event IDs; confirmed retry advances it once |
-| 3.4 | integration | `sync_posts_expected_batch_to_mock_fleet_endpoint` | mocked agentsfleet URL receives one bounded JSON batch and returns an accepted count |
+| 3.3 | unit | `sync_retries_without_losing_or_renaming_events` | failure retains the same records and event IDs; confirmed retry removes the sent prefix once |
+| 3.4 | unit | `sync_compacts_and_bounds_local_queue` | acknowledged records are removed; records older than seven days and bytes past 10 MiB are dropped oldest-first |
 | 4.1 | integration | `generated_hooks_mark_telemetry_invocation` | installed pre-commit and pre-push scripts export hook origin before gate execution |
 | 4.2 | end-to-end | `telemetry_help_names_tiers_storage_and_privacy` | CLI help names all tiers, the state root, collected fields, and excluded fields |
 
@@ -230,7 +232,7 @@ The first funnel is installation → first gate → verify gate → PR gate, gro
 |---|--------------------------------|---------------------|----------|----------|-----------------|
 | R1 | Consent defaults off and never prompts automation (§1) | `bun test src/telemetry.test.ts --test-name-pattern 'consent|prompt|automation'` | exit 0 | P0 | |
 | R2 | Local events are useful and contain no private context (§2) | `bun test src/telemetry.test.ts --test-name-pattern 'event|identity|private|command result'` | exit 0 | P0 | |
-| R3 | Fleet sync is receipted, retryable, and tested only against a mock (§3) | `bun test src/telemetry.test.ts --test-name-pattern 'sync|receipt|fleet'` | exit 0 | P0 | |
+| R3 | PostHog sync is receipted, retryable, bounded, and tested only against a mock (§3) | `bun test src/telemetry.test.ts --test-name-pattern 'sync|receipt|PostHog|queue'` | exit 0 | P0 | |
 | R4 | CLI and docs tell the same privacy story (§4) | `bun test src/cli.test.ts --test-name-pattern telemetry && rg -n 'off|anonymous|\.config/agentsfleet/orly|AGENTSFLEET_STATE_DIR' README.md` | exit 0 and both consent terms found | P0 | |
 | R5 | Diff stays inside Files Changed | `git diff --name-only origin/main...HEAD` | 0 paths missing from the Files Changed table | P0 | |
 | S1 | Conform gates green | `make audit` | exit 0 | P0 | |
@@ -249,9 +251,9 @@ N/A — no files, commands, flags, or public symbols are deleted or renamed.
 
 ## Out of Scope
 
-- Deploying the agentsfleet fleet ingestion endpoint; this repository supplies and tests the client boundary only.
+- Creating a first-party telemetry endpoint or database in agentsfleet.
 - Tracking code, prompts, arguments, paths, repository names, branch names, command output, environment values, or raw error messages.
-- Authentication, human identity, fleet membership, or a customer-visible telemetry dashboard.
+- Authentication, human identity, fleet membership, an Orly Insights Fleet, or a customer-visible telemetry dashboard.
 - Review-specific events, skill instrumentation, inactivity monitoring, or claims that a user is definitively stuck.
 - A general analytics framework, plugin system, daemon, queue database, or new runtime dependency.
 
@@ -261,10 +263,10 @@ N/A — no files, commands, flags, or public symbols are deleted or renamed.
 
 1. **Successful user moment** — a consenting user runs `orly gate verify`, sees unchanged gate output, and the next local event records the failed criterion for later aggregate diagnosis.
 2. **Preserved user behaviour** — all commands, generated hooks, output, exit codes, installation files, and gate ordering work unchanged when telemetry is off or broken.
-3. **Optimal-way check** — authenticated fleet analytics could identify people and repositories, but that would require accounts and more sensitive data. A consented pseudonymous command funnel is the direct useful slice.
+3. **Optimal-way check** — PostHog already accepts public capture-only product events and supplies funnel analysis. A first-party endpoint and database would duplicate that machinery before traffic justifies it.
 4. **Rebuild-vs-iterate** — iterate at the CLI boundary. Command dispatch already owns outcomes, and generated hooks already pass through it.
 5. **What we build** — one consent/logger module, one sender module, focused CLI and hook wiring, tests, help, README, and architecture text.
-6. **What we do NOT build** — backend deployment, authentication, review instrumentation, a daemon, PostHog, or a dashboard.
+6. **What we do NOT build** — backend deployment, authentication, review instrumentation, a daemon, an Insights Fleet, or a dashboard.
 7. **Fit with existing features** — events observe `init`, `update`, `doctor`, `gate`, and `override`; they must not alter materialisation or the PR boundary.
 8. **Surface order** — CLI-first because `orly` is a CLI and the consent decision belongs where collection occurs.
 9. **Dashboard restraint** — no dashboard ships until real consented event volume proves a useful funnel.
@@ -272,15 +274,16 @@ N/A — no files, commands, flags, or public symbols are deleted or renamed.
 
 ## Decomposition & alternatives (patch vs refactor)
 
-- **Chosen shape:** Two source modules separate local consent/event ownership from off-machine retry ownership, with existing CLI and generated-hook boundaries providing the only wiring.
-- **Alternative considered:** One telemetry file. Rejected because consent, filesystem persistence, cursor batching, receipts, and fetch cancellation would push one source beyond its single job and length ceiling.
-- **Alternative considered:** A telemetry service or local database. Rejected because append-only JSONL plus one cursor fully serves the initial funnel.
+- **Chosen shape:** Two source modules separate local consent/event ownership from PostHog upload and compaction, with existing CLI and generated-hook boundaries providing the only wiring.
+- **Alternative considered:** One telemetry file. Rejected because consent, filesystem storage, queue compaction, receipts, and fetch cancellation would push one source beyond its single job and length ceiling.
+- **Alternative considered:** A telemetry service or local database. Rejected because bounded JSONL plus atomic prefix compaction serves the initial funnel.
 - **Alternative considered:** Authenticate every event through agentsfleet. Rejected because it changes onboarding and collects human identity before aggregate usage proves the need.
+- **Alternative considered:** Send every event to a dedicated Fleet. Rejected because a public package cannot protect a Fleet webhook secret, each event would create agent work, and event history would grow with command volume. A later Insights Fleet can query closed PostHog windows with a private key.
 - **Patch-vs-refactor verdict:** this is a focused extension. Existing command handlers and gates remain intact; telemetry observes their final result through one best-effort boundary.
 
 ## Discovery (consult log)
 
-- **Consults** — Indy chose two consent states, `off` and `anonymous`; anonymous retains a random installation identifier so Orly can connect workflow steps without identifying a person, machine, or repository. Orly stores its `.orly.json` under the agentsfleet state directory and tests the agentsfleet fleet endpoint through a mock. Inspection of `~/Projects/agentsfleet/cli` corrected that shared root to `~/.config/agentsfleet` by default or `AGENTSFLEET_STATE_DIR` when set, and confirmed Orly must not reuse the sibling CLI's root-level `telemetry.json`. The authoring call keeps review events outside M05 to avoid over-engineering the first signal path.
-- **Metrics review** — adds `command_run` and the installation-to-PR-gate funnel; `docs/ORLY_ARCHITECTURE.md` becomes the local analytics flow record.
+- **Consults** — Indy chose two consent states, `off` and `anonymous`; anonymous retains a random installation identifier so Orly can connect workflow steps without identifying a person, machine, or repository. Fleet review found that direct Fleet ingress would expose a credential or require an unauthenticated model-execution path. Indy selected direct PostHog capture because telemetry is high priority and a new backend would consume time without improving the first funnel. Inspection of `~/Projects/agentsfleet/cli` confirmed the shared state root and an existing public capture-only PostHog destination. The queue adds seven-day and 10 MiB bounds because gstack's cursor leaves local and remote records accumulating forever.
+- **Metrics review** — adds `orly_command_run` and the installation-to-PR-gate funnel; `docs/ORLY_ARCHITECTURE.md` becomes the local analytics flow record.
 - **Skill-chain outcomes** — `/orly-write-unit-test`, `/review`, and `orly-babysit-prs` remain to be populated during implementation.
 - **Deferrals** — none.
