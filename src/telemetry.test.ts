@@ -178,11 +178,13 @@ describe("telemetry synchronization", () => {
     const stateRoot = join(root, "orly");
     await replaceTelemetrySpool(stateRoot, Array.from({ length: 101 }, (_, index) => event(index + 1)), FIXED_TIME);
     const bodies: unknown[] = [];
-    const options = { env: { [STATE_ENV]: root, [ANONYMOUS_ENV]: "anonymous" }, now: () => FIXED_TIME, fetchImpl: failingFetch(bodies) };
+    const options = { env: { [STATE_ENV]: root, [ANONYMOUS_ENV]: "anonymous" }, now: () => FIXED_TIME, fetchImpl: captureFetch(bodies) };
     await syncTelemetry(options);
     await syncTelemetry(options);
     expect(bodies).toHaveLength(1);
     expect(postHogBatch(bodies[0])).toHaveLength(100);
+    expect((await readTelemetrySpool(stateRoot, FIXED_TIME)).map((entry) => entry.event_id)).toEqual([uuid(101)]);
+    expect(await Bun.file(join(stateRoot, "analytics/.last-sync-time")).text()).toBe(`${FIXED_TIME.toISOString()}\n`);
   });
 
   test("sync_retries_without_losing_or_renaming_events", async () => {
