@@ -99,9 +99,34 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 Consent has exactly two values: `off` and `anonymous`. Missing or malformed configuration resolves to off. On the first eligible direct interactive invocation, the marker is written before asking, so abort and prompt failure do not create a loop. Hooks, non-interactive processes, and Continuous Integration (CI) never prompt. Environment overrides can select a value for one process, and the hard-off override wins over every source.
 
+The prompt must use this disclosure rather than a generic analytics question:
+
+```text
+Help improve Orly by sharing anonymous usage telemetry?
+
+If enabled, Orly records and sends only:
+- command and gate names
+- success, error, or abort outcome and the failed gate criterion
+- duration, Orly version, operating system, CPU architecture, and invocation type
+- timestamps and random event, session, and installation IDs
+  (the installation ID persists so we can connect runs from the same Orly install)
+
+Orly never collects or sends:
+- source code, file contents, prompts, or command argument values
+- file paths, working directory, repository names, or branch names
+- environment variables, command output, or raw error messages
+- name, email, username, hostname, account details, credentials, or tokens
+
+Off — write and send no telemetry (default)
+Anonymous — record and send only the fields listed above
+```
+
+The prompt does not hide collection details behind a documentation link. Help and README may provide additional context, but the user sees the complete field boundary before choosing.
+
 - **Dimension 1.1** — the consent resolver applies hard-off, process override, persisted setting, then default-off precedence → Test `resolves_telemetry_consent_in_precedence_order`
 - **Dimension 1.2** — the one-time prompt persists the selected tier and marks attempted prompting even on abort → Test `prompts_once_and_marks_aborted_prompt`
 - **Dimension 1.3** — hook, CI, and non-interactive invocation never prompt → Test `automation_never_prompts_for_telemetry`
+- **Dimension 1.4** — the consent prompt names every collected field category, the persistent random installation identifier, every excluded private category, and the effect of both choices before accepting input → Test `consent_prompt_discloses_complete_collection_boundary`
 
 ### §2 — Append one privacy-bounded event after a command
 
@@ -123,7 +148,7 @@ After a local append, a background sender may process unsent records. It reads a
 
 ### §4 — Make collection legible and command behavior stable
 
-CLI help and README state the default, tiers, storage location, transmitted fields, excluded fields, environment overrides, and disable route. Generated hooks declare hook invocation before executing `orly gate`. Existing command text and exit status remain unchanged apart from the one-time eligible consent question and the new help section.
+CLI help and README repeat the prompt's default, choices, storage location, transmitted fields, excluded fields, environment overrides, and disable route without weakening or summarizing away the disclosure. Generated hooks declare hook invocation before executing `orly gate`. Existing command text and exit status remain unchanged apart from the one-time eligible consent question and the new help section.
 
 - **Dimension 4.1** — generated hooks identify themselves and cannot reach the consent prompt → Test `generated_hooks_mark_telemetry_invocation`
 - **Dimension 4.2** — help and README describe the same consent and privacy behavior the tests prove → Test `telemetry_help_names_tiers_storage_and_privacy`
@@ -187,6 +212,7 @@ The first funnel is installation → first gate → verify gate → PR gate, gro
 | 1.1 | unit | `resolves_telemetry_consent_in_precedence_order` | conflicting config and environment inputs resolve hard-off first and unknown values to off |
 | 1.2 | unit | `prompts_once_and_marks_aborted_prompt` | first eligible run writes the marker before input; later runs do not ask |
 | 1.3 | unit | `automation_never_prompts_for_telemetry` | hook, CI, and non-interactive contexts make zero prompt calls |
+| 1.4 | unit | `consent_prompt_discloses_complete_collection_boundary` | rendered prompt lists every allowed and prohibited category, explains the persistent random installation ID, labels off as default, and states that off writes and sends nothing |
 | 2.1 | unit | `appends_one_valid_event_per_command` | fixed command result appends one parseable versioned event with controlled fields |
 | 2.2 | unit | `anonymous_installation_identity_is_stable_and_random` | two anonymous events share a generated installation identity with no hostname, username, repository, machine, or environment input |
 | 2.3 | end-to-end | `telemetry_failure_never_changes_command_result` | unwritable state leaves representative success and error subprocess exit codes unchanged |
@@ -242,7 +268,7 @@ N/A — no files, commands, flags, or public symbols are deleted or renamed.
 7. **Fit with existing features** — events observe `init`, `update`, `doctor`, `gate`, and `override`; they must not alter materialisation or the PR boundary.
 8. **Surface order** — CLI-first because `orly` is a CLI and the consent decision belongs where collection occurs.
 9. **Dashboard restraint** — no dashboard ships until real consented event volume proves a useful funnel.
-10. **Confused-user next step** — `orly --help` explains tiers, location, overrides, and how to disable collection.
+10. **Confused-user next step** — the consent prompt itself explains the complete collection boundary; `orly --help` repeats the choices, location, overrides, and disable route.
 
 ## Decomposition & alternatives (patch vs refactor)
 
