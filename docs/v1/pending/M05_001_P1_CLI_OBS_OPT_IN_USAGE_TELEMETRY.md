@@ -30,11 +30,11 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ## Overview
 
-**Goal (testable):** A direct interactive `orly` run asks once for off, anonymous, or community telemetry; consented commands append privacy-bounded events under the agentsfleet state root at `~/.config/agentsfleet/orly/` by default; and anonymous or community events retry safely against the agentsfleet fleet telemetry boundary without changing command output or exit status.
+**Goal (testable):** A direct interactive `orly` run asks once whether to keep telemetry off or enable anonymous telemetry; consented commands append privacy-bounded events under the agentsfleet state root at `~/.config/agentsfleet/orly/` by default; and anonymous events retry safely against the agentsfleet fleet telemetry boundary without changing command output or exit status.
 
 **Problem:** `orly` cannot currently count installations, distinguish active installs from one-time setup, or see which gate criterion repeatedly stops a workflow. Adding a general analytics platform would create more machinery than the Command-Line Interface (CLI) needs, while prompting from generated hooks could block commits and agent automation.
 
-**Solution summary:** Follow gstack's small local-first path. Resolve the agentsfleet state root exactly like the sibling CLI (`AGENTSFLEET_STATE_DIR`, otherwise `~/.config/agentsfleet`), store Orly's consent in the isolated `orly/.orly.json` child, ask once only during eligible direct interactive use, append one controlled JSON Lines (JSONL) event per command, and start a best-effort background sender only for anonymous or community consent. The sender batches unsent records, writes an egress receipt before transmission, and posts to the agentsfleet fleet telemetry URL through a fetch boundary mocked in tests. Off means no event is written and no network call is attempted.
+**Solution summary:** Follow gstack's small local-first path with only two choices. Resolve the agentsfleet state root exactly like the sibling CLI (`AGENTSFLEET_STATE_DIR`, otherwise `~/.config/agentsfleet`), store Orly's consent in the isolated `orly/.orly.json` child, ask once only during eligible direct interactive use, append one controlled JSON Lines (JSONL) event per anonymous command, and start a best-effort background sender. Anonymous events carry a random persistent installation identifier so a multi-command journey can be understood without identifying a person, machine, or repository. The sender batches unsent records, writes an egress receipt before transmission, and posts to the agentsfleet fleet telemetry URL through a fetch boundary mocked in tests. Off means no event is written and no network call is attempted.
 
 ## PR Intent & comprehension handshake
 
@@ -88,7 +88,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ## Prior-Art / Reference Implementations
 
-- **gstack logger and sender:** `bin/gstack-telemetry-log` and `bin/gstack-telemetry-sync` provide the chosen consent gate, random community installation identifier, local JSONL, anonymous identifier removal, receipt-before-send, and cursor-on-success shape.
+- **gstack logger and sender:** `bin/gstack-telemetry-log` and `bin/gstack-telemetry-sync` provide the consent gate, random installation identifier, local JSONL, receipt-before-send, and cursor-on-success shape. Orly intentionally collapses gstack's anonymous and community choices into one clearly described anonymous mode with a random installation identifier.
 - **agentsfleet CLI state path:** `src/lib/config-dir.ts` in `~/Projects/agentsfleet/cli` resolves `AGENTSFLEET_STATE_DIR` first and otherwise uses `~/.config/agentsfleet`; its telemetry service owns root-level `telemetry.json`, so Orly uses an `orly/` child instead of sharing that file.
 - **Existing CLI boundary:** `src/cli.ts` already converts every command to one numeric outcome; telemetry observes that result rather than changing handlers.
 - **Existing test style:** `src/cli.test.ts` and `src/install.test.ts` use subprocess and temporary repository boundaries that preserve real CLI behavior while isolating the network mock.
@@ -97,7 +97,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ### §1 — Ask once without interrupting automation
 
-Consent has exactly three values: `off`, `anonymous`, and `community`. Missing or malformed configuration resolves to off. On the first eligible direct interactive invocation, the marker is written before asking, so abort and prompt failure do not create a loop. Hooks, non-interactive processes, and Continuous Integration (CI) never prompt. Environment overrides can select a tier for one process, and the hard-off override wins over every source.
+Consent has exactly two values: `off` and `anonymous`. Missing or malformed configuration resolves to off. On the first eligible direct interactive invocation, the marker is written before asking, so abort and prompt failure do not create a loop. Hooks, non-interactive processes, and Continuous Integration (CI) never prompt. Environment overrides can select a value for one process, and the hard-off override wins over every source.
 
 - **Dimension 1.1** — the consent resolver applies hard-off, process override, persisted setting, then default-off precedence → Test `resolves_telemetry_consent_in_precedence_order`
 - **Dimension 1.2** — the one-time prompt persists the selected tier and marks attempted prompting even on abort → Test `prompts_once_and_marks_aborted_prompt`
@@ -105,10 +105,10 @@ Consent has exactly three values: `off`, `anonymous`, and `community`. Missing o
 
 ### §2 — Append one privacy-bounded event after a command
 
-After command completion, consented runs append one schema-versioned event. Allowed properties are event identifier, timestamp, command, optional gate, outcome, optional failed criterion, duration, installed `orly` version, operating system, architecture, invocation kind, session identifier, and community-only installation identifier. No path, argument value, environment value, repository name, branch, prompt, command output, or raw error message enters the event.
+After command completion, anonymous runs append one schema-versioned event. Allowed properties are event identifier, timestamp, command, optional gate, outcome, optional failed criterion, duration, installed `orly` version, operating system, architecture, invocation kind, session identifier, and a random persistent installation identifier. No path, argument value, environment value, repository name, branch, prompt, command output, hostname, username, or raw error message enters the event.
 
 - **Dimension 2.1** — successful and failed commands emit the allowlisted schema with a new session and event identifier → Test `appends_one_valid_event_per_command`
-- **Dimension 2.2** — anonymous events omit stable identity while community events reuse a random locally persisted installation identifier → Test `community_identity_is_stable_and_anonymous_has_none`
+- **Dimension 2.2** — anonymous events reuse a random locally persisted installation identifier that has no identifying inputs → Test `anonymous_installation_identity_is_stable_and_random`
 - **Dimension 2.3** — telemetry storage failure and malformed local state cannot print, throw through the command, or alter its exit status → Test `telemetry_failure_never_changes_command_result`
 - **Dimension 2.4** — event serialization cannot contain command arguments, working directory, repository, branch, or environment values → Test `event_schema_rejects_private_context`
 
@@ -116,7 +116,7 @@ After command completion, consented runs append one schema-versioned event. Allo
 
 After a local append, a background sender may process unsent records. It reads a cursor next to the JSONL file, builds a bounded batch, and writes a receipt containing destination, consent tier, payload hash, byte length, and attempted timestamp before fetch. Receipt failure blocks the send. A confirmed successful response advances the cursor atomically; timeout, rejection, or malformed response leaves it unchanged for retry. Telemetry work remains silent and detached from command completion.
 
-- **Dimension 3.1** — off consent performs zero fetches; anonymous and community batches preserve their identity rules → Test `sync_is_consent_gated_and_tier_safe`
+- **Dimension 3.1** — off consent performs zero fetches and anonymous consent sends only allowlisted fields → Test `sync_is_consent_gated_and_schema_safe`
 - **Dimension 3.2** — every fetch is preceded by a receipt for the exact payload bytes and receipt failure prevents fetch → Test `sync_receipts_exact_payload_before_send`
 - **Dimension 3.3** — only confirmed success advances the cursor; network and response failures retry the same event identifiers → Test `sync_retries_without_losing_or_renaming_events`
 - **Dimension 3.4** — the agentsfleet fleet endpoint is exercised through a deterministic fetch mock with no live network dependency → Test `sync_posts_expected_batch_to_mock_fleet_endpoint`
@@ -145,8 +145,8 @@ Request: JSON array of no more than 100 allowlisted telemetry events
 Success: 2xx JSON response confirming the accepted event count
 Failure: non-2xx, timeout, invalid response, or receipt refusal retains the cursor
 
-Configuration: {"telemetry":"off|anonymous|community"}
-Overrides: ORLY_TELEMETRY=off|anonymous|community; ORLY_TELEMETRY_OFF=1
+Configuration: {"telemetry":"off|anonymous"}
+Overrides: ORLY_TELEMETRY=off|anonymous; ORLY_TELEMETRY_OFF=1
 ```
 
 The fleet endpoint is a client boundary in this repository. Tests replace fetch with a deterministic mock; deploying or changing the agentsfleet service is not part of this workstream.
@@ -166,8 +166,8 @@ The fleet endpoint is a client boundary in this repository. Tests replace fetch 
 ## Invariants
 
 1. `off` performs no local event append and no network call — enforced by logger and sender entry guards plus zero-fetch tests.
-2. Anonymous payloads contain no installation identifier — enforced by event construction and payload-schema tests.
-3. Community identity is random and never derived from hostname, username, repository, or environment — enforced by the identity generator's closed input and tests.
+2. Anonymous identity is random and never derived from hostname, username, repository, machine, or environment — enforced by the identity generator's closed input and tests.
+3. Anonymous payloads contain only the closed event schema — enforced by event construction and payload-schema tests.
 4. Every network attempt has a durable receipt for the exact bytes first — enforced by sender ordering and refusal tests.
 5. Telemetry cannot print, throw through CLI dispatch, or change an `orly` exit code — enforced by the top-level best-effort boundary and subprocess tests.
 6. Private context is absent by construction rather than redacted later — enforced by a closed event type and serialization tests.
@@ -176,9 +176,9 @@ The fleet endpoint is a client boundary in this repository. Tests replace fetch 
 
 | Metric / event | Owner | Fires when | Properties allowed | Privacy guard | Test proof |
 |----------------|-------|------------|--------------------|---------------|------------|
-| `command_run` | product | a consented CLI command finishes | command, gate, outcome, failed criterion, duration, version, operating system, architecture, invocation, session, optional community installation ID | closed schema; no paths, repositories, arguments, prompts, output, environment, or raw errors | `appends_one_valid_event_per_command` and `event_schema_rejects_private_context` |
+| `command_run` | product | an anonymous CLI command finishes | command, gate, outcome, failed criterion, duration, version, operating system, architecture, invocation, session, random installation ID | closed schema; no paths, repositories, arguments, prompts, output, hostname, username, environment, or raw errors | `appends_one_valid_event_per_command` and `event_schema_rejects_private_context` |
 
-The first funnel is installation → first gate → verify gate → PR gate, grouped by community installation identifier where available and aggregate-only for anonymous events. Review-specific events and a dashboard remain outside this workstream.
+The first funnel is installation → first gate → verify gate → PR gate, grouped by the random anonymous installation identifier. Review-specific events and a dashboard remain outside this workstream.
 
 ## Test Specification (tiered)
 
@@ -188,10 +188,10 @@ The first funnel is installation → first gate → verify gate → PR gate, gro
 | 1.2 | unit | `prompts_once_and_marks_aborted_prompt` | first eligible run writes the marker before input; later runs do not ask |
 | 1.3 | unit | `automation_never_prompts_for_telemetry` | hook, CI, and non-interactive contexts make zero prompt calls |
 | 2.1 | unit | `appends_one_valid_event_per_command` | fixed command result appends one parseable versioned event with controlled fields |
-| 2.2 | unit | `community_identity_is_stable_and_anonymous_has_none` | two community events share random identity; anonymous event has no identity field |
+| 2.2 | unit | `anonymous_installation_identity_is_stable_and_random` | two anonymous events share a generated installation identity with no hostname, username, repository, machine, or environment input |
 | 2.3 | end-to-end | `telemetry_failure_never_changes_command_result` | unwritable state leaves representative success and error subprocess exit codes unchanged |
 | 2.4 | unit | `event_schema_rejects_private_context` | sentinel path, argument, repository, branch, and environment values are absent from serialized bytes |
-| 3.1 | unit | `sync_is_consent_gated_and_tier_safe` | off yields zero fetches; anonymous and community payloads carry only allowed identity |
+| 3.1 | unit | `sync_is_consent_gated_and_schema_safe` | off yields zero fetches; anonymous payloads contain only the allowed schema |
 | 3.2 | unit | `sync_receipts_exact_payload_before_send` | fetch observes an existing matching receipt; receipt rejection yields zero fetches |
 | 3.3 | unit | `sync_retries_without_losing_or_renaming_events` | failure retains offset and stable event IDs; confirmed retry advances it once |
 | 3.4 | integration | `sync_posts_expected_batch_to_mock_fleet_endpoint` | mocked agentsfleet URL receives one bounded JSON batch and returns an accepted count |
@@ -205,7 +205,7 @@ The first funnel is installation → first gate → verify gate → PR gate, gro
 | R1 | Consent defaults off and never prompts automation (§1) | `bun test src/telemetry.test.ts --test-name-pattern 'consent|prompt|automation'` | exit 0 | P0 | |
 | R2 | Local events are useful and contain no private context (§2) | `bun test src/telemetry.test.ts --test-name-pattern 'event|identity|private|command result'` | exit 0 | P0 | |
 | R3 | Fleet sync is receipted, retryable, and tested only against a mock (§3) | `bun test src/telemetry.test.ts --test-name-pattern 'sync|receipt|fleet'` | exit 0 | P0 | |
-| R4 | CLI and docs tell the same privacy story (§4) | `bun test src/cli.test.ts --test-name-pattern telemetry && rg -n 'off|anonymous|community|\.config/agentsfleet/orly|AGENTSFLEET_STATE_DIR' README.md` | exit 0 and all consent terms found | P0 | |
+| R4 | CLI and docs tell the same privacy story (§4) | `bun test src/cli.test.ts --test-name-pattern telemetry && rg -n 'off|anonymous|\.config/agentsfleet/orly|AGENTSFLEET_STATE_DIR' README.md` | exit 0 and both consent terms found | P0 | |
 | R5 | Diff stays inside Files Changed | `git diff --name-only origin/main...HEAD` | 0 paths missing from the Files Changed table | P0 | |
 | S1 | Conform gates green | `make audit` | exit 0 | P0 | |
 | S2 | Unit tests pass | `bun test src` | exit 0 | P0 | |
@@ -254,7 +254,7 @@ N/A — no files, commands, flags, or public symbols are deleted or renamed.
 
 ## Discovery (consult log)
 
-- **Consults** — Indy chose gstack-style consent, an Orly-specific `.orly.json` under the agentsfleet state directory, and an agentsfleet fleet endpoint mocked in client tests. Inspection of `~/Projects/agentsfleet/cli` corrected that shared root to `~/.config/agentsfleet` by default or `AGENTSFLEET_STATE_DIR` when set, and confirmed Orly must not reuse the sibling CLI's root-level `telemetry.json`. The authoring call keeps review events outside M05 to avoid over-engineering the first signal path.
+- **Consults** — Indy chose two consent states, `off` and `anonymous`; anonymous retains a random installation identifier so Orly can connect workflow steps without identifying a person, machine, or repository. Orly stores its `.orly.json` under the agentsfleet state directory and tests the agentsfleet fleet endpoint through a mock. Inspection of `~/Projects/agentsfleet/cli` corrected that shared root to `~/.config/agentsfleet` by default or `AGENTSFLEET_STATE_DIR` when set, and confirmed Orly must not reuse the sibling CLI's root-level `telemetry.json`. The authoring call keeps review events outside M05 to avoid over-engineering the first signal path.
 - **Metrics review** — adds `command_run` and the installation-to-PR-gate funnel; `docs/ORLY_ARCHITECTURE.md` becomes the local analytics flow record.
 - **Skill-chain outcomes** — `/orly-write-unit-test`, `/review`, and `orly-babysit-prs` remain to be populated during implementation.
 - **Deferrals** — none.
