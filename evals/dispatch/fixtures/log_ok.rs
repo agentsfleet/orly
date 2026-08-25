@@ -11,4 +11,8 @@ pub fn report(runner: &str, error: &str) {
         event,
         "lease failed",
     );
+
+    // logging: stdout is this command's answer, not a log record
+    println!("{runner}");
+    eprintln!("{error}"); // logging: stderr is the fallback fatal renderer
 }
