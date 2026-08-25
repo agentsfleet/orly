@@ -736,6 +736,34 @@ Every triggered consult is logged in the active spec's **Discovery** section, or
 
 NLR is the cleanup-on-touch arm; NLG bans new legacy framing pre-v2.0.0; this guard covers the harder judgment calls ("should this whole subsystem exist") that need the user's input.
 
+## Porting a codebase between languages (RULE PORT)
+
+> [JUDGMENT → NEW:PORT]
+
+A port is a REWRITE with a conformance test, never a transliteration.
+
+Before porting a construct, ask what it was working AROUND, not what it was.
+A thread with a stop flag is usually the absence of async. A registration map
+with generation counters is usually the absence of structured cancellation. A
+defer chain is usually the absence of ownership. Port the GUARANTEE; delete the
+workaround, and write down which guarantee replaced it.
+
+Every construct carried over needs one sentence: "kept because <the target
+language has no better mechanism>". If that sentence cannot be written
+honestly, it is transliteration.
+
+Conformance is on OBSERVABLE behaviour — wire bytes, rows, status codes, money,
+exit codes. Never on internal shape. A test that pins internal shape freezes
+the source language's debt into the target.
+
+Read the reference implementations the spec names before designing. Take the
+SHAPE and reject the specifics.
+
+Name the tech debt you are NOT carrying over, and where it went.
+
+A milestone titled "parity" means behavioural parity. It never licenses a
+one-to-one file, type, or thread mapping.
+
 ## Comment Voice — New to the Codebase, Familiar with the Goal
 
 > [JUDGMENT → NEW:CMT]
