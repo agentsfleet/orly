@@ -1,5 +1,7 @@
 # Markdown JSX authoring
 
+<!-- oracle-scope: *.mdx -->
+
 Treat Markdown JSX (MDX) as a language, not generic prose. Validate front matter,
 component nesting, links, code fences, and accessible image descriptions.
 

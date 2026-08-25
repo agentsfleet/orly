@@ -187,6 +187,40 @@ ledger_has_prefix() {
 DISPATCH_LIB_BASENAME="lib.sh"
 
 # The executable façades: dispatch/*.sh minus the shared library.
+# A façade's trigger surface, declared where it belongs: in the façade. The tag
+# is one HTML comment, invisible in rendered markdown, e.g.
+#   <!-- oracle-scope: *.rs -->
+# Scope used to be readable ONLY from a leaf's dispatch_init line, so the five
+# façades carrying deterministic checks had a voice and the other fourteen had
+# none — a Rust author was never asked to read the Rust rules, because
+# write_rust.md has no .sh. The page wins; the leaf remains the fallback so the
+# mechanised façades keep the scope they already declare, in one place.
+FACADE_SCOPE_TAG='^[[:space:]]*<!--[[:space:]]*oracle-scope:[^>]*-->[[:space:]]*$'
+
+ledger_facade_pages() {
+  local file
+  for file in "$LEDGER_ROOT"/dispatch/*.md; do
+    [ -f "$file" ] || continue
+    printf '%s\n' "$file"
+  done
+}
+
+# Space-separated, trailing space — same shape ledger_facade_globs returns, so
+# ledger_match_count reads either without knowing which declared it.
+ledger_facade_scope() {
+  local page="$1" tag stem leaf
+  tag="$(grep -hE "$FACADE_SCOPE_TAG" "$page" 2>/dev/null | head -1)"
+  if [ -n "$tag" ]; then
+    printf '%s' "$tag" \
+      | sed -e 's/.*oracle-scope:[[:space:]]*//' -e 's/[[:space:]]*-->.*//' \
+            -e 's/[[:space:]][[:space:]]*/ /g' -e 's/[[:space:]]*$/ /'
+    return 0
+  fi
+  stem="$(basename "$page" .md)"
+  leaf="$(dirname "$page")/$stem.sh"
+  [ -f "$leaf" ] && ledger_facade_globs "$leaf"
+}
+
 ledger_facade_scripts() {
   local file
   for file in "$LEDGER_ROOT"/dispatch/*.sh; do
@@ -208,7 +242,16 @@ ledger_facade_globs() {
 # is the match itself — the same expansion dispatch_resolve_files applies to
 # explicit file arguments, so a fire count means what the dispatcher means.
 ledger_match_count() {
-  local globs="$1" path glob matches=0
+  local globs="$1" path glob matches=0 reglob=""
+  # `for glob in $globs` needs WORD SPLITTING and must not get PATHNAME
+  # EXPANSION: unguarded, bash expands each pattern against the real tree
+  # first, so a façade declaring 'src/*' iterates the 33 files that happen to
+  # exist there and then compares them as literals — src/foo.rs matches
+  # nothing and core/* "matches" only because it expanded to the one file in
+  # core/. Latent while every leaf declared extension globs ('*.zig') that
+  # match nothing at the root and so survive expansion unchanged; the first
+  # path-glob façade turns it into a scope that silently reads wrong.
+  case "$-" in *f*) ;; *) reglob="yes"; set -f ;; esac
   while IFS= read -r path; do
     [ -n "$path" ] || continue
     for glob in $globs; do
@@ -216,6 +259,7 @@ ledger_match_count() {
       case "$path" in $glob) matches=$((matches + 1)); break ;; esac
     done
   done
+  [ -n "$reglob" ] && set +f
   printf '%d' "$matches"
 }
 

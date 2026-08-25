@@ -1,5 +1,7 @@
 # Rust authoring
 
+<!-- oracle-scope: *.rs -->
+
 Use ownership and borrowing to make resource lifetime visible. Keep `unsafe`
 blocks small and state the invariant they rely on. Preserve error variants until
 the caller has enough information to decide whether to retry or stop.

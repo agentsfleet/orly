@@ -94,19 +94,21 @@ content_hash() {
   git -C "$LEDGER_ROOT" hash-object "$LEDGER_ROOT/$1" 2>/dev/null || printf ''
 }
 
-# Façade pages the staged files trigger, one per line. Same glob map the
-# reachability report uses: a façade's scope is its dispatch_init line, so this
-# check and the ledger can never disagree about what fires.
+# Façade pages the staged files trigger, one per line. Scope comes from
+# ledger_facade_scope — the page's own oracle-scope tag, else its leaf's
+# dispatch_init — which is the SAME resolver the ledger's reachability report
+# uses, so this check and the ledger can never disagree about what fires.
+# Iterating pages rather than leaves is the point: a façade without a
+# deterministic leaf still has a trigger surface, and used to be unaskable.
 expected_facade_pages() {
-  local staged="$1" script stem globs
-  while IFS= read -r script; do
-    [ -n "$script" ] || continue
-    stem="$(basename "$script" .sh)"
-    [ -f "$LEDGER_ROOT/dispatch/$stem.md" ] || continue
-    globs="$(ledger_facade_globs "$script")"
-    [ -n "$globs" ] || continue
-    [ "$(ledger_match_count "$globs" < "$staged")" -gt 0 ] && printf 'dispatch/%s.md\n' "$stem"
-  done < <(ledger_facade_scripts)
+  local staged="$1" page stem scope
+  while IFS= read -r page; do
+    [ -n "$page" ] || continue
+    scope="$(ledger_facade_scope "$page")"
+    [ -n "$scope" ] || continue
+    stem="$(basename "$page" .md)"
+    [ "$(ledger_match_count "$scope" < "$staged")" -gt 0 ] && printf 'dispatch/%s.md\n' "$stem"
+  done < <(ledger_facade_pages)
 }
 
 json_unescape() {

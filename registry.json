@@ -264,6 +264,10 @@
           "target": "dispatch/edit_rules.md"
         },
         {
+          "source": "dispatch/edit_rules.sh",
+          "target": "dispatch/edit_rules.sh"
+        },
+        {
           "source": "audits/agents-md.md",
           "target": "audits/agents-md.md"
         },
