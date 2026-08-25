@@ -30,11 +30,11 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ## Overview
 
-**Goal (testable):** A direct interactive `orly` run asks once for off, anonymous, or community telemetry; consented commands append privacy-bounded events under `~/.agentsfleet/orly/`; and anonymous or community events retry safely against the agentsfleet fleet telemetry boundary without changing command output or exit status.
+**Goal (testable):** A direct interactive `orly` run asks once for off, anonymous, or community telemetry; consented commands append privacy-bounded events under the agentsfleet state root at `~/.config/agentsfleet/orly/` by default; and anonymous or community events retry safely against the agentsfleet fleet telemetry boundary without changing command output or exit status.
 
 **Problem:** `orly` cannot currently count installations, distinguish active installs from one-time setup, or see which gate criterion repeatedly stops a workflow. Adding a general analytics platform would create more machinery than the Command-Line Interface (CLI) needs, while prompting from generated hooks could block commits and agent automation.
 
-**Solution summary:** Follow gstack's small local-first path. Store one consent file at `~/.agentsfleet/orly/.orly.json`, ask once only during eligible direct interactive use, append one controlled JSON Lines (JSONL) event per command, and start a best-effort background sender only for anonymous or community consent. The sender batches unsent records, writes an egress receipt before transmission, and posts to the agentsfleet fleet telemetry URL through a fetch boundary mocked in tests. Off means no event is written and no network call is attempted.
+**Solution summary:** Follow gstack's small local-first path. Resolve the agentsfleet state root exactly like the sibling CLI (`AGENTSFLEET_STATE_DIR`, otherwise `~/.config/agentsfleet`), store Orly's consent in the isolated `orly/.orly.json` child, ask once only during eligible direct interactive use, append one controlled JSON Lines (JSONL) event per command, and start a best-effort background sender only for anonymous or community consent. The sender batches unsent records, writes an egress receipt before transmission, and posts to the agentsfleet fleet telemetry URL through a fetch boundary mocked in tests. Off means no event is written and no network call is attempted.
 
 ## PR Intent & comprehension handshake
 
@@ -48,6 +48,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 2. `src/install.ts` — owns generated hook invocation and can mark hook-originated commands without changing gate behavior.
 3. `docs/ORLY_ARCHITECTURE.md` — defines the CLI, installation, and gate boundaries this signal follows.
 4. gstack `bin/gstack-telemetry-log` and `bin/gstack-telemetry-sync` — prior art for consent gating, local JSONL, cursor retry, and background upload.
+5. agentsfleet CLI `src/lib/config-dir.ts` and `src/services/telemetry/consent.ts` — source of truth for the shared state-root default, environment override, and ownership of the sibling CLI's root-level `telemetry.json`.
 
 ## Files Changed (blast radius)
 
@@ -88,6 +89,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 ## Prior-Art / Reference Implementations
 
 - **gstack logger and sender:** `bin/gstack-telemetry-log` and `bin/gstack-telemetry-sync` provide the chosen consent gate, random community installation identifier, local JSONL, anonymous identifier removal, receipt-before-send, and cursor-on-success shape.
+- **agentsfleet CLI state path:** `src/lib/config-dir.ts` in `~/Projects/agentsfleet/cli` resolves `AGENTSFLEET_STATE_DIR` first and otherwise uses `~/.config/agentsfleet`; its telemetry service owns root-level `telemetry.json`, so Orly uses an `orly/` child instead of sharing that file.
 - **Existing CLI boundary:** `src/cli.ts` already converts every command to one numeric outcome; telemetry observes that result rather than changing handlers.
 - **Existing test style:** `src/cli.test.ts` and `src/install.test.ts` use subprocess and temporary repository boundaries that preserve real CLI behavior while isolating the network mock.
 
@@ -129,15 +131,16 @@ CLI help and README state the default, tiers, storage location, transmitted fiel
 ## Interfaces
 
 ```text
-State root: ~/.agentsfleet/orly/
-Consent:    ~/.agentsfleet/orly/.orly.json
-Marker:     ~/.agentsfleet/orly/.telemetry-prompted
-Identity:   ~/.agentsfleet/orly/installation-id
-Events:     ~/.agentsfleet/orly/analytics/orly-usage.jsonl
-Cursor:     ~/.agentsfleet/orly/analytics/.sync-state
-Receipts:   ~/.agentsfleet/orly/analytics/egress-receipts.jsonl
+Default state root:  ~/.config/agentsfleet/orly/
+Override state root: <AGENTSFLEET_STATE_DIR>/orly/
+Consent:    <state root>/.orly.json
+Marker:     <state root>/.telemetry-prompted
+Identity:   <state root>/installation-id
+Events:     <state root>/analytics/orly-usage.jsonl
+Cursor:     <state root>/analytics/.sync-state
+Receipts:   <state root>/analytics/egress-receipts.jsonl
 
-POST https://api.agentsfleet.dev/fleets/telemetry
+POST https://api.agentsfleet.net/fleets/telemetry
 Request: JSON array of no more than 100 allowlisted telemetry events
 Success: 2xx JSON response confirming the accepted event count
 Failure: non-2xx, timeout, invalid response, or receipt refusal retains the cursor
@@ -202,7 +205,7 @@ The first funnel is installation → first gate → verify gate → PR gate, gro
 | R1 | Consent defaults off and never prompts automation (§1) | `bun test src/telemetry.test.ts --test-name-pattern 'consent|prompt|automation'` | exit 0 | P0 | |
 | R2 | Local events are useful and contain no private context (§2) | `bun test src/telemetry.test.ts --test-name-pattern 'event|identity|private|command result'` | exit 0 | P0 | |
 | R3 | Fleet sync is receipted, retryable, and tested only against a mock (§3) | `bun test src/telemetry.test.ts --test-name-pattern 'sync|receipt|fleet'` | exit 0 | P0 | |
-| R4 | CLI and docs tell the same privacy story (§4) | `bun test src/cli.test.ts --test-name-pattern telemetry && rg -n 'off|anonymous|community|\.agentsfleet/orly' README.md` | exit 0 and all consent terms found | P0 | |
+| R4 | CLI and docs tell the same privacy story (§4) | `bun test src/cli.test.ts --test-name-pattern telemetry && rg -n 'off|anonymous|community|\.config/agentsfleet/orly|AGENTSFLEET_STATE_DIR' README.md` | exit 0 and all consent terms found | P0 | |
 | R5 | Diff stays inside Files Changed | `git diff --name-only origin/main...HEAD` | 0 paths missing from the Files Changed table | P0 | |
 | S1 | Conform gates green | `make audit` | exit 0 | P0 | |
 | S2 | Unit tests pass | `bun test src` | exit 0 | P0 | |
@@ -251,7 +254,7 @@ N/A — no files, commands, flags, or public symbols are deleted or renamed.
 
 ## Discovery (consult log)
 
-- **Consults** — Indy chose gstack-style consent, the `~/.agentsfleet/orly/.orly.json` namespace, and an agentsfleet fleet endpoint mocked in client tests. The authoring call keeps review events outside M05 to avoid over-engineering the first signal path.
+- **Consults** — Indy chose gstack-style consent, an Orly-specific `.orly.json` under the agentsfleet state directory, and an agentsfleet fleet endpoint mocked in client tests. Inspection of `~/Projects/agentsfleet/cli` corrected that shared root to `~/.config/agentsfleet` by default or `AGENTSFLEET_STATE_DIR` when set, and confirmed Orly must not reuse the sibling CLI's root-level `telemetry.json`. The authoring call keeps review events outside M05 to avoid over-engineering the first signal path.
 - **Metrics review** — adds `command_run` and the installation-to-PR-gate funnel; `docs/ORLY_ARCHITECTURE.md` becomes the local analytics flow record.
 - **Skill-chain outcomes** — `/orly-write-unit-test`, `/review`, and `orly-babysit-prs` remain to be populated during implementation.
 - **Deferrals** — none.
