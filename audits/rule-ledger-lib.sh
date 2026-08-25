@@ -208,7 +208,16 @@ ledger_facade_globs() {
 # is the match itself — the same expansion dispatch_resolve_files applies to
 # explicit file arguments, so a fire count means what the dispatcher means.
 ledger_match_count() {
-  local globs="$1" path glob matches=0
+  local globs="$1" path glob matches=0 reglob=""
+  # `for glob in $globs` needs WORD SPLITTING and must not get PATHNAME
+  # EXPANSION: unguarded, bash expands each pattern against the real tree
+  # first, so a façade declaring 'src/*' iterates the 33 files that happen to
+  # exist there and then compares them as literals — src/foo.rs matches
+  # nothing and core/* "matches" only because it expanded to the one file in
+  # core/. Latent while every leaf declared extension globs ('*.zig') that
+  # match nothing at the root and so survive expansion unchanged; the first
+  # path-glob façade turns it into a scope that silently reads wrong.
+  case "$-" in *f*) ;; *) reglob="yes"; set -f ;; esac
   while IFS= read -r path; do
     [ -n "$path" ] || continue
     for glob in $globs; do
@@ -216,6 +225,7 @@ ledger_match_count() {
       case "$path" in $glob) matches=$((matches + 1)); break ;; esac
     done
   done
+  [ -n "$reglob" ] && set +f
   printf '%d' "$matches"
 }
 

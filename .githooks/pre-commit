@@ -32,7 +32,11 @@ fi
 # that did or did not read the façade is still the session committing.
 SOURCE_PATTERN='\.(zig|ts|tsx|js|jsx|py|rs|go|sh|sql)$'
 
-if git diff --cached --name-only | grep -qE "$SOURCE_PATTERN"; then
+# Governance paths join the source list here: dispatch/edit_rules.sh declares
+# the corpus scope, so a staged rule edit now has a façade to have read. The
+# check itself stays the arbiter — a path outside every leaf's globs still
+# reports "nothing staged triggers a façade" and costs one grep.
+if git diff --cached --name-only | grep -qE "$SOURCE_PATTERN|$GOVERNANCE_PATTERN"; then
   if ! bash audits/doc-read.sh check; then
     echo "pre-commit: a triggered façade went unread — read it, or record why" >&2
     exit 1
