@@ -7,7 +7,10 @@ import { GateReport, isGateName, recordOverride, runGate, runGates } from "./gat
 import { install, InstallResult } from "./install";
 import { isString, OrlyError, readJsonObject, RulesModel } from "./model";
 import { Renderer } from "./render";
+import { beginTelemetry, installedOrlyVersion, isTelemetrySkill, recordTelemetry } from "./telemetry";
 import { verifyRenders, writeEvidence } from "./verify";
+
+type CliResult = { exitCode: number; gate?: string; failedCriterion?: string };
 
 const PASS_RESULT = "pass";
 const NOT_REQUIRED_RESULT = "not-required";
@@ -26,42 +29,61 @@ const FAIL_GLYPH = "🔴";
 const PR_GATE = "pr";
 const ENGINE_MARKER = "evals/install/run.sh";
 const VERIFY_COMMAND = "verify";
+const SKILL_EVENT_COMMAND = "skill-event";
+const TELEMETRY_CONFIG_KEY = "telemetry";
+const ANONYMOUS_TELEMETRY_CONFIG = JSON.stringify({ [TELEMETRY_CONFIG_KEY]: "anonymous" });
+const OFF_TELEMETRY_CONFIG = JSON.stringify({ [TELEMETRY_CONFIG_KEY]: "off" });
 
 const { root, arguments: commandArguments } = parseRoot(Bun.argv.slice(2));
+const startedAt = performance.now();
+const telemetry = await beginTelemetry(commandArguments);
+const result = await execute(root, commandArguments);
+await recordTelemetry(telemetry, {
+  ...(result.gate ? { gate: result.gate } : {}),
+  outcome: result.exitCode === 0 ? "success" : "error",
+  ...(result.failedCriterion ? { failedCriterion: result.failedCriterion } : {}),
+  durationMs: performance.now() - startedAt,
+  version: await installedOrlyVersion(root),
+});
+process.exit(result.exitCode);
 
-try {
-  const model = await RulesModel.load(root);
-  const exitCode = await run(model, commandArguments);
-  process.exit(exitCode);
-} catch (error) {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(`orly: ${message}`);
-  process.exit(1);
+async function execute(engineRoot: string, args: string[]): Promise<CliResult> {
+  try {
+    return await run(await RulesModel.load(engineRoot), args);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`orly: ${message}`);
+    return cliResult(1);
+  }
 }
 
-async function run(model: RulesModel, args: string[]): Promise<number> {
+async function run(model: RulesModel, args: string[]): Promise<CliResult> {
   const [command, ...rest] = args;
   if (!command || command === "--help" || command === "-h") {
     printHelp();
-    return command ? 0 : 1;
+    return cliResult(command ? 0 : 1);
   }
-  if (command === "--version" || command === "-v") return printVersion(model);
+  if (command === "--version" || command === "-v") return cliResult(await printVersion(model));
   if (command === "doctor") {
     model.validate();
     requireNoArguments(rest, "doctor checks the installed ruleset: orly doctor");
-    return doctorGlobal(model);
+    return cliResult(await doctorGlobal(model));
   }
-  if (command === "init") return materialise(model, rest, true);
-  if (command === "update") return materialise(model, rest, false);
-  if (command === VERIFY_COMMAND) return verify(model, rest);
+  if (command === "init") return cliResult(await materialise(model, rest, true));
+  if (command === "update") return cliResult(await materialise(model, rest, false));
+  if (command === VERIFY_COMMAND) return cliResult(await verify(model, rest));
   if (command === "gate") return gate(model, rest);
-  if (command === "override") return override(rest);
+  if (command === "override") return cliResult(override(rest));
+  if (command === SKILL_EVENT_COMMAND) {
+    if (rest.length !== 1 || !isTelemetrySkill(rest[0])) throw new OrlyError("skill-event requires a packaged Orly skill name");
+    return cliResult(0);
+  }
   throw new OrlyError(`unknown command: ${command}`);
 }
 
 // Read-only: run every gate in order (stop at the first red group), or one
 // named gate. Nothing is ever written.
-function gate(model: RulesModel, args: string[]): number {
+function gate(model: RulesModel, args: string[]): CliResult {
   const acceptDirty = args.includes(ACCEPT_DIRTY_FLAG);
   const named = args.find((argument) => !argument.startsWith("-"));
   if (named !== undefined && !isGateName(named)) throw new OrlyError(`unknown gate: ${named} (work, verify, pr)`);
@@ -69,7 +91,14 @@ function gate(model: RulesModel, args: string[]): number {
   for (const report of reports) printGate(report);
   const allGreen = reports.every((report) => report.ok);
   if (allGreen && (named === undefined || named === PR_GATE)) console.log(`${PASS_GLYPH} PR boundary open — CHORE(close) is the next motion`);
-  return allGreen ? 0 : 1;
+  const failedReport = reports.find((report) => !report.ok);
+  const failedCriterion = failedReport?.results.find((result) => !result.ok)?.name;
+  const selectedGate = named ?? failedReport?.gate;
+  return {
+    exitCode: allGreen ? 0 : 1,
+    ...(selectedGate ? { gate: selectedGate } : {}),
+    ...(failedCriterion ? { failedCriterion } : {}),
+  };
 }
 
 function override(args: string[]): number {
@@ -254,6 +283,10 @@ function optionalValues(args: string[], name: string): string[] {
   return values;
 }
 
+function cliResult(exitCode: number): CliResult {
+  return { exitCode };
+}
+
 function printHelp(): void {
   console.log(`orly — prove the boundary; carry the rules
 
@@ -280,6 +313,17 @@ Install (the repository is the unit — no checkout of this package required):
   orly doctor                       check this repository's installed rules
                                     against what orly would write today
   orly --version                    the installed package version
+
+Usage telemetry (off by default):
+  Consent file:                     ~/.config/agentsfleet/orly/.orly.json
+  State-root override:              AGENTSFLEET_STATE_DIR
+  Set ${ANONYMOUS_TELEMETRY_CONFIG} to send command, gate, and packaged Orly skill
+  names, outcome, failed criterion, duration, Orly version, operating system, architecture,
+  invocation type, timestamps, and random event, session, and installation IDs.
+  Set ${OFF_TELEMETRY_CONFIG} to write and send nothing.
+  ORLY_TELEMETRY=off|anonymous changes one process; ORLY_TELEMETRY_OFF=1 wins.
+  Orly never collects source, paths, repositories, branches, arguments, prompts,
+  output, environment values, raw errors, or personal and account details.
 
 Ruleset authoring (an orly checkout only — refused from an installed package):
   orly verify                       the rules render the same twice, and the

@@ -6,6 +6,7 @@ import { CONFIG_PATH, readConfig, seedConfig, selectPacks, writeConfig } from ".
 import { applyMode, assertWritableInside, hashContent, isBelow, isString, JsonObject, modeLabel, objectArray, objectValue, OrlyError, RulesModel, stringArray } from "./model";
 import { referenceClosureErrors, renderProfileText } from "./references";
 import { Renderer } from "./render";
+import { HOOK_INVOCATION_ENV, HOOK_INVOCATION_VALUE } from "./telemetry";
 
 const AGENTS_FILENAME = "AGENTS.md";
 const ORLY_AGENTS_FILENAME = "AGENTS.orly.md";
@@ -277,12 +278,11 @@ function hookScript(gate: string): string {
     "    exit 1",
     "fi",
     "",
+    `export ${HOOK_INVOCATION_ENV}=${HOOK_INVOCATION_VALUE}`,
     `exec orly gate ${gate}`,
     "",
   ].join("\n");
 }
-
-
 // One entry per target, so two packs naming the same file collapse instead of
 // racing. Two packs naming DIFFERENT sources for one target is a registry bug
 // and stops the install rather than letting pack order decide the winner.

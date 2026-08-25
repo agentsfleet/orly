@@ -41,6 +41,17 @@ SPECS=(
   "ufs_dup_string.go|write_any|src/ufs_dup_string.go|1|UFS"
   "log_ok.zig|write_any|src/log_ok.zig|0|LOG"
   "log_violation.zig|write_any|src/log_violation.zig|1|LOG"
+  "log_ok.rs|write_any|rustd/crates/demo/src/log_ok.rs|0|LOG"
+  "log_test_ok.rs|write_any|rustd/crates/demo/src/log_test_ok.rs|0|LOG"
+  "log_path_test_ok.rs|write_any|rustd/crates/demo/tests/log_path_test_ok.rs|0|LOG"
+  "log_path_test_ok.rs|write_any|rustd/crates/demo/benches/log_path_test_ok.rs|0|LOG"
+  "log_println_violation.rs|write_any|rustd/crates/demo/src/log_println_violation.rs|1|LOG"
+  "log_eprintln_violation.rs|write_any|rustd/crates/demo/src/log_eprintln_violation.rs|1|LOG"
+  "log_dbg_violation.rs|write_any|rustd/crates/demo/src/log_dbg_violation.rs|1|LOG"
+  "log_missing_event.rs|write_any|rustd/crates/demo/src/log_missing_event.rs|1|LOG"
+  "log_tail_missing_event.rs|write_any|rustd/crates/demo/src/log_tail_missing_event.rs|1|LOG"
+  "log_missing_event.rs|logging_all|rustd/crates/demo/src/log_missing_event.rs|1|LOG"
+  "log_positional_violation.rs|write_any|rustd/crates/demo/src/log_positional_violation.rs|1|LOG"
   "msid_ok.zig|write_any|src/msid_ok.zig|0|MSID"
   "msid_violation.zig|write_any|src/msid_violation.zig|1|MSID"
   "deinit_ok.zig|write_zig|src/deinit_ok.zig|0|DEINIT"
@@ -61,14 +72,20 @@ for spec in "${SPECS[@]}"; do
   mkdir -p "$sb/$(dirname "$dest")"
   cp "$FX/$fx" "$sb/$dest"
   git -C "$sb" add -A
-  ( cd "$sb" && bash "$ROOT/dispatch/$dispatch.sh" --staged ) >/dev/null 2>&1
+  if [ "$dispatch" = "logging_all" ]; then
+    invocation="--all"
+    ( cd "$sb" && bash "$ROOT/audits/logging.sh" --all ) >/dev/null 2>&1
+  else
+    invocation="--staged"
+    ( cd "$sb" && bash "$ROOT/dispatch/$dispatch.sh" --staged ) >/dev/null 2>&1
+  fi
   act=$?
   rm -rf "$sb"
   if [ "$act" = "$exp" ]; then
-    printf '  PASS  %-5s %-22s %s --staged -> exit %s\n' "$code" "$fx" "$dispatch" "$act"
+    printf '  PASS  %-5s %-22s %s %s -> exit %s\n' "$code" "$fx" "$dispatch" "$invocation" "$act"
     pass=$((pass + 1))
   else
-    printf '  FAIL  %-5s %-22s %s --staged -> exit %s (expected %s)\n' "$code" "$fx" "$dispatch" "$act" "$exp"
+    printf '  FAIL  %-5s %-22s %s %s -> exit %s (expected %s)\n' "$code" "$fx" "$dispatch" "$invocation" "$act" "$exp"
     fail=$((fail + 1))
   fi
 done
