@@ -122,6 +122,25 @@ surfaces:
 
 Orly owns policy and invokes these commands. The repository owns what they do.
 
+## Usage telemetry
+
+Orly keeps usage telemetry off until a person enables anonymous collection in
+an interactive run. Hooks, Continuous Integration (CI), and other automated
+runs never ask for consent. Off writes no event and makes no network request.
+
+Anonymous events enter a bounded outbound spool under the agentsfleet state
+root. After each append, Orly launches a detached sync attempt and lets the
+command exit. The sync sends at most 100 events and exits without a fetch when
+another attempt ran within five minutes. A successful response removes the
+acknowledged prefix. Spool maintenance drops records older than seven days and
+keeps the file at or below 10 MiB, so an unavailable destination cannot create
+an unbounded local log. Orly runs no telemetry daemon.
+
+PostHog owns product-event storage and funnel analysis. Orly sends no source,
+path, repository, branch, argument, output, environment, hostname, username, or
+raw error value. A future Insights Fleet may query PostHog with a private key;
+the Fleet is an analysis consumer and never the public ingestion boundary.
+
 ## Evidence
 
 `orly verify --all --write-evidence` records the source commit and every check

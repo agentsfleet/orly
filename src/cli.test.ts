@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 
 const ROOT = resolve(import.meta.dir, "..");
 const COMMAND = resolve(ROOT, "bin/orly");
@@ -16,6 +16,19 @@ describe("orly command", () => {
     expect(output).toContain("orly override <CRITERION> --reason <REASON>");
     expect(output).not.toContain("orly adopt");
     expect(output).not.toContain("oracle-rules");
+  });
+
+  test("telemetry_help_names_tiers_storage_and_privacy", () => {
+    const result = Bun.spawnSync([COMMAND, "--help"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
+    const output = result.stdout.toString();
+
+    expect(output).toContain("off by default");
+    expect(output).toContain("anonymous");
+    expect(output).toContain("~/.config/agentsfleet/orly/.orly.json");
+    expect(output).toContain("AGENTSFLEET_STATE_DIR");
+    expect(output).toContain("ORLY_TELEMETRY_OFF=1");
+    expect(output).toContain("packaged Orly skill");
+    expect(output).toContain("never collects source, paths, repositories, branches, arguments, prompts");
   });
 
   // Adversarial review found recordOptIn running before the --dry-run branch,
@@ -66,5 +79,73 @@ describe("orly command", () => {
     const result = Bun.spawnSync([COMMAND, "verify"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
 
     expect(result.exitCode).toBe(0);
+  });
+
+  test("telemetry_failure_never_changes_command_result", () => {
+    const blockedRoot = join(mkdtempSync(join(tmpdir(), "orly-telemetry-blocked-")), "state-file");
+    writeFileSync(blockedRoot, "not a directory\n");
+    const enabled = { ...process.env, AGENTSFLEET_STATE_DIR: blockedRoot, ORLY_TELEMETRY: "anonymous" };
+    const off = { ...enabled, ORLY_TELEMETRY_OFF: "1" };
+    try {
+      const successWithFailure = Bun.spawnSync([COMMAND, "doctor"], { cwd: ROOT, env: enabled, stdout: "pipe", stderr: "pipe" });
+      const successWithOff = Bun.spawnSync([COMMAND, "doctor"], { cwd: ROOT, env: off, stdout: "pipe", stderr: "pipe" });
+      const errorWithFailure = Bun.spawnSync([COMMAND, "gate", "nope"], { cwd: ROOT, env: enabled, stdout: "pipe", stderr: "pipe" });
+      const errorWithOff = Bun.spawnSync([COMMAND, "gate", "nope"], { cwd: ROOT, env: off, stdout: "pipe", stderr: "pipe" });
+
+      expect(successWithFailure.exitCode).toBe(successWithOff.exitCode);
+      expect(successWithFailure.stdout.toString()).toBe(successWithOff.stdout.toString());
+      expect(errorWithFailure.exitCode).toBe(errorWithOff.exitCode);
+      expect(errorWithFailure.stderr.toString()).toBe(errorWithOff.stderr.toString());
+    } finally {
+      rmSync(dirname(blockedRoot), { recursive: true, force: true });
+    }
+  });
+
+  test("gate_command_records_its_selected_gate_and_failed_criterion", async () => {
+    const root = mkdtempSync(join(tmpdir(), "orly-telemetry-command-"));
+    const repo = join(root, "repo");
+    const stateRoot = join(root, "state");
+    Bun.spawnSync(["git", "init", "-q", repo]);
+    writeFileSync(join(repo, "README.md"), "fixture\n");
+    Bun.spawnSync(["git", "-C", repo, "add", "README.md"]);
+    Bun.spawnSync(["git", "-C", repo, "-c", "user.name=Orly Test", "-c", "user.email=orly@example.invalid", "commit", "-q", "-m", "test: seed"]);
+    Bun.spawnSync(["git", "-C", repo, "checkout", "-q", "-b", "feat/telemetry"]);
+    const env = {
+      ...process.env,
+      AGENTSFLEET_STATE_DIR: stateRoot,
+      ORLY_TELEMETRY: "anonymous",
+      ORLY_TELEMETRY_OFF: "0",
+      ORLY_POSTHOG_HOST: "http://127.0.0.1:1",
+    };
+    try {
+      const result = Bun.spawnSync([COMMAND, "gate", "pr"], { cwd: repo, env, stdout: "pipe", stderr: "pipe" });
+      expect(result.exitCode).toBe(1);
+      const failedCriterion = result.stdout.toString().match(/🔴 ([^:]+):/)?.[1];
+      expect(failedCriterion).toBeDefined();
+
+      const spool = join(stateRoot, "orly/analytics/orly-usage.jsonl");
+      for (let attempt = 0; attempt < 20 && !existsSync(spool); attempt += 1) await Bun.sleep(10);
+      const event = JSON.parse(readFileSync(spool, "utf8"));
+      expect(event).toMatchObject({ command: "gate", gate: "pr", outcome: "error", failed_criterion: failedCriterion });
+      expect(event.duration_ms).toBeGreaterThanOrEqual(0);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  test("skill_event_accepts_only_packaged_skills", () => {
+    const env = { ...process.env, ORLY_TELEMETRY_OFF: "1", ORLY_INVOCATION: "skill" };
+    const packagedSkills = ["orly-babysit-prs", "orly-spec-new", "orly-write-integration-test", "orly-write-unit-test"];
+    for (const skill of packagedSkills) {
+      const accepted = Bun.spawnSync([COMMAND, "skill-event", skill], { cwd: ROOT, env, stdout: "pipe", stderr: "pipe" });
+      expect(accepted.exitCode).toBe(0);
+      expect(accepted.stdout.toString()).toBe("");
+      expect(readFileSync(join(ROOT, "skills", skill, "SKILL.md"), "utf8")).toContain(`orly skill-event ${skill}`);
+    }
+    const rejected = Bun.spawnSync([COMMAND, "skill-event", "other-skill"], { cwd: ROOT, env, stdout: "pipe", stderr: "pipe" });
+
+    expect(rejected.exitCode).toBe(1);
+    expect(rejected.stderr.toString()).toContain("skill-event requires a packaged Orly skill name");
+    expect(Bun.spawnSync([COMMAND, "--help"], { cwd: ROOT, env, stdout: "pipe" }).stdout.toString()).not.toContain("skill-event");
   });
 });
