@@ -58,3 +58,39 @@ describe("Renderer", () => {
     expect(new Renderer(model).renderText(KERNEL_PACKS)).rejects.toThrow("unclosed orly pack block");
   });
 });
+
+// Claims the rendered rules make about the machine. Each one was false when
+// this suite was written: the prose said "always" where the gate runs once,
+// named a chain where one gate is the boundary, made a conditional skill
+// mandatory, and credited a reporting-only criterion with enforcement. Prose
+// drifting back is exactly as expensive as the first time, and none of it is
+// visible to a render-determinism check.
+describe("the rendered rules match the machine", () => {
+  test("VERIFY states two cadences rather than one 'always'", async () => {
+    const text = await new Renderer(await RulesModel.load(ROOT)).renderText(DOTFILES_PACKS, DOTFILES_COMMANDS);
+
+    expect(text).toContain("Two cadences, one boundary");
+    expect(text).toContain("runs ONCE, at the milestone boundary");
+  });
+
+  test("CHORE(close) names the pr gate, not the whole chain", async () => {
+    const text = await new Renderer(await RulesModel.load(ROOT)).renderText(DOTFILES_PACKS, DOTFILES_COMMANDS);
+
+    expect(text).toContain("`orly gate pr` is the command CHORE(close) runs");
+    expect(text).toContain("pays the fast tier twice");
+  });
+
+  test("the integration skill is conditional on a real input/output boundary", async () => {
+    const text = await new Renderer(await RulesModel.load(ROOT)).renderText(DOTFILES_PACKS, DOTFILES_COMMANDS);
+
+    expect(text).toContain("when the diff crosses a module boundary with real input/output");
+    expect(text).not.toContain("both before the PR, never skipped");
+  });
+
+  test("SOUL does not claim the language criterion enforces anything", async () => {
+    const soul = await Bun.file(resolve(ROOT, "SOUL.md")).text();
+
+    expect(soul).toContain("REPORTS it");
+    expect(soul).not.toContain("`orly gate verify` enforces it");
+  });
+});

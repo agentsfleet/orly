@@ -186,7 +186,7 @@ Non-trivial (full lifecycle) if it: touches >1 file · new abstraction · data m
 
 **With spec:** `CHORE(open) → PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT → CHORE(close)`. **Without spec** (bug fix/config/refactor): `PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT`. CHORE bookends iff work creates/continues a spec under `docs/v*/{active,pending}/`. Stage runbooks (checklists, recipes, formats): `dispatch/lifecycle.md`.
 
-**Anchor invariant — `orly gate` proves the boundary.** No PR opens unless every `orly gate pr` criterion is green or carries an `Orly-Override` trailer the user recorded with a reason. `orly gate` runs `work → verify → pr`, stops at the first red group, and only reads; green unlocks CHORE(close) but never performs it. No spec → spec criteria skip, quality gates still run. Slow suites (`verify.integration`, `verify.memory`) run only when the branch carries code. A user-surface change without a docs change is red until docs land or an override says why not.
+**Anchor invariant — `orly gate` proves the boundary.** No PR opens unless every `orly gate pr` criterion is green or carries an `Orly-Override` trailer the user recorded with a reason. `orly gate pr` is the command CHORE(close) runs: it carries the whole-branch criteria and the slow suites. A bare `orly gate` chains `work → verify → pr` and pays the fast tier twice on the way to the same verdict — reach for it when a branch is mid-stream and the earlier boundaries are in doubt, not at the close. Both stop at the first red group and only read; green unlocks CHORE(close) but never performs it. No spec → spec criteria skip, quality gates still run. Slow suites (`verify.integration`, `verify.memory`) run only when the branch carries code. A user-surface change without a docs change is red until docs land or an override says why not.
 
 **LAND (after merge, or when the user confirms it merged):** pull the default branch, prune the merged worktree + branch, `make down` where defined.
 
@@ -220,9 +220,9 @@ In `agentsfleet` this stage is `make harness-verify`; its output block and end-o
 
 ### VERIFY
 
-Run the repository's declared `verify.*` commands from `.oracle/orly.json`. A package-scoped command never replaces a listed one.
+**Two cadences, one boundary.** Inside a Section, run CONFORM plus the declared lane covering the surface the Section touched — enough to prove a Section, reported as a Section claim. The repository's full declared `verify.*` set runs ONCE, at the milestone boundary, before the PR. A package-scoped command never replaces a listed one at either cadence, and a Section lane never satisfies a "tests pass" claim about the repository.
 <!-- oracle-packs:start product.agentsfleet -->
-The `agentsfleet` output block and exact tiers live in `docs/VERIFY_TIERS.md`. **FIRST: `/orly-write-unit-test`** audits diff coverage. **LAST: the Test Delta row** compares against the CHORE(open) baseline; zero or negative unit growth on a code-adding diff needs justification or a return to EXECUTE. Paste memory-leak evidence into PR Session Notes or cite its Continuous Integration (CI) URL. After refactors, list newly dead code before removing it.
+The `agentsfleet` output block and both cadences live in `docs/VERIFY_TIERS.md`. **FIRST: `/orly-write-unit-test`** audits diff coverage. **LAST: the Test Delta row** compares against the CHORE(open) baseline; zero or negative unit growth on a code-adding diff needs justification or a return to EXECUTE. Paste memory-leak evidence into PR Session Notes or cite its Continuous Integration (CI) URL. After refactors, list newly dead code before removing it.
 <!-- oracle-packs:end -->
 
 ### REVIEW
@@ -250,7 +250,7 @@ Required when spec involved — after last COMMIT, before PR. Also runs when par
 
 | # | When | Skill |
 |---|---|---|
-| 1 | VERIFY | `/orly-write-unit-test`, then `/orly-write-integration-test` — both before the PR, never skipped, never deferred |
+| 1 | VERIFY | `/orly-write-unit-test` once per Section over that Section's diff, and again at the boundary over the whole branch — never skipped, never deferred. Then `/orly-write-integration-test` at the boundary **when the diff crosses a module boundary with real input/output** (handler, repository, service, transport); otherwise record `N/A — <reason>` in Session Notes. |
 | 2 | REVIEW | gstack `/review` — every runtime, same route; address findings or record a user-acked deferral; reviewer unavailable → Session Notes: *"skipped — <reason> <ts>; rerun before merge"* |
 | 3 | After every push | `orly-babysit-prs` — CI check runs + greptile inline threads + PR-level summary; stops on two consecutive empty polls with CI green; never `gh pr checks --watch` for greptile |
 

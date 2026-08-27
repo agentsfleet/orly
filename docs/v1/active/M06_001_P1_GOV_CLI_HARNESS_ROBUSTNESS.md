@@ -67,6 +67,8 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | `evals/dispatch/run.sh`, `evals/dispatch/fixtures/err_rs_*.rs` | EDIT, CREATE | Pin acceptance and rejection for the new code |
 | `registry.json` | EDIT | Ship the recorder, its library, and the Rust façade to consumers |
 | `src/install_packs.test.ts` | EDIT | Prove the shipped recorder runs in the repository it lands in |
+| `src/render.test.ts` | EDIT | Pin the four claims the rendered rules make about the machine |
+| `docs/RULE_ENFORCEMENT.md` | EDIT | Regenerate the ledger scoreboard against the changed clause counts |
 | `core/operating-model.md` | EDIT | Tier the verification cadence and rehome the persona pack's engineering clauses |
 | `dispatch/verify.md`, `docs/VERIFY_TIERS.md` | EDIT | Replace the retired-lane claim and state the two cadences |
 | `SOUL.md` | EDIT | Stop claiming a reporting-only criterion enforces the banned-word list |
@@ -131,13 +133,13 @@ RULE ERR-RS is written, cited by the doc-read map, and enforced by nobody: Rust 
 - **Dimension 3.3** — DONE — test modules, `tests/`, `benches/`, `examples/`, and `build.rs` are carved out, matching the logging leaf's Rust scope → Fixtures `err_rs_test_ok.rs` and the same violation replayed at a `tests/` path
 - **Dimension 3.4** — DONE — the new code carries a tag in the façade prose, a row in the `.sh`, a gloss in both mirrors, and a pass+fail fixture pair → `evals/dispatch/coverage.sh` green
 
-### §4 — One stage, one boundary run
+### §4 — One stage, one boundary run — DONE
 
 The cadence prose says the declared `verify.*` set runs "always", which reads as every done-claim; the same suites then run again in the hooks and a third time inside a bare `orly gate`. The prose is tiered instead: CONFORM stays per-edit, the section-scoped lane proves a section, the declared set runs once at the milestone boundary, and `orly gate pr` is the close command. Two retired-lane claims that now contradict the declared integration command are removed, and one false enforcement claim is corrected.
 
-- **Dimension 4.1** — `dispatch/verify.md` and `docs/VERIFY_TIERS.md` state the section and milestone cadences and no longer claim no lane needs live datastores → Test `verify_tiers_state_both_cadences`
-- **Dimension 4.2** — the operating model names `orly gate pr` as the close command and makes the integration skill conditional on a real-input/output boundary, matching `dispatch/verify.md` → Test `operating_model_names_the_pr_gate_at_close`
-- **Dimension 4.3** — `SOUL.md` no longer claims `orly gate verify` enforces the banned-word list, which `docs.language` reports without failing → Test `soul_does_not_claim_docs_language_gates`
+- **Dimension 4.1** — DONE — `dispatch/verify.md` and `docs/VERIFY_TIERS.md` state the Section and milestone cadences and no longer claim no lane needs live datastores → Test `VERIFY states two cadences rather than one 'always'`
+- **Dimension 4.2** — DONE — the operating model names `orly gate pr` as the close command and makes the integration skill conditional on a real input/output boundary → Tests `CHORE(close) names the pr gate, not the whole chain` and `the integration skill is conditional on a real input/output boundary`
+- **Dimension 4.3** — DONE — `SOUL.md` no longer claims `orly gate verify` enforces the banned-word list, which `docs.language` reports without failing → Test `SOUL does not claim the language criterion enforces anything`
 
 ### §5 — Less context, same enforcement
 
@@ -215,9 +217,10 @@ No new event name and no new property enter the telemetry schema; the parity che
 | 3.2 | integration | `err_rs_no_result_alias` fixture | an error type with no alias beside it exits 1 |
 | 3.3 | integration | `err_rs_test_ok` fixture | a `#[cfg(test)]` module carrying both shapes exits 0 |
 | 3.4 | integration | `evals/dispatch/coverage.sh` | the new code passes tag, row, fixture, gloss, and legend checks |
-| 4.1 | unit | `verify_tiers_state_both_cadences` | the tier document names the section lane and the milestone set and carries no retired-lane claim |
-| 4.2 | unit | `operating_model_names_the_pr_gate_at_close` | the rendered rules name `orly gate pr` at CHORE(close) and make the integration skill conditional |
-| 4.3 | unit | `soul_does_not_claim_docs_language_gates` | `SOUL.md` states the criterion reports rather than enforces |
+| 4.1 | unit | `VERIFY states two cadences rather than one 'always'` | the rendered rules carry both cadences and the once-at-the-boundary rule |
+| 4.2 | unit | `CHORE(close) names the pr gate, not the whole chain` | the rendered rules name `orly gate pr` at the close and say a bare gate pays the fast tier twice |
+| 4.2 | unit | `the integration skill is conditional on a real input/output boundary` | the mandatory-always wording is gone and the condition is stated |
+| 4.3 | unit | `SOUL does not claim the language criterion enforces anything` | `SOUL.md` states the criterion reports rather than enforces |
 | 5.1 | unit | `engineering_clauses_survive_without_the_persona_pack` | a render without persona still carries all five clauses |
 | 5.2 | unit | `packaged_skill_descriptions_stay_within_budget` | every packaged skill description is at most 320 characters |
 
