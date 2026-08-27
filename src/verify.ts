@@ -1,12 +1,16 @@
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { localSelection } from "./config";
-import { objectValue, RulesModel } from "./model";
+import { managedContent } from "./install";
+import { hashContent, isString, objectArray, objectValue, RulesModel } from "./model";
 import { Renderer } from "./render";
 
 const PASS_RESULT = "pass";
 const FAIL_RESULT = "fail";
+const REGISTRY_PACKS_LABEL = "registry packs";
+const AGENTS_FILENAME = "AGENTS.md";
+const DETAIL_SEPARATOR = "; ";
 
 export type VerificationCheck = {
   name: string;
@@ -32,8 +36,45 @@ export async function verifyRenders(model: RulesModel): Promise<VerificationChec
     });
   }
   const errors = await renderer.rootErrors(local.packs, local.commands);
-  checks.push({ name: "generated.root.current", result: errors.length === 0 ? PASS_RESULT : FAIL_RESULT, detail: errors.join("; ") });
+  checks.push({ name: "generated.root.current", result: errors.length === 0 ? PASS_RESULT : FAIL_RESULT, detail: errors.join(DETAIL_SEPARATOR) });
+  const drift = await packSourceErrors(model, local.packs);
+  checks.push({ name: "packs.sources.current", result: drift.length === 0 ? PASS_RESULT : FAIL_RESULT, detail: drift.join(DETAIL_SEPARATOR) });
   return checks;
+}
+
+// Every pack file this checkout carries, against the bytes its pack would ship.
+//
+// `planFiles` deliberately skips writing a managed file into the checkout that
+// owns its source: writing there would either replace a source with its own
+// pack-filtered rendering or plant a second copy that drifts. The consequence is
+// that the copy living here is maintained BY HAND and no install ever corrects
+// it — so a source can gain three sections while the target beside it keeps the
+// old two, and every consumer receives rules this repository's own agents, its
+// dispatch-coverage audit, and its rule ledger never see. Both halves of that
+// had already happened when this check was written.
+//
+// A target the checkout does not carry is silence, not drift: a consumer-only
+// path (a skill copied into `.claude/skills/`) is absent here by design.
+export async function packSourceErrors(model: RulesModel, packs: string[]): Promise<string[]> {
+  const registryPacks = objectValue(model.registry.packs, REGISTRY_PACKS_LABEL);
+  const known = new Set(Object.keys(registryPacks));
+  const findings = new Set<string>();
+  for (const name of packs) {
+    const pack = objectValue(registryPacks[name], `pack ${name}`);
+    for (const entry of objectArray(pack.managed_files, `pack ${name} managed_files`)) {
+      if (!isString(entry.source) || !isString(entry.target)) continue;
+      // Same path on both sides is the source itself — nothing to compare it to.
+      if (entry.source === entry.target) continue;
+      const targetPath = join(model.root, entry.target);
+      if (!existsSync(targetPath)) continue;
+      // The engine checkout renders its own rules under their own name, so the
+      // citation retarget managedContent applies for a guest is identity here.
+      const expected = await managedContent(join(model.root, entry.source), entry.target, entry.source, packs, known, AGENTS_FILENAME);
+      if (hashContent(expected) === hashContent(await Bun.file(targetPath).bytes())) continue;
+      findings.add(`${entry.target} drifted from ${entry.source} (pack ${name}) — copy the source over it`);
+    }
+  }
+  return [...findings].sort();
 }
 
 export async function writeEvidence(

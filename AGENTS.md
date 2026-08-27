@@ -61,7 +61,7 @@ Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_A
 - **Skip hooks/signing.** Never `--no-verify`/`--no-gpg-sign`/`-c commit.gpgsign=false`. Hook fails → fix cause.
 - **Plaintext secrets in entity tables.** Store vault `key_name` ref, resolve via `crypto_store.load()`.
 - **Static strings in SQL schema.** No `DEFAULT 'value'`/`CHECK (col IN ('a','b'))`. Enforce in app via named constants.
-- **Resolving/printing credentials.** `op read 'op://...'` at runtime — never paste/log.
+- **Resolving/printing credentials.** `op read 'op://...'` at runtime — never paste/log. Vault names come from the environment, never from a rules file.
 - **Force-push default branch** (`main`/`master`).
 - **Install-process launches in core paths.** Native SDKs. Exception: personal dev tools (`op`/`gh`/`glab`/`oracle`).
 
@@ -83,14 +83,14 @@ Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_A
 - **Symlinked edits land in the repository that owns the file.** A file whose `readlink` resolves outside this checkout — into a dotfiles or config repository — is an edit to *that* repository, not this one. Detect via `readlink` BEFORE editing. After: `cd` to the resolved repository, `git add <files> && git commit && git push` on its default branch. Never leave uncommitted.
 - **Docs-repo edits on own branch.** `~/Projects/docs/` is shared across milestones: check `git status` first; from `main` (checkout or worktree off `main`) commit on `chore/m{N}-{slug}-changelog`; recovery = stash, re-apply on a fresh branch.
 - Other dotfiles (`.zshrc`/`.gitconfig`/etc.): timestamped backup; minimal edits.
+- **Check a sibling repository for an existing pattern in the same language before inventing one.** A shape shipping next door is prior art; a new one needs a reason.
+- **Read the reference implementation before designing.** Where the language's dispatch page names a canonical external source, that read is mandatory in review and its guideline identifiers are cited — applied or diverged from. "Broken for us" means the delta was missed: diff our call site against theirs before blaming the principle.
 - Before commit/push: `gitleaks` must pass.
 - No new `make` targets without a distinct caller (CI job, spec-mandated gate, or a workflow existing targets can't express) — check `make/*.mk` first; extend over near-duplicate wrappers.
 - `*.zig` → read `dispatch/write_zig.md`; ZIG GATE fires.
 - Auth-flow (token-minting handlers, credential-typed spec dimensions, the repository's auth directories) → read the repository's `docs/AUTH.md` first, where it exists.
 - `conn.query()` requires `.drain()` in same fn before `deinit()`. Verify `make lint-governance`. Use `conn.exec()` for no-rows.
-- **Vault (1Password `op`).** Resolve secrets via the `op` CLI, never hand-paste/log. Vault names come from the environment, never from a rules file.
-- Check a sibling repository under `$HOME/Projects/` for an existing pattern in the same language before inventing one.
-- **Reference canon (read before designing):** TypeScript → `oss/supabase/apps/studio` + `oss/supabase/packages/{ui,ui-patterns}` + `oss/cli`; Zig → `oss/ghostty/src/`; Rust → `oss/bun/src/` + `oss/exonum` + `oss/core_api-develop` + Microsoft's Rust guidelines (`oss/rust-guidelines/all.txt`, fetch if absent; mandatory in review). Missing checkout → ask, then clone into `~/Projects/oss/`. "Broken for us" → call-site diff first.
+- **Indy's reference checkouts** (the machine-local half of the rule above): TypeScript → `oss/supabase/apps/studio` + `oss/supabase/packages/{ui,ui-patterns}` + `oss/cli`; Zig → `oss/ghostty/src/`; Rust → `oss/bun/src/` + `oss/exonum` + `oss/core_api-develop`. Missing checkout → ask, then clone into `~/Projects/oss/`.
 
 **Forge detection:** `github.com` → `gh`; `gitlab.com` → `glab`. Check `git remote -v`.
 
@@ -180,7 +180,9 @@ Non-trivial (full lifecycle) if it: touches >1 file · new abstraction · data m
 
 **With spec:** `CHORE(open) → PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT → CHORE(close)`. **Without spec** (bug fix/config/refactor): `PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT`. CHORE bookends iff work creates/continues a spec under `docs/v*/{active,pending}/`. Stage runbooks (checklists, recipes, formats): `dispatch/lifecycle.md`.
 
-**Anchor invariant — `orly gate` proves the boundary.** No PR opens unless every `orly gate pr` criterion is green or carries an `Orly-Override` trailer the user recorded with a reason. `orly gate` runs `work → verify → pr`, stops at the first red group, and only reads; green unlocks CHORE(close) but never performs it. No spec → spec criteria skip, quality gates still run. Slow suites (`verify.integration`, `verify.memory`) run only when the branch carries code. A user-surface change without a docs change is red until docs land or an override says why not.
+**Anchor invariant — `orly gate` proves the boundary.** No PR opens unless every `orly gate pr` criterion is green or carries an `Orly-Override` trailer the user recorded with a reason.
+
+**One gate per cadence, each tier run once.** `work` = the declared `conform` command, no git state (a commit hook's tree is dirty by construction). `verify` = spec dimensions, docs language, the fast `verify.*` set. `pr` = branch shape, clean tree, pushed branch, every spec criterion, the slow suites. `orly gate pr` is the command CHORE(close) runs; `git.pushed` proves HEAD is exactly what the pre-push `orly gate verify` already graded. A bare `orly gate` chains all three, for a branch whose earlier gates never ran. Stage map: `dispatch/lifecycle.md`. Both stop at the first red group and only read; green unlocks CHORE(close) but never performs it. No spec → spec criteria skip, quality gates still run. Slow suites (`verify.integration`, `verify.memory`) run only when the branch carries code. A user-surface change without a docs change is red until docs land or an override says why not.
 
 **LAND (after merge, or when the user confirms it merged):** pull the default branch, prune the merged worktree + branch, `make down` where defined.
 
@@ -203,13 +205,13 @@ Edit only approved scope; no opportunistic refactors. Stay in active worktree. C
 
 ### CONFORM
 
-Runs after EXECUTE, before VERIFY. Invokes the `conform` commands the repository declares in `.oracle/orly.json` and aggregates every gate verdict. Any 🔴 returns to EXECUTE; the lifecycle does not advance.
+Runs after EXECUTE, before VERIFY. Invokes the `conform` commands the repository declares in `.oracle/orly.json` and aggregates every gate verdict. Any 🔴 returns to EXECUTE; the lifecycle does not advance. This is the `work` gate's tier and the pre-commit hook runs it at every commit: declare a `conform` costing seconds, not minutes.
 In `agentsfleet` this stage is `make harness-verify`; its output block and end-of-turn audit detail live in `docs/HARNESS_VERIFY_OUTPUT.md`. Required rows: FILE SHAPE, PUB GATE, LENGTH GATE, MILESTONE-ID GATE, ZIG GATE, UI GATE, DESIGN TOKEN GATE, UFS GATE, SCHEMA GUARD, GREPTILE GATE, Architecture consult, Coverage, and `/orly-write-unit-test`.
 
 ### VERIFY
 
-Run the repository's declared `verify.*` commands from `.oracle/orly.json`. A package-scoped command never replaces a listed one.
-The `agentsfleet` output block and exact tiers live in `docs/VERIFY_TIERS.md`. **FIRST: `/orly-write-unit-test`** audits diff coverage. **LAST: the Test Delta row** compares against the CHORE(open) baseline; zero or negative unit growth on a code-adding diff needs justification or a return to EXECUTE. Paste memory-leak evidence into PR Session Notes or cite its Continuous Integration (CI) URL. After refactors, list newly dead code before removing it.
+**Two cadences, one boundary.** Inside a Section, run CONFORM plus the declared lane covering the surface the Section touched — enough to prove a Section, reported as a Section claim. The repository's full declared `verify.*` set runs ONCE, at the milestone boundary, before the PR. A package-scoped command never replaces a listed one at either cadence, and a Section lane never satisfies a "tests pass" claim about the repository.
+The `agentsfleet` output block and both cadences live in `docs/VERIFY_TIERS.md`. **FIRST: `/orly-write-unit-test`** audits diff coverage. **LAST: the Test Delta row** compares against the CHORE(open) baseline; zero or negative unit growth on a code-adding diff needs justification or a return to EXECUTE. Paste memory-leak evidence into PR Session Notes or cite its Continuous Integration (CI) URL. After refactors, list newly dead code before removing it.
 
 ### REVIEW
 
@@ -235,7 +237,7 @@ Required when spec involved — after last COMMIT, before PR. Also runs when par
 
 | # | When | Skill |
 |---|---|---|
-| 1 | VERIFY | `/orly-write-unit-test`, then `/orly-write-integration-test` — both before the PR, never skipped, never deferred |
+| 1 | VERIFY | `/orly-write-unit-test` once per Section over that Section's diff, and again at the boundary — never skipped, never deferred. Then `/orly-write-integration-test` at the boundary **when the diff crosses a module boundary with real input/output**; otherwise record `N/A — <reason>` in Session Notes. |
 | 2 | REVIEW | gstack `/review` — every runtime, same route; address findings or record a user-acked deferral; reviewer unavailable → Session Notes: *"skipped — <reason> <ts>; rerun before merge"* |
 | 3 | After every push | `orly-babysit-prs` — CI check runs + greptile inline threads + PR-level summary; stops on two consecutive empty polls with CI green; never `gh pr checks --watch` for greptile |
 
@@ -294,7 +296,10 @@ Optimise for one thing: he never has to ask twice.
   justification clauses, importance puffery, em-dash rhythm crutches, and
   fake-profound kickers. End on the clearest concrete sentence. The banned-word
   list lives in `docs/DOCUMENTATION_RULES.md` §DOC-05, §DOC-07, §DOC-14b, and
-  `orly gate verify` enforces it.
+  `orly gate verify` REPORTS it — `docs.language` prints its findings and stays
+  green, because the corpus predates the rule and a red on day one gets switched
+  off by the end of the week. Nobody fails a build over this, so the prose is
+  mine to get right.
 
 ## Reading Indy
 
@@ -370,5 +375,5 @@ Optimise for one thing: he never has to ask twice.
 
 | Responsibility | Commands |
 |---|---|
-| `conform` | `make audit` |
+| `conform` | `make conform` |
 | `verify.unit` | `bun test src` |

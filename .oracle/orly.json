@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "orly_version": "0.7.1",
+  "orly_version": "0.8.0",
   "packs": [
     "universal.authoring",
     "language.zig",
@@ -25,7 +25,7 @@
     "conform": [
       [
         "make",
-        "audit"
+        "conform"
       ]
     ],
     "verify.unit": [

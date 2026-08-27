@@ -70,6 +70,11 @@ SPECS=(
   "deinit_missing.zig|write_zig|src/deinit_missing.zig|1|DEINIT"
   "sqlmod_ok.zig|write_zig|src/sqlmod_ok.zig|0|SQLMOD"
   "sqlmod_violation.zig|write_zig|src/sqlmod_violation.zig|1|SQLMOD"
+  "err_rs_ok.rs|write_rust|src/err_rs_ok.rs|0|ERR-RS"
+  "err_rs_map_err_to_string.rs|write_rust|src/err_rs_map_err_to_string.rs|1|ERR-RS"
+  "err_rs_no_result_alias.rs|write_rust|src/err_rs_no_result_alias.rs|1|ERR-RS"
+  "err_rs_test_ok.rs|write_rust|src/err_rs_test_ok.rs|0|ERR-RS"
+  "err_rs_map_err_to_string.rs|write_rust|tests/err_rs_map_err_to_string.rs|0|ERR-RS"
 )
 
 pass=0
@@ -83,6 +88,11 @@ for spec in "${SPECS[@]}"; do
   git -C "$sb" config user.name evals
   mkdir -p "$sb/$(dirname "$dest")"
   cp "$FX/$fx" "$sb/$dest"
+  # A Rust sandbox gets a manifest, because a crate-scoped rule has no crate to
+  # ask without one: ERR-RS resolves the nearest Cargo.toml to decide where a
+  # `Result` alias may live. Leaf checks that read source extensions
+  # (audits/ufs.sh) filter a .toml out, so this is inert for every other case.
+  case "$fx" in *.rs) printf '[package]\nname = "fixture"\nversion = "0.0.0"\n' > "$sb/Cargo.toml" ;; esac
   git -C "$sb" add -A
   if [ "$dispatch" = "logging_all_missing" ]; then
     mv "$sb/$dest" "$sb/missing.rs.deleted"

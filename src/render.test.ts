@@ -15,7 +15,7 @@ const KERNEL_PACKS = ["universal.authoring", "language.zig", "language.rust", "d
 // This repository's own selection, as `.oracle/orly.json` declares it — the
 // root render must stay current against exactly what `orly update` writes.
 const DOTFILES_PACKS = ["universal.authoring", "language.zig", "language.typescript", "language.javascript", "language.rust", "language.go", "language.python", "language.shell", "language.mdx", "domain.sql", "domain.http", "domain.auth", "domain.documentation", "domain.changelog", "workflow.specifications", "workflow.governance", "product.agentsfleet", "persona.indy", "workflow.skills"];
-const DOTFILES_COMMANDS = { conform: [["make", "audit"]], "verify.unit": [["bun", "test", "src"]] };
+const DOTFILES_COMMANDS = { conform: [["make", "conform"]], "verify.unit": [["bun", "test", "src"]] };
 
 describe("Renderer", () => {
   test("renders byte-stable text for a pack set", async () => {
@@ -56,5 +56,63 @@ describe("Renderer", () => {
     const model = new RulesModel(source.root, registry);
 
     expect(new Renderer(model).renderText(KERNEL_PACKS)).rejects.toThrow("unclosed orly pack block");
+  });
+});
+
+// Claims the rendered rules make about the machine. Each one was false when
+// this suite was written: the prose said "always" where the gate runs once,
+// named a chain where one gate is the boundary, made a conditional skill
+// mandatory, and credited a reporting-only criterion with enforcement. Prose
+// drifting back is exactly as expensive as the first time, and none of it is
+// visible to a render-determinism check.
+describe("the rendered rules match the machine", () => {
+  test("VERIFY states two cadences rather than one 'always'", async () => {
+    const text = await new Renderer(await RulesModel.load(ROOT)).renderText(DOTFILES_PACKS, DOTFILES_COMMANDS);
+
+    expect(text).toContain("Two cadences, one boundary");
+    expect(text).toContain("runs ONCE, at the milestone boundary");
+  });
+
+  test("CHORE(close) names the pr gate, not the whole chain", async () => {
+    const text = await new Renderer(await RulesModel.load(ROOT)).renderText(DOTFILES_PACKS, DOTFILES_COMMANDS);
+
+    expect(text).toContain("`orly gate pr` is the command CHORE(close) runs");
+    // Sound without re-running the fast tier, and the reason is stated where
+    // the claim is: git.pushed pins HEAD to what pre-push already graded.
+    expect(text).toContain("`git.pushed` proves HEAD is exactly what the pre-push");
+    expect(text).toContain("One gate per cadence, each tier run once");
+  });
+
+  test("the integration skill is conditional on a real input/output boundary", async () => {
+    const text = await new Renderer(await RulesModel.load(ROOT)).renderText(DOTFILES_PACKS, DOTFILES_COMMANDS);
+
+    expect(text).toContain("when the diff crosses a module boundary with real input/output");
+    expect(text).not.toContain("both before the PR, never skipped");
+  });
+
+  // persona.indy is opt-in, and five engineering clauses were hiding inside it:
+  // a repository dropping the voice silently dropped symlink-edit routing,
+  // dotfiles backup, vault naming, sibling-repo precedent, and the
+  // read-the-reference mandate with it. A pack named for voice must cost only
+  // voice when it is left out.
+  test("the engineering clauses survive without the persona pack", async () => {
+    const renderer = new Renderer(await RulesModel.load(ROOT));
+    const withoutPersona = await renderer.renderText(DOTFILES_PACKS.filter((pack) => pack !== "persona.indy"), DOTFILES_COMMANDS);
+
+    expect(withoutPersona).toContain("Symlinked edits land in the repository that owns the file");
+    expect(withoutPersona).toContain("timestamped backup");
+    expect(withoutPersona).toContain("Vault names come from the environment");
+    expect(withoutPersona).toContain("Check a sibling repository");
+    expect(withoutPersona).toContain("Read the reference implementation before designing");
+    // What persona is actually for stays behind with it.
+    expect(withoutPersona).not.toContain("Indy's reference checkouts");
+    expect(withoutPersona).not.toContain("🤠 Indy");
+  });
+
+  test("SOUL does not claim the language criterion enforces anything", async () => {
+    const soul = await Bun.file(resolve(ROOT, "SOUL.md")).text();
+
+    expect(soul).toContain("REPORTS it");
+    expect(soul).not.toContain("`orly gate verify` enforces it");
   });
 });

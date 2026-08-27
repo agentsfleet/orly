@@ -293,6 +293,12 @@ function printHelp(): void {
 Gates (read-only; no PR without every criterion green or a recorded override):
   orly gate [--accept-dirty]        run work → verify → pr; stop at first red
   orly gate <work|verify|pr>        run one gate
+      work    does this commit conform? the declared conform command; no git
+              state, so a commit hook's own dirty tree never blocks it
+      verify  does the work hold up? spec dimensions, docs language, and the
+              fast verify.* set
+      pr      can this ship? branch, tree, pushed, every spec criterion, and
+              the slow verify.* suites
   orly override <CRITERION> --reason <REASON>
                                     empty commit with an Orly-Override trailer
 

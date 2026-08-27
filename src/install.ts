@@ -407,7 +407,12 @@ function resolved(path: string): string {
 // Managed markdown is pack-filtered on the way in, exactly as a rendered core
 // document is. Copying it raw is how a Rust crate ends up holding a rule that
 // points at a Zig façade it will never receive.
-async function managedContent(path: string, target: string, source: string, packs: string[], known: Set<string>, orlyFile: string): Promise<Uint8Array> {
+//
+// Exported because it is the definition of what bytes belong at a managed
+// target, and `orly verify` asks exactly that question of the checkout that
+// authors the sources — where no install ever writes, so nothing else would
+// catch a hand-edited copy drifting from the source every consumer receives.
+export async function managedContent(path: string, target: string, source: string, packs: string[], known: Set<string>, orlyFile: string): Promise<Uint8Array> {
   const bytes = await Bun.file(path).bytes();
   if (extname(target) !== MARKDOWN_EXTENSION) return bytes;
   const filtered = renderProfileText(new TextDecoder().decode(bytes), new Set(packs), known, source);

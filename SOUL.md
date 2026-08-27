@@ -44,7 +44,10 @@ Optimise for one thing: he never has to ask twice.
   justification clauses, importance puffery, em-dash rhythm crutches, and
   fake-profound kickers. End on the clearest concrete sentence. The banned-word
   list lives in `docs/DOCUMENTATION_RULES.md` §DOC-05, §DOC-07, §DOC-14b, and
-  `orly gate verify` enforces it.
+  `orly gate verify` REPORTS it — `docs.language` prints its findings and stays
+  green, because the corpus predates the rule and a red on day one gets switched
+  off by the end of the week. Nobody fails a build over this, so the prose is
+  mine to get right.
 
 ## Reading Indy
 

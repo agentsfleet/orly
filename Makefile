@@ -1,7 +1,7 @@
 # The audit recipe uses bash arrays and a here-string; /bin/sh has neither.
 SHELL := /bin/bash
 
-.PHONY: audit test-audit llmevals ledger install-evals \
+.PHONY: conform audit test-audit llmevals ledger install-evals \
         dispatch-coverage dispatch-evals dispatch-parity dispatch-parity-evals ledger-evals
 
 # Run the deterministic audit chain (all green):
@@ -21,12 +21,26 @@ SHELL := /bin/bash
 # push can break for anyone. It runs unconditionally in CI
 # (.github/workflows/harness.yml) and by hand as `make install-evals`.
 # `%` separates the steps, so no step command may contain one.
-AUDIT_STEPS := \
-	bun run typecheck && bun test src%bin/orly verify%bash audits/ufs.sh --all%bash audits/agents-md.sh%bash evals/dispatch/coverage.sh%bash evals/dispatch/run.sh%bash evals/dispatch/parity.sh%bash evals/ledger/run.sh%bash audits/rule-ledger.sh --check%bash audits/rule-ledger.sh --census
+#
+# CONFORM_STEPS is what this repository declares as `conform`, and CONFORM is a
+# lifecycle stage that runs after every EXECUTE — so `orly gate work` runs it at
+# every commit and it has to cost seconds. These four are the deterministic rule
+# gates: the render is current and every pack file matches its source, no magic
+# string went unnamed, the generated rules still hold the line, and the
+# enforcement ledger matches the tree. Together, about two seconds.
+CONFORM_STEPS := bin/orly verify%bash audits/ufs.sh --all%bash audits/agents-md.sh%bash audits/rule-ledger.sh --check
+# Everything the rule corpus must survive before it can reach anyone else:
+# CONFORM plus the type and test suite and every eval sandbox. This is what
+# .githooks/pre-push runs, and what Continuous Integration (CI) runs. It used to
+# BE the declared conform, which meant `orly gate` ran `bun test src` twice —
+# once inside the audit chain and once as the declared verify.unit.
+AUDIT_STEPS := $(CONFORM_STEPS)%bun run typecheck && bun test src%bash evals/dispatch/coverage.sh%bash evals/dispatch/run.sh%bash evals/dispatch/parity.sh%bash evals/ledger/run.sh%bash audits/rule-ledger.sh --census
 
-audit:
+conform: STEPS := $(CONFORM_STEPS)
+audit:   STEPS := $(AUDIT_STEPS)
+conform audit:
 	@set -uo pipefail; \
-	IFS='%' read -r -a steps <<< "$(AUDIT_STEPS)"; \
+	IFS='%' read -r -a steps <<< "$(STEPS)"; \
 	logs="$$(mktemp -d)"; pids=(); \
 	trap 'rm -rf "$$logs"' EXIT; \
 	for i in "$${!steps[@]}"; do \
