@@ -61,7 +61,7 @@ Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_A
 - **Skip hooks/signing.** Never `--no-verify`/`--no-gpg-sign`/`-c commit.gpgsign=false`. Hook fails → fix cause.
 - **Plaintext secrets in entity tables.** Store vault `key_name` ref, resolve via `crypto_store.load()`.
 - **Static strings in SQL schema.** No `DEFAULT 'value'`/`CHECK (col IN ('a','b'))`. Enforce in app via named constants.
-- **Resolving/printing credentials.** `op read 'op://...'` at runtime — never paste/log.
+- **Resolving/printing credentials.** `op read 'op://...'` at runtime — never paste/log. Vault names come from the environment, never from a rules file.
 - **Force-push default branch** (`main`/`master`).
 - **Install-process launches in core paths.** Native SDKs. Exception: personal dev tools (`op`/`gh`/`glab`/`oracle`).
 
@@ -80,18 +80,18 @@ Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_A
 ### Operational defaults
 
 - Workspace `~/Projects`. `gh`/`glab` not browsers. `trash` not `rm`. Conventional Commits. Process decisions → repo docs, not chat. "Make a note" → update `AGENTS.md`/repo docs.
-- **Symlinked edits land in the repository that owns the file.** A file whose `readlink` resolves outside this checkout — into a dotfiles or config repository — is an edit to *that* repository, not this one. Detect via `readlink` BEFORE editing. After: `cd` to the resolved repository, `git add <files> && git commit && git push` on its default branch. Never leave uncommitted. <!-- oracle-packs:persona.indy -->
+- **Symlinked edits land in the repository that owns the file.** A file whose `readlink` resolves outside this checkout — into a dotfiles or config repository — is an edit to *that* repository, not this one. Detect via `readlink` BEFORE editing. After: `cd` to the resolved repository, `git add <files> && git commit && git push` on its default branch. Never leave uncommitted.
 - **Docs-repo edits on own branch.** `~/Projects/docs/` is shared across milestones: check `git status` first; from `main` (checkout or worktree off `main`) commit on `chore/m{N}-{slug}-changelog`; recovery = stash, re-apply on a fresh branch.
-- Other dotfiles (`.zshrc`/`.gitconfig`/etc.): timestamped backup; minimal edits. <!-- oracle-packs:persona.indy -->
+- Other dotfiles (`.zshrc`/`.gitconfig`/etc.): timestamped backup; minimal edits.
+- **Check a sibling repository for an existing pattern in the same language before inventing one.** A shape already shipping next door is prior art; a new one is a decision that needs a reason.
+- **Read the reference implementation before designing.** Where the dispatch page for the language names a canonical external source, that read is mandatory in review and the guideline identifiers it defines are cited — applied or consciously diverged from. "Broken for us" means the delta was missed: diff our call site against theirs (version, config, wiring) before blaming the principle.
 - Before commit/push: `gitleaks` must pass.
 - No new `make` targets without a distinct caller (CI job, spec-mandated gate, or a workflow existing targets can't express) — check `make/*.mk` first; extend over near-duplicate wrappers.
 - `*.zig` → read `dispatch/write_zig.md`; ZIG GATE fires. <!-- oracle-packs:language.zig -->
 - Auth-flow (token-minting handlers, credential-typed spec dimensions, the repository's auth directories) → read the repository's `docs/AUTH.md` first, where it exists. <!-- oracle-packs:domain.auth -->
 - `conn.query()` requires `.drain()` in same fn before `deinit()`. Verify `make lint-governance`. Use `conn.exec()` for no-rows. <!-- oracle-packs:product.agentsfleet -->
 <!-- oracle-packs:start persona.indy -->
-- **Vault (1Password `op`).** Resolve secrets via the `op` CLI, never hand-paste/log. Vault names come from the environment, never from a rules file.
-- Check a sibling repository under `$HOME/Projects/` for an existing pattern in the same language before inventing one.
-- **Reference canon (read before designing):** TypeScript → `oss/supabase/apps/studio` + `oss/supabase/packages/{ui,ui-patterns}` + `oss/cli`; Zig → `oss/ghostty/src/`; Rust → `oss/bun/src/` + `oss/exonum` + `oss/core_api-develop` + Microsoft's Rust guidelines (`oss/rust-guidelines/all.txt`, fetch if absent; mandatory in review). Missing checkout → ask, then clone into `~/Projects/oss/`. "Broken for us" → call-site diff first.
+- **Indy's reference checkouts** (the machine-local half of the rule above): TypeScript → `oss/supabase/apps/studio` + `oss/supabase/packages/{ui,ui-patterns}` + `oss/cli`; Zig → `oss/ghostty/src/`; Rust → `oss/bun/src/` + `oss/exonum` + `oss/core_api-develop`. Missing checkout → ask, then clone into `~/Projects/oss/`.
 <!-- oracle-packs:end -->
 
 **Forge detection:** `github.com` → `gh`; `gitlab.com` → `glab`. Check `git remote -v`.

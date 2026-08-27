@@ -87,6 +87,25 @@ describe("the rendered rules match the machine", () => {
     expect(text).not.toContain("both before the PR, never skipped");
   });
 
+  // persona.indy is opt-in, and five engineering clauses were hiding inside it:
+  // a repository dropping the voice silently dropped symlink-edit routing,
+  // dotfiles backup, vault naming, sibling-repo precedent, and the
+  // read-the-reference mandate with it. A pack named for voice must cost only
+  // voice when it is left out.
+  test("the engineering clauses survive without the persona pack", async () => {
+    const renderer = new Renderer(await RulesModel.load(ROOT));
+    const withoutPersona = await renderer.renderText(DOTFILES_PACKS.filter((pack) => pack !== "persona.indy"), DOTFILES_COMMANDS);
+
+    expect(withoutPersona).toContain("Symlinked edits land in the repository that owns the file");
+    expect(withoutPersona).toContain("timestamped backup");
+    expect(withoutPersona).toContain("Vault names come from the environment");
+    expect(withoutPersona).toContain("Check a sibling repository");
+    expect(withoutPersona).toContain("Read the reference implementation before designing");
+    // What persona is actually for stays behind with it.
+    expect(withoutPersona).not.toContain("Indy's reference checkouts");
+    expect(withoutPersona).not.toContain("🤠 Indy");
+  });
+
   test("SOUL does not claim the language criterion enforces anything", async () => {
     const soul = await Bun.file(resolve(ROOT, "SOUL.md")).text();
 

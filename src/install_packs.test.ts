@@ -7,6 +7,7 @@ import { install } from "./install";
 import { RulesModel } from "./model";
 
 const SOURCE_EXTENSIONS = ["rs", "ts", "tsx", "js", "jsx", "py", "sh", "sql", "zig", "mdx"];
+const DESCRIPTION_BUDGET = 320;
 const RECORDER = "audits/doc-read.sh";
 const RECORDER_LIBRARY = "audits/rule-ledger-lib.sh";
 // Read from package.json rather than restated here: a hand-synced copy goes
@@ -36,6 +37,29 @@ describe("opt-in pack selection", () => {
     expect(result.packs).not.toContain("workflow.governance");
     expect(existsSync(join(repo, "docs/EXECUTE_DOC_READS.md"))).toBe(true);
     expect(existsSync(join(repo, "dispatch/edit_rules.md"))).toBe(false);
+  });
+});
+
+// Every host renders skill metadata into a fixed context budget and truncates
+// the set when it overflows — Codex says so out loud ("descriptions were
+// shortened to fit the skills context budget"). A truncated description is a
+// skill the model can no longer route to correctly, and the failure is silent
+// at the point it matters. The bound is checked here so a growing description
+// fails a test rather than degrading discovery in the field.
+describe("packaged skill metadata", () => {
+  test("every description stays inside the host budget", async () => {
+    const skills = new Set<string>();
+    for (const entry of (await Bun.file(join(ROOT, "registry.json")).json()).packs["workflow.skills"].managed_files) skills.add(entry.source);
+    expect(skills.size).toBeGreaterThan(0);
+
+    for (const relative of [...skills].sort()) {
+      const frontmatter = (await Bun.file(join(ROOT, relative)).text()).split("---")[1] ?? "";
+      const description = (frontmatter.split(/^description:/m)[1] ?? "").split(/^[a-z_]+:/m)[0] ?? "";
+      const rendered = description.replace(/^[>|]/, "").replace(/\s+/g, " ").trim();
+
+      expect(rendered.length).toBeGreaterThan(0);
+      expect({ skill: relative, length: rendered.length }).toEqual({ skill: relative, length: Math.min(rendered.length, DESCRIPTION_BUDGET) });
+    }
   });
 });
 

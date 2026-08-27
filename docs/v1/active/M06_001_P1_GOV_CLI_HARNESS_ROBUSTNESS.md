@@ -141,12 +141,12 @@ The cadence prose says the declared `verify.*` set runs "always", which reads as
 - **Dimension 4.2** — DONE — the operating model names `orly gate pr` as the close command and makes the integration skill conditional on a real input/output boundary → Tests `CHORE(close) names the pr gate, not the whole chain` and `the integration skill is conditional on a real input/output boundary`
 - **Dimension 4.3** — DONE — `SOUL.md` no longer claims `orly gate verify` enforces the banned-word list, which `docs.language` reports without failing → Test `SOUL does not claim the language criterion enforces anything`
 
-### §5 — Less context, same enforcement
+### §5 — Less context, same enforcement — DONE
 
 The opt-in persona pack carries five engineering clauses among its voice: reference canon, sibling-repository precedent, vault resolution, symlinked-edit routing, and dotfiles backup. A repository dropping the persona silently drops those rules too. They move to the always-on packs, so persona becomes what its name claims. Four packaged skill descriptions shrink to fit a fixed host skills budget.
 
-- **Dimension 5.1** — the five engineering clauses render for a repository that takes no persona pack → Test `engineering_clauses_survive_without_the_persona_pack`
-- **Dimension 5.2** — each packaged skill description fits the budget bound → Test `packaged_skill_descriptions_stay_within_budget`
+- **Dimension 5.1** — DONE — the five engineering clauses render for a repository that takes no persona pack, and only the machine-local checkout list stays behind with it → Test `the engineering clauses survive without the persona pack`
+- **Dimension 5.2** — DONE — each packaged skill description fits the budget bound → Test `every description stays inside the host budget`
 
 ## Interfaces
 
@@ -221,8 +221,8 @@ No new event name and no new property enter the telemetry schema; the parity che
 | 4.2 | unit | `CHORE(close) names the pr gate, not the whole chain` | the rendered rules name `orly gate pr` at the close and say a bare gate pays the fast tier twice |
 | 4.2 | unit | `the integration skill is conditional on a real input/output boundary` | the mandatory-always wording is gone and the condition is stated |
 | 4.3 | unit | `SOUL does not claim the language criterion enforces anything` | `SOUL.md` states the criterion reports rather than enforces |
-| 5.1 | unit | `engineering_clauses_survive_without_the_persona_pack` | a render without persona still carries all five clauses |
-| 5.2 | unit | `packaged_skill_descriptions_stay_within_budget` | every packaged skill description is at most 320 characters |
+| 5.1 | unit | `the engineering clauses survive without the persona pack` | a render without persona carries all five clauses and drops only the personal ones |
+| 5.2 | unit | `every description stays inside the host budget` | every packaged skill description is at most 320 characters |
 
 ## Acceptance Rubric (single scoring surface)
 
@@ -232,7 +232,7 @@ No new event name and no new property enter the telemetry schema; the parity che
 | R2 | The recorder and the Rust façade ship through packs (§2, §3) | `bun test src/install_packs.test.ts` | exit 0 | P0 | pending |
 | R3 | The new deterministic code is coherent across all five artifacts (§3) | `bash evals/dispatch/coverage.sh` | exit 0 | P0 | pending |
 | R4 | The Rust leaf accepts and rejects the pinned prose shapes (§3) | `bash evals/dispatch/run.sh` | exit 0 | P0 | pending |
-| R5 | Cadence and enforcement claims match the machine (§4, §5) | `bun test src/render.test.ts` | exit 0 | P0 | pending |
+| R5 | Cadence and enforcement claims match the machine (§4, §5) | `bun test src/render.test.ts src/install_packs.test.ts` | exit 0 | P0 | pending |
 | R6 | Diff stays inside Files Changed | `git diff --name-only origin/main` | 0 paths missing from the Files Changed table | P0 | pending |
 | S1 | Conform gates green | `make audit` | exit 0 | P0 | pending |
 | S2 | Unit tests pass | `bun test src` | exit 0 | P0 | pending |
