@@ -66,6 +66,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | `dispatch/lib.sh`, `docs/greptile-learnings/RULES.md` | EDIT | Register the new code's gloss in both mirrors |
 | `evals/dispatch/run.sh`, `evals/dispatch/fixtures/err_rs_*.rs` | EDIT, CREATE | Pin acceptance and rejection for the new code |
 | `registry.json` | EDIT | Ship the recorder, its library, and the Rust façade to consumers |
+| `src/install_packs.test.ts` | EDIT | Prove the shipped recorder runs in the repository it lands in |
 | `core/operating-model.md` | EDIT | Tier the verification cadence and rehome the persona pack's engineering clauses |
 | `dispatch/verify.md`, `docs/VERIFY_TIERS.md` | EDIT | Replace the retired-lane claim and state the two cadences |
 | `SOUL.md` | EDIT | Stop claiming a reporting-only criterion enforces the banned-word list |
@@ -115,12 +116,12 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 - **Dimension 1.3** — DONE — `orly verify` reports the parity check beside the render proofs and fails when it fails → Test `verify reports pack source parity beside the render proofs`
 - **Dimension 1.4** — DONE — `dispatch/write_rust.md` and `dispatch/write_go.md` byte-match their pack sources → Test `pack targets match their sources` over the real tree
 
-### §2 — The recorder ships wherever the rule that needs it lands
+### §2 — The recorder ships wherever the rule that needs it lands — DONE
 
 The operating model tells every agent to record a triggered read with `bash audits/doc-read.sh log <path>`, and the consuming repository has no such file: the pack that carries the rule never carried the script. `universal.authoring` gains the recorder and the library it sources, so the command exists in every repository whose rules cite it.
 
-- **Dimension 2.1** — `universal.authoring` manages `audits/doc-read.sh` and `audits/rule-ledger-lib.sh` → Test `authoring_pack_ships_the_doc_read_recorder`
-- **Dimension 2.2** — the recorder keeps its executable mode through a real install → Test `install_writes_the_recorder_executable`
+- **Dimension 2.1** — DONE — `universal.authoring` manages `audits/doc-read.sh` and `audits/rule-ledger-lib.sh` → Test `installs with the authoring pack and runs where it lands`
+- **Dimension 2.2** — DONE — the shipped pair runs in the repository it lands in: `log` records and `check` reports, so an incomplete shipment fails at run time rather than passing as a copied file → Test `installs with the authoring pack and runs where it lands`
 
 ### §3 — Rust error discipline fails a machine
 
@@ -209,8 +210,8 @@ No new event name and no new property enter the telemetry schema; the parity che
 | 1.1 | unit | `pack target drift names the pack and both paths` | a byte-changed target yields one finding naming pack, source, and target |
 | 1.2 | unit | `a pack target the checkout does not carry is not drift` | a row whose target is missing yields no finding |
 | 1.3 | unit | `verify reports pack source parity beside the render proofs` | `verifyRenders` includes `packs.sources.current` and reports pass on a matched tree |
-| 2.1 | unit | `authoring_pack_ships_the_doc_read_recorder` | `universal.authoring` manages both the recorder and its library |
-| 2.2 | integration | `install_writes_the_recorder_executable` | a real install writes `audits/doc-read.sh` with mode 0755 |
+| 2.1 | integration | `installs with the authoring pack and runs where it lands` | a real install into a fresh repository writes both the recorder and its library |
+| 2.2 | integration | `installs with the authoring pack and runs where it lands` | `bash audits/doc-read.sh log` then `check` both exit 0 inside the installed repository |
 | 3.1 | integration | `err_rs_map_err_to_string` fixture | a stringifying `map_err` exits 1; the context-adding sibling exits 0 |
 | 3.2 | integration | `err_rs_no_result_alias` fixture | an error type with no alias beside it exits 1 |
 | 3.3 | integration | `err_rs_test_ok` fixture | a `#[cfg(test)]` module carrying both shapes exits 0 |
@@ -226,7 +227,7 @@ No new event name and no new property enter the telemetry schema; the parity che
 | # | Criterion (observable outcome) | Verify (copy-paste) | Expected | Priority | Graded (VERIFY) |
 |---|--------------------------------|---------------------|----------|----------|-----------------|
 | R1 | Pack sources reach this checkout and drift is a red check (§1) | `bun test src/verify.test.ts` | exit 0 | P0 | pending |
-| R2 | The recorder and the Rust façade ship through packs (§2, §3) | `bun test src/install_packs.test.ts src/model.test.ts` | exit 0 | P0 | pending |
+| R2 | The recorder and the Rust façade ship through packs (§2, §3) | `bun test src/install_packs.test.ts` | exit 0 | P0 | pending |
 | R3 | The new deterministic code is coherent across all five artifacts (§3) | `bash evals/dispatch/coverage.sh` | exit 0 | P0 | pending |
 | R4 | The Rust leaf accepts and rejects the pinned prose shapes (§3) | `bash evals/dispatch/run.sh` | exit 0 | P0 | pending |
 | R5 | Cadence and enforcement claims match the machine (§4, §5) | `bun test src/render.test.ts` | exit 0 | P0 | pending |
