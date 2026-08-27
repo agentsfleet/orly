@@ -199,7 +199,7 @@ Each edit activates the rule page for that file kind. A gate proves whether the 
 
 `AGENTS.md` stays yours — orly writes its rules beside it and points at them from one delimited block.
 
-The last two files exist because installing a rules file is not the same as delivering it, and no runtime loads `AGENTS.orly.md` on its own. Codex and Amp auto-load `AGENTS.md`, which carries the pointer block onward. Claude Code loads `CLAUDE.md` and nothing else. opencode loads only what its `instructions` name. So orly writes the one import line each of those needs, and leaves any file you already wrote alone — a `CLAUDE.md` of your own, symlink included, is your answer to the question and orly does not touch it.
+The last two files exist because installing a rules file is not the same as delivering it, and no runtime loads `AGENTS.orly.md` on its own. Codex and Amp auto-load `AGENTS.md`, which carries the pointer block onward. Claude Code loads `CLAUDE.md` and nothing else. opencode loads only what its `instructions` name. So orly writes the one import line each of those needs, and leaves any file you already wrote alone — a `CLAUDE.md` of your own is your answer to the question and orly does not touch it — including a symlink, whether it points at your rules file, somewhere else in the repository, or at nothing yet. Only a link out of the repository is refused, because a write through it would land outside the repository you ran orly in.
 
 > [!WARNING]
 > orly refuses to replace a hook or rule page it did not write. `--force` and `--no-hooks` are the ways through. A refused run changes nothing.

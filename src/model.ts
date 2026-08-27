@@ -83,11 +83,21 @@ function isSymbolicLink(path: string): boolean {
 
 // A dangling link resolves nowhere; judge it by where it points, not where it
 // lands, so a link to a not-yet-created file outside the repository still fails.
+//
+// The directory holding it is resolved too, and has to be: the caller compares
+// this against a realpath'd root, and a lexical answer put a link pointing
+// squarely INSIDE the repository on the wrong side of that comparison wherever
+// the repository itself sits behind a symlink — which is every macOS temporary
+// directory, and plenty of real checkouts. The refusal even named the file it
+// was about to protect, one path component at a time.
+//
+// Resolving the parent cannot fail here: this runs only where the destination
+// itself lstat'd as a link, which a missing parent makes impossible.
 function safeRealpath(path: string): string | undefined {
   try {
     return realpathSync(path);
   } catch {
-    return resolve(dirname(path), readlinkSync(path));
+    return resolve(realpathSync(dirname(path)), readlinkSync(path));
   }
 }
 
