@@ -308,7 +308,11 @@ Install (the repository is the unit — no checkout of this package required):
                                     seeded .oracle/orly.json. A repository that
                                     already has an AGENTS.md keeps it: orly's
                                     rules land as AGENTS.orly.md, reached by a
-                                    pointer block in the file you own.
+                                    pointer block in the file you own. One
+                                    import line lands per runtime that needs
+                                    one (CLAUDE.md, opencode.json), so the
+                                    rules load rather than wait to be noticed;
+                                    a loader you wrote yourself is left alone.
   orly update [--force] [--with <PACK>] [--dry-run] [--json]
                                     re-materialise at the installed engine version
 
