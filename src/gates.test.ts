@@ -16,25 +16,49 @@ afterEach(cleanupTemporaryDirectories);
 describe("gate groups", () => {
   test("run in order and stop at the first red group", async () => {
     const project = newSpecRepository();
-    const model = await modelFor(project);
-    // Default branch: the work gate is red, so verify and pr never run.
+    // A failing conform reds the work gate, so verify and pr never run.
+    const model = await modelFor(project, undefined, { conform: [["false"]] });
     const reports = runGates(model, project);
 
     expect(reports.map((report) => report.gate)).toEqual(["work"]);
     expect(reports[0]?.ok).toBeFalse();
-    expect(reports[0]?.results.find((result) => result.name === "git.branch")?.ok).toBeFalse();
+    expect(reports[0]?.results.find((result) => result.name === "cmd.conform")?.ok).toBeFalse();
   });
 
+  // One gate per cadence: work asks whether the commit conforms, verify whether
+  // the work holds up, pr whether it can ship. Branch shape and a clean tree are
+  // pr's questions alone — asked at commit time they refuse the commit being
+  // made, and asked at push time they refuse a scratch file that is not being
+  // pushed.
   test("each gate evaluates exactly its declared criteria", async () => {
     const project = newSpecRepository();
     const model = await modelFor(project);
 
-    expect(names(runGate(model, project, "work"))).toEqual(["git.branch", "git.tree", "repo.config"]);
-    expect(names(runGate(model, project, "verify"))).toEqual(["cmd.conform", "cmd.verify.unit", "docs.language", "spec.dimensions"]);
+    expect(names(runGate(model, project, "work"))).toEqual(["cmd.conform", "repo.config"]);
+    expect(names(runGate(model, project, "verify"))).toEqual(["cmd.verify.unit", "docs.language", "spec.dimensions"]);
     expect(names(runGate(model, project, "pr"))).toEqual([
-      "docs.updated", "git.pushed", "git.tree", "spec.baseline", "spec.deferrals", "spec.dimensions", "spec.gate",
-      "spec.moved", "spec.open-questions", "spec.ordering", "spec.product-clarity",
+      "docs.updated", "git.branch", "git.pushed", "git.tree", "spec.baseline", "spec.deferrals", "spec.dimensions",
+      "spec.gate", "spec.moved", "spec.open-questions", "spec.ordering", "spec.product-clarity",
     ]);
+  });
+
+  // The bug this composition exists to kill: the hook orly generates runs
+  // `orly gate work`, and a commit hook's tree is dirty by construction — that
+  // is what is being committed. On the default branch, which the operating
+  // model itself says a new spec is committed on, it failed twice over. A fresh
+  // install could not commit itself without `--no-verify`, which Hard Safety
+  // forbids outright.
+  test("the work gate passes on the default branch with a staged edit", async () => {
+    const project = newSpecRepository();
+    const model = await modelFor(project);
+    await Bun.write(join(project, "src/staged.txt"), "an edit on its way into a commit\n");
+    git(project, "add", "src/staged.txt");
+
+    const report = runGate(model, project, "work");
+
+    expect(report.ok).toBeTrue();
+    expect(names(report)).not.toContain("git.tree");
+    expect(names(report)).not.toContain("git.branch");
   });
 
   test("gates never write: the tree is byte-identical after a run", async () => {
@@ -68,8 +92,8 @@ describe("repository resolution", () => {
     git(project, "worktree", "add", "-q", "-b", "feat/stream", worktree);
     await Bun.write(join(worktree, "stream-only.txt"), "present only in the worktree\n");
 
-    expect(runGate(model, worktree, "verify").results.find((result) => result.name === "cmd.conform")?.ok).toBeTrue();
-    expect(runGate(model, project, "verify").results.find((result) => result.name === "cmd.conform")?.ok).toBeFalse();
+    expect(runGate(model, worktree, "work").results.find((result) => result.name === "cmd.conform")?.ok).toBeTrue();
+    expect(runGate(model, project, "work").results.find((result) => result.name === "cmd.conform")?.ok).toBeFalse();
   });
 
   test("a repository with no orly config is red, and names the install command", async () => {

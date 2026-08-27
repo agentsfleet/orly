@@ -24,9 +24,12 @@ describe("criteriaFor", () => {
     return criteriaFor(gate, context).map((criterion) => criterion.name).sort();
   }
 
-  test("work evaluates the branch, the tree and the profile", async () => {
+  // work is the commit-time gate, and a commit hook's tree is dirty by
+  // construction. It asks the repository's own conform command and nothing
+  // about git state.
+  test("work evaluates the profile and the conform tier", async () => {
     const project = newSpecRepository();
-    expect(named(WORK, await contextFor(project))).toEqual(["git.branch", "git.tree", REPO_CONFIG]);
+    expect(named(WORK, await contextFor(project))).toEqual(["cmd.conform", REPO_CONFIG]);
   });
 
   test("verify pairs the spec dimensions with the fast command tier only", async () => {
@@ -34,7 +37,9 @@ describe("criteriaFor", () => {
     const names = named(VERIFY, await contextFor(project));
 
     expect(names).toContain("spec.dimensions");
-    expect(names).toContain("cmd.conform");
+    expect(names).toContain("cmd.verify.unit");
+    // conform is the work gate's tier now, so the chain runs it once.
+    expect(names).not.toContain("cmd.conform");
     // The slow tier belongs to the pr gate; leaking it here would make every
     // verify run pay for integration and memory suites.
     expect(names).not.toContain("cmd.verify.integration");
@@ -47,9 +52,15 @@ describe("criteriaFor", () => {
     for (const required of ["spec.moved", "spec.baseline", "spec.ordering", "spec.deferrals", "docs.updated"]) {
       expect(names).toContain(required);
     }
-    // git.branch is a work-gate concern: by pr time the branch is established,
-    // and re-asserting it would make an already-merged branch un-gateable.
-    expect(names).not.toContain("git.branch");
+    // git.branch belongs here and only here. It was a work-gate criterion until
+    // the generated pre-commit hook was found refusing every commit made on the
+    // default branch — including the commit that installs orly, and the
+    // spec-on-main commit the operating model itself prescribes. The question
+    // "is this the default branch" is only ever decisive where a Pull Request
+    // would open from it, so it is asked there. Running `orly gate pr` on a
+    // merged branch reds, which is the honest answer: no PR opens from main.
+    expect(names).toContain("git.branch");
+    expect(names).toContain("git.tree");
   });
 
   test("an unknown gate name yields no criteria rather than throwing", async () => {

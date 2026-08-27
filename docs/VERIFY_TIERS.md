@@ -21,9 +21,14 @@ These five are exactly what `.oracle/orly.json` declares and exactly what
 Section, run `make harness-verify` plus the lane covering the surface the
 Section touched (`make test-unit-rustd`, `make test-unit-app`, …) — enough to
 prove the Section, never a repository claim. The full table above runs ONCE, at
-CHORE(close), and `orly gate pr` is the command that proves it: a bare
-`orly gate` chains `work → verify → pr` and pays the fast tier twice on the way
-to the same answer.
+CHORE(close).
+
+**Which gate runs which row.** `orly gate work` runs the `conform` row alone and
+is what the pre-commit hook fires, so it costs seconds. `orly gate verify` runs
+the lint, unit, and version rows and is what pre-push fires. `orly gate pr` runs
+the integration row plus the whole-branch and spec criteria, and is what
+CHORE(close) fires — it skips the fast rows because `git.pushed` proves HEAD is
+the commit pre-push already graded.
 
 One lane needs live datastores, and only one. `make/test-infra.mk` brings up
 docker compose Postgres and Redis for `test-integration-rustd`; `make

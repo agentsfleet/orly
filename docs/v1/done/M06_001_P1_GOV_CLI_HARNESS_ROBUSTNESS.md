@@ -57,6 +57,12 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 |------|--------|-----|
 | `docs/v1/done/M06_001_P1_GOV_CLI_HARNESS_ROBUSTNESS.md` | CREATE, then MOVE through lifecycle directories | Record intent, tests, and evidence |
 | `src/verify.ts` | EDIT | Own the pack source-versus-target parity comparison and report it beside the render proofs |
+| `src/criteria.ts` | EDIT | Give CONFORM its own tier and move branch and tree to the pr gate |
+| `src/criteria.test.ts`, `src/gates.test.ts`, `src/gates_spec.test.ts` | EDIT | Pin the cadence composition and the commit-time regression |
+| `src/cli.ts` | EDIT | Say what each gate asks in `--help` |
+| `dispatch/lib.sh` | EDIT | Never judge a file the engine wrote |
+| `dispatch/lifecycle.md` | EDIT | Carry the stage-by-stage map of what runs where |
+| `Makefile`, `.oracle/orly.json` | EDIT | Split a seconds-long `conform` out of the full audit chain |
 | `src/install.ts` | EDIT | Export `managedContent` so one definition decides what bytes belong at a managed target |
 | `src/verify.test.ts` | EDIT | Prove parity passes on a matched tree, fails on a drifted one, and reaches `orly verify` |
 | `dispatch/write_rust.md`, `dispatch/write_go.md` | EDIT | Restore the drifted copies to their pack sources |
@@ -148,6 +154,30 @@ The opt-in persona pack carries five engineering clauses among its voice: refere
 - **Dimension 5.1** — DONE — the five engineering clauses render for a repository that takes no persona pack, and only the machine-local checkout list stays behind with it → Test `the engineering clauses survive without the persona pack`
 - **Dimension 5.2** — DONE — each packaged skill description fits the budget bound → Test `every description stays inside the host budget`
 
+### §6 — The generated hooks stop refusing the commits they protect — DONE
+
+`orly gate work` judged branch shape and tree cleanliness, and the generated pre-commit hook runs exactly that. A commit hook's tree is dirty by construction — that is what is being committed — and the operating model itself says a new spec is committed on the default branch, so the hook failed twice over on a normal commit. A fresh `orly init` could not commit its own installation, and the only way past was `--no-verify`, which Hard Safety forbids outright.
+
+The gates are recomposed so each asks only what it can answer honestly at its own cadence: `work` runs the declared `conform` command and no git state, `verify` keeps the fast `verify.*` set, and branch shape, clean tree, and pushed branch move to `pr`, where a Pull Request is what makes them decisive.
+
+- **Dimension 6.1** — DONE — the work gate passes on the default branch with a staged edit → Test `the work gate passes on the default branch with a staged edit`
+- **Dimension 6.2** — DONE — each gate carries exactly its cadence's criteria, with `conform` in `work` and `git.branch` in `pr` → Tests `each gate evaluates exactly its declared criteria`, `work evaluates the profile and the conform tier`, and `pr carries every closed-spec follow-through criterion`
+- **Dimension 6.3** — DONE — a failing `conform` reds the work gate so later gates never run → Test `run in order and stop at the first red group`
+- **Dimension 6.4** — DONE — the dispatch never judges a file the engine wrote, since the next update overwrites it → `dispatch_managed_paths` filters the staged set
+
+### §7 — CONFORM costs seconds, so it can run at every commit — DONE
+
+`conform` is now the `work` gate's tier and the pre-commit hook runs it, so a repository declaring a minutes-long command makes the stage that should run constantly the one nobody waits for. This repository was that repository: its declared `conform` was `make audit`, which contains `bun test src` — the same suite its `verify.unit` declares — so `orly gate` ran the unit tests twice.
+
+- **Dimension 7.1** — DONE — `make conform` runs the four deterministic rule gates in about two seconds; `make audit` keeps the full chain for pre-push and Continuous Integration (CI) → `make conform`
+- **Dimension 7.2** — DONE — the declared `conform` no longer contains the declared `verify.unit` → `.oracle/orly.json`
+
+### §8 — The lifecycle says what runs where — DONE
+
+`dispatch/lifecycle.md` gains a stage-by-stage table naming the command each stage runs and the gate that fires it, so the answer to "what runs at CONFORM" is a table row rather than an inference across three documents.
+
+- **Dimension 8.1** — DONE — every lifecycle stage names its command and the gate that fires it → `dispatch/lifecycle.md` §What runs at each stage
+
 ## Interfaces
 
 ```text
@@ -233,9 +263,11 @@ No new event name and no new property enter the telemetry schema; the parity che
 | R3 | The new deterministic code is coherent across all five artifacts (§3) | `bash evals/dispatch/coverage.sh` | exit 0 | P0 | PASS — ALL CHECKS PASSED |
 | R4 | The Rust leaf accepts and rejects the pinned prose shapes (§3) | `bash evals/dispatch/run.sh` | exit 0 | P0 | PASS — 43 passed, 0 failed |
 | R5 | Cadence and enforcement claims match the machine (§4, §5) | `bun test src/render.test.ts src/install_packs.test.ts` | exit 0 | P0 | PASS — 13 pass, 0 fail |
+| R7 | Each gate carries its cadence and a fresh install can commit itself (§6, §7) | `bun test src/criteria.test.ts src/gates.test.ts src/gates_spec.test.ts` | exit 0 | P0 | PASS — 32 pass, 0 fail |
 | R6 | Diff stays inside Files Changed | `git diff --name-only origin/main` | 0 paths missing from the Files Changed table | P0 | PASS — every changed path maps to a declared row |
-| S1 | Conform gates green | `make audit` | exit 0 | P0 | PASS — all checks passed |
-| S2 | Unit tests pass | `bun test src` | exit 0 | P0 | PASS — 160 pass, 0 fail; baseline delta +12 |
+| S1 | Conform gates green | `make conform` | exit 0 | P0 | PASS — all checks passed |
+| S6 | The full invariance chain green | `make audit` | exit 0 | P0 | PASS — all checks passed |
+| S2 | Unit tests pass | `bun test src` | exit 0 | P0 | PASS — 161 pass, 0 fail; baseline delta +13 |
 | S3 | No secrets | `gitleaks detect` | exit 0 | P0 | PASS — no leaks found, 576 commits scanned |
 | S4 | No newly added oversize source file | `git diff --diff-filter=A --name-only origin/main \| grep -v '\.md$' \| xargs wc -l 2>/dev/null \| awk '$1>350 && $2!="total"'` | no output | P0 | PASS — no output |
 | S5 | Orphan sweep | `git diff --diff-filter=D --name-only origin/main` | no output | P0 | PASS — no deleted path |

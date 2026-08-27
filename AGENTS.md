@@ -83,8 +83,8 @@ Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_A
 - **Symlinked edits land in the repository that owns the file.** A file whose `readlink` resolves outside this checkout — into a dotfiles or config repository — is an edit to *that* repository, not this one. Detect via `readlink` BEFORE editing. After: `cd` to the resolved repository, `git add <files> && git commit && git push` on its default branch. Never leave uncommitted.
 - **Docs-repo edits on own branch.** `~/Projects/docs/` is shared across milestones: check `git status` first; from `main` (checkout or worktree off `main`) commit on `chore/m{N}-{slug}-changelog`; recovery = stash, re-apply on a fresh branch.
 - Other dotfiles (`.zshrc`/`.gitconfig`/etc.): timestamped backup; minimal edits.
-- **Check a sibling repository for an existing pattern in the same language before inventing one.** A shape already shipping next door is prior art; a new one is a decision that needs a reason.
-- **Read the reference implementation before designing.** Where the dispatch page for the language names a canonical external source, that read is mandatory in review and the guideline identifiers it defines are cited — applied or consciously diverged from. "Broken for us" means the delta was missed: diff our call site against theirs (version, config, wiring) before blaming the principle.
+- **Check a sibling repository for an existing pattern in the same language before inventing one.** A shape shipping next door is prior art; a new one needs a reason.
+- **Read the reference implementation before designing.** Where the language's dispatch page names a canonical external source, that read is mandatory in review and its guideline identifiers are cited — applied or diverged from. "Broken for us" means the delta was missed: diff our call site against theirs before blaming the principle.
 - Before commit/push: `gitleaks` must pass.
 - No new `make` targets without a distinct caller (CI job, spec-mandated gate, or a workflow existing targets can't express) — check `make/*.mk` first; extend over near-duplicate wrappers.
 - `*.zig` → read `dispatch/write_zig.md`; ZIG GATE fires.
@@ -180,7 +180,9 @@ Non-trivial (full lifecycle) if it: touches >1 file · new abstraction · data m
 
 **With spec:** `CHORE(open) → PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT → CHORE(close)`. **Without spec** (bug fix/config/refactor): `PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT`. CHORE bookends iff work creates/continues a spec under `docs/v*/{active,pending}/`. Stage runbooks (checklists, recipes, formats): `dispatch/lifecycle.md`.
 
-**Anchor invariant — `orly gate` proves the boundary.** No PR opens unless every `orly gate pr` criterion is green or carries an `Orly-Override` trailer the user recorded with a reason. `orly gate pr` is the command CHORE(close) runs: it carries the whole-branch criteria and the slow suites. A bare `orly gate` chains `work → verify → pr` and pays the fast tier twice on the way to the same verdict — reach for it when a branch is mid-stream and the earlier boundaries are in doubt, not at the close. Both stop at the first red group and only read; green unlocks CHORE(close) but never performs it. No spec → spec criteria skip, quality gates still run. Slow suites (`verify.integration`, `verify.memory`) run only when the branch carries code. A user-surface change without a docs change is red until docs land or an override says why not.
+**Anchor invariant — `orly gate` proves the boundary.** No PR opens unless every `orly gate pr` criterion is green or carries an `Orly-Override` trailer the user recorded with a reason.
+
+**One gate per cadence, each tier run once.** `work` = the declared `conform` command, no git state (a commit hook's tree is dirty by construction). `verify` = spec dimensions, docs language, the fast `verify.*` set. `pr` = branch shape, clean tree, pushed branch, every spec criterion, the slow suites. `orly gate pr` is the command CHORE(close) runs; `git.pushed` proves HEAD is exactly what the pre-push `orly gate verify` already graded. A bare `orly gate` chains all three, for a branch whose earlier gates never ran. Stage map: `dispatch/lifecycle.md`. Both stop at the first red group and only read; green unlocks CHORE(close) but never performs it. No spec → spec criteria skip, quality gates still run. Slow suites (`verify.integration`, `verify.memory`) run only when the branch carries code. A user-surface change without a docs change is red until docs land or an override says why not.
 
 **LAND (after merge, or when the user confirms it merged):** pull the default branch, prune the merged worktree + branch, `make down` where defined.
 
@@ -203,7 +205,7 @@ Edit only approved scope; no opportunistic refactors. Stay in active worktree. C
 
 ### CONFORM
 
-Runs after EXECUTE, before VERIFY. Invokes the `conform` commands the repository declares in `.oracle/orly.json` and aggregates every gate verdict. Any 🔴 returns to EXECUTE; the lifecycle does not advance.
+Runs after EXECUTE, before VERIFY. Invokes the `conform` commands the repository declares in `.oracle/orly.json` and aggregates every gate verdict. Any 🔴 returns to EXECUTE; the lifecycle does not advance. This is the `work` gate's tier and the pre-commit hook runs it at every commit: declare a `conform` costing seconds, not minutes.
 In `agentsfleet` this stage is `make harness-verify`; its output block and end-of-turn audit detail live in `docs/HARNESS_VERIFY_OUTPUT.md`. Required rows: FILE SHAPE, PUB GATE, LENGTH GATE, MILESTONE-ID GATE, ZIG GATE, UI GATE, DESIGN TOKEN GATE, UFS GATE, SCHEMA GUARD, GREPTILE GATE, Architecture consult, Coverage, and `/orly-write-unit-test`.
 
 ### VERIFY
@@ -235,7 +237,7 @@ Required when spec involved — after last COMMIT, before PR. Also runs when par
 
 | # | When | Skill |
 |---|---|---|
-| 1 | VERIFY | `/orly-write-unit-test` once per Section over that Section's diff, and again at the boundary over the whole branch — never skipped, never deferred. Then `/orly-write-integration-test` at the boundary **when the diff crosses a module boundary with real input/output** (handler, repository, service, transport); otherwise record `N/A — <reason>` in Session Notes. |
+| 1 | VERIFY | `/orly-write-unit-test` once per Section over that Section's diff, and again at the boundary — never skipped, never deferred. Then `/orly-write-integration-test` at the boundary **when the diff crosses a module boundary with real input/output**; otherwise record `N/A — <reason>` in Session Notes. |
 | 2 | REVIEW | gstack `/review` — every runtime, same route; address findings or record a user-acked deferral; reviewer unavailable → Session Notes: *"skipped — <reason> <ts>; rerun before merge"* |
 | 3 | After every push | `orly-babysit-prs` — CI check runs + greptile inline threads + PR-level summary; stops on two consecutive empty polls with CI green; never `gh pr checks --watch` for greptile |
 
@@ -373,5 +375,5 @@ Optimise for one thing: he never has to ask twice.
 
 | Responsibility | Commands |
 |---|---|
-| `conform` | `make audit` |
+| `conform` | `make conform` |
 | `verify.unit` | `bun test src` |

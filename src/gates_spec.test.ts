@@ -18,7 +18,7 @@ describe("spec discovery", () => {
 
     const verify = runGate(model, project, "verify");
     expect(verify.results.find((result) => result.name === "spec.dimensions")?.detail).toContain("no active spec");
-    expect(verify.results.find((result) => result.name === "cmd.conform")?.ok).toBeTrue();
+    expect(runGate(model, project, "work").results.find((result) => result.name === "cmd.conform")?.ok).toBeTrue();
   });
 
   test("cache-kit style docs/v0.9.2/ layout is discovered", () => {

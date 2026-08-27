@@ -36,6 +36,12 @@ const DOCS_LANGUAGE = "docs.language";
 // line is a summary, not a linter dump.
 const NAMED_FINDINGS = 3;
 
+// CONFORM is its own lifecycle stage — EXECUTE → CONFORM → VERIFY — and it is
+// its own tier here for the same reason. Lumped into verify, the deterministic
+// rule audit could only run beside the lint and unit suites, so a repository
+// paid minutes to learn something its seconds-long conform command already
+// knew, and `orly gate` ran it twice on the way to `pr`.
+const CONFORM_TIER = "conform";
 const FAST_TIER = "fast";
 const SLOW_TIER = "slow";
 // The slow tier is a fixed name set, not a prefix rule: lint and version
@@ -45,14 +51,31 @@ const SLOW_COMMANDS = ["verify.integration", "verify.memory"];
 // Every criterion is mechanical: it reads an exit code or a file, never a
 // judgment. The anchor invariant promises the machine can PROVE the PR
 // boundary, so anything unprovable stays prose and never lands here.
-// work = is this branch workable · verify = does the work hold up ·
-// pr = can this ship (whole-branch checks + the slow suites).
+//
+// One gate per cadence, and each question asked at the only moment it can be
+// answered honestly:
+//
+//   work   — does this commit conform? Config plus the declared `conform`
+//            command. Nothing about branch or tree: inside a commit hook the
+//            tree is dirty BY CONSTRUCTION (that is what is being committed),
+//            and the operating model itself says a new spec is committed on the
+//            default branch. Judging either here made the generated pre-commit
+//            hook refuse every commit — including the one installing orly —
+//            with `--no-verify`, which Hard Safety forbids, as the only way out.
+//   verify — does the work hold up? Spec dimensions, documentation language,
+//            and the fast `verify.*` set. Runs before the work leaves the
+//            machine, not after every edit.
+//   pr     — can this ship? The whole-branch facts (branch shape, clean tree,
+//            pushed) plus every spec criterion and the slow suites. A tree is
+//            only required clean where a reviewer is about to read it, and a
+//            branch is only wrong for being `main` where a PR would open from
+//            it.
 export function criteriaFor(gate: string, context: CriterionContext): Criterion[] {
-  if (gate === "work") return [gitBranch(), gitTree(), repositoryConfig()];
+  if (gate === "work") return [repositoryConfig(), ...commandCriteria(context, CONFORM_TIER)];
   if (gate === "verify") return [specDimensions(), docsLanguage(), ...commandCriteria(context, FAST_TIER)];
   if (gate === "pr") {
     return [
-      gitTree(), gitPushed(), specGate(), openQuestions(), productClarity(), specDimensions(),
+      gitBranch(), gitTree(), gitPushed(), specGate(), openQuestions(), productClarity(), specDimensions(),
       specMoved(), specBaseline(), specOrdering(), specDeferrals(),
       docsUpdated(), ...commandCriteria(context, SLOW_TIER),
     ];
@@ -107,10 +130,11 @@ function repositoryConfig(): Criterion {
 }
 
 // Model C: the repository's declared command surface. Orly owns policy and
-// invokes these; the repository owns what they actually do. Fast tier =
-// conform + verify.unit. Slow tier = every other verify.* (integration,
-// memleak); those auto-pass with a printed skip when the branch carries no
-// code, so a prose-only branch never pays for the slow suites.
+// invokes these; the repository owns what they actually do. Conform tier = the
+// `conform` command alone. Fast tier = every verify.* that is not slow. Slow
+// tier = verify.integration and verify.memory; those auto-pass with a printed
+// skip when the branch carries no code, so a prose-only branch never pays for
+// the slow suites.
 function commandCriteria(context: CriterionContext, tier: string): Criterion[] {
   const config = resolvedConfig(context);
   if (!config) return tier === FAST_TIER ? [criterion(REPO_CONFIG, () => ({ ok: false, detail: UNINSTALLED }))] : [];
@@ -125,8 +149,9 @@ function commandCriteria(context: CriterionContext, tier: string): Criterion[] {
 }
 
 function tierOf(key: string): string {
+  if (key === CONFORM_COMMAND) return CONFORM_TIER;
   if (SLOW_COMMANDS.includes(key)) return SLOW_TIER;
-  if (key === CONFORM_COMMAND || key.startsWith(VERIFY_PREFIX)) return FAST_TIER;
+  if (key.startsWith(VERIFY_PREFIX)) return FAST_TIER;
   return "";
 }
 

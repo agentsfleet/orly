@@ -15,7 +15,7 @@ const KERNEL_PACKS = ["universal.authoring", "language.zig", "language.rust", "d
 // This repository's own selection, as `.oracle/orly.json` declares it — the
 // root render must stay current against exactly what `orly update` writes.
 const DOTFILES_PACKS = ["universal.authoring", "language.zig", "language.typescript", "language.javascript", "language.rust", "language.go", "language.python", "language.shell", "language.mdx", "domain.sql", "domain.http", "domain.auth", "domain.documentation", "domain.changelog", "workflow.specifications", "workflow.governance", "product.agentsfleet", "persona.indy", "workflow.skills"];
-const DOTFILES_COMMANDS = { conform: [["make", "audit"]], "verify.unit": [["bun", "test", "src"]] };
+const DOTFILES_COMMANDS = { conform: [["make", "conform"]], "verify.unit": [["bun", "test", "src"]] };
 
 describe("Renderer", () => {
   test("renders byte-stable text for a pack set", async () => {
@@ -77,7 +77,10 @@ describe("the rendered rules match the machine", () => {
     const text = await new Renderer(await RulesModel.load(ROOT)).renderText(DOTFILES_PACKS, DOTFILES_COMMANDS);
 
     expect(text).toContain("`orly gate pr` is the command CHORE(close) runs");
-    expect(text).toContain("pays the fast tier twice");
+    // Sound without re-running the fast tier, and the reason is stated where
+    // the claim is: git.pushed pins HEAD to what pre-push already graded.
+    expect(text).toContain("`git.pushed` proves HEAD is exactly what the pre-push");
+    expect(text).toContain("One gate per cadence, each tier run once");
   });
 
   test("the integration skill is conditional on a real input/output boundary", async () => {

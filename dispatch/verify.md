@@ -34,9 +34,14 @@ cross-language gates. The declared `make` targets are the canonical gates.
 ## Two cadences, one boundary
 
 "Always" is not a cadence. A Section closing and a milestone closing are
-different claims, and running the whole declared set at both — then again in a
-hook, then again inside a bare `orly gate` — spends the wall-clock of the
-comprehensive tier to answer a question the scoped lane already answered.
+different claims, and running the whole declared set at both spends the
+wall-clock of the comprehensive tier to answer a question the scoped lane
+already answered.
+
+The gates match those cadences: `orly gate work` runs the declared `conform`
+alone (every commit, seconds), `orly gate verify` runs the fast `verify.*` set
+(every push), and `orly gate pr` runs the whole-branch criteria and the slow
+suites (the close). Each tier runs once per cadence.
 
 **Section lane (per Section, and per done-claim inside one).** `make
 harness-verify` — the declared `conform`, seconds — plus the lane that covers
@@ -50,10 +55,10 @@ VERIFY row on its own.
 `verify.memory`). This is the repository claim, and it is what the done-message
 below reports.
 
-Run `orly gate pr` at the close, not a bare `orly gate`. The bare form chains
-`work → verify → pr` and re-runs the fast tier on the way through; the `pr` gate
-alone adds the whole-branch criteria and the slow suites, which is the boundary
-CHORE(close) actually needs proven.
+Run `orly gate pr` at the close. It does not re-run the fast tier, and it does
+not need to: its own `git.pushed` criterion proves HEAD is exactly the commit
+the pre-push `orly gate verify` already graded. A bare `orly gate` chains all
+three gates — use it on a branch whose earlier gates never ran.
 
 | Target | When |
 |---|---|
