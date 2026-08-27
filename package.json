@@ -1,6 +1,6 @@
 {
   "name": "@agentsfleet/orly",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Repository-scoped engineering harness: renders agent rules, materialises the gates that enforce them, and proves the PR boundary \u2014 for any coding agent.",
   "license": "MIT",
   "type": "module",

@@ -81,6 +81,9 @@ your-repo/
 ├── AGENTS.md ─────────────── yours. untouched, except one delimited pointer block
 ├── AGENTS.orly.md ────────── the generated rules: safety, dispatch router, lifecycle
 │
+├── CLAUDE.md ─────────────── one import line; the only file Claude Code loads itself
+├── opencode.json ─────────── names both rule files; opencode loads nothing by default
+│
 ├── dispatch/*.md ─────────── one rule page per kind of work
 ├── audits/*.sh ───────────── the deterministic gates
 ├── docs/*.md ─────────────── the standards those rules cite
@@ -191,8 +194,12 @@ Each edit activates the rule page for that file kind. A gate proves whether the 
 |---|---|---|
 | `AGENTS.md` | **you** | untouched, except one delimited pointer block |
 | `AGENTS.orly.md` | orly | rewritten |
+| `CLAUDE.md` | **you** | written only when missing; never edited after |
+| `opencode.json` | **you** | gains the two rule files in `instructions`; nothing else touched |
 
-Every agent runtime auto-loads `AGENTS.md`, so it stays yours. orly writes its rules beside it and adds a pointer so they get read.
+`AGENTS.md` stays yours — orly writes its rules beside it and points at them from one delimited block.
+
+The last two files exist because installing a rules file is not the same as delivering it, and no runtime loads `AGENTS.orly.md` on its own. Codex and Amp auto-load `AGENTS.md`, which carries the pointer block onward. Claude Code loads `CLAUDE.md` and nothing else. opencode loads only what its `instructions` name. So orly writes the one import line each of those needs, and leaves any file you already wrote alone — a `CLAUDE.md` of your own, symlink included, is your answer to the question and orly does not touch it.
 
 > [!WARNING]
 > orly refuses to replace a hook or rule page it did not write. `--force` and `--no-hooks` are the ways through. A refused run changes nothing.

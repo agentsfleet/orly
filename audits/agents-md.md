@@ -335,6 +335,8 @@ siblings.
 | 26.5 | Does the `agentsfleet` profile map CONFORM to `make harness-verify` while VERIFY remains behavior proof? | YES |
 | 26.6 | Does `README.md` document initialization, explicit synchronization, status, and doctor commands for new repositories? | YES |
 | 26.7 | Does `orly gate pr` discover a spec closed to `done/` on the branch (its `Branch:` header names the branch) and run the spec criteria — including `spec.moved`, `spec.baseline`, `spec.ordering`, and `spec.deferrals` — instead of skip-passing as spec-less? | YES |
+| 26.8 | Does the install write one loader per runtime that has a deterministic way into context — a bare, unbackticked `@AGENTS.orly.md` import line inside the pointer block, a `CLAUDE.md` carrying `@AGENTS.md` where the repository has none, and both rule files in `opencode.json`'s `instructions` — so delivery never depends on an agent noticing a markdown link? | YES |
+| 26.9 | Are those loaders the repository's files rather than orly's — absent from `managed`, `CLAUDE.md` written only when missing (a symlink at the host counted as delivery, any other symlink left alone), `opencode.json` edited only by appending a missing `instructions` entry, and an unparseable one left byte for byte? | YES |
 
 ### Scenario 27 — Rule-path residence & reachability
 
