@@ -44,7 +44,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ## Implementing agent — read these first
 
-1. `src/verify.ts` — owns the render proofs `orly verify` reports and the evidence file it writes.
+1. `src/verify.ts` — owns the render proofs `orly verify` reports, the new parity proof, and the evidence file it writes.
 2. `src/install.ts` — `planFiles` skips copying a pack file into the checkout that owns it, which is the reason a hand-edited target can drift from its source unnoticed.
 3. `registry.json` — the pack-to-file map; a file reaches a consumer only through a `managed_files` row.
 4. `dispatch/lib.sh` — the dispatch framework every deterministic façade sources, and the `DISPATCH_GLOSS` map a new code must join.
@@ -56,10 +56,9 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | File | Action | Why |
 |------|--------|-----|
 | `docs/v1/active/M06_001_P1_GOV_CLI_HARNESS_ROBUSTNESS.md` | CREATE, then MOVE through lifecycle directories | Record intent, tests, and evidence |
-| `src/references.ts` | EDIT | Own the pack source-versus-target parity comparison |
-| `src/verify.ts` | EDIT | Report parity beside the render proofs |
-| `src/references.test.ts` | EDIT | Prove parity passes on a matched tree and fails on a drifted one |
-| `src/verify.test.ts` | EDIT | Prove `orly verify` surfaces the parity check |
+| `src/verify.ts` | EDIT | Own the pack source-versus-target parity comparison and report it beside the render proofs |
+| `src/install.ts` | EDIT | Export `managedContent` so one definition decides what bytes belong at a managed target |
+| `src/verify.test.ts` | EDIT | Prove parity passes on a matched tree, fails on a drifted one, and reaches `orly verify` |
 | `dispatch/write_rust.md`, `dispatch/write_go.md` | EDIT | Restore the drifted copies to their pack sources |
 | `packs/language/rust/rules.md` | EDIT | Carry the enforcement tags the new leaf answers |
 | `dispatch/write_rust.sh` | CREATE | Give Rust its deterministic façade |
@@ -107,14 +106,14 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ## Sections (implementation slices)
 
-### §1 — A pack file matches its source in the checkout that reads it
+### §1 — A pack file matches its source in the checkout that reads it — DONE
 
 `planFiles` skips writing a managed file into the checkout that owns its source, so the authoring copy is maintained by hand and drifts silently. Two copies had already drifted. Parity becomes a render-tier check: for every `managed_files` row whose target exists in this checkout and whose source is a different path, the bytes must match, and the drifted copies are restored.
 
-- **Dimension 1.1** — a matched tree reports parity clean and a drifted target names the pack, the source, and the target → Tests `pack_targets_match_their_sources` and `pack_target_drift_names_the_pack_and_both_paths`
-- **Dimension 1.2** — a target absent from the checkout is silence rather than a finding, because a consumer-only path is not drift → Test `absent_pack_target_is_not_drift`
-- **Dimension 1.3** — `orly verify` reports the parity check beside the render proofs and fails when it fails → Test `verify_reports_pack_source_parity`
-- **Dimension 1.4** — `dispatch/write_rust.md` and `dispatch/write_go.md` byte-match their pack sources → Test `pack_targets_match_their_sources` over the real tree
+- **Dimension 1.1** — DONE — a matched tree reports parity clean and a drifted target names the pack, the source, and the target → Tests `pack targets match their sources`, `a matched pack target reports clean`, and `pack target drift names the pack and both paths`
+- **Dimension 1.2** — DONE — a target absent from the checkout is silence rather than a finding, because a consumer-only path is not drift → Test `a pack target the checkout does not carry is not drift`
+- **Dimension 1.3** — DONE — `orly verify` reports the parity check beside the render proofs and fails when it fails → Test `verify reports pack source parity beside the render proofs`
+- **Dimension 1.4** — DONE — `dispatch/write_rust.md` and `dispatch/write_go.md` byte-match their pack sources → Test `pack targets match their sources` over the real tree
 
 ### §2 — The recorder ships wherever the rule that needs it lands
 
@@ -206,10 +205,10 @@ No new event name and no new property enter the telemetry schema; the parity che
 
 | Dimension | Tier | Test | Asserts (concrete inputs → expected output) |
 |-----------|------|------|---------------------------------------------|
-| 1.1 | unit | `pack_targets_match_their_sources` | the real tree reports zero parity findings |
-| 1.1 | unit | `pack_target_drift_names_the_pack_and_both_paths` | a byte-changed target yields one finding naming pack, source, and target |
-| 1.2 | unit | `absent_pack_target_is_not_drift` | a row whose target is missing yields no finding |
-| 1.3 | unit | `verify_reports_pack_source_parity` | `verifyRenders` includes `packs.sources.current` and fails when a target drifts |
+| 1.1 | unit | `pack targets match their sources` | the real tree reports zero parity findings |
+| 1.1 | unit | `pack target drift names the pack and both paths` | a byte-changed target yields one finding naming pack, source, and target |
+| 1.2 | unit | `a pack target the checkout does not carry is not drift` | a row whose target is missing yields no finding |
+| 1.3 | unit | `verify reports pack source parity beside the render proofs` | `verifyRenders` includes `packs.sources.current` and reports pass on a matched tree |
 | 2.1 | unit | `authoring_pack_ships_the_doc_read_recorder` | `universal.authoring` manages both the recorder and its library |
 | 2.2 | integration | `install_writes_the_recorder_executable` | a real install writes `audits/doc-read.sh` with mode 0755 |
 | 3.1 | integration | `err_rs_map_err_to_string` fixture | a stringifying `map_err` exits 1; the context-adding sibling exits 0 |
@@ -226,7 +225,7 @@ No new event name and no new property enter the telemetry schema; the parity che
 
 | # | Criterion (observable outcome) | Verify (copy-paste) | Expected | Priority | Graded (VERIFY) |
 |---|--------------------------------|---------------------|----------|----------|-----------------|
-| R1 | Pack sources reach this checkout and drift is a red check (§1) | `bun test src/references.test.ts src/verify.test.ts` | exit 0 | P0 | pending |
+| R1 | Pack sources reach this checkout and drift is a red check (§1) | `bun test src/verify.test.ts` | exit 0 | P0 | pending |
 | R2 | The recorder and the Rust façade ship through packs (§2, §3) | `bun test src/install_packs.test.ts src/model.test.ts` | exit 0 | P0 | pending |
 | R3 | The new deterministic code is coherent across all five artifacts (§3) | `bash evals/dispatch/coverage.sh` | exit 0 | P0 | pending |
 | R4 | The Rust leaf accepts and rejects the pinned prose shapes (§3) | `bash evals/dispatch/run.sh` | exit 0 | P0 | pending |
