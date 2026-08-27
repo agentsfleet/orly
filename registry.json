@@ -127,6 +127,14 @@
       ],
       "managed_files": [
         {
+          "source": "dispatch/write_rust.sh",
+          "target": "dispatch/write_rust.sh"
+        },
+        {
+          "source": "audits/rust-error.sh",
+          "target": "audits/rust-error.sh"
+        },
+        {
           "source": "packs/language/rust/rules.md",
           "target": "dispatch/write_rust.md"
         }

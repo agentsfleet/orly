@@ -71,8 +71,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | `dispatch/verify.md`, `docs/VERIFY_TIERS.md` | EDIT | Replace the retired-lane claim and state the two cadences |
 | `SOUL.md` | EDIT | Stop claiming a reporting-only criterion enforces the banned-word list |
 | `skills/orly-*/SKILL.md` | EDIT | Fit four descriptions inside a fixed host skills budget |
-| `audits/data.sh`, `audits/agents-md.md` | EDIT | Register the new façade and question the new rule |
-| `docs/RULE_ENFORCEMENT.md` | EDIT | Regenerate the ledger scoreboard against the new tags |
+| `audits/agents-md.md`, `docs/EXECUTE_DOC_READS.md` | EDIT | Question the new rule and route the edit that triggers it |
 | `AGENTS.md` | EDIT | Re-render this repository's own rules from the edited sources |
 | `package.json` | EDIT | Release the completed work as Orly 0.8.0 |
 
@@ -123,14 +122,14 @@ The operating model tells every agent to record a triggered read with `bash audi
 - **Dimension 2.1** — DONE — `universal.authoring` manages `audits/doc-read.sh` and `audits/rule-ledger-lib.sh` → Test `installs with the authoring pack and runs where it lands`
 - **Dimension 2.2** — DONE — the shipped pair runs in the repository it lands in: `log` records and `check` reports, so an incomplete shipment fails at run time rather than passing as a copied file → Test `installs with the authoring pack and runs where it lands`
 
-### §3 — Rust error discipline fails a machine
+### §3 — Rust error discipline fails a machine — DONE
 
 RULE ERR-RS is written, cited by the doc-read map, and enforced by nobody: Rust carries no deterministic façade at all. `dispatch/write_rust.sh` runs `audits/rust-error.sh`, which decides the two halves of the rule that need no judgment — a `map_err` that stringifies its cause into an error type, and a crate declaring an error type with no `Result` alias beside it. Everything the rule leaves to taste stays a judgment row.
 
-- **Dimension 3.1** — a `map_err` closure converting its cause through `to_string()` or `format!` fails, and one adding context without stringifying passes → Fixtures `err_rs_map_err_to_string.rs` and `err_rs_ok.rs`
-- **Dimension 3.2** — a crate declaring `pub enum Error` or `pub struct Error` with no `pub type Result<` beside it fails → Fixture `err_rs_no_result_alias.rs`
-- **Dimension 3.3** — test modules, `tests/`, `benches/`, `examples/`, and `build.rs` are carved out, matching the logging leaf's Rust scope → Fixture `err_rs_test_ok.rs`
-- **Dimension 3.4** — the new code carries a tag in the façade prose, a row in the `.sh`, a gloss in both mirrors, and a pass+fail fixture pair → `evals/dispatch/coverage.sh` green
+- **Dimension 3.1** — DONE — a `map_err` closure converting its cause through `to_string()` or `format!` fails, and one adding context without stringifying passes → Fixtures `err_rs_map_err_to_string.rs` and `err_rs_ok.rs`
+- **Dimension 3.2** — DONE — a crate declaring `pub enum Error` or `pub struct Error` with no `pub type Result<` beside it fails → Fixture `err_rs_no_result_alias.rs`
+- **Dimension 3.3** — DONE — test modules, `tests/`, `benches/`, `examples/`, and `build.rs` are carved out, matching the logging leaf's Rust scope → Fixtures `err_rs_test_ok.rs` and the same violation replayed at a `tests/` path
+- **Dimension 3.4** — DONE — the new code carries a tag in the façade prose, a row in the `.sh`, a gloss in both mirrors, and a pass+fail fixture pair → `evals/dispatch/coverage.sh` green
 
 ### §4 — One stage, one boundary run
 
