@@ -16,7 +16,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** M06
 **Workstream:** 001
 **Date:** Aug 27, 2026
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P1 — rules that never reach a runtime are enforcement the corpus only claims to have
 **Categories:** GOV, CLI, DOCS
 **Batch:** B1 — one delivery path from pack source to the runtime that reads it
@@ -55,7 +55,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 | File | Action | Why |
 |------|--------|-----|
-| `docs/v1/active/M06_001_P1_GOV_CLI_HARNESS_ROBUSTNESS.md` | CREATE, then MOVE through lifecycle directories | Record intent, tests, and evidence |
+| `docs/v1/done/M06_001_P1_GOV_CLI_HARNESS_ROBUSTNESS.md` | CREATE, then MOVE through lifecycle directories | Record intent, tests, and evidence |
 | `src/verify.ts` | EDIT | Own the pack source-versus-target parity comparison and report it beside the render proofs |
 | `src/install.ts` | EDIT | Export `managedContent` so one definition decides what bytes belong at a managed target |
 | `src/verify.test.ts` | EDIT | Prove parity passes on a matched tree, fails on a drifted one, and reaches `orly verify` |
@@ -75,7 +75,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | `skills/orly-*/SKILL.md` | EDIT | Fit four descriptions inside a fixed host skills budget |
 | `audits/agents-md.md`, `docs/EXECUTE_DOC_READS.md` | EDIT | Question the new rule and route the edit that triggers it |
 | `AGENTS.md` | EDIT | Re-render this repository's own rules from the edited sources |
-| `package.json` | EDIT | Release the completed work as Orly 0.8.0 |
+| `package.json`, `.oracle/orly.json` | EDIT | Release the completed work as Orly 0.8.0 and keep the installed-rules version synchronized |
 
 ## Applicable Rules
 
@@ -228,17 +228,17 @@ No new event name and no new property enter the telemetry schema; the parity che
 
 | # | Criterion (observable outcome) | Verify (copy-paste) | Expected | Priority | Graded (VERIFY) |
 |---|--------------------------------|---------------------|----------|----------|-----------------|
-| R1 | Pack sources reach this checkout and drift is a red check (§1) | `bun test src/verify.test.ts` | exit 0 | P0 | pending |
-| R2 | The recorder and the Rust façade ship through packs (§2, §3) | `bun test src/install_packs.test.ts` | exit 0 | P0 | pending |
-| R3 | The new deterministic code is coherent across all five artifacts (§3) | `bash evals/dispatch/coverage.sh` | exit 0 | P0 | pending |
-| R4 | The Rust leaf accepts and rejects the pinned prose shapes (§3) | `bash evals/dispatch/run.sh` | exit 0 | P0 | pending |
-| R5 | Cadence and enforcement claims match the machine (§4, §5) | `bun test src/render.test.ts src/install_packs.test.ts` | exit 0 | P0 | pending |
-| R6 | Diff stays inside Files Changed | `git diff --name-only origin/main` | 0 paths missing from the Files Changed table | P0 | pending |
-| S1 | Conform gates green | `make audit` | exit 0 | P0 | pending |
-| S2 | Unit tests pass | `bun test src` | exit 0 | P0 | pending |
-| S3 | No secrets | `gitleaks detect` | exit 0 | P0 | pending |
-| S4 | No newly added oversize source file | `git diff --diff-filter=A --name-only origin/main \| grep -v '\.md$' \| xargs wc -l 2>/dev/null \| awk '$1>350 && $2!="total"'` | no output | P0 | pending |
-| S5 | Orphan sweep | `git diff --diff-filter=D --name-only origin/main` | no output | P0 | pending |
+| R1 | Pack sources reach this checkout and drift is a red check (§1) | `bun test src/verify.test.ts` | exit 0 | P0 | PASS — 6 pass, 0 fail |
+| R2 | The recorder and the Rust façade ship through packs (§2, §3) | `bun test src/install_packs.test.ts` | exit 0 | P0 | PASS — 3 pass, 0 fail |
+| R3 | The new deterministic code is coherent across all five artifacts (§3) | `bash evals/dispatch/coverage.sh` | exit 0 | P0 | PASS — ALL CHECKS PASSED |
+| R4 | The Rust leaf accepts and rejects the pinned prose shapes (§3) | `bash evals/dispatch/run.sh` | exit 0 | P0 | PASS — 43 passed, 0 failed |
+| R5 | Cadence and enforcement claims match the machine (§4, §5) | `bun test src/render.test.ts src/install_packs.test.ts` | exit 0 | P0 | PASS — 13 pass, 0 fail |
+| R6 | Diff stays inside Files Changed | `git diff --name-only origin/main` | 0 paths missing from the Files Changed table | P0 | PASS — every changed path maps to a declared row |
+| S1 | Conform gates green | `make audit` | exit 0 | P0 | PASS — all checks passed |
+| S2 | Unit tests pass | `bun test src` | exit 0 | P0 | PASS — 160 pass, 0 fail; baseline delta +12 |
+| S3 | No secrets | `gitleaks detect` | exit 0 | P0 | PASS — no leaks found, 576 commits scanned |
+| S4 | No newly added oversize source file | `git diff --diff-filter=A --name-only origin/main \| grep -v '\.md$' \| xargs wc -l 2>/dev/null \| awk '$1>350 && $2!="total"'` | no output | P0 | PASS — no output |
+| S5 | Orphan sweep | `git diff --diff-filter=D --name-only origin/main` | no output | P0 | PASS — no deleted path |
 
 **Command source rule:** `make audit` and `bun test src` are copied verbatim from `.oracle/orly.json`; VERIFY grades only their actual output.
 
