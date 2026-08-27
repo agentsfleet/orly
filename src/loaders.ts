@@ -34,9 +34,14 @@ const JSON_INDENT = 2;
 
 export type Layout = { orlyFile: string; pointerHost?: string };
 export type LoaderResult = { written: string[]; skipped: string[] };
-// written — orly created or refreshed it. current — already exactly right.
-// theirs — the repository answered this question itself; leave it alone.
-type Verdict = "written" | "current" | "theirs";
+
+// What one loader destination came to. WRITTEN — orly created or refreshed it.
+// CURRENT — already exactly right, by orly's hand or by someone else's wiring.
+// THEIRS — the repository answered this question itself; leave it alone.
+const WRITTEN = "written";
+const CURRENT = "current";
+const THEIRS = "theirs";
+type Verdict = typeof WRITTEN | typeof CURRENT | typeof THEIRS;
 
 // Every destination orly aims at a file it does not own, with the kind name
 // the refusal will carry. Exported so the install can guard them in its
@@ -54,7 +59,7 @@ export function loaderTargets(layout: Layout): Array<[string, string]> {
 export async function installLoaders(targetRoot: string, layout: Layout): Promise<LoaderResult> {
   const written: string[] = [];
   const skipped: string[] = [];
-  const record = (path: string, verdict: Verdict) => (verdict === "written" ? written : skipped).push(path);
+  const record = (path: string, verdict: Verdict) => (verdict === WRITTEN ? written : skipped).push(path);
 
   // The host is what a loader imports: the repository's own file, which the
   // pointer block chains onward to orly's. Importing orly's file directly
@@ -118,19 +123,19 @@ async function upsertPointer(targetRoot: string, host: string, orlyFile: string)
   // which is the migration for anything installed before the split.
   if (!existsSync(path) || (await Bun.file(path).text()).startsWith(GENERATED_BANNER)) {
     await Bun.write(path, `${stubHost(block)}\n`);
-    return "written";
+    return WRITTEN;
   }
   const current = await Bun.file(path).text();
   const open = current.indexOf(POINTER_OPEN);
   const close = current.indexOf(POINTER_CLOSE);
   if (open >= 0 && close > open) {
     const replaced = `${current.slice(0, open)}${block}${current.slice(close + POINTER_CLOSE.length)}`;
-    if (replaced === current) return "current";
+    if (replaced === current) return CURRENT;
     await Bun.write(path, replaced);
-    return "written";
+    return WRITTEN;
   }
   await Bun.write(path, `${current.replace(/\s*$/, "")}\n\n${block}\n`);
-  return "written";
+  return WRITTEN;
 }
 
 // Claude Code auto-loads CLAUDE.md and nothing else — an AGENTS.md reaches it
@@ -152,15 +157,15 @@ async function upsertClaudeLoader(targetRoot: string, host: string): Promise<Ver
   const content = claudeLoader(host);
   if (!existsSync(path)) {
     await Bun.write(path, content);
-    return "written";
+    return WRITTEN;
   }
   const current = await Bun.file(path).text();
-  if (current === content) return "current";
+  if (current === content) return CURRENT;
   // An older loader of orly's own making is orly's to refresh; anything else
   // is the repository's file and is reported, not edited.
-  if (!current.startsWith(GENERATED_BANNER)) return "theirs";
+  if (!current.startsWith(GENERATED_BANNER)) return THEIRS;
   await Bun.write(path, content);
-  return "written";
+  return WRITTEN;
 }
 
 function claudeLoader(host: string): string {
@@ -194,9 +199,9 @@ function linkVerdict(targetRoot: string, path: string, host: string): Verdict | 
     return undefined;
   }
   try {
-    return realpathSync(path) === realpathSync(join(targetRoot, host)) ? "current" : "theirs";
+    return realpathSync(path) === realpathSync(join(targetRoot, host)) ? CURRENT : THEIRS;
   } catch {
-    return "theirs";
+    return THEIRS;
   }
 }
 
@@ -214,20 +219,20 @@ async function upsertOpencodeLoader(targetRoot: string, entries: string[]): Prom
   const path = join(targetRoot, OPENCODE_FILENAME);
   if (!existsSync(path)) {
     await Bun.write(path, serialise({ $schema: OPENCODE_SCHEMA, [INSTRUCTIONS_KEY]: entries }));
-    return "written";
+    return WRITTEN;
   }
   let config: unknown;
   try {
     config = JSON.parse(await Bun.file(path).text());
   } catch {
-    return "theirs";
+    return THEIRS;
   }
-  if (!isObject(config)) return "theirs";
+  if (!isObject(config)) return THEIRS;
   const listed = Array.isArray(config[INSTRUCTIONS_KEY]) ? config[INSTRUCTIONS_KEY].map(String) : [];
   const missing = entries.filter((entry) => !listed.includes(entry));
-  if (missing.length === 0) return "current";
+  if (missing.length === 0) return CURRENT;
   await Bun.write(path, serialise({ ...config, [INSTRUCTIONS_KEY]: [...listed, ...missing] }));
-  return "written";
+  return WRITTEN;
 }
 
 function serialise(config: object): string {
