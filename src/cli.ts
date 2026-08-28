@@ -15,6 +15,8 @@ type CliResult = { exitCode: number; gate?: string; failedCriterion?: string };
 const PASS_RESULT = "pass";
 const NOT_REQUIRED_RESULT = "not-required";
 const ACCEPT_DIRTY_FLAG = "--accept-dirty";
+const HELP_FLAG = "--help";
+const SHORT_HELP_FLAG = "-h";
 const REASON_FLAG = "--reason";
 const PIPE_OUTPUT = "pipe";
 const PACKAGE_MANIFEST = "package.json";
@@ -59,7 +61,7 @@ async function execute(engineRoot: string, args: string[]): Promise<CliResult> {
 
 async function run(model: RulesModel, args: string[]): Promise<CliResult> {
   const [command, ...rest] = args;
-  if (!command || command === "--help" || command === "-h") {
+  if (!command || command === HELP_FLAG || command === SHORT_HELP_FLAG) {
     printHelp();
     return cliResult(command ? 0 : 1);
   }
@@ -84,6 +86,10 @@ async function run(model: RulesModel, args: string[]): Promise<CliResult> {
 // Read-only: run every gate in order (stop at the first red group), or one
 // named gate. Nothing is ever written.
 function gate(model: RulesModel, args: string[]): CliResult {
+  if (args.includes(HELP_FLAG) || args.includes(SHORT_HELP_FLAG)) {
+    printHelp();
+    return cliResult(0);
+  }
   const acceptDirty = args.includes(ACCEPT_DIRTY_FLAG);
   const named = args.find((argument) => !argument.startsWith("-"));
   if (named !== undefined && !isGateName(named)) throw new OrlyError(`unknown gate: ${named} (work, verify, pr)`);
