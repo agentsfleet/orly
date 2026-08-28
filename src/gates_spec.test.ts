@@ -2,10 +2,10 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { activeSpecPath, runGate } from "./gates";
+import { activeSpecPath, closedSpecPath, runGate } from "./gates";
 import {
-  cleanupTemporaryDirectories, closedSpecRepository, git, modelFor,
-  newRepository, newSpecRepository, SPEC_RELATIVE, specFixture,
+  cleanupTemporaryDirectories, closedSpecRepository, fixtureRegistry, git, modelFor,
+  newRepository, newSpecRepository, orly, SPEC_RELATIVE, specFixture,
 } from "./gates_test_support";
 
 afterEach(cleanupTemporaryDirectories);
@@ -39,6 +39,78 @@ describe("spec discovery", () => {
 });
 
 describe("closed-spec follow-through", () => {
+  test("two owning specs naming one branch remain a hard error", async () => {
+    const project = closedSpecRepository("feat/shared");
+    mkdirSync(join(project, "docs/v2/done"), { recursive: true });
+    await Bun.write(join(project, "docs/v2/done/M100_001_P2_CLI_SECOND.md"), specFixture("DONE", "feat/shared"));
+
+    expect(() => closedSpecPath(project)).toThrow("one stream per worktree");
+  });
+
+  test("a folded spec yields ownership to the spec it names", async () => {
+    const project = closedSpecRepository("feat/shared");
+    mkdirSync(join(project, "docs/v2/done"), { recursive: true });
+    await Bun.write(
+      join(project, "docs/v2/done/M100_001_P2_CLI_FOLDED.md"),
+      specFixture("DONE", "feat/shared", ["**Folded-into:** `M99_001`"]),
+    );
+
+    expect(closedSpecPath(project)).toEndWith("M99_001_P2_CLI_FIXTURE.md");
+  });
+
+  test("a folded spec must name the exact owner on its branch", async () => {
+    const project = closedSpecRepository("feat/shared");
+    mkdirSync(join(project, "docs/v2/done"), { recursive: true });
+    await Bun.write(
+      join(project, "docs/v2/done/M100_001_P2_CLI_FOLDED.md"),
+      specFixture("DONE", "feat/shared", ["**Folded-into:** `M404_001`"]),
+    );
+
+    expect(() => closedSpecPath(project)).toThrow("must name their owner M99_001");
+  });
+
+  test("a folded spec cannot name itself", async () => {
+    const project = closedSpecRepository("feat/shared");
+    mkdirSync(join(project, "docs/v2/done"), { recursive: true });
+    await Bun.write(
+      join(project, "docs/v2/done/M100_001_P2_CLI_FOLDED.md"),
+      specFixture("DONE", "feat/shared", ["**Folded-into:** `M100_001`"]),
+    );
+
+    expect(() => closedSpecPath(project)).toThrow("cannot fold into themselves");
+  });
+
+  test("a branch name is not a prefix match", async () => {
+    const project = newRepository();
+    git(project, "checkout", "-q", "-b", "feat/foo");
+    mkdirSync(join(project, "docs/v1/done"), { recursive: true });
+    await Bun.write(join(project, "docs/v1/done/M99_001_P2_CLI_OTHER.md"), specFixture("DONE", "feat/foo-2"));
+
+    expect(closedSpecPath(project)).toBeUndefined();
+  });
+
+  test("prose mentioning a branch does not declare ownership", async () => {
+    const project = newRepository();
+    git(project, "checkout", "-q", "-b", "feat/foo");
+    mkdirSync(join(project, "docs/v1/done"), { recursive: true });
+    await Bun.write(
+      join(project, "docs/v1/done/M99_001_P2_CLI_OTHER.md"),
+      specFixture("DONE", undefined, ["**Branch:** folded into `feat/foo` rather than taken as its own tree"]),
+    );
+
+    expect(closedSpecPath(project)).toBeUndefined();
+  });
+
+  test("gate help does not discover specs", async () => {
+    const project = closedSpecRepository("feat/shared");
+    mkdirSync(join(project, "docs/v2/done"), { recursive: true });
+    await Bun.write(join(project, "docs/v2/done/M100_001_P2_CLI_SECOND.md"), specFixture("DONE", "feat/shared"));
+
+    const result = orly(project, fixtureRegistry(project), "gate", "--help");
+    expect(result.code).toBe(0);
+    expect(result.output).toContain("orly gate");
+  });
+
   test("a spec closed to done/ is discovered by its Branch: header and still gated", async () => {
     const project = closedSpecRepository("feat/closed");
     const model = await modelFor(project);

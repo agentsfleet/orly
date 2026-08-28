@@ -1,5 +1,5 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { basename, join, relative } from "node:path";
 
 import { criteriaFor, CriterionContext, CriterionResult } from "./criteria";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
@@ -14,7 +14,8 @@ const GIT = "git";
 const DOCS_DIRECTORY = "docs";
 const ACTIVE_DIRECTORY = "active";
 const DONE_DIRECTORY = "done";
-const BRANCH_HEADER = "Branch:";
+const BRANCH_HEADER = "Branch";
+const FOLDED_INTO_HEADER = "Folded-into";
 const DEFAULT_BRANCHES = ["main", "master"];
 const UTF8 = "utf8";
 // Accept every real layout: docs/v1/, docs/v2/, docs/v0.9.2/ — cache-kit
@@ -22,6 +23,8 @@ const UTF8 = "utf8";
 const PROTOTYPE_PATTERN = /^v\d+(\.\d+)*$/;
 const MARKDOWN_EXTENSION = ".md";
 const NEWLINE = "\n";
+const MARKDOWN_HEADER_TOKEN_PATTERN = /^\s*\*\*([^*]+):\*\*\s*`([^`]+)`/;
+const SPEC_IDENTIFIER_PATTERN = /^(M\d+_\d+)(?:_|\.md$)/;
 // Strict trailer shape: "Orly-Override: <criterion> (<reason>)". A trailer
 // that does not parse is not an override — the gate stays red rather than
 // guessing what a malformed waiver meant.
@@ -36,6 +39,12 @@ export type GateReport = {
 };
 
 export type Override = { criterion: string; reason: string };
+type ClosedSpec = {
+  path: string;
+  identifier: string | undefined;
+  branch: string | undefined;
+  foldedInto: string | undefined;
+};
 
 // Run one gate: evaluate its criteria fresh from git + the working tree.
 // A red criterion with a matching Orly-Override trailer on the branch is
@@ -110,10 +119,22 @@ export function activeSpecPath(root: string): string | undefined {
 export function closedSpecPath(root: string): string | undefined {
   const branch = gitOutput(root, ["rev-parse", "--abbrev-ref", "HEAD"]);
   if (!branch || DEFAULT_BRANCHES.includes(branch)) return undefined;
-  const specs = specPathsUnder(root, DONE_DIRECTORY).filter((path) => branchNamed(path, branch));
+  const specs = specPathsUnder(root, DONE_DIRECTORY)
+    .map(closedSpec)
+    .filter((spec): spec is ClosedSpec => spec !== undefined && spec.branch === branch);
   if (specs.length === 0) return undefined;
-  if (specs.length > 1) throw new OrlyError(`more than one done/ spec names branch ${branch} — one stream per worktree:${NEWLINE}${specs.join(NEWLINE)}`);
-  return specs[0];
+  const owners = specs.filter((spec) => spec.foldedInto === undefined);
+  if (owners.length === 0) throw new OrlyError(`every done/ spec naming branch ${branch} is folded — one owning stream is required:${NEWLINE}${specs.map((spec) => spec.path).join(NEWLINE)}`);
+  if (owners.length > 1) throw new OrlyError(`more than one done/ spec names branch ${branch} — one stream per worktree:${NEWLINE}${owners.map((spec) => spec.path).join(NEWLINE)}`);
+  const owner = owners[0];
+  if (!owner) throw new OrlyError(`done/ spec ownership could not be resolved for branch ${branch}`);
+  const folded = specs.filter((spec) => spec.foldedInto !== undefined);
+  if (folded.length > 0 && !owner.identifier) throw new OrlyError(`the owning done/ spec for branch ${branch} has no milestone and workstream identifier: ${owner.path}`);
+  const selfFolds = folded.filter((spec) => spec.identifier === spec.foldedInto);
+  if (selfFolds.length > 0) throw new OrlyError(`folded done/ specs naming branch ${branch} cannot fold into themselves:${NEWLINE}${selfFolds.map((spec) => spec.path).join(NEWLINE)}`);
+  const invalidFolds = folded.filter((spec) => spec.foldedInto !== owner.identifier);
+  if (invalidFolds.length > 0) throw new OrlyError(`folded done/ specs naming branch ${branch} must name their owner ${owner.identifier}:${NEWLINE}${invalidFolds.map((spec) => spec.path).join(NEWLINE)}`);
+  return owner.path;
 }
 
 // An in-flight (active/) spec wins; otherwise the branch's closed spec gates.
@@ -124,11 +145,23 @@ export function specPathFor(root: string): { path: string; closed: boolean } | u
   return closed ? { path: closed, closed: true } : undefined;
 }
 
-function branchNamed(path: string, branch: string): boolean {
+function closedSpec(path: string): ClosedSpec | undefined {
   try {
-    return readFileSync(path, UTF8).split(/\r?\n/).some((line) => line.includes(BRANCH_HEADER) && line.includes(branch));
+    const metadata: ClosedSpec = {
+      path,
+      identifier: basename(path).match(SPEC_IDENTIFIER_PATTERN)?.[1],
+      branch: undefined,
+      foldedInto: undefined,
+    };
+    for (const line of readFileSync(path, UTF8).split(/\r?\n/)) {
+      if (line.startsWith("## ")) break;
+      const match = line.match(MARKDOWN_HEADER_TOKEN_PATTERN);
+      if (match?.[1] === BRANCH_HEADER) metadata.branch = match[2];
+      if (match?.[1] === FOLDED_INTO_HEADER) metadata.foldedInto = match[2];
+    }
+    return metadata;
   } catch {
-    return false;
+    return undefined;
   }
 }
 
