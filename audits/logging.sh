@@ -393,12 +393,17 @@ fi
 # ---------------------------------------------------------------------------
 scoped_hits=0
 scoped_eligible=()
-for f in "${zig_nontest[@]}"; do
-  case "$f" in
-    src/logging/*) continue ;;
-  esac
-  scoped_eligible+=("$f")
-done
+# Guarded like every sibling loop: bash 3.2 under `set -u` treats "${empty[@]}"
+# as unbound (fixed only in 4.4), so an unguarded expansion aborts the audit in
+# any repository with no Zig sources. macOS ships 3.2.
+if [[ ${#zig_nontest[@]} -gt 0 ]]; then
+  for f in "${zig_nontest[@]}"; do
+    case "$f" in
+      src/logging/*) continue ;;
+    esac
+    scoped_eligible+=("$f")
+  done
+fi
 if [[ ${#scoped_eligible[@]} -gt 0 ]]; then
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
