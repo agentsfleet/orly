@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # cross-tier-rates.sh — pin numeric parity of the rate constants
-# across Zig + three TypeScript surfaces.
+# across the daemon + three TypeScript surfaces.
 #
 # RULE UFS extension. The shipped billing surface depends on these constants
 # having identical numeric values everywhere they appear:
@@ -16,13 +16,13 @@
 #
 # Files (one definition site per constant per file):
 #
-#   src/agentsfleetd/state/tenant_billing.zig       — server enforces the charge
+#   rustd/crates/afd_billing/src/nanos.rs   — server enforces the charge
 #   ui/packages/website/src/lib/rates.ts    — pricing page display
 #   ui/packages/app/lib/types.ts            — dashboard display
 #   cli/src/constants/billing.ts    — `agentsfleet doctor --json` billing block
 #
 # A drift between any two = a billing-display lie or a server-vs-CLI disagreement.
-# Zig is the source of truth (server enforces); the three TS surfaces echo it.
+# The daemon is the source of truth (server enforces); the three TS surfaces echo it.
 #
 # Fires in: make harness-verify, make harness-verify-all.
 # Exits 0 clean, 1 on any drift.
@@ -37,7 +37,7 @@ readonly NAMES=(
 )
 
 readonly FILES=(
-  src/agentsfleetd/state/tenant_billing.zig
+  rustd/crates/afd_billing/src/nanos.rs
   ui/packages/website/src/lib/rates.ts
   ui/packages/app/lib/types.ts
   cli/src/constants/billing.ts
@@ -96,7 +96,7 @@ if [[ $FAIL -ne 0 ]]; then
     printf "  %s\n" "$v" >&2
   done
   printf "\nFix: align all four files on the canonical Zig value\n" >&2
-  printf "     (src/agentsfleetd/state/tenant_billing.zig is the server-side enforcer).\n" >&2
+  printf "     (rustd/crates/afd_billing/src/nanos.rs is the server-side enforcer).\n" >&2
   exit 1
 fi
 

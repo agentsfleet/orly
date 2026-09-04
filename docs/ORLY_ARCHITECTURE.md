@@ -115,7 +115,7 @@ surfaces:
 {
   "commands": { "conform": [["make", "harness-verify"]],
                 "verify.unit": [["make", "test-unit-all"]] },
-  "surfaces": { "user": ["src/agentsfleetd/http/", "cli/src/"],
+  "surfaces": { "user": ["src/http/", "cli/src/"],
                 "docs": ["docs/"] }
 }
 ```
