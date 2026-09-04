@@ -110,7 +110,10 @@ gather_paths() {
   esac
 }
 
-mapfile -t FILES < <(gather_paths)
+# `while read` rather than mapfile: mapfile is bash 4+ and macOS ships 3.2 —
+# the portability rule scripts/run-playbook-tests.sh already records.
+FILES=()
+while IFS= read -r p; do FILES+=("$p"); done < <(gather_paths)
 if [[ ${#FILES[@]} -eq 0 ]]; then
   ok "no source files in scope ($MODE)"
   exit 0
@@ -139,7 +142,9 @@ for f in "${FILES[@]}"; do
 done
 
 if [[ ${#rust_nontest[@]} -gt 0 ]]; then
-  mapfile -t rust_candidates < <(grep -lE '(^|[^[:alnum:]_])(println|eprintln|dbg)!|tracing::(error|warn|info|debug|trace)!' "${rust_nontest[@]}" 2>/dev/null || true)
+  rust_candidates=()
+  while IFS= read -r p; do rust_candidates+=("$p"); done \
+    < <(grep -lE '(^|[^[:alnum:]_])(println|eprintln|dbg)!|tracing::(error|warn|info|debug|trace)!' "${rust_nontest[@]}" 2>/dev/null || true)
 fi
 
 # ---------------------------------------------------------------------------
@@ -388,12 +393,17 @@ fi
 # ---------------------------------------------------------------------------
 scoped_hits=0
 scoped_eligible=()
-for f in "${zig_nontest[@]}"; do
-  case "$f" in
-    src/logging/*) continue ;;
-  esac
-  scoped_eligible+=("$f")
-done
+# Guarded like every sibling loop: bash 3.2 under `set -u` treats "${empty[@]}"
+# as unbound (fixed only in 4.4), so an unguarded expansion aborts the audit in
+# any repository with no Zig sources. macOS ships 3.2.
+if [[ ${#zig_nontest[@]} -gt 0 ]]; then
+  for f in "${zig_nontest[@]}"; do
+    case "$f" in
+      src/logging/*) continue ;;
+    esac
+    scoped_eligible+=("$f")
+  done
+fi
 if [[ ${#scoped_eligible[@]} -gt 0 ]]; then
   while IFS= read -r line; do
     [[ -z "$line" ]] && continue
