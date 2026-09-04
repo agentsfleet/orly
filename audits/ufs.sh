@@ -349,9 +349,13 @@ done < <(awk -v re="$NUMERIC_RE" '
 
 # ── 3. cross-runtime-orphan ─────────────────────────────────────────────────
 # Full-tree ERR_* parity. Scoped to the ERR_* prefix because that is the
-# cross-runtime contract surface — server error codes a client consumes. Zig is
-# the source of truth: every client-side ERR_* must have a matching Zig
-# `pub const ERR_*`. Zig-only codes are fine; a server-internal code needs no
+# cross-runtime contract surface — server error codes a client consumes. The
+# daemon is the source of truth. A Rust daemon declares its codes through a
+# registry — `ErrorCode::declare("…")` — and the contract a client holds is
+# that STRING, so parity is checked on the string: every client
+# `export const ERR_X = "…"` must name a code the registry declares. Where no
+# registry exists and Zig does, the Zig `pub const ERR_*` NAMES are the
+# oracle instead. Daemon-only codes are fine; a server-internal code needs no
 # client mirror.
 #
 # Scoped BY RUNTIME, not by one repository's directory names. The previous form
@@ -386,11 +390,29 @@ parity_codes() {
     | grep -oE 'ERR_[A-Z][A-Z0-9_]+' | sort -u || true
 }
 
+# The Rust registry outranks a Zig mirror: a runner that keeps a Zig subset of
+# the daemon's codes for its own use is a client, not the oracle. `record`
+# mutates globals, so the loop runs in this shell over a here-string — never on
+# the right of a pipe, which would run it in a subshell and drop every finding.
+rust_codes=$(git ls-files -z -- '*.rs' 2>/dev/null \
+  | { grep -zvE "$PARITY_EXCLUDE" || true; } \
+  | { xargs -0 grep -hoE 'ErrorCode::declare\("[^"]+"\)' 2>/dev/null || true; } \
+  | { grep -oE '"[^"]+"' || true; } | tr -d '"' | sort -u)
 zig_err=$(parity_codes '^pub const ERR_[A-Z][A-Z0-9_]+[[:space:]]*=' '*.zig')
 client_err=$(parity_codes '^export const ERR_[A-Z][A-Z0-9_]+[[:space:]]*=' '*.js' '*.jsx' '*.ts' '*.tsx')
 
-if [ -z "$zig_err" ]; then
-  ok "audit-ufs: cross-runtime parity skipped — no Zig ERR_* declared, so this repository has no source of truth to compare against"
+if [ -n "$rust_codes" ]; then
+  client_decls=$(git ls-files -z -- '*.js' '*.jsx' '*.ts' '*.tsx' 2>/dev/null \
+    | { grep -zvE "$PARITY_EXCLUDE" || true; } \
+    | { xargs -0 grep -hE '^export const ERR_[A-Z][A-Z0-9_]+[[:space:]]*=[[:space:]]*"[^"]+"' 2>/dev/null || true; })
+  while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    name=$(printf '%s' "$line" | grep -oE 'ERR_[A-Z][A-Z0-9_]+' | head -1)
+    code=$(printf '%s' "$line" | sed -E 's/^[^=]*=[[:space:]]*"([^"]+)".*/\1/')
+    echo "$rust_codes" | grep -qxF -- "$code" || record "cross-runtime-orphan $name ($code) absent-in-daemon"
+  done <<<"$client_decls"
+elif [ -z "$zig_err" ]; then
+  ok "audit-ufs: cross-runtime parity skipped — no Rust registry and no Zig ERR_* declared, so this repository has no source of truth to compare against"
 else
   # Every client-side ERR_* must exist in Zig.
   for c in $client_err; do

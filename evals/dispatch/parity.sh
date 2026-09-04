@@ -83,5 +83,44 @@ run_case "ui/ orphan still caught after the rewrite" \
   "$ZIG_OK
 ui/packages/app/src/codes.ts	export const ERR_UI_ONLY = \"ui-only\";"
 
+# ── The Rust registry as oracle ──────────────────────────────────────────────
+# A Rust daemon declares codes as strings through `ErrorCode::declare("…")`, and
+# a client's contract is that string, not a constant's spelling. These cases
+# pin that the comparison is on the string, and that a Zig mirror beside the
+# registry (a runner's own subset) neither excuses nor condemns a client code.
+RUST_OK=$'rustd/crates/core/src/error_code/registry.rs\tpub fn declare_all() { ErrorCode::declare("UZ-AUTH-001"); }'
+
+run_case "a client string the Rust registry never declared is an orphan" \
+  "cross-runtime-orphan ERR_DRIFT (UZ-AUTH-999) absent-in-daemon" \
+  "$RUST_OK
+cli/src/drift.ts	export const ERR_DRIFT = \"UZ-AUTH-999\";"
+
+run_case "a client string the Rust registry declares is not reported" \
+  "no violations" \
+  "$RUST_OK
+cli/src/auth.ts	export const ERR_UNAUTHORIZED = \"UZ-AUTH-001\";"
+
+# Zig is present but is not the oracle: the constant NAME is unknown to Zig,
+# the STRING is declared by Rust, and the string is what decides.
+run_case "Rust registry outranks a Zig mirror — a name Zig lacks is fine when the string is declared" \
+  "no violations" \
+  "$RUST_OK
+$ZIG_OK
+cli/src/auth.ts	export const ERR_RUST_ONLY = \"UZ-AUTH-001\";"
+
+# And the other direction: a name Zig HAS does not excuse a string the
+# registry never declared.
+run_case "Rust registry outranks a Zig mirror — a name Zig has does not excuse an undeclared string" \
+  "cross-runtime-orphan ERR_UNAUTHORIZED (unauthorized) absent-in-daemon" \
+  "$RUST_OK
+$ZIG_OK
+cli/src/auth.ts	export const ERR_UNAUTHORIZED = \"unauthorized\";"
+
+# Registry declarations inside a tests/ tree are fixtures, not the oracle.
+run_case "a registry declaration under tests/ does not make Rust the oracle" \
+  "cross-runtime parity skipped" \
+  "rustd/crates/core/tests/fixture.rs	fn f() { ErrorCode::declare(\"UZ-TEST-001\"); }
+cli/src/codes.ts	export const ERR_TS_ONLY = \"ts-only\";"
+
 printf '\n%d passed, %d failed\n' "$pass" "$fail"
 [ "$fail" -eq 0 ]
