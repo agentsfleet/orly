@@ -297,10 +297,6 @@
       "extensions": [],
       "managed_files": [
         {
-          "source": "audits/cross-tier-rates.sh",
-          "target": "audits/cross-tier-rates.sh"
-        },
-        {
           "source": "audits/design-tokens.sh",
           "target": "audits/design-tokens.sh"
         },
