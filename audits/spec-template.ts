@@ -10,6 +10,8 @@ const CONFIG_PATH = ".oracle/orly.json";
 const SPEC_LINE_LIMIT = 320;
 const BACKTICK = "`";
 const EMPTY = "";
+const PIPE_OUTPUT = "pipe";
+const TABLE_ROW = "tr";
 const TEST_HEADING = /^Test Specification/;
 const RUBRIC_HEADING = /^Acceptance (Rubric|Criteria)/;
 const REQUIRED = [
@@ -27,7 +29,7 @@ function sectionsOf(text: string): Section[] {
   const sections: Section[] = [];
   const document = Bun.markdown.react(text) as MarkdownElement;
   for (const node of children(document)) {
-    if (typeof node !== "string" && node.type === "h2") sections.push({ title: textOf(node), nodes: [] });
+    if (!isString(node) && node.type === "h2") sections.push({ title: textOf(node), nodes: [] });
     else if (sections.length) sections[sections.length - 1]!.nodes.push(node);
   }
   return sections;
@@ -38,15 +40,15 @@ function section(sections: Section[], heading: RegExp): MarkdownNode[] {
 }
 
 function children(node: MarkdownNode): MarkdownNode[] {
-  return typeof node === "string" ? [] : node.props.children ?? [];
+  return isString(node) ? [] : node.props.children ?? [];
 }
 
 function elements(nodes: MarkdownNode[], type: string): MarkdownElement[] {
-  return nodes.filter((node): node is MarkdownElement => typeof node !== "string" && node.type === type);
+  return nodes.filter((node): node is MarkdownElement => !isString(node) && node.type === type);
 }
 
 function textOf(node: MarkdownNode): string {
-  if (typeof node === "string") return node;
+  if (isString(node)) return node;
   const text = children(node).map(textOf).join(EMPTY);
   return node.type === "code" ? `${BACKTICK}${text}${BACKTICK}` : text;
 }
@@ -56,8 +58,8 @@ function table(nodes: MarkdownNode[]): { columns: string[]; rows: string[][] } {
   const headers = elements(groups, "thead").flatMap(children);
   const bodies = elements(groups, "tbody").flatMap(children);
   return {
-    columns: elements(headers, "tr").flatMap(children).map((node) => textOf(node).trim()),
-    rows: elements(bodies, "tr").map((row) => children(row).map((node) => textOf(node).trim())),
+    columns: elements(headers, TABLE_ROW).flatMap(children).map((node) => textOf(node).trim()),
+    rows: elements(bodies, TABLE_ROW).map((row) => children(row).map((node) => textOf(node).trim())),
   };
 }
 
@@ -105,7 +107,7 @@ function readFirst(sections: Section[], exists: (path: string) => boolean): stri
 }
 
 function git(argv: string[], root: string): { ok: boolean; text: string } {
-  const result = Bun.spawnSync(["git", ...argv], { cwd: root, stdout: "pipe", stderr: "pipe" });
+  const result = Bun.spawnSync(["git", ...argv], { cwd: root, stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
   return { ok: result.exitCode === 0, text: result.stdout.toString() };
 }
 
@@ -118,7 +120,7 @@ async function commands(staged: boolean, root: string): Promise<Commands> {
   for (const [name, invocations] of Object.entries(config.commands)) {
     if (!Array.isArray(invocations) || !invocations.length) throw new Error(`empty command group: ${name}`);
     result[name] = invocations.map((argv: unknown) => {
-      if (!Array.isArray(argv) || !argv.length || !argv.every((arg): arg is string => typeof arg === "string")) throw new Error(`invalid arguments for ${name}`);
+      if (!Array.isArray(argv) || !argv.length || !argv.every(isString)) throw new Error(`invalid arguments for ${name}`);
       return argv;
     });
   }
@@ -128,6 +130,10 @@ async function commands(staged: boolean, root: string): Promise<Commands> {
 
 function object(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isString(value: unknown): value is string {
+  return typeof value === "string";
 }
 
 function rubricCommands(sections: Section[], declared: Commands): string[] {
