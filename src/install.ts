@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, realpathSync, renameSy
 import { dirname, extname, join, relative, resolve } from "node:path";
 
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
-import { CONFIG_PATH, readConfig, seedConfig, selectPacks, writeConfig } from "./config";
+import { CONFIG_PATH, contentDigest, readConfig, seedConfig, selectPacks, writeConfig } from "./config";
 import { applyMode, assertWritableInside, hashContent, isBelow, isString, JsonObject, modeLabel, objectArray, objectValue, OrlyError, RulesModel, stringArray } from "./model";
 import { AGENTS_FILENAME, GENERATED_BANNER, installLoaders, Layout, loaderTargets, ORLY_AGENTS_FILENAME } from "./loaders";
 import { referenceClosureErrors, renderProfileText } from "./references";
@@ -116,7 +116,16 @@ export async function install(model: RulesModel, options: InstallOptions): Promi
   skipped.push(...hooks.all.filter((path) => !hooks.written.includes(path)));
   // One file carries both halves: the repository's own fields pass through
   // untouched, orly's two record what this run installed and wrote.
-  await writeConfig(targetRoot, { ...config, orly_version: options.orlyVersion, managed: [...planned.map((file) => file.target), ...hooks.all] });
+  // Digests cover `planned` only. Hooks are managed — orly restores a missing
+  // one — but it does not always AUTHOR them: it refuses to overwrite a hook it
+  // did not write. Recording a digest for a file whose content belongs to the
+  // repository would report the repository's own edits as drift.
+  await writeConfig(targetRoot, {
+    ...config,
+    orly_version: options.orlyVersion,
+    managed: [...planned.map((file) => file.target), ...hooks.all],
+    digests: Object.fromEntries(planned.map((file) => [file.target, contentDigest(file.content)])),
+  });
   if (!existing) written.push(CONFIG_PATH);
   return { ok: true, packs, written: written.sort(), skipped: skipped.sort(), errors: [] };
 }
@@ -370,6 +379,11 @@ function retargetRulesCitations(text: string, orlyFile: string): string {
   return text
     .replaceAll(`](${AGENTS_FILENAME})`, `](${orlyFile})`)
     .replaceAll(`](../${AGENTS_FILENAME})`, `](../${orlyFile})`)
+    // The relative spelling first: `../AGENTS.md` contains `AGENTS.md`, so the
+    // bare rule below would rewrite its tail and leave the `../` stranded.
+    // Missing it is what rendered `[`../AGENTS.md`](../AGENTS.orly.md)` into
+    // four managed pages — a label naming one file over a link to another.
+    .replaceAll(`\`../${AGENTS_FILENAME}\``, `\`../${orlyFile}\``)
     .replaceAll(`\`${AGENTS_FILENAME}\``, `\`${orlyFile}\``);
 }
 
