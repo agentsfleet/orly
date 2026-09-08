@@ -1,8 +1,7 @@
-import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
 
-import { assertWritableInside, isObject, isString, JsonObject, objectValue, OrlyError, readJsonObject, RulesModel, stringArray } from "./model";
+import { assertWritableInside, hashContent, isObject, isString, JsonObject, objectValue, OrlyError, readJsonObject, RulesModel, stringArray } from "./model";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { validateCommands, validateSurfaces } from "./validation";
 
@@ -19,7 +18,6 @@ const VERSION_FIELD = "orly_version";
 const MANAGED_FIELD = "managed";
 const DIGESTS_FIELD = "digests";
 const DIGEST_ALGORITHM = "sha256";
-const DIGEST_ENCODING = "hex";
 const COMMANDS_FIELD = "commands";
 const CONFORM_COMMAND = "conform";
 const MAKE_COMMAND = "make";
@@ -139,7 +137,7 @@ function readDigests(value: unknown): Record<string, string> {
 /// and the alternative was a scanner suppression, which is how a real
 /// credential eventually rides through.
 export function contentDigest(bytes: Uint8Array): string {
-  return `${DIGEST_ALGORITHM}:${createHash(DIGEST_ALGORITHM).update(bytes).digest(DIGEST_ENCODING)}`;
+  return `${DIGEST_ALGORITHM}:${hashContent(bytes)}`;
 }
 
 // Tolerates the unprefixed spelling 0.10.2 wrote for its one release, so a
