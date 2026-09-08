@@ -12,6 +12,7 @@ import { documentationSurfaces, scanSurfaces } from "./doc_rules";
 import { isObject, JsonObject, objectValue, OrlyError, RulesModel } from "./model";
 import { readConfigSync, RepoConfig } from "./config";
 import { classifyBranch, SurfaceReport } from "./surfaces";
+import { commandSetupErrors } from "./validation";
 
 export type { Criterion, CriterionContext, CriterionResult, Verdict };
 export { runCommand };
@@ -22,6 +23,9 @@ const VERIFY_PREFIX = "verify.";
 const REPOSITORIES_LABEL = "repositories";
 const UNINSTALLED = "no .oracle/orly.json here — run `orly init` first";
 const REV_PARSE = "rev-parse";
+const HEAD = "HEAD";
+const UPSTREAM = "@{upstream}";
+const NEWLINE = "\n";
 const ABBREV_REF = "--abbrev-ref";
 const WORKTREE_LIST = ["worktree", "list", "--porcelain"];
 const WORKTREE_PREFIX = "worktree ";
@@ -47,37 +51,20 @@ const SLOW_TIER = "slow";
 // The slow tier is a fixed name set, not a prefix rule: lint and version
 // checks are verify.* too, and demoting them to skip-on-prose would be wrong.
 const SLOW_COMMANDS = ["verify.integration", "verify.memory"];
+const UNIT_COMMAND = "verify.unit";
+const ALL_TIER = "all";
 
-// Every criterion is mechanical: it reads an exit code or a file, never a
-// judgment. The anchor invariant promises the machine can PROVE the PR
-// boundary, so anything unprovable stays prose and never lands here.
-//
-// One gate per cadence, and each question asked at the only moment it can be
-// answered honestly:
-//
-//   work   — does this commit conform? Config plus the declared `conform`
-//            command. Nothing about branch or tree: inside a commit hook the
-//            tree is dirty BY CONSTRUCTION (that is what is being committed),
-//            and the operating model itself says a new spec is committed on the
-//            default branch. Judging either here made the generated pre-commit
-//            hook refuse every commit — including the one installing orly —
-//            with `--no-verify`, which Hard Safety forbids, as the only way out.
-//   verify — does the work hold up? Spec dimensions, documentation language,
-//            and the fast `verify.*` set. Runs before the work leaves the
-//            machine, not after every edit.
-//   pr     — can this ship? The whole-branch facts (branch shape, clean tree,
-//            pushed) plus every spec criterion and the slow suites. A tree is
-//            only required clean where a reviewer is about to read it, and a
-//            branch is only wrong for being `main` where a PR would open from
-//            it.
+// Commit checks read the index. Push checks permit in-flight Sections and omit
+// the boundary test suites. The final gate runs all declared verification
+// itself, including checks a custom repository hook may not have invoked.
 export function criteriaFor(gate: string, context: CriterionContext): Criterion[] {
   if (gate === "work") return [repositoryConfig(), ...commandCriteria(context, CONFORM_TIER)];
-  if (gate === "verify") return [specDimensions(), docsLanguage(), ...commandCriteria(context, FAST_TIER)];
+  if (gate === "verify") return [repositoryConfig(), docsLanguage(), ...commandCriteria(context, FAST_TIER)];
   if (gate === "pr") {
     return [
       gitBranch(), gitTree(), gitPushed(), specGate(), openQuestions(), productClarity(), specDimensions(),
       specMoved(), specBaseline(), specOrdering(), specDeferrals(),
-      docsUpdated(), ...commandCriteria(context, SLOW_TIER),
+      repositoryConfig(), docsLanguage(), docsUpdated(), ...commandCriteria(context, ALL_TIER),
     ];
   }
   return [];
@@ -93,14 +80,10 @@ function gitBranch(): Criterion {
 
 function gitTree(): Criterion {
   return criterion(GIT_TREE, (context) => {
-    // The active spec is excluded while work is in flight: Dimensions get
-    // marked DONE as the agent goes, and the tree check must not block on that
-    // bookkeeping. Committing the spec stays a CHORE(close) obligation.
     const dirty = gitOutput(context.root, ["status", "--porcelain=v1", "-uall"])
       .split(/\r?\n/)
-      .filter(Boolean)
-      .filter((line) => !context.specPath || !line.includes(context.specPath));
-    if (dirty.length === 0) return { ok: true, detail: "clean (active spec excluded)" };
+      .filter(Boolean);
+    if (dirty.length === 0) return { ok: true, detail: "clean" };
     if (context.acceptDirty) return { ok: true, detail: `${dirty.length} dirty path(s) accepted` };
     return { ok: false, detail: `${dirty.length} uncommitted path(s), first: ${dirty[0] ?? ""}` };
   });
@@ -108,11 +91,12 @@ function gitTree(): Criterion {
 
 function gitPushed(): Criterion {
   return criterion(GIT_PUSHED, (context) => {
-    const upstream = gitOutput(context.root, [REV_PARSE, ABBREV_REF, "--symbolic-full-name", "@{upstream}"]);
+    const upstream = gitOutput(context.root, [REV_PARSE, ABBREV_REF, "--symbolic-full-name", UPSTREAM]);
     if (upstream.length === 0) return { ok: false, detail: "branch has no upstream; push it first" };
-    const ahead = gitOutput(context.root, ["rev-list", "--count", "@{upstream}..HEAD"]);
-    const ok = ahead === "0";
-    return { ok, detail: ok ? `in sync with ${upstream}` : `${ahead} commit(s) not pushed to ${upstream}` };
+    const head = gitOutput(context.root, [REV_PARSE, HEAD]);
+    const remote = gitOutput(context.root, [REV_PARSE, UPSTREAM]);
+    const ok = head.length > 0 && head === remote;
+    return { ok, detail: ok ? `in sync with ${upstream}` : `HEAD differs from ${upstream}; push the reviewed revision` };
   });
 }
 
@@ -121,27 +105,23 @@ function repositoryConfig(): Criterion {
     try {
       const config = readConfigSync(context.root);
       if (!config) return { ok: false, detail: UNINSTALLED };
-      const commands = Object.keys(config.commands).length;
-      return { ok: commands > 0, detail: commands > 0 ? `${commands} command(s) declared` : "no commands declared in .oracle/orly.json — add conform and verify.* so the gate can run them" };
+      const errors = commandSetupErrors(config.commands);
+      return { ok: errors.length === 0, detail: errors.length > 0 ? errors.join("; ") : `${Object.keys(config.commands).length} command(s) declared` };
     } catch (error) {
       return { ok: false, detail: error instanceof Error ? error.message : String(error) };
     }
   });
 }
 
-// Model C: the repository's declared command surface. Orly owns policy and
-// invokes these; the repository owns what they actually do. Conform tier = the
-// `conform` command alone. Fast tier = every verify.* that is not slow. Slow
-// tier = verify.integration and verify.memory; those auto-pass with a printed
-// skip when the branch carries no code, so a prose-only branch never pays for
-// the slow suites.
+// Commands and source paths are repository-owned. Only integration and memory
+// checks are conditional on code; every other declared lane always runs.
 function commandCriteria(context: CriterionContext, tier: string): Criterion[] {
   const config = resolvedConfig(context);
-  if (!config) return tier === FAST_TIER ? [criterion(REPO_CONFIG, () => ({ ok: false, detail: UNINSTALLED }))] : [];
+  if (!config) return [];
   const commands = config.commands;
-  const selected = Object.keys(commands).filter((key) => tierOf(key) === tier).sort();
+  const selected = Object.keys(commands).filter((key) => tier === ALL_TIER ? key.startsWith(VERIFY_PREFIX) : tierOf(key) === tier).sort();
   return selected.map((key) => criterion(`cmd.${key}`, (inner) => {
-    if (tier === SLOW_TIER && report(inner, config.surfaces).code.length === 0) {
+    if (SLOW_COMMANDS.includes(key) && report(inner, config.surfaces).code.length === 0) {
       return { ok: true, detail: "skipped — no code files on this branch" };
     }
     return runInvocations(inner.root, commands[key]);
@@ -150,7 +130,7 @@ function commandCriteria(context: CriterionContext, tier: string): Criterion[] {
 
 function tierOf(key: string): string {
   if (key === CONFORM_COMMAND) return CONFORM_TIER;
-  if (SLOW_COMMANDS.includes(key)) return SLOW_TIER;
+  if (key === UNIT_COMMAND || SLOW_COMMANDS.includes(key)) return SLOW_TIER;
   if (key.startsWith(VERIFY_PREFIX)) return FAST_TIER;
   return "";
 }
@@ -213,12 +193,13 @@ function resolvedConfig(context: CriterionContext): RepoConfig | undefined {
 
 function runInvocations(root: string, invocations: unknown): Verdict {
   if (!Array.isArray(invocations) || invocations.length === 0) return { ok: false, detail: "command group is empty" };
+  const evidence: string[] = [];
   for (const invocation of invocations) {
     if (!Array.isArray(invocation) || invocation.length === 0) return { ok: false, detail: "command invocation is empty" };
     const argv = invocation.map((argument) => String(argument));
     const result = runCommand(root, argv);
-    if (!result.ok) return { ok: false, detail: `${argv.join(" ")} -> ${result.detail}` };
+    evidence.push(`${argv.join(" ")} -> ${result.detail}`);
+    if (!result.ok) return { ok: false, detail: evidence.join(NEWLINE) };
   }
-  return { ok: true, detail: `${invocations.length} invocation(s) exit 0` };
+  return { ok: true, detail: `${invocations.length} invocation(s) exit 0\n${evidence.join(NEWLINE)}` };
 }
-

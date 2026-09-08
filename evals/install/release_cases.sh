@@ -118,21 +118,19 @@ PY
   ok "$name"
 }
 
-# The README's own claim: one command installs the harness anywhere. If the
-# harness-install section carries more than one fenced command block, the
-# "one command" claim in this milestone's own spec is false.
-install_readme_harness_section_is_one_command() {
-  local name="README's harness-install section is a single command block"
+# Hooks need a persistent executable; initialization alone does not install one.
+install_readme_installs_executable_before_init() {
+  local name="README installs the executable before initializing hooks"
   local section
-  # Matches "## Install" and "## Install the harness": the claim under test is
-  # that the section holds one command, not how the heading is worded.
   section="$(awk '/^## Install/{flag=1; next} /^## /{flag=0} flag' "$ROOT/README.md")"
   if [[ -z "$section" ]]; then bad "$name" "no '## Install' section found"; return; fi
 
   local blocks
   blocks="$(printf '%s\n' "$section" | grep -c '^```bash$')"
   if [[ "$blocks" -ne 1 ]]; then bad "$name" "expected exactly 1 bash command block, found $blocks"; return; fi
-  printf '%s\n' "$section" | grep -q 'bunx @agentsfleet/orly init' || { bad "$name" "the block is not the init command"; return; }
+  local commands
+  commands="$(printf '%s\n' "$section" | awk '/^```bash$/{block=1; next} /^```$/{block=0} block')"
+  if [[ "$commands" != $'bun add -g @agentsfleet/orly\norly init' ]]; then bad "$name" "expected executable installation followed by init: $commands"; return; fi
   ok "$name"
 }
 

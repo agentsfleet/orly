@@ -61,15 +61,33 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 Run this inside the repository you want governed.
 
 ```bash
-bunx @agentsfleet/orly init
+bun add -g @agentsfleet/orly
+orly init
 ```
 
 orly scans your source, detects your languages, and installs only the rules that apply.
 
 > [!TIP]
-> Try `bunx @agentsfleet/orly init --dry-run` first. It prints everything it would write and changes nothing.
+> Try `orly init --dry-run` first. It previews the generated rules and changes nothing.
 
-Then commit what it wrote. Teammates get the rules on clone.
+The Git hooks use the installed `orly` executable. Keep it on `PATH`.
+Complete any setup items printed by `init`, then run `orly doctor` and commit the generated files.
+Teammates get the rules on clone and run `orly init` to install their hooks.
+
+Declare `conform` and at least one `verify.*` command in `.oracle/orly.json`.
+Orly runs your repository's commands; the verification name does not require a particular language or test runner.
+For a documentation repository whose Makefile provides `test` and `lint`:
+
+```json
+"commands": {
+  "conform": [["make", "test"]],
+  "verify.docs": [["make", "lint"]]
+}
+```
+
+Here `test` checks documentation during work, and `lint` validates the site and links before the pull request.
+Markdown and Markdown JSX (MDX) repositories do not need application unit or integration suites.
+`orly doctor` checks configuration and installed files; run the gates to verify the commands themselves.
 
 ---
 
@@ -120,8 +138,8 @@ Three checkpoints, all running your own declared commands:
 | Checkpoint | When | Effect |
 |---|---|---|
 | `pre-commit` | every commit | stops at the first failing check |
-| `pre-push` | every push | same gates, before anything leaves the machine |
-| `orly gate pr` | opening the Pull Request | refuses until each criterion is green, or carries a recorded override |
+| `pre-push` | every push | documentation and declared non-test verification checks |
+| `orly gate pr` | opening the Pull Request | runs all declared verification commands and checks the branch and spec |
 
 ---
 
@@ -144,7 +162,7 @@ flowchart TB
     subgraph active["⚙️ docs/v1/active/"]
         direction TB
 
-        plan["PLAN<br/><small>understand spec · record baseline</small>"]
+        plan["PLAN<br/><small>understand spec · resolve decisions</small>"]
         execute["EXECUTE<br/><small>make the change</small>"]
         conform["CONFORM<br/><small>apply matching rule pages</small>"]
         verify["VERIFY<br/><small>run deterministic gates</small>"]
@@ -171,7 +189,7 @@ flowchart TB
 | Directory | Meaning |
 |---|---|
 | `docs/v1/pending/` | the spec is written and committed on `main` |
-| `docs/v1/active/` | branch cut, baseline recorded, no code until it commits |
+| `docs/v1/active/` | branch cut, comparison revision recorded, measurement pending; no code until it commits |
 | `docs/v1/done/` | gates green, Pull Request opens |
 
 Inside `active/`, work runs through the stages: **PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT**.
@@ -216,7 +234,7 @@ The last two files exist because installing a rules file is not the same as deli
 | `orly update --with <pack>` | add an opt-in pack, recorded for every clone |
 | `orly gate` | run your declared checks in order, stopping at the first failure |
 | `orly override <criterion> --reason <why>` | record a gate exception as an empty commit that rides into the Pull Request |
-| `orly doctor` | compare what is installed against what orly would write today |
+| `orly doctor` | check installed files and required command configuration |
 
 ---
 

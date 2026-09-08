@@ -269,6 +269,10 @@
         {
           "source": "audits/spec-template.sh",
           "target": "audits/spec-template.sh"
+        },
+        {
+          "source": "audits/spec-template.ts",
+          "target": "audits/spec-template.ts"
         }
       ]
     },

@@ -8,6 +8,8 @@ import {
   newRepository, newSpecRepository, orly, SPEC_RELATIVE, specFixture,
 } from "./gates_test_support";
 
+const BASELINE_FIXTURE = "**Test Baseline:** unit=0 integration=0";
+
 afterEach(cleanupTemporaryDirectories);
 
 describe("spec discovery", () => {
@@ -16,7 +18,7 @@ describe("spec discovery", () => {
     const model = await modelFor(project);
     git(project, "checkout", "-q", "-b", "fix/adhoc");
 
-    const verify = runGate(model, project, "verify");
+    const verify = runGate(model, project, "pr");
     expect(verify.results.find((result) => result.name === "spec.dimensions")?.detail).toContain("no active spec");
     expect(runGate(model, project, "work").results.find((result) => result.name === "cmd.conform")?.ok).toBeTrue();
   });
@@ -120,6 +122,43 @@ describe("closed-spec follow-through", () => {
     expect(pr.results.find((result) => result.name === "spec.moved")?.ok).toBeTrue();
     expect(pr.results.find((result) => result.name === "spec.ordering")?.ok).toBeTrue();
     expect(pr.results.find((result) => result.name === "spec.baseline")?.ok).toBeTrue();
+  });
+
+  // CHORE(open) declares the header and the boundary fills it. The gate that
+  // grades the boundary is `pr`, so `pending` surviving to here is the
+  // measurement skipped rather than the measurement not yet due.
+  test("a Test Baseline still reading `pending` is red at the Pull Request gate", async () => {
+    const project = newRepository();
+    const model = await modelFor(project);
+    git(project, "checkout", "-q", "-b", "feat/pending-baseline");
+    mkdirSync(join(project, "docs/v1/active"), { recursive: true });
+    await Bun.write(
+      join(project, SPEC_RELATIVE),
+      specFixture("IN_PROGRESS", "feat/pending-baseline").replace(BASELINE_FIXTURE, "**Test Baseline:** pending — measured before the Pull Request"),
+    );
+    git(project, "add", ".");
+    git(project, "commit", "-q", "-m", "chore(open): the spec declares its baseline");
+
+    const baseline = runGate(model, project, "pr").results.find((result) => result.name === "spec.baseline");
+    expect(baseline?.ok).toBeFalse();
+    expect(baseline?.detail).toContain("carries no count");
+  });
+
+  test("a branch carrying no code records n/a and spec.baseline is green", async () => {
+    const project = newRepository();
+    const model = await modelFor(project);
+    git(project, "checkout", "-q", "-b", "feat/no-code-baseline");
+    mkdirSync(join(project, "docs/v1/active"), { recursive: true });
+    await Bun.write(
+      join(project, SPEC_RELATIVE),
+      specFixture("IN_PROGRESS", "feat/no-code-baseline").replace(BASELINE_FIXTURE, "**Test Baseline:** n/a — no code on this branch"),
+    );
+    git(project, "add", ".");
+    git(project, "commit", "-q", "-m", "chore(open): a docs-only stream measures nothing");
+
+    const baseline = runGate(model, project, "pr").results.find((result) => result.name === "spec.baseline");
+    expect(baseline?.ok).toBeTrue();
+    expect(baseline?.detail).toContain("not applicable");
   });
 
   test("Status: DONE while the spec still lives under active/ is red on spec.moved", async () => {

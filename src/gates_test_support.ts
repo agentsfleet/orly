@@ -10,6 +10,10 @@ import { CONFIG_PATH } from "./config";
 import { RulesModel } from "./model";
 
 const GIT = "git";
+const HEAD = "HEAD";
+const REV_PARSE = "rev-parse";
+const IN_PROGRESS = "IN_PROGRESS";
+const BASELINE_EVIDENCE = "**Baseline evidence:** README.md";
 const QUIET = "-q";
 const COMMIT = "commit";
 const CONFIG = "config";
@@ -21,6 +25,7 @@ const ACCEPTANCE_RUBRIC_HEADING = "Acceptance Rubric";
 const FIXTURE = "fixture";
 const AUDITS_DIR = "audits";
 const SPEC_GATE_SCRIPT = `${AUDITS_DIR}/spec-template.sh`;
+const SPEC_GATE_CONTENT = `${AUDITS_DIR}/spec-template.ts`;
 
 export const ROOT = resolve(import.meta.dir, "..");
 export const SPEC_RELATIVE = "docs/v1/active/M99_001_P2_CLI_FIXTURE.md";
@@ -105,7 +110,10 @@ export function closedSpecRepository(branch: string, extraLines: string[] = []):
   mkdirSync(join(project, "docs/v1/done"), { recursive: true });
   mkdirSync(join(project, AUDITS_DIR), { recursive: true });
   copyFileSync(join(ROOT, SPEC_GATE_SCRIPT), join(project, SPEC_GATE_SCRIPT));
-  Bun.write(join(project, "docs/v1/done/M99_001_P2_CLI_FIXTURE.md"), specFixture("DONE", branch, extraLines));
+  copyFileSync(join(ROOT, SPEC_GATE_CONTENT), join(project, SPEC_GATE_CONTENT));
+  Bun.write(join(project, "docs/v1/done/M99_001_P2_CLI_FIXTURE.md"), specFixture("DONE", branch, [
+    `**Baseline revision:** ${gitOutput(project, REV_PARSE, HEAD)}`, BASELINE_EVIDENCE, ...extraLines,
+  ]));
   git(project, ADD, ".");
   git(project, COMMIT, QUIET, MESSAGE, "chore: close the fixture spec");
   return project;
@@ -116,7 +124,10 @@ export function newSpecRepository(): string {
   mkdirSync(join(project, "docs/v1/active"), { recursive: true });
   mkdirSync(join(project, AUDITS_DIR), { recursive: true });
   copyFileSync(join(ROOT, SPEC_GATE_SCRIPT), join(project, SPEC_GATE_SCRIPT));
-  Bun.write(join(project, SPEC_RELATIVE), specFixture());
+  copyFileSync(join(ROOT, SPEC_GATE_CONTENT), join(project, SPEC_GATE_CONTENT));
+  Bun.write(join(project, SPEC_RELATIVE), specFixture(IN_PROGRESS, undefined, [
+    `**Baseline revision:** ${gitOutput(project, REV_PARSE, HEAD)}`, BASELINE_EVIDENCE,
+  ]));
   git(project, ADD, ".");
   git(project, COMMIT, QUIET, MESSAGE, "test: add fixture spec");
   return project;
@@ -124,7 +135,7 @@ export function newSpecRepository(): string {
 
 // A spec carrying every section audits/spec-template.sh requires, with all
 // Dimensions already DONE so the gates' own criteria are what is under test.
-export function specFixture(status = "IN_PROGRESS", branch?: string, extraLines: string[] = []): string {
+export function specFixture(status = IN_PROGRESS, branch?: string, extraLines: string[] = []): string {
   const sections = [
     "PR Intent & comprehension handshake",
     "Overview",
@@ -139,6 +150,7 @@ export function specFixture(status = "IN_PROGRESS", branch?: string, extraLines:
     "Metrics & Observability",
     "Test Specification (tiered)",
     ACCEPTANCE_RUBRIC_HEADING,
+    "Dead Code Sweep",
     "Out of Scope",
     "Product Clarity (authoring record)",
     "Decomposition & alternatives",
@@ -149,7 +161,9 @@ export function specFixture(status = "IN_PROGRESS", branch?: string, extraLines:
     // Family 2b) — the fixture models a compliant spec, so its rubric carries
     // them the way a real spec's S-rows do.
     heading === ACCEPTANCE_RUBRIC_HEADING
-      ? `## ${heading}\n\n| S1 | Conform gates green | \`${TRUE_COMMAND}\` | exit 0 | P0 | |\n| S2 | Unit tests pass | \`${TRUE_COMMAND}\` | exit 0 | P0 | |\n`
+      ? `## ${heading}\n\n| # | Criterion | Verify | Expected | Priority | Graded |\n|---|---|---|---|---|---|\n| S1 | Declared checks | \`${TRUE_COMMAND}\` | exit 0 | P0 | |\n`
+      : heading.startsWith("Implementing agent") ? `## ${heading}\n\n1. \`README.md\` — fixture reference.\n`
+      : heading.startsWith("Test Specification") ? `## ${heading}\n\n| Dimension | Tier | Test | Asserts |\n|---|---|---|---|\n| 1.1 | unit | \`fixture_test\` | Valid input is accepted. |\n`
       : `## ${heading}\n\nFixture content for ${heading}.\n`,
   );
   return [
