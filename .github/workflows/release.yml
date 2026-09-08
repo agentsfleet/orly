@@ -92,6 +92,14 @@ jobs:
           bash /tmp/release-probe/package/bin/orly init
           test -f AGENTS.orly.md || { echo "✗ orly's rules did not land"; exit 1; }
           test -f AGENTS.md      || { echo "✗ the repository's own file did not land"; exit 1; }
+          # `init` seeds commands by reading a Makefile and package.json scripts,
+          # and this probe repository is one Go file — so it seeds none, and
+          # `doctor` refuses an incomplete setup rather than passing a repository
+          # that declares no way to check itself. Declaring them here is the
+          # completion a real repository performs after init, and it is what the
+          # probe is actually for: proving the packed tarball installs, renders,
+          # and doctors clean once its setup is finished.
+          node -e 'const f=".oracle/orly.json",fs=require("fs"),c=JSON.parse(fs.readFileSync(f,"utf8"));c.commands={...c.commands,conform:[["true"]],"verify.unit":[["true"]]};fs.writeFileSync(f,JSON.stringify(c,null,2)+"\n")'
           bash /tmp/release-probe/package/bin/orly doctor
           echo "✓ the packed tarball installs and doctors clean"
 
