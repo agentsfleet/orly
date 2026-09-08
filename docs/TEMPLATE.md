@@ -101,7 +101,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Batch:** B{1-4} — {parallel execution context}
 **Branch:** {feat/mNN-name — added at CHORE(open)}
 <!-- A deliberately folded workstream adds Folded-into metadata per dispatch/lifecycle.md. -->
-**Test Baseline:** set at CHORE(open) — `unit=<N> integration=<M>` from the repository's declared `verify.*` commands (`.oracle/orly.json`)
+**Test Baseline:** pending — measured before the Pull Request as `unit=<N> integration=<M>` from the repository's declared `verify.*` commands (`.oracle/orly.json`), or `n/a — no code on this branch`
 **Depends on:** {M{N}_{NNN} (one-line reason), …}
 **Provenance:** human-written | LLM-drafted ({model}, {date}) | agent-generated (pre-spec, {source doc})
 **Canonical architecture:** `docs/architecture/{relevant-doc}.md` §{N}

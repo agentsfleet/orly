@@ -195,7 +195,7 @@ Non-trivial (full lifecycle) if it: touches >1 file · new abstraction · data m
 <!-- oracle-packs:start workflow.specifications -->
 ### CHORE (open)
 
-Spec `pending/`→`active/`; `Status: IN_PROGRESS`; `Branch:` set; **`Test Baseline:` recorded** (declared `verify.*` counts → `**Test Baseline:** unit=<N> integration=<M>`; VERIFY's Test Delta compares against it); committed. Worktree created, CWD inside (verify `pwd` + `git worktree list`). No code until the 4 steps are committed.
+Spec `pending/`→`active/`; `Status: IN_PROGRESS`; `Branch:` set; **`Test Baseline:` declared** (the header lands here saying the counts are pending; the suites that produce them run at the pre-Pull-Request boundary, and `orly gate pr` refuses a header still carrying no number); committed. Worktree created, CWD inside (verify `pwd` + `git worktree list`), carrying the base checkout's uncommitted work in with it. No code until the 4 steps are committed.
 <!-- oracle-packs:end -->
 
 ### PLAN

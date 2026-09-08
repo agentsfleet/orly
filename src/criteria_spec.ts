@@ -18,6 +18,11 @@ const SPEC_ORDERING = "spec.ordering";
 const SPEC_DEFERRALS = "spec.deferrals";
 const STATUS_DONE = "Status: DONE";
 const BASELINE_HEADER = "Test Baseline:";
+// CHORE(open) declares the header; the suites that fill it run at the
+// pre-Pull-Request boundary, which is this gate. So a header still reading
+// `pending` here is a step skipped, not a step not yet due. `n/a` is the
+// measured answer for a branch that adds no code.
+const BASELINE_MEASURED = /unit=\d+|\bn\/a\b/i;
 const INDY_ACK = "> Indy (";
 // deferred/deferral(s) only — never Zig's defer/errdefer keywords.
 const DEFERRAL_CLAIM = /\bdeferr(ed|al|als)\b/i;
@@ -78,10 +83,13 @@ export function specMoved(): Criterion {
 
 export function specBaseline(): Criterion {
   return specCriterion(SPEC_BASELINE, (context) => {
-    const present = specLines(context).some((line) => line.includes(BASELINE_HEADER));
-    return present
-      ? { ok: true, detail: "Test Baseline recorded" }
-      : { ok: false, detail: `no \`${BASELINE_HEADER}\` line in the spec header — CHORE(open) records it before any code` };
+    const header = specLines(context).find((line) => line.includes(BASELINE_HEADER));
+    if (!header) {
+      return { ok: false, detail: `no \`${BASELINE_HEADER}\` line in the spec header — CHORE(open) declares it before any code` };
+    }
+    return BASELINE_MEASURED.test(header)
+      ? { ok: true, detail: "Test Baseline measured" }
+      : { ok: false, detail: `\`${BASELINE_HEADER}\` carries no count — measure it before the Pull Request, or record \`n/a\` when the branch adds no code` };
   });
 }
 

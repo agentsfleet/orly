@@ -18,7 +18,7 @@ column is a command, not a claim — `orly gate` reads the repository's declared
 
 | Stage | Runs | Fired by |
 |---|---|---|
-| CHORE(open) | the declared `verify.unit` once, to record `Test Baseline:` | the agent |
+| CHORE(open) | nothing — the `Test Baseline:` header is declared, not measured | the agent |
 | PLAN | nothing — no file mutations | — |
 | EXECUTE | the dispatch façade for each edited file type; DOC READ recorded via `audits/doc-read.sh log` | the agent, and the runtime's read hook where it has one |
 | CONFORM | the declared `conform` command | `orly gate work` — the generated pre-commit hook |
@@ -40,27 +40,72 @@ slow set at the close. And `orly gate pr` can skip the fast set because
 ## CHORE (open) — runbook
 
 1. Spec `docs/v*/pending/` → `active/`; `Status: IN_PROGRESS`; `Branch:` set.
-2. **Test Baseline** — run the repository's declared `verify.unit` (and
-   `verify.integration` where declared) from `.oracle/orly.json`; copy the
-   reported counts into the spec header as `**Test Baseline:** unit=<N>
-   integration=<M>` (VERIFY's Test Delta row compares against it; a product
-   pack may name a dedicated counter — see the product block below).
-3. Create the worktree; verify CWD is inside it (`pwd` + `git worktree list`).
+2. **Test Baseline** — declare the header now, measure it before the Pull
+   Request. CHORE(open) writes `**Test Baseline:** pending — measured before
+   the Pull Request` and runs nothing: the declared suites cost minutes, and an
+   open that spends them buys a number the boundary has to read again anyway.
+   The counts are the BRANCH POINT's, not HEAD's — a baseline measured on the
+   same tree as the final count makes VERIFY's Test Delta compare a number
+   against itself. So at the boundary, read them from the default branch's own
+   last green run of the declared lanes where that run reports counts; failing
+   that, run the declared `verify.unit` (and `verify.integration` where
+   declared) in the BASE CHECKOUT, which is already sitting on the branch point,
+   while the boundary's own run works in the worktree. A branch carrying no code
+   records `**Test Baseline:** n/a — no code on this branch`, and the Test Delta
+   has nothing to measure. `orly gate pr` fails a header still reading `pending`,
+   so the measurement can be late but not forgotten. (A product pack may name a
+   dedicated counter — see the product block below.)
+3. Create the worktree and carry the base checkout's uncommitted work into it;
+   verify CWD is inside it (`pwd` + `git worktree list`).
 4. Commit the four steps on the feature branch. No code until the commit lands.
+
+**The base checkout's uncommitted work moves with the stream.** A worktree cut
+from a dirty base strands that work on the default branch, where it is neither
+committed, nor reviewed, nor in the tree the stream is about to gate — and the
+next `git status` there reads as drift nobody owns. So step 3 moves it, before
+any spec edit:
+
+```bash
+git -C <base> status --porcelain -uall            # nothing? the step is a no-op
+git -C <base> stash push --include-untracked -m "chore(open): <branch>"
+git -C <worktree> stash pop
+```
+
+`git stash` is per-repository, not per-worktree, so the entry the base pushes is
+the entry the worktree pops. **Move, never copy** — work left in both places is
+committed twice and conflicts on the merge. Name what came across in the
+CHORE(open) report; a carry-over nobody announced is indistinguishable from
+scope that wandered in. A pop that conflicts KEEPS the stash: stop there and
+resolve before step 4, because a half-applied carry-over is worse than a dirty
+base. Work that does not belong to this stream is the one exception — leave it,
+and say so.
 
 <!-- oracle-packs:start product.agentsfleet -->
 ## Worktree recipe (agentsfleet)
 
-`git checkout main && git branch feat/mNN-name && git worktree add ../agentsfleet-mNN-name feat/mNN-name && cd ../agentsfleet-mNN-name && bun install && (cd cli && bun install && bun run build)`.
-The root `bun install` hydrates the workspace (`ui/packages/*`); `cli/` is its
-own Bun project needing install + build. `git worktree add` fires
+```bash
+cd ~/Projects/agentsfleet && git checkout main
+git status --porcelain -uall     # dirty? carry it over — the two stash lines below
+git stash push --include-untracked -m "chore(open): feat/mNN-name"
+git branch feat/mNN-name
+git worktree add ../agentsfleet-mNN-name feat/mNN-name
+cd ../agentsfleet-mNN-name && git stash pop
+bun install && (cd cli && bun install && bun run build)
+```
+
+The two `git stash` lines are the carry-over above, and they drop out when
+`git status` in the base comes back empty. The root `bun install` hydrates the
+workspace (`ui/packages/*`); `cli/` is its own Bun project needing install +
+build. `git worktree add` fires
 `.githooks/post-checkout` → symlinks `~/.config/agentsfleet/{ui,runner}.env.local`
 into the tree; on 🟠 run `provision-env-1password`, re-link. Post-merge:
 `git worktree remove ../agentsfleet-mNN-name`.
 
 **Test Baseline counter.** A repository whose declared `verify.unit` does not
 print a total names its own counter here. Without one, record the count the
-declared command reports.
+declared command reports. Measured before the Pull Request, never at the open —
+and in `~/Projects/agentsfleet`, the base checkout, which is still sitting on the
+branch point while the worktree carries the diff.
 
 **agentsfleet CHORE(close) paths:** the `<Update>` lands in
 `~/Projects/docs/changelog.mdx` (template + version-bump matrix:

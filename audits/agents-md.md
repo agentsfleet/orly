@@ -122,8 +122,10 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 6.6 | Is at least one declared `verify.integration` run from clean state required per branch before ship-ready (where the repository declares one)? | YES |
 | 6.7 | Are package-scoped runners (`bun run test`, `vitest <file>`, `zig build test` w/o integration) explicitly **not** verification? | YES |
 | 6.8 | Must memleak evidence (last 3 lines verbatim) appear in PR Session Notes when touching `src/http/**` / `src/cmd/serve.zig` / allocator wiring? | YES |
-| 6.9 | Does CHORE(open) record a `Test Baseline:` line (unit + integration counts from the repository's declared `verify.*` commands; a product pack may name a dedicated counter) in the spec header? | YES |
-| 6.10 | Does VERIFY end with a Test Delta row (growth vs the CHORE(open) baseline) plus a lacking-areas verdict, with zero/negative unit delta on a code-adding diff requiring justification or a return to EXECUTE? | YES |
+| 6.9 | Does CHORE(open) DECLARE the `Test Baseline:` line in the spec header while measuring nothing, with the counts from the repository's declared `verify.*` commands landing before the Pull Request (a product pack may name a dedicated counter)? | YES |
+| 6.9a | Is the baseline the BRANCH POINT's count — read from the default branch's last green run of the declared lanes, or measured in the base checkout — rather than a count taken off the same tree as the final number? | YES |
+| 6.9b | Does `orly gate pr` fail a `Test Baseline:` header that still carries no count, and accept `n/a` from a branch that adds no code? | YES |
+| 6.10 | Does VERIFY end with a Test Delta row (growth vs the branch point's baseline) plus a lacking-areas verdict, with zero/negative unit delta on a code-adding diff requiring justification or a return to EXECUTE? | YES |
 | 6.11 | Do the lifecycle stage runbooks (CHORE(open/close) checklists, PLAN expansions, deferral quote format, pre-PR gates, LAND) resolve from `dispatch/lifecycle.md`, with AGENTS.md keeping each stage's binding essence? | YES |
 
 ### Scenario 7 — Review discipline before merge
@@ -233,6 +235,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 18.1 | Must `gitleaks` pass before any `git commit` / `git push`? | YES |
 | 18.2 | Is the rule "one worktree per active stream — no edits outside, no reads from siblings, merge only after REVIEW and the final commit" preserved? | YES |
 | 18.3 | Are cross-worktree edits explicitly forbidden without explicit user approval? | YES |
+| 18.4 | Does CHORE(open) MOVE the base checkout's uncommitted work into the new worktree — never copy it, naming what came across, and stopping on a conflicting `git stash pop` — so a stream is never cut from a dirty base that then reads as unowned drift? | YES |
 
 ### Scenario 19 — CONFORM combined audit
 

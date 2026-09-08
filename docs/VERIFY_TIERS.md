@@ -39,10 +39,18 @@ the inner loop; Continuous Integration (CI) never sets it.
 ## Test Baseline
 
 `make test-unit-all` reports its own counts per target. Record the cargo
-workspace total in the spec header at CHORE(open) as
-`**Test Baseline:** unit=<N>`, and compare against it in VERIFY's Test Delta row.
-Zero or negative growth on a code-adding diff needs justification or a return to
-EXECUTE.
+workspace total in the spec header as `**Test Baseline:** unit=<N>`, and compare
+against it in VERIFY's Test Delta row. Zero or negative growth on a code-adding
+diff needs justification or a return to EXECUTE.
+
+The number is measured **before the Pull Request, not at CHORE(open)** — the
+lane costs minutes the open does not have to spend. It is still the BRANCH
+POINT's number: run `make test-unit-all` in `~/Projects/agentsfleet`, the base
+checkout, which is sitting on the branch point while the worktree carries the
+diff, and the boundary's own run measures HEAD in the worktree. A baseline read
+off the same tree as the final count makes the Test Delta compare a number
+against itself. A branch carrying no code records `n/a — no code on this branch`
+and the Test Delta says it had nothing to measure.
 
 ## Wire fixtures
 
