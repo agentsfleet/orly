@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { rmSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative } from "node:path";
 
 import { criteriaFor, runCommand } from "./criteria";
-import { cleanupTemporaryDirectories, modelFor, newRepository, newSpecRepository } from "./gates_test_support";
+import { activeSpecPath, closedSpecPath } from "./gates";
+import { cleanupTemporaryDirectories, closedSpecRepository, git, modelFor, newRepository, newSpecRepository } from "./gates_test_support";
 
 const WORK = "work";
 const VERIFY = "verify";
@@ -32,12 +33,12 @@ describe("criteriaFor", () => {
     expect(named(WORK, await contextFor(project))).toEqual(["cmd.conform", REPO_CONFIG]);
   });
 
-  test("verify pairs the spec dimensions with the fast command tier only", async () => {
+  test("verify permits unfinished Sections and excludes boundary test suites", async () => {
     const project = newSpecRepository();
     const names = named(VERIFY, await contextFor(project));
 
-    expect(names).toContain("spec.dimensions");
-    expect(names).toContain("cmd.verify.unit");
+    expect(names).not.toContain("spec.dimensions");
+    expect(names).not.toContain("cmd.verify.unit");
     // conform is the work gate's tier now, so the chain runs it once.
     expect(names).not.toContain("cmd.conform");
     // The slow tier belongs to the pr gate; leaking it here would make every
@@ -61,6 +62,20 @@ describe("criteriaFor", () => {
     // merged branch reds, which is the honest answer: no PR opens from main.
     expect(names).toContain("git.branch");
     expect(names).toContain("git.tree");
+  });
+
+  test("final verification runs test lanes even when push verification never ran", async () => {
+    const root = newRepository();
+    const commands = Object.fromEntries(["unit", "integration", "memory", "lint"].map((lane) => [
+      `verify.${lane}`, [["sh", "-c", `echo ${lane} >> ran.txt`]],
+    ]));
+    const context = {
+      root, model: await modelFor(root, undefined, commands), acceptDirty: false,
+      surfaces: { changed: ["app.rs"], code: ["app.rs"], docs: [], userSurface: [] },
+    };
+    const checks = criteriaFor(PR, context).filter((entry) => entry.name.startsWith("cmd."));
+    expect(checks.map((entry) => entry.evaluate(context).ok)).toEqual([true, true, true, true]);
+    expect((await Bun.file(join(root, "ran.txt")).text()).trim().split("\n").sort()).toEqual(["integration", "lint", "memory", "unit"]);
   });
 
   test("an unknown gate name yields no criteria rather than throwing", async () => {
@@ -108,12 +123,17 @@ describe("runCommand", () => {
     expect(runCommand(process.cwd(), ["true"])).toEqual({ ok: true, detail: "exit 0" });
   });
 
-  test("a non-zero exit carries the code and the last output line", () => {
+  test("a non-zero exit retains all output, including earlier findings", () => {
     const result = runCommand(process.cwd(), ["sh", "-c", "echo first; echo decisive >&2; exit 3"]);
 
     expect(result.ok).toBeFalse();
     expect(result.detail).toContain("exit 3");
+    expect(result.detail).toContain("first");
     expect(result.detail).toEndWith("decisive");
+  });
+
+  test("a successful command retains its measured counts", () => {
+    expect(runCommand(process.cwd(), ["echo", "12 passed, 0 failed"]).detail).toContain("12 passed, 0 failed");
   });
 
   test("a silent failure still reports a detail rather than an empty string", () => {
@@ -145,4 +165,25 @@ describe("repo.config", () => {
     expect(verdict?.ok).toBeFalse();
     expect(verdict?.detail).toContain("orly init");
   });
+});
+
+describe("the final tree check", () => {
+  for (const stage of ["active", "done"]) {
+    test(`requires a ${stage} spec edit to be committed`, async () => {
+      const root = stage === "active" ? newSpecRepository() : closedSpecRepository("feat/spec");
+      const model = await modelFor(root);
+      const specPath = relative(root, activeSpecPath(root) ?? closedSpecPath(root)!);
+      const context = { root, model, specPath, acceptDirty: false };
+      const check = criteriaFor(PR, context).find((entry) => entry.name === "git.tree")!;
+      expect(check.evaluate(context).ok).toBe(true);
+
+      const path = join(root, specPath);
+      await Bun.write(path, `${await Bun.file(path).text()}\nUpdated evidence.\n`);
+      expect(check.evaluate(context).ok).toBe(false);
+      git(root, "add", specPath);
+      expect(check.evaluate(context).ok).toBe(false);
+      git(root, "commit", "-qm", "docs: record evidence");
+      expect(check.evaluate(context).ok).toBe(true);
+    });
+  }
 });

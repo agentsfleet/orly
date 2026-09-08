@@ -1,5 +1,16 @@
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { readConfigSync } from "./config";
 import { Criterion, CriterionContext, criterion, gitOutput, runCommand, Verdict } from "./criteria_support";
-import { branchDiff, defaultMergeBase } from "./surfaces";
+import { branchDiff, classifyBranch, defaultMergeBase } from "./surfaces";
+
+const BASELINE_HEADER = "Test Baseline";
+const REVISION_HEADER = "Baseline revision";
+const EVIDENCE_HEADER = "Baseline evidence";
+const BASELINE_LANES = ["unit", "integration"];
+const FULL_REVISION = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
+const NOT_APPLICABLE = /^n\/a\s+[—-]\s+\S/i;
+
 
 const OPEN_QUESTION = "[?]";
 const PRODUCT_CLARITY_HEADING = "## Product Clarity";
@@ -17,12 +28,6 @@ const SPEC_BASELINE = "spec.baseline";
 const SPEC_ORDERING = "spec.ordering";
 const SPEC_DEFERRALS = "spec.deferrals";
 const STATUS_DONE = "Status: DONE";
-const BASELINE_HEADER = "Test Baseline:";
-// CHORE(open) declares the header; the suites that fill it run at the
-// pre-Pull-Request boundary, which is this gate. So a header still reading
-// `pending` here is a step skipped, not a step not yet due. `n/a` is the
-// measured answer for a branch that adds no code.
-const BASELINE_MEASURED = /unit=\d+|\bn\/a\b/i;
 const INDY_ACK = "> Indy (";
 // deferred/deferral(s) only — never Zig's defer/errdefer keywords.
 const DEFERRAL_CLAIM = /\bdeferr(ed|al|als)\b/i;
@@ -83,13 +88,29 @@ export function specMoved(): Criterion {
 
 export function specBaseline(): Criterion {
   return specCriterion(SPEC_BASELINE, (context) => {
-    const header = specLines(context).find((line) => line.includes(BASELINE_HEADER));
-    if (!header) {
-      return { ok: false, detail: `no \`${BASELINE_HEADER}\` line in the spec header — CHORE(open) declares it before any code` };
+    const baseline = header(context.specText ?? "", BASELINE_HEADER);
+    if (!baseline) return { ok: false, detail: "no Test Baseline header — declare it at opening" };
+    let config;
+    try {
+      config = readConfigSync(context.root);
+    } catch (error) {
+      return { ok: false, detail: `cannot read baseline configuration: ${error instanceof Error ? error.message : String(error)}` };
     }
-    return BASELINE_MEASURED.test(header)
-      ? { ok: true, detail: "Test Baseline measured" }
-      : { ok: false, detail: `\`${BASELINE_HEADER}\` carries no count — measure it before the Pull Request, or record \`n/a\` when the branch adds no code` };
+    if (!config) return { ok: false, detail: "baseline needs the repository's declared commands" };
+    const lanes = BASELINE_LANES.filter((lane) => `verify.${lane}` in config.commands);
+    const surfaces = context.surfaces ?? classifyBranch(context.root, config.surfaces);
+    if (NOT_APPLICABLE.test(baseline)) {
+      const knownBase = defaultMergeBase(context.root).length > 0;
+      const allowed = lanes.length === 0 || (knownBase && surfaces.code.length === 0);
+      return { ok: allowed, detail: allowed ? "baseline not applicable: no code or no baseline lanes" : "n/a cannot replace a code branch's declared baseline lanes" };
+    }
+    for (const lane of lanes) {
+      if (!new RegExp(`(?:^|\\s)${lane}=\\d+(?=\\s|$)`).test(baseline)) {
+        return { ok: false, detail: `Test Baseline carries no count for ${lane} — measure before the Pull Request` };
+      }
+    }
+    if (lanes.length === 0) return { ok: false, detail: "no baseline lanes declared — record n/a with the reason" };
+    return baselineEvidence(context);
   });
 }
 
@@ -132,4 +153,22 @@ function specLines(context: CriterionContext): string[] {
 
 function dimensionLabels(lines: string[]): string {
   return lines.map((line) => line.trim().slice(DIMENSION_PREFIX.length).split("*")[0]?.trim() ?? "?").join(", ");
+}
+
+function baselineEvidence(context: CriterionContext): Verdict {
+  const text = context.specText ?? "";
+  const revision = header(text, REVISION_HEADER);
+  if (!FULL_REVISION.test(revision)) return { ok: false, detail: "Baseline revision must name a full comparison commit" };
+  const ancestor = gitOutput(context.root, ["merge-base", revision, "HEAD"]);
+  if (ancestor !== revision) return { ok: false, detail: "Baseline revision is missing or is not an ancestor of HEAD" };
+  const evidence = header(text, EVIDENCE_HEADER);
+  if (!evidence || (!/^https?:\/\/\S+$/.test(evidence) && !existsSync(resolve(context.root, evidence)))) {
+    return { ok: false, detail: "Baseline evidence must name an existing report or a run URL" };
+  }
+  return { ok: true, detail: "baseline counts, comparison revision, and evidence reference recorded; report contents require review" };
+}
+
+function header(text: string, name: string): string {
+  const prefix = `**${name}:**`;
+  return (text.split(/\r?\n/).find((line) => line.startsWith(prefix))?.slice(prefix.length).trim() ?? "").replaceAll("`", "");
 }

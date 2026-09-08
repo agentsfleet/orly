@@ -9,6 +9,7 @@ import { isString, OrlyError, readJsonObject, RulesModel } from "./model";
 import { Renderer } from "./render";
 import { beginTelemetry, installedOrlyVersion, isTelemetrySkill, recordTelemetry } from "./telemetry";
 import { verifyRenders, writeEvidence } from "./verify";
+import { commandSetupErrors } from "./validation";
 
 type CliResult = { exitCode: number; gate?: string; failedCriterion?: string };
 
@@ -152,15 +153,18 @@ async function materialise(model: RulesModel, args: string[], isInit: boolean): 
     installHooks: !args.includes(NO_HOOKS_FLAG),
     orlyVersion: await packageVersion(model),
   });
-  if (args.includes(JSON_FLAG)) console.log(JSON.stringify(result, undefined, JSON_INDENT));
-  else printInstall(result);
+  const setupErrors = result.ok ? commandSetupErrors((await readConfig(targetRoot))!.commands) : [];
+  if (args.includes(JSON_FLAG)) console.log(JSON.stringify({ ...result, setupErrors }, undefined, JSON_INDENT));
+  else printInstall(result, setupErrors);
   return result.ok ? 0 : 1;
 }
 
-function printInstall(result: InstallResult): void {
+function printInstall(result: InstallResult, setupErrors: string[]): void {
   for (const error of result.errors) console.log(`${FAIL_GLYPH} ${error.path}: ${error.message} — ${error.suggestion}`);
   if (!result.ok) return;
   console.log(`${PASS_GLYPH} ${result.written.length} written, ${result.skipped.length} already current (${result.packs.length} packs)`);
+  for (const error of setupErrors) console.log(`🟠 setup incomplete: ${error}`);
+  if (setupErrors.length > 0) console.log("Then run orly doctor to check the completed setup.");
 }
 
 function printGate(report: GateReport): void {
@@ -175,9 +179,6 @@ function projectRoot(): string {
 }
 
 async function doctorGlobal(model: RulesModel): Promise<number> {
-  // Every repository is the same case now: doctor reports on the ruleset
-  // installed where the caller is standing. There is no machine-level carrier
-  // to check — the rules ride in each repository's own commit.
   const errors = await doctorInstall(model);
   if (errors.length > 0) {
     for (const error of errors) console.log(`${FAIL_GLYPH} ${error}`);
@@ -188,7 +189,10 @@ async function doctorGlobal(model: RulesModel): Promise<number> {
     console.log(`${FAIL_GLYPH} no ${CONFIG_PATH} here — run \`orly init\` first`);
     return 1;
   }
-  console.log(`${PASS_GLYPH} this repository's installed ruleset matches ${CONFIG_PATH}`);
+  const setupErrors = commandSetupErrors(config.commands);
+  for (const error of setupErrors) console.log(`${FAIL_GLYPH} setup incomplete: ${error}`);
+  if (setupErrors.length > 0) return 1;
+  console.log(`${PASS_GLYPH} installed rules match ${CONFIG_PATH}; work and verification commands are declared`);
   return 0;
 }
 
@@ -266,12 +270,6 @@ function requireNoArguments(args: string[], usage: string): void {
   if (args.length > 0) throw new OrlyError(usage);
 }
 
-function optionValue(args: string[], name: string): string {
-  const value = optionalValue(args, name);
-  if (!value) throw new OrlyError(`${name} is required`);
-  return value;
-}
-
 function optionalValue(args: string[], name: string): string | undefined {
   const index = args.indexOf(name);
   return index < 0 ? undefined : args[index + 1];
@@ -301,10 +299,10 @@ Gates (read-only; no PR without every criterion green or a recorded override):
   orly gate <work|verify|pr>        run one gate
       work    does this commit conform? the declared conform command; no git
               state, so a commit hook's own dirty tree never blocks it
-      verify  does the work hold up? spec dimensions, docs language, and the
-              fast verify.* set
+      verify  does the work hold up? configuration, docs language, and the
+              non-test verify.* set; unfinished Sections may be pushed
       pr      can this ship? branch, tree, pushed, every spec criterion, and
-              the slow verify.* suites
+              every declared verify.* command
   orly override <CRITERION> --reason <REASON>
                                     empty commit with an Orly-Override trailer
 

@@ -71,9 +71,14 @@ determinism proof is unchanged by any of this.
 
 | Gate | Proves |
 |---|---|
-| `work` | branch is not the default; tree is clean; the repository declares its commands in `.oracle/orly.json` |
-| `verify` | Dimensions marked DONE (when a spec exists); `conform`; the fast `verify.*` commands |
-| `pr` | tree clean; branch pushed; spec gate + closed-spec follow-through (`spec.moved` / `spec.baseline` / `spec.ordering` / `spec.deferrals`); docs updated for user-surface changes; the slow suites |
+| `work` | repository configuration and the declared `conform` command over the staged change |
+| `verify` | documentation checks and non-test `verify.*` commands; unfinished Sections may be pushed |
+| `pr` | exact pushed revision, branch/spec criteria, docs surface, and every declared `verify.*` command |
+
+The authoritative sequence is `dispatch/lifecycle.md`. Full unit, integration,
+and memory suites run at the PR boundary. No stored verification cache or
+assumption about a custom pre-push hook can remove them. Baselines name an
+immutable comparison revision and are measured before the Pull Request.
 
 Every criterion is mechanical — it reads an exit code or a file. Claims that
 cannot be proven that way stay prose and are graded by the spec's rubric; they
@@ -121,6 +126,11 @@ surfaces:
 ```
 
 Orly owns policy and invokes these commands. The repository owns what they do.
+Setup requires `conform` and at least one named `verify.*` command.
+Documentation repositories can use `verify.docs` for site validation and link
+checks without declaring application test suites. `init` reports missing
+commands; `doctor` rejects incomplete setup without running those commands.
+The final tree check includes the spec, so its evidence must be committed.
 
 ## Usage telemetry
 

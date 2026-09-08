@@ -44,10 +44,8 @@ export type InstallOptions = {
 
 type PlannedFile = { target: string; content: Uint8Array; mode: string };
 
-// Materialise a profile into a repository: its rules, the gates that enforce
-// them, the hooks that run the gates, and a lock recording exactly what landed.
-// Everything is staged in a temporary directory first, so a run that refuses —
-// or dies — leaves the target untouched rather than half-installed.
+// Validate the planned files before writing them. Later filesystem failures
+// can still leave a partial installation; inspect the diff before retrying.
 export async function install(model: RulesModel, options: InstallOptions): Promise<InstallResult> {
   const targetRoot = resolve(options.targetRoot);
   requireWorkTree(targetRoot);
@@ -78,7 +76,7 @@ export async function install(model: RulesModel, options: InstallOptions): Promi
     // tracked anything — this checkout among them. Without it, orly's own
     // render reads as a stranger's file and every update refuses.
     if (file.target === layout.orlyFile && (await Bun.file(path).text()).startsWith(GENERATED_BANNER)) { written.push(file.target); continue; }
-    refusals.push(refusal(file.target, false));
+    refusals.push(refusal(file.target));
   }
   if (options.installHooks) {
     const claim = hooksClaimedByAnother(targetRoot);
@@ -161,35 +159,19 @@ async function hookAuthorship(targetRoot: string, target: string, gate: string, 
   return { path: target, message: "a hook already exists here and orly did not write it", suggestion: "move it aside, re-run with --force to replace it, or use --no-hooks" };
 }
 
-function refusal(target: string, wasManaged: boolean): InstallError {
-  return wasManaged
-    ? { path: target, message: "managed file was edited in place since it was installed", suggestion: "revert the edit, or re-run with --force to overwrite it" }
-    : { path: target, message: "a file already exists here and orly did not write it", suggestion: "move it aside, or re-run with --force to replace it" };
+function refusal(target: string): InstallError {
+  return { path: target, message: "a file already exists here and orly did not write it", suggestion: "move it aside, or re-run with --force to replace it" };
 }
 
-// The payload is written to a scratch directory and only moved into the target
-// once every file exists and every reference it names resolves. Reference
-// closure runs against the staged tree, so a pack whose façade cites a document
-// no selected pack provides is caught before anything lands. The scratch
-// directory lives inside the target's own .oracle/ — not the OS tmp dir —
-// because `rename(2)` cannot cross a filesystem boundary: an OS tmp dir and
-// the target repository are routinely on different filesystems (a mounted
-// external drive, a devcontainer's bind-mounted workspace over a tmpfs
-// /tmp), and staging there turned every such install into a hard EXDEV
-// crash instead of the atomic move this function exists to guarantee.
+// Check references in the staged payload. Stage inside the repository because
+// rename cannot move files across filesystem boundaries.
 async function stageAndCommit(model: RulesModel, targetRoot: string, planned: PlannedFile[], written: string[]): Promise<InstallError[]> {
   const stagingParent = join(targetRoot, dirname(CONFIG_PATH));
   const stagingParentExisted = existsSync(stagingParent);
   mkdirSync(stagingParent, { recursive: true });
   const stage = mkdtempSync(join(stagingParent, STAGE_PREFIX));
 
-  // A refusal must leave the target exactly as it found it, and staging now
-  // lives inside it: remove .oracle/ too if this run is the one that created
-  // it and it is still empty on the failure path — a fresh empty directory
-  // left behind is as much a footprint as a written file. The success path
-  // must NOT run this: .oracle/ is still empty at this point (the caller
-  // writes orly.json into it right after stageAndCommit returns), so an
-  // unconditional check would delete a directory the next step needs.
+  // On failure, remove an empty .oracle/ only if this call created it.
   const cleanupStagingParentIfEmpty = () => {
     rmSync(stage, { recursive: true, force: true });
     if (!stagingParentExisted && existsSync(stagingParent) && readdirSync(stagingParent).length === 0) rmSync(stagingParent, { recursive: true, force: true });
@@ -202,11 +184,7 @@ async function stageAndCommit(model: RulesModel, targetRoot: string, planned: Pl
       await Bun.write(path, file.content);
       applyMode(path, file.mode);
     }
-    // Skills are playbooks copied verbatim, not rule pages: one names the
-    // façade for every language it might be invoked in. Grading those citations
-    // would force a Go repository to take the Zig and TypeScript packs to
-    // satisfy a menu it will never read — the same reason a `docs/TEMPLATE.md`
-    // comment is exempt.
+    // Skills may name optional language guides that this repository does not use.
     const markdown = planned
       .filter((file) => extname(file.target) === MARKDOWN_EXTENSION && !file.target.includes(SKILLS_SEGMENT))
       .map((file) => join(stage, file.target));
@@ -232,10 +210,7 @@ async function stageAndCommit(model: RulesModel, targetRoot: string, planned: Pl
   }
 }
 
-// A hooksPath already pointing somewhere other than what init installs is
-// someone else's setup — retargeting it silently would disable whatever
-// ran there before. init only overrides its own prior installs (the same
-// directory name) or an unset config, matching the idempotent-rerun case.
+// Retargeting another tool's hooks would silently disable its checks.
 function hooksClaimedByAnother(targetRoot: string): InstallError | undefined {
   const result = Bun.spawnSync([GIT_COMMAND, GIT_REPO_FLAG, targetRoot, GIT_CONFIG_SUBCOMMAND, "--get", HOOKS_PATH_KEY], { stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT, env: UNSCOPED_ENVIRONMENT });
   if (result.exitCode !== 0) return undefined;
@@ -244,10 +219,7 @@ function hooksClaimedByAnother(targetRoot: string): InstallError | undefined {
   return { path: HOOKS_PATH_KEY, message: `already set to '${existing}', not the directory this install manages`, suggestion: "run with --no-hooks to leave it alone, or --force to retarget it" };
 }
 
-// Hooks are generated, never copied: this repository's own hooks run `make
-// audit` and `bin/orly verify`, neither of which exists in a consumer. What a
-// consumer needs is the gate engine, reached through the binary that installed
-// it — with a PATH fallback so a relocated checkout still resolves.
+// Consumer hooks use the installed executable, independent of this checkout.
 async function installHooks(targetRoot: string): Promise<{ written: string[]; all: string[] }> {
   for (const [name] of HOOK_GATES) assertWritableInside(targetRoot, `${HOOKS_DIRECTORY}/${name}`, HOOK_KIND);
   const directory = join(targetRoot, HOOKS_DIRECTORY);
@@ -279,7 +251,7 @@ function hookScript(gate: string): string {
     "      GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES",
     "",
     'if ! command -v orly >/dev/null 2>&1; then',
-    '    printf "orly: not on PATH — install it with `bun add -g @agentsfleet/orly`, or delete this hook\\n" >&2',
+    "    printf '%s\\n' 'orly: not on PATH — install it with `bun add -g @agentsfleet/orly`' >&2",
     "    exit 1",
     "fi",
     "",
@@ -304,12 +276,7 @@ async function planFiles(model: RulesModel, packs: string[], commands: Record<st
       if (claimed && claimed !== entry.source) throw new OrlyError(`packs disagree on ${entry.target}: ${claimed} and ${entry.source}`);
       sources.set(entry.target, entry.source);
       const path = join(model.root, entry.source);
-      // Installing into the checkout that owns the sources. Copying is for
-      // consumers: here the repository already has the file, and writing it
-      // would either replace a pack source with its own pack-filtered
-      // rendering (same path) or plant a second copy that drifts from the
-      // original (skills/ into .claude/skills/). Skipping is what the retired
-      // sync verb used to buy, generalised past the same-path case.
+      // Never overwrite the engine's pack sources with filtered consumer copies.
       if (resolved(model.root) === resolved(targetRoot)) continue;
       planned.set(entry.target, { target: entry.target, content: await managedContent(path, entry.target, entry.source, packs, known, orlyFile), mode: modeLabel(path) });
     }
@@ -319,30 +286,9 @@ async function planFiles(model: RulesModel, packs: string[], commands: Record<st
   return [...planned.values()].sort((left, right) => left.target.localeCompare(right.target));
 }
 
-// Where orly's rules land, and whether the repository keeps a file of its own.
-//
-// A repository that already wrote an AGENTS.md keeps it, under its own name,
-// byte for byte — orly's rules go beside it as AGENTS.orly.md and are reached
-// by a pointer block. Renaming their file would put orly's name on content it
-// did not write and move a file its own docs already cite. A repository with
-// no AGENTS.md gets orly's rules under that name directly, because nothing is
-// displaced and agent runtimes auto-load it.
-//
-// The test is the generated banner, not the config's managed list: this
-// checkout's own .oracle/orly.json predates managed tracking, so a
-// managed-based test would treat orly's own render as a stranger's file and
-// push it aside on the next update.
 function resolveLayout(model: RulesModel, targetRoot: string): Layout {
-  // The checkout that authors the rules holds them as sources, not as an
-  // installed copy — the same reason pack files inside the target are skipped
-  // rather than written. Its AGENTS.md IS the render, and the payload ships it
-  // as the reference copy.
+  // The engine owns its render; consumers retain their own AGENTS.md.
   if (resolved(model.root) === resolved(targetRoot)) return { orlyFile: AGENTS_FILENAME };
-  // Everywhere else orly is a guest. It always takes AGENTS.orly.md and always
-  // leaves AGENTS.md to the repository, whether or not the repository has
-  // written one yet. One layout, so `update` never has to ask which mode it is
-  // in, and a repository that starts with no rules of its own still has the
-  // file to put them in when it wants them.
   return { orlyFile: ORLY_AGENTS_FILENAME, pointerHost: AGENTS_FILENAME };
 }
 
@@ -354,14 +300,7 @@ function resolved(path: string): string {
   }
 }
 
-// Managed markdown is pack-filtered on the way in, exactly as a rendered core
-// document is. Copying it raw is how a Rust crate ends up holding a rule that
-// points at a Zig façade it will never receive.
-//
-// Exported because it is the definition of what bytes belong at a managed
-// target, and `orly verify` asks exactly that question of the checkout that
-// authors the sources — where no install ever writes, so nothing else would
-// catch a hand-edited copy drifting from the source every consumer receives.
+// Installation and verification use the same filtered bytes for each pack.
 export async function managedContent(path: string, target: string, source: string, packs: string[], known: Set<string>, orlyFile: string): Promise<Uint8Array> {
   const bytes = await Bun.file(path).bytes();
   if (extname(target) !== MARKDOWN_EXTENSION) return bytes;
@@ -369,11 +308,7 @@ export async function managedContent(path: string, target: string, source: strin
   return new TextEncoder().encode(`${retargetRulesCitations(filtered, orlyFile)}\n`);
 }
 
-// A rule page citing `AGENTS.md` means orly's rules, which is that file's name
-// only in the checkout that authors them. In a consumer they live in
-// AGENTS.orly.md and AGENTS.md belongs to the repository, so a citation left
-// alone would point every reader at the wrong half — and fail reference
-// closure, since the repository's own file is not orly's to promise.
+// Managed rule citations must point to Orly's file, not the consumer's own rules.
 function retargetRulesCitations(text: string, orlyFile: string): string {
   if (orlyFile === AGENTS_FILENAME) return text;
   return text

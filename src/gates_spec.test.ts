@@ -18,7 +18,7 @@ describe("spec discovery", () => {
     const model = await modelFor(project);
     git(project, "checkout", "-q", "-b", "fix/adhoc");
 
-    const verify = runGate(model, project, "verify");
+    const verify = runGate(model, project, "pr");
     expect(verify.results.find((result) => result.name === "spec.dimensions")?.detail).toContain("no active spec");
     expect(runGate(model, project, "work").results.find((result) => result.name === "cmd.conform")?.ok).toBeTrue();
   });
@@ -158,7 +158,7 @@ describe("closed-spec follow-through", () => {
 
     const baseline = runGate(model, project, "pr").results.find((result) => result.name === "spec.baseline");
     expect(baseline?.ok).toBeTrue();
-    expect(baseline?.detail).toContain("measured");
+    expect(baseline?.detail).toContain("not applicable");
   });
 
   test("Status: DONE while the spec still lives under active/ is red on spec.moved", async () => {

@@ -36,17 +36,19 @@ Run from the repository root. Execute these in order and stop at the first
 non-zero exit.
 
 ```bash
-# 1. preview — writes nothing
-bunx @agentsfleet/orly init --dry-run
+# 1. install the executable used by Git hooks
+bun add -g @agentsfleet/orly
 
-# 2. install
-bunx @agentsfleet/orly init
+# 2. preview, then initialize
+orly init --dry-run
+orly init
 
-# 3. confirm installed state matches what orly would write today
-bunx @agentsfleet/orly doctor
+# 3. complete any reported setup items, then check configuration and files
+orly doctor
 ```
 
 Then commit the result. Teammates receive the rules on clone.
+Keep `orly` on `PATH`; hooks use the installed executable.
 
 IMPORTANT: git does not clone hooks. Each checkout must run `orly init` once.
 If a human reports that gates are not firing, this is the first thing to check.
@@ -67,8 +69,11 @@ If a human reports that gates are not firing, this is the first thing to check.
 | `.oracle/orly.json` | packs, gate commands, install record | shared — edit the commands |
 
 `orly init` seeds `.oracle/orly.json` with gate commands found in `Makefile` or
-`package.json`. If commands are missing, ask the user which ones to add. Do not
-invent check commands.
+`package.json`. Read the repository's build files to complete missing commands;
+ask only when the repository does not define a check. Do not invent commands.
+Declare `conform` and at least one named `verify.*` command. Documentation
+repositories can use `verify.docs` without application unit or integration
+suites. `init` reports missing configuration; `doctor` rejects it.
 
 ---
 
@@ -91,7 +96,7 @@ move it. `orly gate pr` reads where it ended up.
 ```
 docs/v1/pending/   spec written, committed on main
       │
-      │  CHORE(open)   branch cut, baseline recorded, NO CODE until it commits
+      │  CHORE(open)   branch cut, comparison revision recorded, baseline measurement pending
       ▼
 docs/v1/active/    PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT
       │
@@ -117,14 +122,14 @@ Rules for you:
 | same gate fails twice on the same cause | stop, report the gate name and output to the user |
 | `orly init` refuses a file | orly did not write that file. Report it. Do **not** pass `--force` on your own initiative |
 | hooks not firing | run `git config core.hooksPath` and confirm `orly init` was run in this checkout |
-| gate command missing from `.oracle/orly.json` | ask the user for the command; do not invent one |
+| gate command missing from `.oracle/orly.json` | read the build files and declare the existing check; ask only if none exists |
 | `orly gate pr` red and the failure is genuinely inapplicable | ask the user; only they authorise `orly override` |
 | gstack `/review` unavailable | continue; orly records the skipped review in the PR notes |
 
 Overrides are recorded as an empty commit that rides into the Pull Request:
 
 ```bash
-bunx @agentsfleet/orly override <criterion> --reason "<why>"
+orly override <criterion> --reason "<why>"
 ```
 
 Never record an override without an explicit instruction from the user, and
@@ -155,7 +160,7 @@ never with a placeholder reason.
 | `orly gate` | run declared checks in order, stopping at the first failure |
 | `orly gate pr` | the Pull Request criteria check |
 | `orly override <criterion> --reason <why>` | record a gate exception (user-authorised only) |
-| `orly doctor` | diff installed state against what orly would write today |
+| `orly doctor` | check installed files and required command configuration |
 
 ---
 

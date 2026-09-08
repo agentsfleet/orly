@@ -66,21 +66,19 @@ describe("Renderer", () => {
 // drifting back is exactly as expensive as the first time, and none of it is
 // visible to a render-determinism check.
 describe("the rendered rules match the machine", () => {
-  test("VERIFY states two cadences rather than one 'always'", async () => {
+  test("VERIFY distinguishes Section proof from final verification", async () => {
     const text = await new Renderer(await RulesModel.load(ROOT)).renderText(DOTFILES_PACKS, DOTFILES_COMMANDS);
 
-    expect(text).toContain("Two cadences, one boundary");
-    expect(text).toContain("runs ONCE, at the milestone boundary");
+    expect(text).toContain("Section checks prove the changed Dimensions");
+    expect(text).toContain("the final gate runs the full declared verification set");
   });
 
   test("CHORE(close) names the pr gate, not the whole chain", async () => {
     const text = await new Renderer(await RulesModel.load(ROOT)).renderText(DOTFILES_PACKS, DOTFILES_COMMANDS);
 
     expect(text).toContain("`orly gate pr` is the command CHORE(close) runs");
-    // Sound without re-running the fast tier, and the reason is stated where
-    // the claim is: git.pushed pins HEAD to what pre-push already graded.
-    expect(text).toContain("`git.pushed` proves HEAD is exactly what the pre-push");
-    expect(text).toContain("One gate per cadence, each tier run once");
+    expect(text).toContain("a push is never proof that tests ran");
+    expect(text).toContain("every declared `verify.*` command itself");
   });
 
   test("the integration skill is conditional on a real input/output boundary", async () => {

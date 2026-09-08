@@ -107,7 +107,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 |---|---|---|
 | 5.1 | Is the agent required to verify CWD is inside the active worktree before resuming (`pwd` + `git worktree list`)? | YES |
 | 5.2 | Must the agent re-read RULES.md when sub-task shape changes (new layer/language/resume after break)? | YES |
-| 5.3 | If the spec is in `active/`, is CHORE(close) the mandatory next action after any COMMIT? | YES |
+| 5.3 | If the spec is in `active/`, does CHORE(close) follow the final implementation commit or an explicit request to park, while Section commits continue implementation? | YES |
 | 5.4 | If unexpected changes appear in files the agent is editing, must the agent stop and ask (not overwrite as stale)? | YES |
 
 ### Scenario 6 — Conformance and verification lifecycle
@@ -123,8 +123,9 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 6.7 | Are package-scoped runners (`bun run test`, `vitest <file>`, `zig build test` w/o integration) explicitly **not** verification? | YES |
 | 6.8 | Must memleak evidence (last 3 lines verbatim) appear in PR Session Notes when touching `src/http/**` / `src/cmd/serve.zig` / allocator wiring? | YES |
 | 6.9 | Does CHORE(open) DECLARE the `Test Baseline:` line in the spec header while measuring nothing, with the counts from the repository's declared `verify.*` commands landing before the Pull Request (a product pack may name a dedicated counter)? | YES |
-| 6.9a | Is the baseline the BRANCH POINT's count — read from the default branch's last green run of the declared lanes, or measured in the base checkout — rather than a count taken off the same tree as the final number? | YES |
-| 6.9b | Does `orly gate pr` fail a `Test Baseline:` header that still carries no count, and accept `n/a` from a branch that adds no code? | YES |
+| 6.9a | Does the baseline identify the full comparison commit, with matching run evidence or an isolated checkout, declared unit and integration counts, and a report reference? | YES |
+| 6.9b | Does `orly gate pr` reject missing declared baseline counts, allow reasoned `n/a` only without code or baseline lanes, and run all declared verification commands independently of custom hooks? | YES |
+| 6.9c | Does setup require `conform` and a named `verify.*` command, allowing `verify.docs` without application test suites while reporting incomplete configuration? | YES |
 | 6.10 | Does VERIFY end with a Test Delta row (growth vs the branch point's baseline) plus a lacking-areas verdict, with zero/negative unit delta on a code-adding diff requiring justification or a return to EXECUTE? | YES |
 | 6.11 | Do the lifecycle stage runbooks (CHORE(open/close) checklists, PLAN expansions, deferral quote format, pre-PR gates, LAND) resolve from `dispatch/lifecycle.md`, with AGENTS.md keeping each stage's binding essence? | YES |
 

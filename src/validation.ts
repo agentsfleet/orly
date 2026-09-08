@@ -42,6 +42,15 @@ export function validateCommands(label: string, value: unknown, errors: string[]
   }
 }
 
+export function commandSetupErrors(commands: Record<string, string[][]>): string[] {
+  const errors: string[] = [];
+  if (!commands.conform?.length) errors.push("declare conform in .oracle/orly.json for work checks");
+  if (!Object.keys(commands).some((name) => /^verify\..+/.test(name) && commands[name]?.length)) {
+    errors.push("declare at least one verify.* command in .oracle/orly.json (for example, verify.unit or verify.docs)");
+  }
+  return errors;
+}
+
 export function validateActiveRule(
   key: string,
   rule: JsonObject,

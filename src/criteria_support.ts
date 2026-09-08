@@ -41,10 +41,11 @@ export function runCommand(root: string, command: string[]): Verdict {
   } catch (error) {
     return { ok: false, detail: `${command[0] ?? "command"} could not be run: ${error instanceof Error ? error.message : String(error)}` };
   }
-  if (result.exitCode === 0) return { ok: true, detail: "exit 0" };
-  const merged = `${result.stdout.toString()}\n${result.stderr.toString()}`;
-  const lines = merged.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  return { ok: false, detail: `exit ${result.exitCode}: ${lines[lines.length - 1] ?? NO_OUTPUT}` };
+  const output = [result.stdout.toString(), result.stderr.toString()].filter(Boolean).join("\n").trim();
+  if (output) return { ok: result.exitCode === 0, detail: `exit ${result.exitCode}:\n${output}` };
+  return result.exitCode === 0
+    ? { ok: true, detail: "exit 0" }
+    : { ok: false, detail: `exit ${result.exitCode}: ${NO_OUTPUT}` };
 }
 
 export function gitOutput(root: string, command: string[]): string {
