@@ -130,8 +130,25 @@ function readDigests(value: unknown): Record<string, string> {
 }
 
 /// The digest orly records for content it wrote, and recomputes to check it.
+///
+/// Algorithm-prefixed, and not for elegance: a bare 64-character hex string is
+/// indistinguishable from a credential to an entropy-based secret scanner, and
+/// gitleaks refused the very first commit that carried these — in EVERY
+/// consuming repository at once, since `orly update` writes one per managed
+/// file. The prefix is what makes the value self-describing enough to pass,
+/// and the alternative was a scanner suppression, which is how a real
+/// credential eventually rides through.
 export function contentDigest(bytes: Uint8Array): string {
-  return createHash(DIGEST_ALGORITHM).update(bytes).digest(DIGEST_ENCODING);
+  return `${DIGEST_ALGORITHM}:${createHash(DIGEST_ALGORITHM).update(bytes).digest(DIGEST_ENCODING)}`;
+}
+
+// Tolerates the unprefixed spelling 0.10.2 wrote for its one release, so a
+// checkout installed on that version is not reported as wholly drifted before
+// its next update — a format change is not an edit, and saying so would be the
+// false alarm that teaches people to ignore the real ones.
+function sameDigest(recorded: string, actual: string): boolean {
+  const bare = (digest: string) => digest.startsWith(`${DIGEST_ALGORITHM}:`) ? digest.slice(DIGEST_ALGORITHM.length + 1) : digest;
+  return bare(recorded) === bare(actual);
 }
 
 // What orly installed here, and whether the engine has moved since.
@@ -196,7 +213,7 @@ function editedManaged(targetRoot: string, config: RepoConfig, present: string[]
     const recorded = config.digests[relativePath];
     if (!recorded) return [];
     const actual = contentDigest(readFileSync(join(targetRoot, relativePath)));
-    if (actual === recorded) return [];
+    if (sameDigest(recorded, actual)) return [];
     return [`managed file was edited after orly wrote it: ${relativePath} — move the change into the pack source, or \`orly update\` to discard it`];
   });
 }
