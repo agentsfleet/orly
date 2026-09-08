@@ -180,6 +180,24 @@ describe("managedDrift — content", () => {
     expect(drift[0]).toContain("move the change into the pack source");
   });
 
+  test("a digest is algorithm-prefixed, and the unprefixed spelling still matches", async () => {
+    // Bare hex is indistinguishable from a credential to an entropy scanner:
+    // gitleaks refused the first commit that carried these, in every consuming
+    // repository at once. The prefix is what makes it pass without a scanner
+    // suppression — and 0.10.2's unprefixed records must not read as drift.
+    const bytes = new TextEncoder().encode("managed\n");
+    const digest = contentDigest(bytes);
+    expect(digest.startsWith("sha256:")).toBe(true);
+
+    const root = scratch();
+    writeFileSync(join(root, "managed.md"), "managed\n");
+    const legacy = { ...(await seedConfig(root)), managed: ["managed.md"], digests: { "managed.md": digest.slice("sha256:".length) } };
+    expect(managedDrift(root, legacy)).toEqual([]);
+
+    const prefixed = { ...legacy, digests: { "managed.md": digest } };
+    expect(managedDrift(root, prefixed)).toEqual([]);
+  });
+
   test("a file with no recorded digest makes no claim", async () => {
     // Two cases share this path: a config written before digests existed, and a
     // hook orly manages but did not author. Neither may be reported as drift.
