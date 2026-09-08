@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
 
@@ -16,6 +17,9 @@ const EXTENSIONS_FIELD = "extensions";
 const PACKS_FIELD = "packs";
 const VERSION_FIELD = "orly_version";
 const MANAGED_FIELD = "managed";
+const DIGESTS_FIELD = "digests";
+const DIGEST_ALGORITHM = "sha256";
+const DIGEST_ENCODING = "hex";
 const COMMANDS_FIELD = "commands";
 const CONFORM_COMMAND = "conform";
 const MAKE_COMMAND = "make";
@@ -65,6 +69,7 @@ export type RepoConfig = {
   commands: Record<string, string[][]>;
   surfaces: JsonObject | undefined;
   managed: string[];
+  digests: Record<string, string>;
 };
 
 export function configPath(targetRoot: string): string {
@@ -109,7 +114,24 @@ function parseConfig(value: JsonObject): RepoConfig {
     commands: readCommands(value[COMMANDS_FIELD]),
     surfaces: isObject(value.surfaces) ? value.surfaces : undefined,
     managed: stringArray(value[MANAGED_FIELD] ?? [], `${CONFIG_PATH} ${MANAGED_FIELD}`),
+    digests: readDigests(value[DIGESTS_FIELD]),
   };
+}
+
+// Absent in a config written before digests existed, and absent per-file for
+// anything orly did not author (a hook it declined to overwrite). Both cases
+// read as "no claim", which is what keeps an older checkout green until its
+// next update rather than failing it for a record it never had.
+function readDigests(value: unknown): Record<string, string> {
+  if (!isObject(value)) return {};
+  const digests: Record<string, string> = {};
+  for (const [path, digest] of Object.entries(value)) if (isString(digest)) digests[path] = digest;
+  return digests;
+}
+
+/// The digest orly records for content it wrote, and recomputes to check it.
+export function contentDigest(bytes: Uint8Array): string {
+  return createHash(DIGEST_ALGORITHM).update(bytes).digest(DIGEST_ENCODING);
 }
 
 // What orly installed here, and whether the engine has moved since.
@@ -152,7 +174,31 @@ export function managedDrift(targetRoot: string, config: RepoConfig): string[] {
     ...present
       .filter((relativePath) => ignored.has(relativePath))
       .map((relativePath) => `managed file is ignored by git: ${relativePath} — orly wrote it and a clone will not receive it; scope the .gitignore rule that excludes it`),
+    ...editedManaged(targetRoot, config, present),
   ].sort();
+}
+
+// A managed file whose CONTENT no longer matches what orly wrote.
+//
+// The half `managedDrift` was missing, and the gap was not theoretical: a
+// consuming repository added two checks straight to a materialised gate script,
+// the pack never learned them, and the next update deleted them — while doctor
+// reported green throughout, because it verified that the file EXISTED and
+// never that it still said what orly put there. A gate whose checks can be
+// removed under a passing verifier is not a gate.
+//
+// The remedy for a hit is deliberately not `orly update`: the local content may
+// be the better version, as it was in that case. Update overwrites it; the
+// message says to move the change into the source instead, which is the only
+// way it reaches every other consumer.
+function editedManaged(targetRoot: string, config: RepoConfig, present: string[]): string[] {
+  return present.flatMap((relativePath) => {
+    const recorded = config.digests[relativePath];
+    if (!recorded) return [];
+    const actual = contentDigest(readFileSync(join(targetRoot, relativePath)));
+    if (actual === recorded) return [];
+    return [`managed file was edited after orly wrote it: ${relativePath} — move the change into the pack source, or \`orly update\` to discard it`];
+  });
 }
 
 // Key order is fixed so a rewrite produces a reviewable diff: orly's own two
@@ -168,6 +214,7 @@ export async function writeConfig(targetRoot: string, config: RepoConfig): Promi
     commands: config.commands,
     ...(config.surfaces ? { surfaces: config.surfaces } : {}),
     managed: [...config.managed].sort(),
+    digests: Object.fromEntries(Object.entries(config.digests).sort(([a], [b]) => a.localeCompare(b))),
   };
   await Bun.write(path, `${JSON.stringify(ordered, undefined, JSON_INDENT)}${NEWLINE}`);
   return path;
@@ -177,7 +224,7 @@ export async function writeConfig(targetRoot: string, config: RepoConfig): Promi
 // from what the repository already builds with; an empty set is honest rather
 // than wrong, and says so in the gate's own failure message.
 export async function seedConfig(targetRoot: string): Promise<RepoConfig> {
-  return { schema_version: CONFIG_SCHEMA_VERSION, orly_version: "", packs: [], commands: await sniffCommands(targetRoot), surfaces: undefined, managed: [] };
+  return { schema_version: CONFIG_SCHEMA_VERSION, orly_version: "", packs: [], commands: await sniffCommands(targetRoot), surfaces: undefined, managed: [], digests: {} };
 }
 
 // What this repository installed and runs with, read from its own `.oracle/`.
