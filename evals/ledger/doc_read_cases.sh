@@ -241,6 +241,13 @@ git -C "$sb" add tool.sh >/dev/null 2>&1
 for page in dispatch/write_fixture.md docs/LOGGING_STANDARD.md docs/CHANGELOG_VOICE.md; do
   run_doc_read "$sb" log "$page" >/dev/null
 done
+# The rows are written by three separate process starts, which straddle a
+# second boundary on a slow runner — and did, passing here and failing in CI on
+# the first run of this case. The clock is not the claim; the REPORT is. Pin the
+# timestamps the rows already carry and assert what `check` says about them.
+pinned="$(repo_log "$sb").pinned"
+awk '{ sub(/"ts":[0-9]+/, "\"ts\":1700000000"); print }' "$(repo_log "$sb")" > "$pinned"
+mv "$pinned" "$(repo_log "$sb")"
 out_bulk="$(run_doc_read "$sb" check)"; bulk_rc=$?
 if [ "$bulk_rc" -eq 0 ] && printf '%s' "$out_bulk" | grep -q 'bulk'; then
   ok "ledger_readlog_bulk_assertion — three façades in one second are named as a bulk assertion"
