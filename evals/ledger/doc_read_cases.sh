@@ -16,7 +16,9 @@ run_doc_read "$sb" log "dispatch/write_fixture.md" >/dev/null
 run_doc_read "$sb" log "docs/LOGGING_STANDARD.md" >/dev/null
 run_doc_read "$sb" log "/etc/hosts" >/dev/null
 rows="$(wc -l < "$(repo_log "$sb")" | tr -d ' ')"
-shaped="$(grep -cE '^\{"ts":[0-9]+,"path":"[^"]+","blob":"[0-9a-f]+"\}$' "$(repo_log "$sb")")"
+# The row carries a `section` field, empty when the caller cited none — the
+# shape is fixed either way, so a parser reads one row layout and not two.
+shaped="$(grep -cE '^\{"ts":[0-9]+,"path":"[^"]+","blob":"[0-9a-f]+","section":"[^"]*"\}$' "$(repo_log "$sb")")"
 if [ "$rows" -eq 2 ] && [ "$shaped" -eq 2 ]; then
   ok "ledger_readlog_append — 2 well-formed rows, the out-of-tree path dropped"
 else
@@ -148,7 +150,11 @@ check_code 2 "$(exit_code_of bash "$LEDGER" --write)" "write-no-target"
 check_code 0 "$(exit_code_of bash "$LEDGER" --help)" "help"
 check_code 2 "$(exit_code_of bash "$DOC_READ")" "doc-read-no-mode"
 check_code 2 "$(exit_code_of bash "$DOC_READ" log)" "log-no-path"
-check_code 2 "$(exit_code_of bash "$DOC_READ" log a b)" "log-extra-arg"
+# `log` takes an optional cited section, so misuse begins at the fourth
+# argument. The assertion moved with the contract rather than being deleted:
+# what it guards is that misuse exits 2, not the arity itself.
+check_code 0 "$(exit_code_of bash "$DOC_READ" log a b)" "log-with-section"
+check_code 2 "$(exit_code_of bash "$DOC_READ" log a b c)" "log-extra-arg"
 check_code 2 "$(exit_code_of bash "$DOC_READ" check extra)" "check-extra-arg"
 if [ "$usage_codes_ok" -eq 1 ]; then
   ok "ledger_usage_exit_codes — every misuse exits 2, --help exits 0"
@@ -205,3 +211,39 @@ else
   bad "ledger_readlog_fails_closed" "wrote: $(cat "$(repo_log "$sb")")"
 fi
 
+
+# A cited section is reported, and its absence is reported too — neither reds.
+# The citation is the half a loop cannot produce: writing "§Error discipline:
+# composed with #[from]" needs the section open, where writing a JSONL row does
+# not. `check` therefore counts it rather than demanding it, because a runtime
+# whose read hook logs automatically has no section to give.
+sb="$(mk_repo)"
+printf '#!/bin/sh\necho hi\n' > "$sb/tool.sh"
+git -C "$sb" add tool.sh >/dev/null 2>&1
+run_doc_read "$sb" log "dispatch/write_fixture.md" >/dev/null
+out_uncited="$(run_doc_read "$sb" check)"; uncited_rc=$?
+run_doc_read "$sb" log "dispatch/write_fixture.md" "§2 applied: quoted every expansion" >/dev/null
+out_cited="$(run_doc_read "$sb" check)"; cited_rc=$?
+if [ "$uncited_rc" -eq 0 ] && printf '%s' "$out_uncited" | grep -q '0 of 1 triggered' \
+   && [ "$cited_rc" -eq 0 ] && printf '%s' "$out_cited" | grep -q 'cite the section applied'; then
+  ok "ledger_readlog_cited_section — an uncited read reports 0 of 1, a cited one reports all"
+else
+  bad "ledger_readlog_cited_section" "uncited=$uncited_rc cited=$cited_rc"
+fi
+
+# A list walked in one second is named as one. Three distinct façades sharing a
+# timestamp is the shape of a `for` loop over a trigger list, which is how a
+# green gate once stood over nine documents nobody had opened. Reported, never
+# blocking: an agent that genuinely read three short pages in a second exists.
+sb="$(mk_repo)"
+printf '#!/bin/sh\necho hi\n' > "$sb/tool.sh"
+git -C "$sb" add tool.sh >/dev/null 2>&1
+for page in dispatch/write_fixture.md docs/LOGGING_STANDARD.md docs/CHANGELOG_VOICE.md; do
+  run_doc_read "$sb" log "$page" >/dev/null
+done
+out_bulk="$(run_doc_read "$sb" check)"; bulk_rc=$?
+if [ "$bulk_rc" -eq 0 ] && printf '%s' "$out_bulk" | grep -q 'bulk'; then
+  ok "ledger_readlog_bulk_assertion — three façades in one second are named as a bulk assertion"
+else
+  bad "ledger_readlog_bulk_assertion" "rc=$bulk_rc out=$(printf '%s' "$out_bulk" | tr '\n' ' ')"
+fi
