@@ -66,6 +66,13 @@ SPECS=(
   "log_positional_violation.rs|write_any|rustd/crates/demo/src/log_positional_violation.rs|1|LOG"
   "msid_ok.zig|write_any|src/msid_ok.zig|0|MSID"
   "msid_violation.zig|write_any|src/msid_violation.zig|1|MSID"
+  # Carve-out adjacency, the three cases a diff-shaped lookup could not tell
+  # apart: the mode below commits the fixture and then stages an aria-label
+  # change to the <section> line ALONE, so the neighbouring line the carve-out
+  # turns on is never part of the diff. Wrapped and overridden pass; bare bites.
+  "msid_ui_section_wrapped.tsx|msid_prewrapped_edit|ui/packages/app/region/page.tsx|0|MSID"
+  "msid_ui_section_override.tsx|msid_prewrapped_edit|ui/packages/app/region/page.tsx|0|MSID"
+  "msid_ui_section_bare.tsx|msid_prewrapped_edit|ui/packages/app/region/page.tsx|1|MSID"
   "deinit_ok.zig|write_zig|src/deinit_ok.zig|0|DEINIT"
   "deinit_missing.zig|write_zig|src/deinit_missing.zig|1|DEINIT"
   "sqlmod_ok.zig|write_zig|src/sqlmod_ok.zig|0|SQLMOD"
@@ -94,7 +101,20 @@ for spec in "${SPECS[@]}"; do
   # (audits/ufs.sh) filter a .toml out, so this is inert for every other case.
   case "$fx" in *.rs) printf '[package]\nname = "fixture"\nversion = "0.0.0"\n' > "$sb/Cargo.toml" ;; esac
   git -C "$sb" add -A
-  if [ "$dispatch" = "logging_all_missing" ]; then
+  if [ "$dispatch" = "msid_prewrapped_edit" ]; then
+    # Every other case here stages a NEW file, where the whole fixture arrives
+    # as added lines and diff adjacency and source adjacency agree. The bug
+    # these three exist for only appears once the neighbouring line is already
+    # committed: commit the fixture, then stage a one-line edit to the <section>
+    # tag. The leaf runs directly, so the verdict is the carve-out's alone and
+    # not another gate in the façade reacting to a .tsx fixture.
+    invocation="--staged"
+    git -C "$sb" commit -qm base >/dev/null 2>&1
+    sed -i.orig 's/aria-label="Pending"/aria-label="Awaiting review"/' "$sb/$dest"
+    rm -f "$sb/$dest.orig"
+    git -C "$sb" add -A
+    ( cd "$sb" && bash "$ROOT/audits/msid-ui.sh" --staged ) >/dev/null 2>&1
+  elif [ "$dispatch" = "logging_all_missing" ]; then
     mv "$sb/$dest" "$sb/missing.rs.deleted"
     invocation="--all"
     ( cd "$sb" && bash "$ROOT/audits/logging.sh" --all ) >/dev/null 2>&1
