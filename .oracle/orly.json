@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "orly_version": "0.10.6",
+  "orly_version": "0.10.8",
   "packs": [
     "universal.authoring",
     "language.zig",
@@ -50,6 +50,6 @@
     "AGENTS.md"
   ],
   "digests": {
-    "AGENTS.md": "sha256:180e25fbba2e95bef4e7274a87a5c94b9089f88b12674bb86fee579b85bc1338"
+    "AGENTS.md": "sha256:3d7f4e5aaa96152b68699701fbbf8103a2016bd9971546cc7f783cd75fed08d9"
   }
 }

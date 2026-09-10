@@ -15,7 +15,7 @@
 | P1 | May 18 '26 · PR #330 | Kept a 51-line cross-file integration test block for the new Accordion | "Ack #4 why do you need an integration row for the Accordion if i approve?" | Decision made → delete the redundant scaffolding; tests co-locate beside the unit they prove. A second proof of an approved decision is dead code at write time (RULE NDC) |
 | P2 | '26 (¶) | AskUserQuestion with three architectural options | Rejected the question itself | Pick one, explain why; one open question beats a menu |
 | P3 | May 18 '26 · PR #330 | Framed empty-triggers as a design fork | "I feel its not empty or the accordion, its just that the M71 modernized the 3 tabs approach. And we will have to get rid of the old empty 3 tabs." | Modernization implies deleting what it replaces (RULE NLR) |
-| P4 | May 18 '26 · PR #330 | Kept a `legacy` sentinel key | "And why are we doing legacy here? Remove any legacy keys" | No legacy framing pre-2.0.0 (RULE NLG) |
+| P4 | May 18 '26 · PR #330 | Kept a `legacy` sentinel key | "And why are we doing legacy here? Remove any legacy keys" | No legacy framing pre-0.30.0 (RULE NLG) |
 | P5 | Jun '26 (¶) | Estimated "1–2 weeks" for a refactor | Sized it as a few lines, few files | Halve estimates; check "days" for "hours" |
 | P6 | May '26 (¶) | Bundler bug → proposed a React Server Components (RSC)-first refactor | Redirected to a 4-line fix | Solution-size ≈ problem-size; the refactor is a separate ask. (Earlier notes pinned this to PR #330 — wrong; #330 is the trigger-panel PR. Number lost.) |
 | P7 | Jul '26 · M80_007 (¶) | Built on an eng-reviewed HANDOFF; it was wrong twice about `main` | — | Prose is a hypothesis; open the file on the target branch |
