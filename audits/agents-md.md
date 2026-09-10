@@ -175,7 +175,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 
 | # | Question | Expected |
 |---|---|---|
-| 11.1 | Pre-v2.0.0, is the table-removal flow rm-file + rm-embed + rm-migration-array (no `ALTER TABLE`/`DROP TABLE`/`SELECT 1;` markers)? | YES |
+| 11.1 | Pre-v0.30.0, is the table-removal flow rm-file + rm-embed + rm-migration-array (no `ALTER TABLE`/`DROP TABLE`/`SELECT 1;` markers)? | YES |
 | 11.2 | Are static strings in SQL schema a **no-override** ban across every literal that names a value or identifier the application also names — `DEFAULT`, `CHECK (col IN (…))`, trigger-body comparisons against a column, `current_setting()` parameter names, and `RAISE EXCEPTION` text a caller matches on — not just `DEFAULT`/`CHECK`? | YES |
 
 ### Scenario 12 — Auto-mode boundary (added)
