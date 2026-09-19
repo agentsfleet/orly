@@ -85,6 +85,7 @@ Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_A
 - Other dotfiles (`.zshrc`/`.gitconfig`/etc.): timestamped backup; minimal edits.
 - **Check a sibling repository for an existing pattern in the same language before inventing one.** A shape shipping next door is prior art; a new one needs a reason.
 - **Read the reference implementation before designing.** Where the language's dispatch page names a canonical external source, that read is mandatory in review and its guideline identifiers are cited — applied or diverged from. "Broken for us" means the delta was missed: diff our call site against theirs before blaming the principle.
+- Never publish a Claude Artifact unless asked for one in that session. Answer in the terminal.
 - Before commit/push: `gitleaks` must pass.
 - No new `make` targets without a distinct caller (CI job, spec-mandated gate, or a workflow existing targets can't express) — check `make/*.mk` first; extend over near-duplicate wrappers.
 - `*.zig` → read `dispatch/write_zig.md`; ZIG GATE fires. <!-- oracle-packs:language.zig -->
