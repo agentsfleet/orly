@@ -11,10 +11,10 @@ regenerates this file and fails on any difference. To update it, run
 | `docs/SCHEMA_CONVENTIONS.md` | — | 0 | 0 | 0/16 | mechanical |
 | `docs/DOCUMENTATION_RULES.md` | — | 0 | 0 | 0/22 | latent |
 | `docs/LIFECYCLE_PATTERNS.md` | — | 0 | 0 | 0/22 | mechanical |
-| `docs/CHANGELOG_VOICE.md` | — | 0 | 0 | 0/3 | latent |
+| `docs/CHANGELOG_VOICE.md` | — | 0 | 0 | 0/4 | latent |
 | `docs/VERIFY_TIERS.md` | — | 0 | 0 | 0/4 | uncited |
 | `docs/greptile-learnings/RULES.md` | — | 0 | 0 | 0/114 | mechanical |
-| **corpus** | | | | **30/276** | |
+| **corpus** | | | | **30/277** | |
 
 ## How to read this
 
