@@ -39,7 +39,7 @@ export type GateReport = {
 };
 
 export type Override = { criterion: string; reason: string };
-type ClosedSpec = {
+type SpecMetadata = {
   path: string;
   identifier: string | undefined;
   branch: string | undefined;
@@ -105,11 +105,34 @@ export function branchOverrides(root: string): Override[] {
   return overrides;
 }
 
+// One stream per worktree, and a fold is not a second stream. Extra specs in
+// active/ are allowed only when each names the one non-folded owner through
+// Folded-into — the same relation closedSpecPath enforces in done/. Without
+// this, folding a workstream into an open stream was impossible during the
+// work and legal only after the close, which is the wrong way round: the fold
+// is decided when the scope is, not when the spec moves.
 export function activeSpecPath(root: string): string | undefined {
-  const specs = specPathsUnder(root, ACTIVE_DIRECTORY);
+  const specs = specPathsUnder(root, ACTIVE_DIRECTORY).map(specMetadata)
+    .filter((spec): spec is SpecMetadata => spec !== undefined);
   if (specs.length === 0) return undefined;
-  if (specs.length > 1) throw new OrlyError(`more than one active spec — one stream per worktree:${NEWLINE}${specs.join(NEWLINE)}`);
-  return specs[0];
+  return owningSpec(specs, "active spec", "active specs").path;
+}
+
+// The fold relation, shared by both discovery paths: exactly one non-folded
+// owner, every other spec naming it, and no spec naming itself.
+function owningSpec(specs: SpecMetadata[], one: string, many: string): SpecMetadata {
+  const owners = specs.filter((spec) => spec.foldedInto === undefined);
+  if (owners.length === 0) throw new OrlyError(`every ${one} is folded — one owning stream is required:${NEWLINE}${specs.map((spec) => spec.path).join(NEWLINE)}`);
+  if (owners.length > 1) throw new OrlyError(`more than one ${one} — one stream per worktree:${NEWLINE}${owners.map((spec) => spec.path).join(NEWLINE)}`);
+  const owner = owners[0];
+  if (!owner) throw new OrlyError(`${one} ownership could not be resolved`);
+  const folded = specs.filter((spec) => spec.foldedInto !== undefined);
+  if (folded.length > 0 && !owner.identifier) throw new OrlyError(`the owning ${one} has no milestone and workstream identifier: ${owner.path}`);
+  const selfFolds = folded.filter((spec) => spec.identifier === spec.foldedInto);
+  if (selfFolds.length > 0) throw new OrlyError(`folded ${many} cannot fold into themselves:${NEWLINE}${selfFolds.map((spec) => spec.path).join(NEWLINE)}`);
+  const invalidFolds = folded.filter((spec) => spec.foldedInto !== owner.identifier);
+  if (invalidFolds.length > 0) throw new OrlyError(`folded ${many} must name their owner ${owner.identifier}:${NEWLINE}${invalidFolds.map((spec) => spec.path).join(NEWLINE)}`);
+  return owner;
 }
 
 // Closed-spec follow-through: CHORE(close) moves the spec to done/, and the
@@ -120,21 +143,10 @@ export function closedSpecPath(root: string): string | undefined {
   const branch = gitOutput(root, ["rev-parse", "--abbrev-ref", "HEAD"]);
   if (!branch || DEFAULT_BRANCHES.includes(branch)) return undefined;
   const specs = specPathsUnder(root, DONE_DIRECTORY)
-    .map(closedSpec)
-    .filter((spec): spec is ClosedSpec => spec !== undefined && spec.branch === branch);
+    .map(specMetadata)
+    .filter((spec): spec is SpecMetadata => spec !== undefined && spec.branch === branch);
   if (specs.length === 0) return undefined;
-  const owners = specs.filter((spec) => spec.foldedInto === undefined);
-  if (owners.length === 0) throw new OrlyError(`every done/ spec naming branch ${branch} is folded — one owning stream is required:${NEWLINE}${specs.map((spec) => spec.path).join(NEWLINE)}`);
-  if (owners.length > 1) throw new OrlyError(`more than one done/ spec names branch ${branch} — one stream per worktree:${NEWLINE}${owners.map((spec) => spec.path).join(NEWLINE)}`);
-  const owner = owners[0];
-  if (!owner) throw new OrlyError(`done/ spec ownership could not be resolved for branch ${branch}`);
-  const folded = specs.filter((spec) => spec.foldedInto !== undefined);
-  if (folded.length > 0 && !owner.identifier) throw new OrlyError(`the owning done/ spec for branch ${branch} has no milestone and workstream identifier: ${owner.path}`);
-  const selfFolds = folded.filter((spec) => spec.identifier === spec.foldedInto);
-  if (selfFolds.length > 0) throw new OrlyError(`folded done/ specs naming branch ${branch} cannot fold into themselves:${NEWLINE}${selfFolds.map((spec) => spec.path).join(NEWLINE)}`);
-  const invalidFolds = folded.filter((spec) => spec.foldedInto !== owner.identifier);
-  if (invalidFolds.length > 0) throw new OrlyError(`folded done/ specs naming branch ${branch} must name their owner ${owner.identifier}:${NEWLINE}${invalidFolds.map((spec) => spec.path).join(NEWLINE)}`);
-  return owner.path;
+  return owningSpec(specs, `done/ spec naming branch ${branch}`, `done/ specs naming branch ${branch}`).path;
 }
 
 // An in-flight (active/) spec wins; otherwise the branch's closed spec gates.
@@ -145,9 +157,9 @@ export function specPathFor(root: string): { path: string; closed: boolean } | u
   return closed ? { path: closed, closed: true } : undefined;
 }
 
-function closedSpec(path: string): ClosedSpec | undefined {
+function specMetadata(path: string): SpecMetadata | undefined {
   try {
-    const metadata: ClosedSpec = {
+    const metadata: SpecMetadata = {
       path,
       identifier: basename(path).match(SPEC_IDENTIFIER_PATTERN)?.[1],
       branch: undefined,

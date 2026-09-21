@@ -38,6 +38,66 @@ describe("spec discovery", () => {
 
     expect(() => activeSpecPath(project)).toThrow("one stream per worktree");
   });
+
+  test("a folded active spec yields ownership to the spec it names", async () => {
+    const project = newSpecRepository();
+    mkdirSync(join(project, "docs/v2/active"), { recursive: true });
+    await Bun.write(
+      join(project, "docs/v2/active/M100_001_P2_CLI_FOLDED.md"),
+      specFixture(undefined, undefined, ["**Folded-into:** `M99_001`"]),
+    );
+
+    expect(activeSpecPath(project)).toEndWith("M99_001_P2_CLI_FIXTURE.md");
+  });
+
+  test("a folded active spec must name the exact owner", async () => {
+    const project = newSpecRepository();
+    mkdirSync(join(project, "docs/v2/active"), { recursive: true });
+    await Bun.write(
+      join(project, "docs/v2/active/M100_001_P2_CLI_FOLDED.md"),
+      specFixture(undefined, undefined, ["**Folded-into:** `M404_001`"]),
+    );
+
+    expect(() => activeSpecPath(project)).toThrow("must name their owner M99_001");
+  });
+
+  test("a folded active spec cannot name itself", async () => {
+    const project = newSpecRepository();
+    mkdirSync(join(project, "docs/v2/active"), { recursive: true });
+    await Bun.write(
+      join(project, "docs/v2/active/M100_001_P2_CLI_FOLDED.md"),
+      specFixture(undefined, undefined, ["**Folded-into:** `M100_001`"]),
+    );
+
+    expect(() => activeSpecPath(project)).toThrow("cannot fold into themselves");
+  });
+
+  test("every active spec folded leaves no owning stream", async () => {
+    const project = newRepository();
+    mkdirSync(join(project, "docs/v2/active"), { recursive: true });
+    await Bun.write(
+      join(project, "docs/v2/active/M100_001_P2_CLI_FOLDED.md"),
+      specFixture(undefined, undefined, ["**Folded-into:** `M99_001`"]),
+    );
+    await Bun.write(
+      join(project, "docs/v2/active/M101_001_P2_CLI_ALSO_FOLDED.md"),
+      specFixture(undefined, undefined, ["**Folded-into:** `M99_001`"]),
+    );
+
+    expect(() => activeSpecPath(project)).toThrow("one owning stream is required");
+  });
+
+  test("a folded active spec still gates through its owner", async () => {
+    const project = newSpecRepository();
+    const model = await modelFor(project);
+    mkdirSync(join(project, "docs/v2/active"), { recursive: true });
+    await Bun.write(
+      join(project, "docs/v2/active/M100_001_P2_CLI_FOLDED.md"),
+      specFixture(undefined, undefined, ["**Folded-into:** `M99_001`"]),
+    );
+
+    expect(runGate(model, project, "work").results.find((result) => result.name === "cmd.conform")?.ok).toBeTrue();
+  });
 });
 
 describe("closed-spec follow-through", () => {
