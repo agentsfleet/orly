@@ -17,9 +17,9 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Workstream:** 002
 **Date:** Sep 23, 2026: 10:10 AM
 **Status:** PENDING
-**Priority:** P0 — Indy made fitting the templates and scripts to Jev the priority of orly 0.11
+**Priority:** P0 — Indy made fitting the templates and scripts to Jev the priority of release 0.12
 **Categories:** CLI (Command-Line Interface), DOCS, SKILL (agent workflow skills)
-**Batch:** B1 — after M07_001 §1, before M07_001 §§2–5
+**Batch:** B1 — release 0.12: after M07_001 §1, before M07_003, M07_004, M07_005, and M07_001 §§2–5
 **Branch:** pending — set at CHORE(open)
 **Baseline revision:** pending — record the full comparison commit at CHORE(open)
 **Test Baseline:** pending — measure declared unit and integration lanes before the Pull Request (PR)
@@ -40,7 +40,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 - The rule-enforcement ledger lists `[JUDGMENT → CODE]` clauses as work an agent must weigh (`docs/RULE_ENFORCEMENT.md`), and no check stands behind them.
 - The only judge of these questions today is the coding agent that wrote the diff, answering in its own context, with no typed answer and no record.
 
-**Solution summary:** A judged predicate is a registry rule with decision kind `judged`, a question file, and evaluation cases. `orly judge` builds versioned inputs, scans the whole serialized request, asks a pinned Jev model, keeps one result per question and input, and records the raw typed answer under the complete request. Every answer is advisory in 0.11. Gates, dispatch prompts, the spec template, and the authoring skill read the answers. A frozen pilot compares Jev with the coding agent on labels Indy sets before seeing either.
+**Solution summary:** A judged predicate is a registry rule with decision kind `judged`, a question file, and evaluation cases. `orly judge` builds versioned inputs, scans the whole serialized request, asks a pinned Jev model, keeps one result per question and input, and records the raw typed answer under the complete request. Every answer is advisory in release 0.12. Gates, dispatch prompts, the spec template, and the authoring skill read the answers. A frozen pilot compares Jev with the coding agent on labels Indy sets before seeing either.
 
 **Verdict and reason:** Jev returns typed answers with probabilities and cannot answer outside the options a question defines, so it cannot invent a file, function, or mechanism. Typed options constrain the shape of an answer, not its correctness: text inside the input can still steer which allowed answer comes back. Code owns applicability, evidence, scanning, records, and thresholds; the pilot measures accuracy; authority stays human.
 
@@ -49,7 +49,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 - **PR title (eventual):** `feat(judge): gate scripts and the spec template ask Jev typed questions`
 - **Intent:** A repository that opts in and authorizes upload gets typed, recorded answers to judgment questions its rules already ask; a repository that does not sees no change.
 - **Authoring handshake:** Indy: "ideally i want to use them since Jev provides unique ability", then: "how about revisiting templates, scripts as part of this to fit JEV and so on. That must be the priority." The CTO review of `58fedbc` returned rework; this revision applies its findings.
-- **ASSUMPTIONS I'M MAKING:** 1. Calibrated runs request `jev-1.13.0`; `jev-latest` is for marked exploration only. 2. The key comes only from `TYPESAFE_API_KEY` and never reaches a repository command. 3. Every answer is advisory in 0.11. 4. gitleaks is the required secret scanner for upload. 5. Question files ship in the package and install under `.orly/` once M07_001 §2 lands.
+- **ASSUMPTIONS I'M MAKING:** 1. Calibrated runs request `jev-1.13.0`; `jev-latest` is for marked exploration only. 2. The key comes only from `TYPESAFE_API_KEY` and never reaches a repository command. 3. Every answer is advisory in release 0.12. 4. gitleaks is the required secret scanner for upload. 5. Question files ship in the package, and the judge reads them from the installed engine, so consumer repositories carry no copies.
 - **Implementer handshake:** pending until PLAN.
 
 ## Implementing agent — read these first
@@ -157,7 +157,7 @@ With the judge enabled and authorized, the `pr` gate carries one `judge.<questio
 orly judge [--staged | --base <commit>] [--spec <path>] [--allow-upload] [--refresh] [--json]
 orly judge --calibrate [--check] [--ids <list>]
 
-Configuration (.orly/orly.json after M07_001 §2); "blocking" is rejected in 0.11:
+Configuration (.orly/orly.json after M07_005); "blocking" is rejected in release 0.12:
   "judge": { "provider": "typesafe", "model": "jev-1.13.0" }
 Key: TYPESAFE_API_KEY from the environment; never passed to repository commands.
 
@@ -196,7 +196,7 @@ Record (<git dir>/orly/judgments/<key>.json):
 1. No request without configuration, key, and out-of-tree authorization — the client requires an authorization value only the command-line flag or the maintainer setting produces.
 2. No request before the complete serialized request passes built-in checks and the scanner — the client accepts only a scanned-request type.
 3. The provider key never enters a repository command's environment — the command runner strips it.
-4. Every answer is advisory in 0.11 — the configuration schema rejects blocking.
+4. Every answer is advisory in release 0.12 — the configuration schema rejects blocking.
 5. Replay happens only for an identical complete request — the key covers every request field.
 6. A judgment never resolves authority — no question targets overrides, deferrals, or owner consults.
 7. Every judgment code has an owner entry — `audits/parity-dispatch.sh` runs in `make audit`.
@@ -273,7 +273,7 @@ N/A — no files deleted. Dispatch prompts keep printing; each gains its owner a
 ## Decomposition & alternatives (patch vs refactor)
 
 - **Chosen shape:** Four Sections: questions, authorized runner, wiring, pilot. The pilot lands last because it measures the bank the earlier Sections build.
-- **Alternatives considered:** Asking Jev inside each bash prompt would put network calls in every commit. Keeping blocking in 0.11 would need the incompleteness rule in Out of Scope plus held-out evidence the pilot has not produced. A reasoning-model judge returns prose without typed probabilities; the provider field keeps it possible.
+- **Alternatives considered:** Asking Jev inside each bash prompt would put network calls in every commit. Keeping blocking in release 0.12 would need the incompleteness rule in Out of Scope plus held-out evidence the pilot has not produced. A reasoning-model judge returns prose without typed probabilities; the provider field keeps it possible.
 - **Patch-vs-refactor verdict:** this is an additive **patch** on existing registry, ledger, and gate shapes.
 
 ## Discovery (consult log)
