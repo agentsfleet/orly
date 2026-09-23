@@ -19,12 +19,12 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Status:** PENDING
 **Priority:** P1 — written rules fail to reach the agent at the moment they matter, and nothing shows whether they did
 **Categories:** CLI (Command-Line Interface), DOCS, SKILL (agent workflow skills)
-**Batch:** B1 — release 0.12: after M07_002, alongside M07_003
+**Batch:** B1 — release 0.12. Execution order: M07_001 §1 → M07_002 → M07_003 and M07_004 → M07_005 → M07_001 §§2–5. "Alongside" permits independent implementation work, not concurrent edits to shared files.
 **Branch:** pending — set at CHORE(open)
 **Baseline revision:** pending — record the full comparison commit at CHORE(open)
 **Test Baseline:** pending — measure declared unit and integration lanes before the Pull Request (PR)
 **Baseline evidence:** pending — report revision, commands, counts, and environment
-**Depends on:** M07_001 §1 for criterion states; M07_002 for optional Jev selection, which deterministic delivery does not need
+**Depends on:** M07_001 §1 for criterion states; M07_002 for optional Jev selection, which deterministic delivery does not need. Local delivery completes without GitHub mode; its GitHub skip behavior is implemented and verified in M07_001 §4.
 **Provenance:** Large Language Model (LLM)-drafted; Claude Opus 5.5; Sep 23, 2026
 **Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §§Topology, Gates, and a new §Rule delivery
 
@@ -74,7 +74,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | `src/cli.ts`, `src/cli_gate.ts`, `src/cli.test.ts` | EDIT | `rules` command; `init --no-agent-hooks` |
 | `src/install.ts`, `src/loaders.ts`, `src/install.test.ts`, `src/loaders.test.ts` | EDIT | Merge adapters into runtime configuration without overwriting entries |
 | `src/config.ts`, `src/validation.ts`, `src/config.test.ts` | EDIT | `rules.paths` block |
-| `evals/ledger/run.sh` | EDIT | Neutrality check covers the commit guarantee |
+| `evals/ledger/run.sh`, `evals/ledger/doc_read_cases.sh`, `src/rules_neutrality.test.ts` | EDIT, EDIT, CREATE | Neutrality executes the real commit criterion under each runtime configuration state |
 | `package.json`, `src/pack_hygiene.test.ts` | EDIT | Ship `templates/adapters/` |
 | `README.md`, `llms.txt`, `docs/ORLY_ARCHITECTURE.md` | EDIT | Setup per runtime; §Rule delivery |
 
@@ -105,27 +105,28 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ### §1 — One engine selects and delivers
 
-`orly rules (--for <path>... | --staged | --base <commit>) [--adapter <runtime>] [--json]` selects sections by three means. File-type triggers map a changed file's extension to its pack's managed rule pages, so a `.rs` file selects the sections of `dispatch/write_rust.md`. Repository path maps in `rules.paths` map globs to documents or named sections, such as `docs/architecture/runner_fleet.md#Traps`. With M07_002's authorization, a Jev question per candidate section may add sections whose trigger is semantic; Jev never removes a deterministic pick. Orly's pages are read from the installed engine and repository documents from the repository. Output is plain text, bounded by a named size cap; overflow lists section names and paths. Each printed section writes a row to the delivery log under the git directory; a section whose content changed is delivered again.
+`orly rules (--for <path>... | --staged | --base <commit>) [--adapter <runtime>] [--json]` selects sections by three means. File-type triggers map a changed file's extension to its pack's managed rule pages, so a `.rs` file selects the sections of the installed Rust page, `dispatch/write_rust.md`, rendered from `packs/language/rust/rules.md`. Repository path maps in `rules.paths` map globs to documents or named sections, such as `docs/architecture/runner_fleet.md#Traps`. With M07_002's authorization, a Jev question per candidate section may add sections whose trigger is semantic; Jev never removes a deterministic pick. Commit gates and adapters never make network requests. They may consume only exact-input recorded selection answers; absent, stale, uncertain, or invalid answers produce deterministic selection alone. Live semantic selection requires an explicit command using M07_002's complete authorization, scanning, model-pinning, and request-budget rules. Candidates are bounded, locally resolved section identifiers, never model-generated paths. Deterministic sections are delivered before semantic additions, and additions cannot consume their output allowance or change the deterministic criterion's success. Engine-owned sections are resolved through the selected packs' source-to-target map and rendered through the same pack filtering and citation rewriting used for installation before selection or delivery; repository-owned sections are read from the evaluated repository; delivery digests cover the final rendered text. Output is plain text, bounded by a named size cap, and sections beyond it stay pending. Each completely emitted section writes a row to the delivery log under the git directory; a section whose rendered text changed is pending again.
 
 - **Dimension 1.1** — A `.rs` change selects the Rust rule page's sections, and a `.ts` change selects the TypeScript page's → Test `test_rules_select_by_file_type`
 - **Dimension 1.2** — A repository path map selects a whole document or one named section for matching paths only → Test `test_rules_select_by_path_map`
-- **Dimension 1.3** — With Jev authorized, a firing semantic question adds a section; deterministic picks are never removed; without authorization only deterministic picks appear → Test `test_jev_only_adds_sections`
-- **Dimension 1.4** — Output respects the size cap and lists overflow; each printed section writes one log row; a changed section is delivered again → Test `test_rules_output_and_delivery_log`
+- **Dimension 1.3** — Authorized explicit selection can record additions; commit and adapter paths open no socket; stale or missing answers retain deterministic selection; additions never displace deterministic output → Test `test_jev_only_adds_sections`
+- **Dimension 1.4** — Output respects the size cap with overflow left pending; each completely emitted section writes one log row; a section whose rendered text changed is pending again → Test `test_rules_output_and_delivery_log`
+- **Dimension 1.5** — Delivered engine sections equal the installed consumer sections for a default install and a persona-enabled install → Test `test_delivered_sections_match_installed_pages`
 
 ### §2 — The commit guarantee
 
-`orly gate work` carries `rules.delivered`. For the staged diff, any selected section not yet delivered for that path area on this branch is printed, logged, and fails the criterion once; the next commit attempt passes. Commits that touch no new area are unaffected. The criterion reads only git, the engine, and the delivery log, so it behaves the same whichever runtime runs `git commit`; `evals/ledger/run.sh` fails the build if runtime configuration enters its path. In GitHub mode from M07_001 §4, it is skipped with the reason that delivery happens where the author commits.
+`orly gate work` carries `rules.delivered`. It proves complete emission of applicable rule text, not model receipt or comprehension. Its cache key contains the worktree identity, full branch reference, normalized area, section identifier, section digest, and selection-configuration digest. An area is a matched repository path-map key, or the language-pack identifier when no path map applies. The gate prints only pending sections in deterministic order; completely emitted sections are logged, overflow remains pending, and subsequent attempts continue with pending content. A section larger than the output cap produces a named failure and is never marked delivered. Missing sections and output failures fail without a delivery record. The criterion passes only when no required section remains pending. Commits that touch no new area are unaffected. The criterion reads only git, the engine, and the delivery log, so it behaves the same whichever runtime runs `git commit`; `evals/ledger/run.sh` fails the build if runtime configuration enters its path. In GitHub mode from M07_001 §4, it is skipped with the reason that delivery happens where the author commits.
 
-- **Dimension 2.1** — The first commit touching an area with undelivered sections fails once and prints them; the retry passes; an unrelated commit is unaffected → Test `test_commit_delivers_rules_once`
-- **Dimension 2.2** — The criterion's code path reads no runtime configuration, and the eval fails when a fixture adds one → Test `test_commit_guarantee_is_runtime_neutral`
+- **Dimension 2.1** — An undelivered selection fails while emitting complete sections; retries drain overflow and pass only when nothing remains pending; a section exceeding the cap or a failed output remains undelivered; unchanged selections do not repeat → Test `test_commit_delivers_rules_once`
+- **Dimension 2.2** — Execute the real commit criterion with each runtime configuration absent, present, malformed, and unreadable; identical repository and delivery inputs yield identical selection and verdicts. A fixture injecting a runtime-configuration read through a transitive helper is detected. Adapters remain outside this dependency path → Test `test_commit_guarantee_is_runtime_neutral`
 - **Dimension 2.3** — In GitHub mode, `rules.delivered` is skipped with its reason → Test `test_rules_delivered_skipped_in_ci`
 
 ### §3 — Adapters for Claude Code, Codex, and OpenCode
 
-`orly init` and `orly update` merge three adapters into each runtime's project configuration, never overwriting a user entry and refusing a conflicting one; `--no-agent-hooks` writes none. Claude Code: a PreToolUse entry in `.claude/settings.json` for edit and write tools. Codex: a PreToolUse entry in `.codex/hooks.json` for `apply_patch`. OpenCode: `.opencode/plugins/orly-rules.ts` on `tool.execute.before` for edit and write tools. Each adapter calls `orly rules --adapter <runtime>` with the runtime's payload; on a first delivery it denies with the sections as the reason on Claude Code and Codex, and throws with them on OpenCode; otherwise it allows. An adapter that cannot reach orly allows the edit and warns, because the commit guarantee still applies. OpenCode's documentation does not state whether a thrown message reaches the model, so its behavior is recorded by manual check.
+Init and update identify each orly adapter by a stable owned identity and its recorded prior digest. They append an absent adapter, leave an identical adapter unchanged, and replace only an unchanged prior orly adapter. Other handlers sharing the event or matcher are preserved. An edited owned entry, malformed configuration, or foreign file at the OpenCode adapter path refuses before any adapter file changes. Preflight covers all destinations; replacements are atomic. `--no-agent-hooks` makes no adapter changes and does not uninstall existing adapters. Claude Code: a PreToolUse entry in `.claude/settings.json` for edit and write tools. Codex: a PreToolUse entry in `.codex/hooks.json` for `apply_patch`. OpenCode: `.opencode/plugins/orly-rules.ts` on `tool.execute.before` for edit and write tools. Each adapter calls `orly rules --adapter <runtime>` with the runtime's payload; Codex's payload carries the patch in `tool_input.command`, and its adapter returns the documented response object, because plain standard output is ignored for PreToolUse. On first delivery, Claude Code and Codex receive the documented denial response containing the sections; OpenCode throws the delivery message. Otherwise the adapter returns no permission decision and leaves the runtime's normal approval flow intact. If orly is unreachable, the adapter warns and returns no decision. Rule delivery never grants permission, changes tool arguments, or overrides another hook's decision. OpenCode's documentation does not state whether a thrown message reaches the model, so its behavior is recorded by manual check.
 
-- **Dimension 3.1** — Init merges the three adapters into existing configuration without touching user entries, refuses a conflicting entry, and writes none with `--no-agent-hooks` → Test `test_init_writes_three_adapters`
-- **Dimension 3.2** — Each runtime's documented payload fixture becomes the same `orly rules` call, answering deny with reason, a thrown error, or allow as specified → Test `test_adapters_translate_each_runtime`
+- **Dimension 3.1** — Repeated init, upgrades from a prior orly adapter, edited owned entries, malformed files, same-matcher user hooks, and symlink destinations each behave as specified, and `--no-agent-hooks` changes nothing → Test `test_init_writes_three_adapters`
+- **Dimension 3.2** — Each runtime's documented payload fixture becomes the same `orly rules` call; first delivery yields the documented denial or a thrown message; otherwise and when orly is unreachable, no permission decision → Test `test_adapters_translate_each_runtime`
 - **Dimension 3.3** — In each runtime, one Rust edit shows whether the sections reached the model before the edit, recorded in Session Notes → Test `manual_three_runtime_delivery`
 
 ### §4 — Measuring delivery
@@ -145,7 +146,8 @@ orly init [--no-agent-hooks]
 Configuration:
   "rules": { "paths": { "src/runner/**": ["docs/architecture/runner_fleet.md#Traps"] } }
 Delivery log (<git dir>/orly/deliveries.jsonl), one row per printed section:
-  { "at", "branch", "area", "section", "section_digest", "via": "commit|claude|codex|opencode|cli" }
+  { "at", "worktree", "branch", "area", "section", "section_digest", "selection_digest",
+    "via": "commit|claude|codex|opencode|cli" }
 Adapters:
   .claude/settings.json            PreToolUse, edit and write tools   → orly rules --adapter claude
   .codex/hooks.json                PreToolUse, apply_patch            → orly rules --adapter codex
@@ -157,21 +159,26 @@ Adapters:
 | Mode | Cause | Handling (system response + what the caller observes) |
 |---|---|---|
 | No adapter ran | Runtime lacks one, trust not granted, or disabled | Commit guarantee delivers; `test_commit_delivers_rules_once` |
-| Engine unreachable in adapter | orly missing on the path | Adapter allows and warns; `test_adapters_translate_each_runtime` |
-| Conflicting runtime entry | User configured the same hook | Refuse naming the file; `test_init_writes_three_adapters` |
+| Engine unreachable in adapter | orly missing on the path | Adapter warns and returns no decision; `test_adapters_translate_each_runtime` |
+| Oversized section | One section exceeds the cap | Named failure; never marked delivered; `test_commit_delivers_rules_once` |
+| Output failure | Standard output closed mid-print | Fails without a delivery record; `test_commit_delivers_rules_once` |
+| Persona leak | Raw package page read directly | Rendered through the install filter; `test_delivered_sections_match_installed_pages` |
+| Adapter ownership | Upgrade, edited owned entry, same-matcher user hook | Unchanged prior replaced; edited refused; user hook preserved; `test_init_writes_three_adapters` |
 | Missing section | A path map names an absent document or heading | Reported with the path; `test_rules_select_by_path_map` |
-| Output too large | Many sections selected | Capped; overflow listed; `test_rules_output_and_delivery_log` |
+| Output too large | Many sections selected | Capped; overflow stays pending; `test_rules_output_and_delivery_log` |
 | Changed section | Rule text edited after delivery | Delivered again; `test_rules_output_and_delivery_log` |
-| Jev unavailable | No authorization, key, or service | Deterministic picks only; `test_jev_only_adds_sections` |
+| Network at commit | Semantic selection wanted at commit | None; only exact-input recorded answers; `test_jev_only_adds_sections` |
 | Corrupt log | Unreadable delivery log | Treated as empty; sections delivered again; `test_rules_output_and_delivery_log` |
 | Runtime leak | Runtime configuration enters the gate path | Eval fails the build; `test_commit_guarantee_is_runtime_neutral` |
 
 ## Invariants
 
 1. The commit guarantee reads only git, the engine, and the delivery log — `evals/ledger/run.sh` enforces it.
-2. Jev only adds sections to deterministic picks — the selector merges, never subtracts.
-3. A delivery is logged only when orly printed the section — the logger is called by the printer.
-4. Adapters never overwrite user entries in runtime configuration — merging refuses conflicts.
+2. Jev only adds sections, after the deterministic ones, and never consumes their output allowance — the selector orders and budgets deterministic picks first.
+3. A delivery is logged only for a completely emitted section — the logger is called after the write succeeds.
+4. Adapters change only orly-owned entries identified by identity and prior digest — merging refuses edited or foreign entries.
+5. Rule delivery never grants permission — adapters return no decision except a delivery denial.
+6. Commit gates and adapters open no network connection — they read recorded answers only.
 
 ## Metrics & Observability
 
@@ -185,13 +192,14 @@ Adapters:
 |---|---|---|---|
 | 1.1 | unit | `test_rules_select_by_file_type` | `.rs` and `.ts` changes → sections of the Rust and TypeScript pages |
 | 1.2 | unit | `test_rules_select_by_path_map` | Map to a document and to `#Traps` → matching paths only; absent heading reported |
-| 1.3 | integration | `test_jev_only_adds_sections` | Stub Jev fires on one candidate → added; deterministic picks intact; no authorization → deterministic only |
-| 1.4 | integration | `test_rules_output_and_delivery_log` | Oversized selection → capped with overflow list; one log row per section; edited section → delivered again |
-| 2.1 | integration | `test_commit_delivers_rules_once` | First commit in a new area → failed with sections; retry → passed; unrelated commit → passed |
-| 2.2 | integration | `test_commit_guarantee_is_runtime_neutral` | Eval over the gate path → clean; fixture adding runtime configuration → eval fails |
+| 1.3 | integration | `test_jev_only_adds_sections` | Explicit authorized run records one addition; commit and adapter paths open no socket; stale answer → deterministic only; additions after deterministic output |
+| 1.4 | integration | `test_rules_output_and_delivery_log` | Oversized selection → capped, overflow pending; one row per emitted section; edited section → pending again |
+| 1.5 | integration | `test_delivered_sections_match_installed_pages` | Default and persona installs → delivered engine sections byte-equal their installed pages |
+| 2.1 | integration | `test_commit_delivers_rules_once` | Selection larger than the cap → retries drain pending sections, then pass; oversized section → named failure; closed output → no record |
+| 2.2 | integration | `test_commit_guarantee_is_runtime_neutral` | Each runtime configuration absent, present, malformed, unreadable → identical verdicts; transitive read fixture → detected |
 | 2.3 | integration | `test_rules_delivered_skipped_in_ci` | GitHub mode → skipped with its reason |
-| 3.1 | integration | `test_init_writes_three_adapters` | Existing settings with user entries → merged, untouched; conflict → refusal; `--no-agent-hooks` → none |
-| 3.2 | unit | `test_adapters_translate_each_runtime` | Three documented payload fixtures → one call each; first delivery → deny or throw with sections; repeat → allow |
+| 3.1 | integration | `test_init_writes_three_adapters` | Repeat, upgrade, edited owned entry, malformed file, same-matcher user hook, symlink → as specified; `--no-agent-hooks` → no change |
+| 3.2 | unit | `test_adapters_translate_each_runtime` | Three payload fixtures → one call each; first delivery → documented denial or throw; repeat and unreachable engine → no decision |
 | 3.3 | manual | `manual_three_runtime_delivery` | Implementer edits a Rust file in each runtime; what the model saw is recorded in Session Notes |
 | 4.1 | unit | `test_delivery_report_counts` | Fixture log → counts by section and channel |
 | 4.2 | manual | `manual_selection_pilot` | Indy labels twenty past diffs; both selections scored in Session Notes |
@@ -200,7 +208,7 @@ Adapters:
 
 | # | Criterion (observable outcome) | Verify (copy-paste) | Expected | Priority | Graded (VERIFY) |
 |---|---|---|---|---|---|
-| R1 | The engine selects and logs deliveries (§1) | `bun test src -t "test_rules_select\|test_jev_only_adds\|test_rules_output"` | exit 0 | P0 | |
+| R1 | The engine selects and logs deliveries (§1) | `bun test src -t "test_rules_select\|test_jev_only_adds\|test_rules_output\|test_delivered_sections"` | exit 0 | P0 | |
 | R2 | The commit guarantee delivers once and stays runtime-neutral (§2) | `bun test src -t "test_commit_delivers\|test_commit_guarantee\|test_rules_delivered_skipped"` | exit 0 | P0 | |
 | R3 | Three adapters merge safely and translate each runtime (§3) | `bun test src -t "test_init_writes_three_adapters\|test_adapters_translate"` | exit 0 | P0 | |
 | R4 | Deliveries are countable (§4) | `bun test src -t test_delivery_report_counts` | exit 0 | P0 | |
@@ -242,7 +250,7 @@ N/A — no files deleted.
 
 ## Discovery (consult log)
 
-- **Consults** — Sep 23, 2026: official documentation read for each runtime. Claude Code: PreToolUse deny with a reason shown to Claude. Codex: PreToolUse covers Bash, `apply_patch` edits, and MCP (Model Context Protocol) tools, can deny with a reason shown to the model, loads project hooks from `.codex/hooks.json` after trust review. OpenCode: project plugins in `.opencode/plugins/` can block via `tool.execute.before`; whether the message reaches the model is not stated. Ten agentsfleet architecture documents carry a `## Traps` section.
+- **Consults** — Codex's CTO review of `136b04c` required complete-emission semantics, no permission grants, owned adapter identity, persona-filtered delivery, offline commits, and an executed neutrality test; each was applied. The installed Rust page is sourced from `packs/language/rust/rules.md` (`registry.json:138`), and today's neutrality eval greps four files for four strings (`evals/ledger/doc_read_cases.sh:124-128`). Sep 23, 2026: official documentation read for each runtime. Claude Code: PreToolUse deny with a reason shown to Claude. Codex: PreToolUse covers Bash, `apply_patch` edits, and MCP (Model Context Protocol) tools, can deny with a reason shown to the model, loads project hooks from `.codex/hooks.json` after trust review. OpenCode: project plugins in `.opencode/plugins/` can block via `tool.execute.before`; whether the message reaches the model is not stated. Ten agentsfleet architecture documents carry a `## Traps` section.
 - **Metrics review** — no telemetry change; the delivery report stays local.
 - **Skill-chain outcomes** — Authoring followed `skills/orly-spec-new/SKILL.md` by hand; implementation outcomes pending.
 - **Deferrals** — None.

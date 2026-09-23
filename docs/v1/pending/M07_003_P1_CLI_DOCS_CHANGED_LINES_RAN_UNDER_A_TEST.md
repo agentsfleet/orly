@@ -19,7 +19,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Status:** PENDING
 **Priority:** P1 — a test that passes without running the change is the gap agent-written pull requests show most
 **Categories:** CLI (Command-Line Interface), DOCS
-**Batch:** B1 — release 0.12: after M07_002, alongside M07_004
+**Batch:** B1 — release 0.12. Execution order: M07_001 §1 → M07_002 → M07_003 and M07_004 → M07_005 → M07_001 §§2–5. "Alongside" permits independent implementation work, not concurrent edits to shared files.
 **Branch:** pending — set at CHORE(open)
 **Baseline revision:** pending — record the full comparison commit at CHORE(open)
 **Test Baseline:** pending — measure declared unit and integration lanes before the Pull Request (PR)
@@ -39,7 +39,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 - `orly gate pr` runs the declared test command and reads its exit status (`src/criteria.ts:118-129`); no criterion reads coverage.
 - Codecov's patch status and diff-cover already check changed lines, after a push or with separate setup; the coding agent sees neither before it says done.
 
-**Solution summary:** A `coverage` block names the command that writes lcov and the file it writes. The `pr` gate removes the old file, runs the command once, maps added and modified lines since the merge base to lcov line hits, and names uncovered ranges per file. `--lcov <path>` accepts a file produced earlier in a Continuous Integration (CI) job and records it as external. `orly init` seeds the block for Bun projects.
+**Solution summary:** A `coverage` block names the command that writes lcov and the file it writes. The `pr` gate removes the old file, runs the command once, maps added and modified lines since the merge base to lcov line hits, and names uncovered ranges per file. `--lcov <path>` reads a report produced elsewhere, such as a Continuous Integration (CI) job, and can pass only with producer evidence from orly's own wrapper. `orly init` seeds the block for Bun projects.
 
 **Verdict and reason:** Changed-line coverage is not new; orly adds its placement: the same check runs inside the agent's definition of done before a push, with no upload, and in CI through the same command. A line that ran is not a line that was checked; mutation testing stays out of scope.
 
@@ -48,7 +48,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 - **PR title (eventual):** `feat(gate): fail when changed lines never ran under a test`
 - **Intent:** The coding agent learns which of its changed lines no test executed before it says done, and the pull request check shows the same.
 - **Authoring handshake:** Indy selected "Add diff proof, move folder (Recommended)", then "Both A and B" after being told that Codecov and diff-cover already check changed lines.
-- **ASSUMPTIONS I'M MAKING:** 1. lcov is the only coverage input. 2. Bun is the proven path; other runners work when they write lcov. 3. Only added and modified lines count; deleted lines never do. 4. Test files, declaration files, and configured exclusions are excluded. 5. A changed runtime file no test loaded counts as uncovered.
+- **ASSUMPTIONS I'M MAKING:** 1. lcov is the only coverage input. 2. Bun is the proven path; other runners work when they write lcov. 3. Only added and modified lines at destination paths count; deletions and pure renames never do. 4. Coverage scope is declared separately from code surfaces. 5. An in-scope runtime file absent from the report fails as missing coverage evidence.
 - **Implementer handshake:** pending until PLAN.
 
 ## Implementing agent — read these first
@@ -66,6 +66,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 |---|---|---|
 | `docs/v1/pending/M07_003_P1_CLI_DOCS_CHANGED_LINES_RAN_UNDER_A_TEST.md` | CREATE, then lifecycle MOVE | Intent and proof ledger |
 | `src/lcov.ts`, `src/lcov.test.ts` | CREATE | lcov reader |
+| `src/coverage_run.ts`, `src/coverage_run.test.ts`, `schemas/coverage-manifest.schema.json` | CREATE | Producer evidence wrapper and its shape |
 | `src/diff_coverage.ts`, `src/diff_coverage.test.ts` | CREATE | Changed-line extraction and mapping to hits |
 | `src/criteria.ts`, `src/criteria.test.ts` | EDIT | `diff.covered` in the `pr` gate |
 | `src/config.ts`, `src/config.test.ts`, `src/validation.ts`, `src/validation.test.ts` | EDIT | `coverage` block; Bun seeding |
@@ -102,28 +103,31 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ### §1 — Changed lines meet coverage records
 
-Changed lines are the added and modified lines between the merge base and the evaluated head, read from `git diff --unified=0` with renames followed, for files in code surfaces. Deleted lines never count. Test files, declaration files, and paths listed in `coverage.exclude` are excluded. The lcov reader accepts source-file (`SF`), line-data (`DA`), and `end_of_record` records, normalizes absolute and relative source paths to repository-relative ones, ignores paths outside the repository while counting them, merges repeated records for one file, and refuses a malformed file naming its line. A changed line with a positive hit count is covered; a zero count is uncovered; a line with no `DA` record is not measurable. A changed code file absent from lcov was never loaded by a test: its changed lines count as uncovered, unless its transpiled JavaScript is empty, which means it holds only types and counts as not measurable. **Implementation default:** detect type-only TypeScript with Bun's transpiler, because loading a file is the only runtime signal Bun's coverage gives.
+Coverage scope is declared independently of code surfaces through `coverage.include` and `coverage.exclude`; Bun initialization includes only its JavaScript and TypeScript source extensions, and files outside the scope are reported as outside measurement scope. Changed lines come from `git diff` between the merge base and the evaluated head, with rename detection explicitly enabled and paths decoded without newline-based splitting: the added and modified lines at destination paths and line numbers. Deleted lines never count, a pure rename contributes no changed lines, and coverage recorded only under an old path is not transferred to an edited destination. The lcov reader resolves relative source-file (`SF`) paths against the recorded coverage producer's working directory, and absolute paths must resolve beneath the evaluated repository root. Canonicalization preserves case and detects ambiguous mappings and symlink escapes; no basename or suffix matching is permitted. Repeated records merge only after canonical source identity agrees; valid non-line records are ignored; malformed required records fail with their line number. A changed line with a positive line-data (`DA`) hit count is covered, a zero count is uncovered, and a line with no `DA` record is not measurable. An in-scope runtime file absent from the report fails as missing coverage evidence; the output does not infer whether it was unloaded, excluded, or omitted by the producer. A TypeScript file is non-runtime only when transpiling it with the TypeScript loader and fixed, documented options, without macros or elimination settings that can erase runtime code, yields empty output or only an empty module marker such as `export {};`; a parse failure is an error.
 
-- **Dimension 1.1** — Added and modified lines since the merge base are extracted with renames followed; deleted lines, test files, declaration files, and exclusions are ignored → Test `test_changed_lines_since_merge_base`
-- **Dimension 1.2** — Relative and absolute lcov paths normalize, repeated records merge, outside paths are counted and ignored, and a malformed file is refused with its line number → Test `test_lcov_reader_normalizes_and_refuses_malformed`
-- **Dimension 1.3** — Positive hits are covered, zero hits uncovered, missing records not measurable; a never-loaded runtime file is uncovered and a never-loaded type-only file is not measurable → Test `test_changed_lines_map_to_hits`
+- **Dimension 1.1** — Changed lines use destination paths and lines at the evaluated head; deletions and pure renames add none; old-path coverage never transfers to an edited destination; quoted filenames decode; out-of-scope files are reported as such → Test `test_changed_lines_since_merge_base`
+- **Dimension 1.2** — Relative paths resolve against the producer directory, absolute paths must sit under the repository, ambiguous mappings and symlink escapes are refused, duplicate basenames never match, repeated records merge only for one canonical file, and malformed records fail with their line number → Test `test_lcov_reader_resolves_paths_exactly`
+- **Dimension 1.3** — Positive hits are covered, zero hits uncovered, and missing records not measurable; an in-scope file absent from the report fails as missing evidence; a file transpiling to nothing or to `export {};` is non-runtime; a parse failure is an error → Test `test_changed_lines_map_to_hits`
 
 ### §2 — `diff.covered` in the gate
 
-The `pr` gate carries `diff.covered` when a `coverage` block is declared. It removes the lcov file, runs the coverage command once, and requires a fresh file afterwards; a failing command fails the criterion with its exit status. `--lcov <path>` uses a file produced earlier, typically in a Continuous Integration (CI) job, and records it as external with its digest instead of running the command. The criterion fails when any measurable changed line ran zero times and names the uncovered ranges per file, merged into contiguous spans and bounded by a named output cap; it passes when every measurable changed line ran; it is skipped with a reason when no coverage block is declared, no code changed, or commands were not executed. Evidence records per file the changed, measurable, and uncovered counts and ranges, the lcov digest, and its source, never source text. `orly init` seeds the block for a Bun project, with command `bun test --coverage --coverage-reporter=lcov` and file `coverage/lcov.info`; it seeds nothing for other runners, whose users declare any command that writes lcov, and it never overwrites a declared block. This repository declares its own block. **Implementation default:** the coverage command is its own invocation, because changing a repository's unit command would change what its other tooling runs.
+The `pr` gate carries `diff.covered` when a `coverage` block is declared. Before running the coverage command once, it may remove only the configured untracked output file beneath the repository root; tracked files, directories, and paths escaping through symlinks are refused before deletion. It requires a fresh file afterwards, and a failing command fails the criterion with its exit status. `--lcov <path>` reads external coverage without executing the coverage command. A bare external file produces `reported`, never `passed`. Passing requires producer evidence binding the report digest, tested head, source-tree digest, coverage configuration, runner version, and successful command exit to the evaluated input; `orly coverage run --manifest <path>`, run from the installed engine, writes that evidence. In GitHub mode, the action's trusted wrapper captures it around coverage generation at the event head; a manifest supplied by the evaluated checkout cannot establish provenance. Missing or mismatched producer evidence is reported as unverified coverage. These records establish run identity, not the honesty of repository-controlled tests. The criterion fails when any measurable changed line ran zero times and names the uncovered ranges per file, merged into contiguous spans and bounded by a named output cap; it passes when every measurable changed line ran; it is skipped with a reason when no coverage block is declared, no code changed, or commands were not executed. Evidence records per file the changed, measurable, and uncovered counts and ranges, the lcov digest, and its source, never source text. `orly init` seeds the block for a Bun project, with command `bun test --coverage --coverage-reporter=lcov` and file `coverage/lcov.info`; it seeds nothing for other runners, whose users declare any command that writes lcov, and it never overwrites a declared block. This repository declares its own block. **Implementation default:** the coverage command is its own invocation, because changing a repository's unit command would change what its other tooling runs.
 
 - **Dimension 2.1** — The criterion fails naming merged uncovered ranges, passes when every measurable changed line ran, and is skipped with a reason for no block, no code change, or no command execution → Test `test_diff_covered_states`
-- **Dimension 2.2** — A leftover lcov file is removed before the run; a command that writes none fails; a failing command fails with its exit status; `--lcov` is recorded as external with its digest → Test `test_diff_covered_uses_fresh_coverage`
+- **Dimension 2.2** — Only the configured untracked output file is removed, and tracked files, directories, and symlink escapes are refused; a command that writes no file fails; a failing command fails with its exit status → Test `test_diff_covered_uses_fresh_coverage`
 - **Dimension 2.3** — Init seeds the Bun block, seeds nothing for other runners, and never overwrites a declared block → Test `test_init_seeds_bun_coverage`
 - **Dimension 2.4** — In a Bun repository, a new exported function with no test fails naming its range, and adding a test that calls it passes → Test `test_untested_change_fails_then_passes`
+- **Dimension 2.5** — A bare `--lcov` file yields `reported`; matching producer evidence from `orly coverage run` allows `passed`; evidence for another head, tree, configuration, or a failed command yields unverified coverage → Test `test_external_coverage_needs_producer_evidence`
 
 ## Interfaces
 
 ```
 Configuration:
   "coverage": { "command": [["bun", "test", "--coverage", "--coverage-reporter=lcov"]],
-                "lcov": "coverage/lcov.info", "exclude": ["**/*.test.ts", "**/*.d.ts"] }
-orly gate pr [--lcov <path>] [--json]
+                "lcov": "coverage/lcov.info", "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
+                "exclude": ["**/*.test.ts", "**/*.d.ts"] }
+orly coverage run [--manifest <path>]          runs the command; writes producer evidence
+orly gate pr [--lcov <path> [--coverage-manifest <path>]] [--json]
 
 Human output (example):
   🔴 diff.covered  src/cli/json.ts:12-40 · src/cli/flags.ts:7   changed lines no test ran
@@ -142,20 +146,24 @@ Evidence entry:
 | Not configured | No `coverage` block | Skipped with reason; `test_diff_covered_states` |
 | Command fails | Non-zero exit | Failed with the exit status; `test_diff_covered_uses_fresh_coverage` |
 | No output | Command writes no lcov file | Failed naming the expected path; `test_diff_covered_uses_fresh_coverage` |
-| Stale file | A leftover lcov from an earlier run | Removed before the run; `test_diff_covered_uses_fresh_coverage` |
-| Malformed lcov | Unknown or broken records | Failed naming the line; `test_lcov_reader_normalizes_and_refuses_malformed` |
-| Foreign paths | lcov names files outside the repository | Counted and ignored; `test_lcov_reader_normalizes_and_refuses_malformed` |
-| Never loaded | A changed runtime file no test imported | Its changed lines uncovered; `test_changed_lines_map_to_hits` |
-| Types only | A changed file holding only types | Not measurable; `test_changed_lines_map_to_hits` |
-| Rename | File moved with edits | Rename followed; `test_changed_lines_since_merge_base` |
+| Stale file | A leftover lcov from an earlier run | Only the configured untracked file is removed; tracked or escaping paths refused; `test_diff_covered_uses_fresh_coverage` |
+| Bare external report | `--lcov` without producer evidence | `reported`, never `passed`; `test_external_coverage_needs_producer_evidence` |
+| Wrong revision | Evidence for another head, tree, or configuration | Unverified coverage; `test_external_coverage_needs_producer_evidence` |
+| Malformed lcov | Broken required records | Failed naming the line; `test_lcov_reader_resolves_paths_exactly` |
+| Path identity | Nested producer directory, duplicate basenames, symlink escape | Resolved against the producer directory; ambiguity refused; `test_lcov_reader_resolves_paths_exactly` |
+| Out of scope | `package.json` or YAML changed | Reported outside measurement scope, never uncovered; `test_changed_lines_since_merge_base` |
+| Missing evidence | An in-scope file absent from the report | Fails as missing coverage evidence; `test_changed_lines_map_to_hits` |
+| Types only | Transpiles to nothing or to `export {};` | Non-runtime; parse failure is an error; `test_changed_lines_map_to_hits` |
+| Rename | Pure or edited rename | Pure adds nothing; old-path coverage never transfers; `test_changed_lines_since_merge_base` |
 | Large diff | Many uncovered ranges | Output capped; totals counted; `test_diff_covered_states` |
 
 ## Invariants
 
-1. Coverage is fresh: the gate removes the lcov file before running, or records an external file with its digest.
+1. `passed` requires coverage produced in this invocation or verified producer evidence for the evaluated input — a bare external report is `reported`.
 2. `diff.covered` never passes while a measurable changed line has zero hits — the state derives from counts.
 3. Deleted lines never count — extraction reads only added and modified lines.
 4. Evidence holds counts and ranges, never source text — the serializer writes from a field allowlist.
+5. Only the configured untracked output file is ever deleted — the gate refuses tracked, directory, and escaping paths first.
 
 ## Metrics & Observability
 
@@ -167,13 +175,14 @@ Evidence entry:
 
 | Dimension | Tier | Test | Asserts (concrete inputs → expected output) |
 |---|---|---|---|
-| 1.1 | unit | `test_changed_lines_since_merge_base` | Fixture repository with edits, a rename, deletions, a test file, a `.d.ts` → only added and modified runtime lines |
-| 1.2 | unit | `test_lcov_reader_normalizes_and_refuses_malformed` | Absolute, relative, repeated, and outside paths → normalized map; broken record → refusal naming its line |
-| 1.3 | unit | `test_changed_lines_map_to_hits` | Hits 3, 0, none; a never-loaded runtime file; a types-only file → covered, uncovered, not measurable, uncovered, not measurable |
+| 1.1 | unit | `test_changed_lines_since_merge_base` | Edits, pure and edited renames, deletions, quoted names, `package.json` → destination lines only; pure rename none; JSON reported out of scope |
+| 1.2 | unit | `test_lcov_reader_resolves_paths_exactly` | Nested producer directory, duplicate basenames, symlink escape, repeated records, broken record → exact map, refusals, line number |
+| 1.3 | unit | `test_changed_lines_map_to_hits` | Hits 3, 0, none; in-scope file absent; interface-only file; `export {};` file; unparsable file → covered, uncovered, not measurable, missing evidence, non-runtime, non-runtime, error |
 | 2.1 | integration | `test_diff_covered_states` | Uncovered lines → failed with merged spans; all ran → passed; no block, no code, no execution → skipped with reasons |
-| 2.2 | integration | `test_diff_covered_uses_fresh_coverage` | Leftover file removed; silent command → failed; exit 1 → failed; `--lcov` → source external with digest |
+| 2.2 | integration | `test_diff_covered_uses_fresh_coverage` | Untracked output removed; tracked or symlinked output refused; silent command → failed; exit 1 → failed |
 | 2.3 | integration | `test_init_seeds_bun_coverage` | Bun project → block seeded; Node project → none; declared block → unchanged |
 | 2.4 | e2e | `test_untested_change_fails_then_passes` | Bun fixture adds an exported function → failed with its range; test added → passed |
+| 2.5 | integration | `test_external_coverage_needs_producer_evidence` | Bare file → reported; matching manifest → passed; manifest for another head, tree, or a failed run → unverified |
 | | integration | `test_gate_without_coverage_is_unchanged` | Regression: no block → every other criterion unchanged; `diff.covered` skipped |
 
 ## Acceptance Rubric (single scoring surface)
@@ -181,7 +190,7 @@ Evidence entry:
 | # | Criterion (observable outcome) | Verify (copy-paste) | Expected | Priority | Graded (VERIFY) |
 |---|---|---|---|---|---|
 | R1 | Changed lines meet coverage correctly (§1) | `bun test src -t "test_changed_lines\|test_lcov_reader"` | exit 0 | P0 | |
-| R2 | The gate fails on untested changes and uses fresh coverage (§2) | `bun test src -t "test_diff_covered\|test_init_seeds_bun"` | exit 0 | P0 | |
+| R2 | The gate fails on untested changes and uses fresh coverage (§2) | `bun test src -t "test_diff_covered\|test_init_seeds_bun\|test_external_coverage"` | exit 0 | P0 | |
 | R3 | An untested change fails, then passes once tested (§2) | `bun test src -t test_untested_change_fails_then_passes` | exit 0 | P0 | |
 | R4 | Scope holds | `git diff --name-only origin/main...HEAD` | 0 paths missing from Files Changed | P0 | |
 | S1 | Declared conformance | `make conform` | exit 0 | P0 | |
@@ -222,7 +231,7 @@ N/A — no files deleted.
 
 ## Discovery (consult log)
 
-- **Consults** — Sep 23, 2026: Bun's coverage page states the lcov reporter, the default `coverage/lcov.info`, and that "Coverage only tracks files that are loaded". diff-cover and Codecov's patch status were read as prior art; Indy chose this work after that correction. orly's own CI already produces lcov (`.github/workflows/test.yml:38`).
+- **Consults** — Codex's CTO review of `136b04c` required declared coverage scope, exact path identity, producer evidence for external reports, and safe deletion; Bun 1.4.2 transpiles `export {};` to `export {};` and type-only modules to empty output, verified locally. Sep 23, 2026: Bun's coverage page states the lcov reporter, the default `coverage/lcov.info`, and that "Coverage only tracks files that are loaded". diff-cover and Codecov's patch status were read as prior art; Indy chose this work after that correction. orly's own CI already produces lcov (`.github/workflows/test.yml:38`).
 - **Metrics review** — no analytics or funnel change.
 - **Skill-chain outcomes** — Authoring followed `skills/orly-spec-new/SKILL.md` by hand; implementation outcomes pending.
 - **Deferrals** — None.

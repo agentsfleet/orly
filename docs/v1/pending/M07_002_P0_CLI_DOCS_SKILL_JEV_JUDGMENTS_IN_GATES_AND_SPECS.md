@@ -19,7 +19,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Status:** PENDING
 **Priority:** P0 — Indy made fitting the templates and scripts to Jev the priority of release 0.12
 **Categories:** CLI (Command-Line Interface), DOCS, SKILL (agent workflow skills)
-**Batch:** B1 — release 0.12: after M07_001 §1, before M07_003, M07_004, M07_005, and M07_001 §§2–5
+**Batch:** B1 — release 0.12. Execution order: M07_001 §1 → M07_002 → M07_003 and M07_004 → M07_005 → M07_001 §§2–5. "Alongside" permits independent implementation work, not concurrent edits to shared files.
 **Branch:** pending — set at CHORE(open)
 **Baseline revision:** pending — record the full comparison commit at CHORE(open)
 **Test Baseline:** pending — measure declared unit and integration lanes before the Pull Request (PR)

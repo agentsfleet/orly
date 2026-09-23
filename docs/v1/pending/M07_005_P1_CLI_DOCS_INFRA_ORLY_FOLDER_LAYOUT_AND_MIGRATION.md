@@ -19,12 +19,12 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Status:** PENDING
 **Priority:** P1 — a stranger rejects 45 files of someone else's rulebook across their root and their own `docs/`
 **Categories:** CLI (Command-Line Interface), DOCS, INFRA (release and scanner configuration)
-**Batch:** B1 — release 0.12, after M07_003 and M07_004, before M07_001 §§4–5
+**Batch:** B1 — release 0.12. Execution order: M07_001 §1 → M07_002 → M07_003 and M07_004 → M07_005 → M07_001 §§2–5. "Alongside" permits independent implementation work, not concurrent edits to shared files.
 **Branch:** pending — set at CHORE(open)
 **Baseline revision:** pending — record the full comparison commit at CHORE(open)
 **Test Baseline:** pending — measure declared unit and integration lanes before the Pull Request (PR)
 **Baseline evidence:** pending — report revision, commands, counts, and environment
-**Depends on:** none. M07_001 §4 and §5 read the layout this spec creates.
+**Depends on:** M07_003 and M07_004 for the final configuration and adapter inventory. M07_001 §§4–5 consume this workstream's completed layout.
 **Provenance:** Large Language Model (LLM)-drafted; Claude Opus 5.5; Sep 23, 2026. Moved from M07_001 §2 after Codex's review as Chief Technology Officer (CTO) of `58fedbc`, at Indy's direction to ship the move as one spec in release 0.12.
 **Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §§Topology, Why it's materialised
 
@@ -32,7 +32,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ## Overview
 
-**Goal (testable):** A fresh `orly init` changes nothing at a repository's root beyond `AGENTS.md`, `CLAUDE.md`, `opencode.json`, the host skill folders, and `.orly/`, and `orly update` moves a 0.10.14 installation into `.orly/` without losing or overwriting any byte, resuming correctly after interruption at any step.
+**Goal (testable):** Fresh initialization writes only `.orly/`, host skill folders, `AGENTS.md`, `CLAUDE.md`, `opencode.json`, and M07_004's three runtime adapter paths. Updating a committed 0.10.14 installation preserves repository-owned content and resumes safely after interruption.
 
 **Problem:** A first-run audit of orly 0.10.14 on Sep 23, 2026 found `orly init` writing 45 files: 13 under `dispatch/`, 7 under `audits/`, and 6 into the user's own `docs/`. The configuration lives in `.oracle/`, a name that reads as another company. Moving files is not enough, because consumers call installed scripts by root paths: agentsfleet's harness sets `ORLY_ROOT ?= $(CURDIR)` and runs `$(ORLY_ROOT)/audits/ufs.sh` (agentsfleet `make/harness.mk:42,91`), and its workflow reads `.oracle/orly.json` directly (`.github/workflows/governance.yml:33`).
 
@@ -106,15 +106,15 @@ Blast-radius rule: tracked files citing the string, minus the repository's manag
 
 In a consumer repository the configuration lives at `.orly/orly.json`, the generated rules at `.orly/AGENTS.md`, hooks under `.orly/hooks/`, and managed rules, audits, and documents at their source-relative paths under `.orly/`. The repository-owned root `AGENTS.md` host, `CLAUDE.md`, and `opencode.json` keep user content and load `.orly/AGENTS.md` through their supported mechanisms. Installation builds one source-to-installed map and rewrites only recognized managed references: Markdown link destinations, exact path tokens, and declared command examples. It preserves URLs, unrelated substrings, and already rewritten paths, resolves relative links from the destination document, and is idempotent. Installed scripts separate the payload root from the evaluated repository. The engine checkout keeps its source layout. **Implementation default:** apply the prefix in the installer rather than editing 52 registry targets, because the registry names sources and the prefix is one rule.
 
-- **Dimension 1.1** — A fresh `orly init` adds nothing at the root beyond the entry files, the host skill folders, and `.orly/`; `core.hooksPath` is `.orly/hooks`; the host and OpenCode load `.orly/AGENTS.md` → Test `test_fresh_install_stays_in_one_folder`
+- **Dimension 1.1** — A fresh `orly init` adds nothing at the root beyond the entry files, the host skill folders, `.orly/`, and M07_004's three adapter paths; `core.hooksPath` is `.orly/hooks`; the host and OpenCode load `.orly/AGENTS.md` → Test `test_fresh_install_stays_in_one_folder`
 - **Dimension 1.2** — Inline paths, relative links, fenced commands, and optional-pack references are rewritten; URLs and unrelated substrings are untouched; a second run changes nothing → Test `test_citation_rewrite_is_exact_and_idempotent`
 - **Dimension 1.3** — Installed scripts run from the consumer root and a nested directory, finding payload siblings under `.orly/` and evaluating the repository → Test `test_installed_scripts_run_from_consumer_layout`
 
 ### §2 — Ordered, resumable migration
 
-Migration requires a committed prior installation and exclusive access. Preflight inventories source bytes, destination collisions, symlinks, executable modes, loader blocks, and hook ownership before any mutation. The old inventory is kept until every new payload file is verified. New payloads install before loaders and hooks switch; the new configuration is written atomically after those switches; old managed copies and `.oracle/orly.json` go last. `core.hooksPath` follows only when both prior hooks were unchanged orly copies. A retry recognizes identical completed destinations and refuses conflicting bytes without overwriting them. `git status` is diagnostic output, never the recovery mechanism. Before migration every command except `orly update` names it. `orly doctor` lists repository-owned files citing an old managed path or `.oracle/`, by file and line. Under the Files Changed rule, agentsfleet at `b1bc6f0c4` owned 50 files citing a managed path and 11 citing `.oracle`; e2e-observability-platform at `8b4d75d` owned 10 and 3. Consumers stay pinned until their one migration change passes their own harness and Continuous Integration (CI) checks.
+Migration requires a committed prior installation and exclusive access. Preflight inventories source bytes, destination collisions, symlinks, executable modes, loader blocks, and hook ownership before any mutation. The old inventory is kept until every new payload file is verified. New payloads install before loaders and hooks switch; the new configuration is written atomically after those switches; old managed copies and `.oracle/orly.json` go last. `core.hooksPath` follows only when both prior hooks were unchanged orly copies. A retry recognizes identical completed destinations and refuses conflicting bytes without overwriting them. `git status` is diagnostic output, never the recovery mechanism. Before migration every command except `orly update` names it. `orly doctor` lists repository-owned files citing an old managed path or `.oracle/`, by file and line. Under the Files Changed rule, agentsfleet at `b1bc6f0c4` owned 50 files citing a managed path and 11 citing `.oracle`; e2e-observability-platform at `8b4d75d` owned 10 and 3. Consumers stay pinned until their one migration change passes their own harness and Continuous Integration (CI) checks. Every replaced payload, loader, adapter configuration, hook, and configuration file is written to a sibling temporary file and atomically renamed after verifying its complete bytes and mode. The committed source revision and complete source inventory are retained until cleanup finishes. Retry recognizes completed cleanup entries, including a missing old source whose verified destination exists; changed source or destination bytes refuse without writes. Failure injection covers every file replacement and cleanup deletion, including partially completed loader and cleanup stages.
 
-- **Dimension 2.1** — Preflight refuses an edited copy or a conflicting destination before any write; interruption at each boundary (payload, loaders, hooks, configuration, cleanup) followed by a rerun completes without data loss → Test `test_migration_resumes_at_every_boundary`
+- **Dimension 2.1** — Preflight refuses an edited copy or a conflicting destination before any write; interruption during any single file replacement or cleanup deletion, including a partially rewritten loader host, followed by a rerun completes without data loss → Test `test_migration_resumes_at_every_boundary`
 - **Dimension 2.2** — Before migration, `gate` names `orly update`; `orly doctor` names each repository-owned file and line still citing an old path or `.oracle/` → Test `test_doctor_names_stale_citations`
 - **Dimension 2.3** — Repository-owned hooks, such as agentsfleet's `.githooks`, are left in place and reported, never retargeted → Test `test_migration_leaves_owned_hooks`
 
@@ -135,7 +135,7 @@ Migration order: preflight → payload → verify payload → loaders → hooks 
 | Mode | Cause | Handling (system response + what the caller observes) |
 |---|---|---|
 | Conflicting destination | Edited copy or foreign bytes at a target | Preflight refusal before writes; `test_migration_resumes_at_every_boundary` |
-| Interrupted migration | Killed at any boundary, hooks included | Rerun completes; no bytes lost; `test_migration_resumes_at_every_boundary` |
+| Interrupted migration | Killed during any file replacement or cleanup deletion | Atomic renames keep whole files; rerun completes; no bytes lost; `test_migration_resumes_at_every_boundary` |
 | Broken caller | A consumer script cites an old path | Doctor names file and line; consumer stays pinned; `test_doctor_names_stale_citations` |
 | Wrong path semantics | Path-like text that is not a reference | Left untouched; `test_citation_rewrite_is_exact_and_idempotent` |
 | Script from nested directory | Installed audit run below the root | Payload siblings found; repository evaluated; `test_installed_scripts_run_from_consumer_layout` |
@@ -143,9 +143,9 @@ Migration order: preflight → payload → verify payload → loaders → hooks 
 
 ## Invariants
 
-1. Every orly-managed path in a consumer lives under `.orly/` or a host skill folder — the installer asserts each target's prefix before writing.
+1. Every orly-owned payload path lives under `.orly/` or a host skill folder, except `.opencode/plugins/orly-rules.ts`. Repository-owned entry files and adapter settings at `.claude/settings.json` and `.codex/hooks.json` remain at their runtime-required paths and receive only the owned edits defined by M07_004 — the installer asserts this explicit allowlist before writing.
 2. Migration never overwrites conflicting bytes — preflight and retry compare bytes before any write.
-3. Rewriting touches only recognized references and is idempotent — the rewriter works from one map and skips fenced text.
+3. Rewriting touches only recognized references and is idempotent. Outside fences it rewrites recognized managed path tokens and Markdown destinations. Inside fences it rewrites only declared command examples; all other fenced content remains byte-identical.
 4. Nothing reads `.oracle/` after migration — one directory constant, and no alias path.
 
 ## Metrics & Observability
@@ -158,10 +158,10 @@ Migration order: preflight → payload → verify payload → loaders → hooks 
 
 | Dimension | Tier | Test | Asserts (concrete inputs → expected output) |
 |---|---|---|---|
-| 1.1 | integration | `test_fresh_install_stays_in_one_folder` | Fresh repository → root diff only entry files, skill folders, `.orly/`; hooks path and loaders point into `.orly/` |
+| 1.1 | integration | `test_fresh_install_stays_in_one_folder` | Fresh repository → root diff only entry files, skill folders, `.orly/`, and three adapter paths; hooks and loaders point into `.orly/` |
 | 1.2 | unit | `test_citation_rewrite_is_exact_and_idempotent` | Inline, relative, fenced, optional-pack, and URL cases → only managed references change; second pass is a no-op |
 | 1.3 | integration | `test_installed_scripts_run_from_consumer_layout` | Installed audit run from root and a nested folder → finds `.orly/` siblings; evaluates the repository |
-| 2.1 | integration | `test_migration_resumes_at_every_boundary` | Faults at payload, loaders, hooks, configuration, cleanup → rerun completes; conflicts refuse; bytes intact |
+| 2.1 | integration | `test_migration_resumes_at_every_boundary` | Faults inside every file replacement and cleanup deletion, host included → rerun completes; conflicts refuse; bytes intact |
 | 2.2 | integration | `test_doctor_names_stale_citations` | Unmigrated repository → `gate` names `orly update`; owned citations listed by file and line |
 | 2.3 | integration | `test_migration_leaves_owned_hooks` | Custom hooks at `.githooks` → untouched; report names them |
 | | integration | `test_foreign_hooks_path_still_refuses` | Regression: another tool's `core.hooksPath` → existing refusal |
@@ -192,7 +192,7 @@ N/A — no files deleted; `.oracle/orly.json` and `AGENTS.orly.md` move. The eng
 
 ## Product Clarity (authoring record)
 
-1. **Successful user moment** — A maintainer runs `orly init` and `git status` shows the agent entry files, the skill folders, and `.orly/`, nothing else.
+1. **Successful user moment** — A maintainer runs `orly init` and `git status` shows the agent entry files, the skill folders, `.orly/`, and the three adapter files, nothing else.
 2. **Preserved user behaviour** — Every rule, command, gate, and hook behaves as before; only locations change.
 3. **Optimal-way check** — The unconstrained shape installs nothing at all and serves rules from the package; agents still need files they can open, so one folder is the least footprint that works in every runtime.
 4. **Rebuild-vs-iterate** — Iterate on the installer; add an ordered migration.
@@ -211,7 +211,7 @@ N/A — no files deleted; `.oracle/orly.json` and `AGENTS.orly.md` move. The eng
 
 ## Discovery (consult log)
 
-- **Consults** — Sep 23, 2026: the CTO review of `58fedbc` required ordered migration, a defined rewrite language, payload-root separation, and loader relocation; each cited line was verified (`src/install.ts:303-306`, `src/loaders.ts:21`, `src/references.ts:30-40`, agentsfleet `make/harness.mk:42,91`). Indy: "Also i want 0.12 move to .orly/ folder in one spec", then "so we create one release 0.12 with all".
+- **Consults** — Codex's CTO review of `136b04c` confirmed the earlier safeguards survived and required atomic replacement of every file, the adapter paths in the footprint, and fence rules matching the rewrite tests; the host rewrite uses a direct write today (`src/loaders.ts:125`). Sep 23, 2026: the CTO review of `58fedbc` required ordered migration, a defined rewrite language, payload-root separation, and loader relocation; each cited line was verified (`src/install.ts:303-306`, `src/loaders.ts:21`, `src/references.ts:30-40`, agentsfleet `make/harness.mk:42,91`). Indy: "Also i want 0.12 move to .orly/ folder in one spec", then "so we create one release 0.12 with all".
 - **Metrics review** — no analytics or funnel change.
 - **Skill-chain outcomes** — Authoring followed `skills/orly-spec-new/SKILL.md` by hand; implementation outcomes pending.
 - **Deferrals** — None.

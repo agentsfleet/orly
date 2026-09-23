@@ -19,7 +19,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Status:** PENDING
 **Priority:** P1 — an open-source user decides on the first run, and today that run shows nothing their Continuous Integration (CI) does not
 **Categories:** CLI (Command-Line Interface), DOCS, INFRA (CI automation), SKILL (agent workflow skills)
-**Batch:** B1 — release 0.12: §1 first; §§2–5 after M07_002, M07_003, M07_004, and M07_005
+**Batch:** B1 — release 0.12. Execution order: M07_001 §1 → M07_002 → M07_003 and M07_004 → M07_005 → M07_001 §§2–5. "Alongside" permits independent implementation work, not concurrent edits to shared files.
 **Branch:** pending — set at CHORE(open)
 **Baseline revision:** pending — record the full comparison commit at CHORE(open)
 **Test Baseline:** pending — measure declared unit and integration lanes before the Pull Request (PR)
@@ -141,14 +141,14 @@ The install filter already applies to every installed Markdown file; this Sectio
 
 ### §4 — The same gate runs on every pull request
 
-`orly gate pr --ci github` reads the pull request event and records the event base tip, event head, evaluated head, and their merge base separately. The checkout must equal the event head. The workflow fetches enough history to resolve both commits and prove their merge base; diff-sensitive criteria, override discovery, and spec discovery share that context. A branch behind its base is a separate `reported` policy result, never malformed input. Missing objects, unrelated histories, a mismatched checkout, an unresolved shallow history, and a merge-ref checkout in head mode refuse before commands run; `--base` and `--head-ref` override the event. With `--no-commands`, nothing from the evaluated checkout executes, the spec-template script included; structural checks use the installed engine, and command criteria report that commands were not executed. `orly init --ci github` writes `.github/workflows/orly.yml`: `pull_request` only, read-only permissions, checkout without persisted credentials, and the orly step, with setup and coverage steps first when a Bun project is detected; a differing file refuses unchanged. The composite `action.yml`, named "orly gate", identifies its own revision and the installed engine version separately, declares supported engine and evidence-schema versions, and rejects incompatible pins before evaluation; its tag and the repository's pinned engine version need not match. Its `lcov` input passes a coverage file produced earlier in the job to M07_003's `diff.covered`, and M07_004's `rules.delivered` reports skipped in CI because delivery happens where the author commits. It writes a state table to the job summary and uploads evidence even after gate failure, without replacing the exit status. `pull_request_target` is rejected. M07_002 judging runs in this mode only when maintainers set the repository variable `ORLY_JUDGE_UPLOAD` to `allow` and supply the provider key as a secret; forks receive no key, and local records are ignored. Usage telemetry already reports CI runs (`src/telemetry.ts:258`).
+`orly gate pr --ci github` reads the pull request event and records the event base tip, event head, evaluated head, and their merge base separately. The checkout must equal the event head. The workflow fetches enough history to resolve both commits and prove their merge base; diff-sensitive criteria, override discovery, and spec discovery share that context. A branch behind its base is a separate `reported` policy result, never malformed input. Missing objects, unrelated histories, a mismatched checkout, an unresolved shallow history, and a merge-ref checkout in head mode refuse before commands run; `--base` and `--head-ref` override the event. With `--no-commands`, nothing from the evaluated checkout executes, the spec-template script included; structural checks use the installed engine, and command criteria report that commands were not executed. `orly init --ci github` writes `.github/workflows/orly.yml`: `pull_request` only, read-only permissions, checkout without persisted credentials, and the orly step, with setup and coverage steps first when a Bun project is detected; a differing file refuses unchanged. The composite `action.yml`, named "orly gate", identifies its own revision and the installed engine version separately, declares supported engine and evidence-schema versions, and rejects incompatible pins before evaluation; its tag and the repository's pinned engine version need not match. Coverage generation uses the same event-head checkout as evaluation. The action removes prior output, captures producer evidence through M07_003's wrapper, and rejects evidence from a merge checkout, different revision, failed command, or changed source tree. M07_004's `rules.delivered` reports skipped in CI because delivery happens where the author commits. It writes a state table to the job summary and uploads evidence even after gate failure, without replacing the exit status. `pull_request_target` is rejected. M07_002 judging runs in this mode only when maintainers set the repository variable `ORLY_JUDGE_UPLOAD` to `allow` and supply the provider key as a secret; forks receive no key, and local records are ignored. Usage telemetry already reports CI runs (`src/telemetry.ts:258`).
 
 - **Dimension 4.1** — With event fixtures where the base advanced after branching, base tip, head, and merge base are recorded, criteria compare against the merge base, and the lag is reported → Test `test_ci_github_binds_to_event_head`
 - **Dimension 4.2** — A non-pull-request event, `pull_request_target`, missing objects, unrelated histories, a mismatched checkout, a merge-ref checkout, and unresolved shallow history each refuse before commands run → Test `test_ci_mode_refuses_bad_revisions`
 - **Dimension 4.3** — With `--no-commands`, a planted checkout `audits/spec-template.sh` never executes, structural checks still run, and command criteria report not executed → Test `test_no_commands_runs_nothing_from_checkout`
 - **Dimension 4.4** — `orly init --ci github` writes the workflow with read-only permissions and no persisted credentials, adding coverage steps for a Bun project; a differing file refuses unchanged → Test `test_init_writes_the_ci_workflow`
 - **Dimension 4.5** — Judging runs only with the maintainer variable and a key; a fork or a missing variable skips it with a reason; local records are ignored → Test `test_ci_judging_requires_maintainer_setting`
-- **Dimension 4.6** — In a scratch repository, a pull request shows the "orly gate" check and its evidence; an incompatible pin fails before evaluation; a failing gate still uploads evidence → Test `manual_scratch_repository_pull_request`
+- **Dimension 4.6** — In a scratch repository, a pull request shows the "orly gate" check and its evidence; an incompatible pin fails before evaluation; coverage evidence from a merge checkout is rejected; a failing gate still uploads evidence → Test `manual_scratch_repository_pull_request`
 
 ### §5 — A stranger's first run is proved and documented
 
@@ -161,13 +161,13 @@ Depends on §§1–4, M07_003, M07_004, and M07_005. An end-to-end test packs th
 
 ```
 orly gate [work|verify|pr] [--json] [--accept-dirty]
-orly gate pr --ci github [--base <full-commit>] [--head-ref <name>] [--no-commands] [--lcov <path>] [--json]
+orly gate pr --ci github [--base <full-commit>] [--head-ref <name>] [--no-commands] [--lcov <path> --coverage-manifest <path>] [--json]
 orly init [--ci github] [--force] [--no-hooks] [--with <PACK>] [--dry-run] [--json]
 
 Seeded when absent (.orly/orly.json):  "surfaces": { "user": ["bin/cli.ts", "src/index.ts"], "docs": ["README.md", "docs/"] }
 Workflow written by init --ci github: on pull_request; permissions contents: read; checkout with
   persist-credentials: false and enough history; Bun setup and coverage when detected;
-  uses: agentsfleet/orly@v0.12.0 with lcov: coverage/lcov.info
+  uses: agentsfleet/orly@v0.12.0, which runs orly coverage run at the event head
 
 Evidence (schemas/gate-evidence.schema.json), no free text:
 { "schema_version": 1, "orly_version": "0.12.0", "source": "working_tree",
@@ -235,7 +235,7 @@ Exit: 0 when no criterion failed; 1 when one failed; usage errors keep their cur
 | 4.3 | integration | `test_no_commands_runs_nothing_from_checkout` | Planted script writing a sentinel → sentinel absent; structural checks ran |
 | 4.4 | integration | `test_init_writes_the_ci_workflow` | Bun project → workflow with setup, coverage, read permissions, no persisted credentials; differing file → refusal |
 | 4.5 | integration | `test_ci_judging_requires_maintainer_setting` | Variable absent, fork without key, planted record → judging skipped or asked fresh |
-| 4.6 | manual | `manual_scratch_repository_pull_request` | Implementer runs the action in a scratch repository; run URLs for pass, incompatible pin, and failing gate in Session Notes |
+| 4.6 | manual | `manual_scratch_repository_pull_request` | Implementer runs the action in a scratch repository; run URLs for pass, incompatible pin, merge-checkout coverage, and failing gate in Session Notes |
 | 5.1 | e2e | `test_first_run_journey` | Packed package in fresh repositories → every journey step succeeds or fails as written |
 | 5.2 | unit | `test_readme_first_run_matches_journey` | README first-run commands → each appears in the journey test |
 | | integration | `test_foreign_hooks_path_still_refuses` | Regression: another tool's `core.hooksPath` → existing refusal |
@@ -286,12 +286,13 @@ N/A — no files deleted.
 
 - **Chosen shape:** Five Sections. §1's states feed every other workstream; §4 and §5 read M07_005's layout.
 - **Order:** release 0.12: §1, then M07_002, then M07_003 and M07_004, then M07_005, then §§2–5, because Jev is the priority and reports through §1's states, and CI binds to the final layout.
+- **Ownership:** M07_001 owns the release implementation stream. At CHORE(open), M07_002 through M07_005 name Folded-into: M07_001. The owner's Files Changed scope is the union of all five workstreams. Its completion review explicitly verifies every child Dimension and acceptance row; discovering the owner alone is not proof that the children are complete.
 - **Alternatives considered:** The profiles draft duplicated existing skill tools and git. Requiring the base tip to be an ancestor of the head refuses every branch whose base advanced. Asking every user to declare surfaces leaves the documentation check off for nearly all of them.
 - **Patch-vs-refactor verdict:** this is a **refactor** of the result type, marker parser, surface seeding, and CI binding.
 
 ## Discovery (consult log)
 
-- **Consults** — Sep 23, 2026: 10:10 AM, first-run audit of orly 0.10.14; figures in Problem. Codex's CTO review of `58fedbc` returned rework with twelve findings; each cited line was verified before revision (`src/criteria_spec.ts:46`, `src/criteria.ts:87,125,174,194`, `src/gates.ts:56-61`, `src/install.ts:303-306`, `src/references.ts:30-40`). Indy, this session: "What is relevant now, for distribution, for opensource folks to use must be seen more"; he selected "Replace M07 (Recommended)", "Add diff proof, move folder (Recommended)", and "Both A and B", then: "Also i want 0.12 move to .orly/ folder in one spec" and "so we create one release 0.12 with all".
+- **Consults** — Codex's CTO review of `136b04c` kept the gate design and required event-head coverage evidence, one owning stream with folded children, and an exact execution order; the gate accepts exactly one non-folded owner (`src/gates.ts:123-125`). Sep 23, 2026: 10:10 AM, first-run audit of orly 0.10.14; figures in Problem. Codex's CTO review of `58fedbc` returned rework with twelve findings; each cited line was verified before revision (`src/criteria_spec.ts:46`, `src/criteria.ts:87,125,174,194`, `src/gates.ts:56-61`, `src/install.ts:303-306`, `src/references.ts:30-40`). Indy, this session: "What is relevant now, for distribution, for opensource folks to use must be seen more"; he selected "Replace M07 (Recommended)", "Add diff proof, move folder (Recommended)", and "Both A and B", then: "Also i want 0.12 move to .orly/ folder in one spec" and "so we create one release 0.12 with all".
 - **Metrics review** — no analytics or funnel change; the usage observation already records CI runs.
 - **Skill-chain outcomes** — Authoring followed `skills/orly-spec-new/SKILL.md` by hand. Implementation proofs, `/review`, and post-push monitoring are pending.
 - **Deferrals** — None.
