@@ -1,0 +1,142 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DeliveryRecord",
+  "type": "object",
+  "properties": {
+    "compliance": {
+      "$ref": "#/$defs/CriterionResult"
+    },
+    "emitted": {
+      "$ref": "#/$defs/CriterionResult"
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "rule_digest": {
+      "type": "string"
+    },
+    "self_reported_read": {
+      "$ref": "#/$defs/CriterionResult"
+    },
+    "snapshot_digest": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "snapshot_digest",
+    "rule_digest",
+    "paths",
+    "emitted",
+    "self_reported_read",
+    "compliance"
+  ],
+  "$defs": {
+    "CriterionResult": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "passed"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "failed"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "skipped"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "reported"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "reason"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "invocation": {
+              "type": "string"
+            },
+            "original": {
+              "$ref": "#/$defs/CriterionResult"
+            },
+            "reason": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string",
+              "const": "overridden"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "reason",
+            "original",
+            "invocation"
+          ]
+        }
+      ]
+    }
+  }
+}

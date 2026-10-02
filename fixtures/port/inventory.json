@@ -1,0 +1,1986 @@
+{
+  "version": 1,
+  "revision": "c02f1e02806204811401b01596a04ff4c039d02a",
+  "entries": [
+    {
+      "path": ".githooks/pre-commit",
+      "disposition": "native_replacement",
+      "successor": "src/cli_output.rs native invocation routing",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of .githooks/pre-commit",
+          "successor": "src/cli_output.rs native invocation routing",
+          "proof": "native.install"
+        }
+      ]
+    },
+    {
+      "path": ".githooks/pre-push",
+      "disposition": "native_replacement",
+      "successor": "src/cli_output.rs native invocation routing",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of .githooks/pre-push",
+          "successor": "src/cli_output.rs native invocation routing",
+          "proof": "native.install"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/gitleaks.yml",
+      "disposition": "release_assembly",
+      "successor": "M07_001 native verification and release assembly",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of .github/workflows/gitleaks.yml",
+          "successor": "M07_001 native verification and release assembly",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/harness.yml",
+      "disposition": "release_assembly",
+      "successor": "M07_001 native verification and release assembly",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of .github/workflows/harness.yml",
+          "successor": "M07_001 native verification and release assembly",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/release.yml",
+      "disposition": "release_assembly",
+      "successor": "M07_001 native verification and release assembly",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of .github/workflows/release.yml",
+          "successor": "M07_001 native verification and release assembly",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": ".github/workflows/test.yml",
+      "disposition": "release_assembly",
+      "successor": "M07_001 native verification and release assembly",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of .github/workflows/test.yml",
+          "successor": "M07_001 native verification and release assembly",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": ".gitignore",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": ".gitleaks.toml",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": ".gitleaksignore",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": ".oracle/orly.json",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "AGENTS.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "CLAUDE.md",
+      "disposition": "host_wrapper",
+      "successor": "src/host/mod.rs owned host integration",
+      "obligations": []
+    },
+    {
+      "path": "LICENSE",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "Makefile",
+      "disposition": "release_assembly",
+      "successor": "M07_001 native verification and release assembly",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of Makefile",
+          "successor": "M07_001 native verification and release assembly",
+          "proof": "comparison.release"
+        },
+        {
+          "name": "Preserve Make entry conform audit",
+          "successor": "M07_001 native development runner assembly",
+          "proof": "comparison.release"
+        },
+        {
+          "name": "Preserve Make entry install-evals",
+          "successor": "M07_001 native development runner assembly",
+          "proof": "comparison.release"
+        },
+        {
+          "name": "Preserve Make entry ledger",
+          "successor": "M07_001 native development runner assembly",
+          "proof": "comparison.release"
+        },
+        {
+          "name": "Preserve Make entry ledger-evals",
+          "successor": "M07_001 native development runner assembly",
+          "proof": "comparison.release"
+        },
+        {
+          "name": "Preserve Make entry dispatch-coverage",
+          "successor": "M07_001 native development runner assembly",
+          "proof": "comparison.release"
+        },
+        {
+          "name": "Preserve Make entry dispatch-evals",
+          "successor": "M07_001 native development runner assembly",
+          "proof": "comparison.release"
+        },
+        {
+          "name": "Preserve Make entry dispatch-parity-evals",
+          "successor": "M07_001 native development runner assembly",
+          "proof": "comparison.release"
+        },
+        {
+          "name": "Preserve Make entry test-audit",
+          "successor": "M07_001 native development runner assembly",
+          "proof": "comparison.release"
+        },
+        {
+          "name": "Preserve Make entry dispatch-parity",
+          "successor": "M07_001 native development runner assembly",
+          "proof": "comparison.release"
+        },
+        {
+          "name": "Preserve Make entry llmevals",
+          "successor": "M07_001 native development runner assembly",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": "README.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "SOUL.md",
+      "disposition": "private_notes",
+      "successor": "excluded from public payload",
+      "obligations": []
+    },
+    {
+      "path": "SOUL_LOG.md",
+      "disposition": "private_notes",
+      "successor": "excluded from public payload",
+      "obligations": []
+    },
+    {
+      "path": "audits/agents-md.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "audits/agents-md.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native agents-md",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/agents-md.sh",
+          "successor": "src/checks/mod.rs native agents-md",
+          "proof": "comparison.invariance"
+        }
+      ]
+    },
+    {
+      "path": "audits/data.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native data",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/data.sh",
+          "successor": "src/checks/mod.rs native data",
+          "proof": "comparison.invariance"
+        }
+      ]
+    },
+    {
+      "path": "audits/deinit-pairs.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native deinit-pairs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/deinit-pairs.sh",
+          "successor": "src/checks/mod.rs native deinit-pairs",
+          "proof": "comparison.deinit"
+        }
+      ]
+    },
+    {
+      "path": "audits/design-tokens.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native design-tokens",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/design-tokens.sh",
+          "successor": "src/checks/mod.rs native design-tokens",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "audits/doc-read.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native doc-read",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/doc-read.sh",
+          "successor": "src/checks/mod.rs native doc-read",
+          "proof": "comparison.doc_read"
+        }
+      ]
+    },
+    {
+      "path": "audits/error-codes.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native error-codes",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/error-codes.sh",
+          "successor": "src/checks/mod.rs native error-codes",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "audits/fixtures/clean.diff",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "audits/fixtures/dirty.diff",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "audits/lifecycle-anchors.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native lifecycle-anchors",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/lifecycle-anchors.sh",
+          "successor": "src/checks/mod.rs native lifecycle-anchors",
+          "proof": "comparison.invariance"
+        }
+      ]
+    },
+    {
+      "path": "audits/logging.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native logging",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/logging.sh",
+          "successor": "src/checks/mod.rs native logging",
+          "proof": "comparison.logging"
+        }
+      ]
+    },
+    {
+      "path": "audits/msid-ui.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native msid-ui",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/msid-ui.sh",
+          "successor": "src/checks/mod.rs native msid-ui",
+          "proof": "comparison.milestone_names"
+        }
+      ]
+    },
+    {
+      "path": "audits/parity-dispatch.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native parity-dispatch",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/parity-dispatch.sh",
+          "successor": "src/checks/mod.rs native parity-dispatch",
+          "proof": "comparison.dispatch"
+        }
+      ]
+    },
+    {
+      "path": "audits/rule-ledger-lib.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native rule-ledger-lib",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/rule-ledger-lib.sh",
+          "successor": "src/checks/mod.rs native rule-ledger-lib",
+          "proof": "comparison.ledger"
+        }
+      ]
+    },
+    {
+      "path": "audits/rule-ledger.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native rule-ledger",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/rule-ledger.sh",
+          "successor": "src/checks/mod.rs native rule-ledger",
+          "proof": "comparison.ledger"
+        }
+      ]
+    },
+    {
+      "path": "audits/rule-paths.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native rule-paths",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/rule-paths.sh",
+          "successor": "src/checks/mod.rs native rule-paths",
+          "proof": "comparison.invariance"
+        }
+      ]
+    },
+    {
+      "path": "audits/rust-error.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native rust-error",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/rust-error.sh",
+          "successor": "src/checks/mod.rs native rust-error",
+          "proof": "comparison.rust_errors"
+        }
+      ]
+    },
+    {
+      "path": "audits/spec-template.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native spec-template",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/spec-template.sh",
+          "successor": "src/checks/mod.rs native spec-template",
+          "proof": "comparison.criteria"
+        }
+      ]
+    },
+    {
+      "path": "audits/spec-template.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native spec-template",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/spec-template.ts",
+          "successor": "src/checks/mod.rs native spec-template",
+          "proof": "comparison.criteria"
+        }
+      ]
+    },
+    {
+      "path": "audits/sql-mod.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native sql-mod",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/sql-mod.sh",
+          "successor": "src/checks/mod.rs native sql-mod",
+          "proof": "comparison.sql_modules"
+        }
+      ]
+    },
+    {
+      "path": "audits/ufs.sh",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs native ufs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of audits/ufs.sh",
+          "successor": "src/checks/mod.rs native ufs",
+          "proof": "comparison.symbol_constants"
+        }
+      ]
+    },
+    {
+      "path": "bin/orly",
+      "disposition": "native_replacement",
+      "successor": "src/cli_output.rs native invocation routing",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of bin/orly",
+          "successor": "src/cli_output.rs native invocation routing",
+          "proof": "native.install"
+        }
+      ]
+    },
+    {
+      "path": "branding/agent-amp.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/agent-claude-code.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/agent-codex.png",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/agent-opencode.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/agentsfleet-mark-glow.png",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/lang-go.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/lang-javascript.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/lang-mdx.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/lang-python.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/lang-rust.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/lang-shell.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/lang-sql.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/lang-typescript.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "branding/lang-zig.svg",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "bun.lock",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "core/operating-model.md",
+      "disposition": "authoritative_rules",
+      "successor": "src/core/payload.rs embedded selected sources",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/edit_rules.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/edit_rules.sh",
+      "disposition": "native_replacement",
+      "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of dispatch/edit_rules.sh",
+          "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "dispatch/lib.sh",
+      "disposition": "native_replacement",
+      "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of dispatch/lib.sh",
+          "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "dispatch/lifecycle.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/name_architecture.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/verify.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_any.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_any.sh",
+      "disposition": "native_replacement",
+      "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of dispatch/write_any.sh",
+          "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "dispatch/write_auth.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_changelog.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_documentation.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_go.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_http.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_mdx.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_pr_description.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_python.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_rust.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_rust.sh",
+      "disposition": "native_replacement",
+      "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of dispatch/write_rust.sh",
+          "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "dispatch/write_shell.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_spec.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_sql.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_sql.sh",
+      "disposition": "native_replacement",
+      "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of dispatch/write_sql.sh",
+          "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "dispatch/write_ts_adhere_bun.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_ts_adhere_bun.sh",
+      "disposition": "native_replacement",
+      "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of dispatch/write_ts_adhere_bun.sh",
+          "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "dispatch/write_zig.md",
+      "disposition": "generated_destination",
+      "successor": "src/core/render.rs generated under .orly/",
+      "obligations": []
+    },
+    {
+      "path": "dispatch/write_zig.sh",
+      "disposition": "native_replacement",
+      "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of dispatch/write_zig.sh",
+          "successor": "src/rules/mod.rs native dispatch and src/checks/mod.rs evaluation",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "docs/CHANGELOG_VOICE.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/DISPATCH_ARCHITECTURE.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/DISPATCH_REVIEW_DISPOSITION.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/DOCUMENTATION_RULES.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/EXECUTE_DOC_READS.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/HARNESS_VERIFY_OUTPUT.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/LIFECYCLE_PATTERNS.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/LOGGING_STANDARD.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/ORLY_ARCHITECTURE.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/RELEASE_TEMPLATE.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/REST_API_DESIGN_GUIDELINES.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/RULE_ENFORCEMENT.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/SCHEMA_CONVENTIONS.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/TEMPLATE.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/VERIFY_TIERS.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/greptile-learnings/README.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/greptile-learnings/RULES.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/v1/done/M01_001_P2_CLI_DOCS_PROCESS_AS_CODE.md",
+      "disposition": "historical_record",
+      "successor": "preserved unchanged as historical data",
+      "obligations": []
+    },
+    {
+      "path": "docs/v1/done/M02_001_P2_CLI_DOCS_RULE_ENFORCEMENT_LEDGER.md",
+      "disposition": "historical_record",
+      "successor": "preserved unchanged as historical data",
+      "obligations": []
+    },
+    {
+      "path": "docs/v1/done/M03_001_P1_CLI_DOCS_INFRA_ORLY_INIT_DISTRIBUTION.md",
+      "disposition": "historical_record",
+      "successor": "preserved unchanged as historical data",
+      "obligations": []
+    },
+    {
+      "path": "docs/v1/done/M04_001_P1_SKILL_PARTIAL_COMPLETION_PROOFS.md",
+      "disposition": "historical_record",
+      "successor": "preserved unchanged as historical data",
+      "obligations": []
+    },
+    {
+      "path": "docs/v1/done/M05_001_P1_CLI_OBS_OPT_IN_USAGE_TELEMETRY.md",
+      "disposition": "historical_record",
+      "successor": "preserved unchanged as historical data",
+      "obligations": []
+    },
+    {
+      "path": "docs/v1/done/M06_001_P1_GOV_CLI_HARNESS_ROBUSTNESS.md",
+      "disposition": "historical_record",
+      "successor": "preserved unchanged as historical data",
+      "obligations": []
+    },
+    {
+      "path": "docs/v1/pending/M07_001_P1_CLI_DOCS_INFRA_SKILL_OPEN_SOURCE_FIRST_RUN.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/v1/pending/M07_002_P0_CLI_DOCS_SKILL_JEV_JUDGMENTS_IN_GATES_AND_SPECS.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/v1/pending/M07_003_P1_CLI_DOCS_CHANGED_LINES_RAN_UNDER_A_TEST.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/v1/pending/M07_004_P1_CLI_DOCS_SKILL_RULES_AT_THE_RIGHT_MOMENT.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "docs/v1/pending/M07_005_P1_CLI_DOCS_INFRA_ORLY_FOLDER_LAYOUT_AND_MIGRATION.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/coverage.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/dispatch/coverage.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "evals/dispatch/fixtures/deinit_missing.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/deinit_ok.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/err_rs_map_err_to_string.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/err_rs_no_result_alias.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/err_rs_ok.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/err_rs_test_ok.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/length_350_pass.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/length_351_fail.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/log_dbg_violation.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/log_eprintln_violation.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/log_missing_event.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/log_ok.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/log_ok.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/log_path_test_ok.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/log_positional_violation.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/log_println_violation.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/log_tail_missing_event.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/log_test_ok.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/log_violation.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/msid_ok.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/msid_ui_section_bare.tsx",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/msid_ui_section_override.tsx",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/msid_ui_section_wrapped.tsx",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/msid_violation.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/sqlmod_ok.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/sqlmod_violation.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/ufs_dup_string.go",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/ufs_dup_string.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/ufs_dup_string.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/ufs_feature_gate.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/ufs_ok.go",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/ufs_ok.rs",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/fixtures/ufs_ok.zig",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/dispatch/parity.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/dispatch/parity.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "evals/dispatch/run.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/dispatch/run.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "evals/install/cases.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/install/cases.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "native.install"
+        },
+        {
+          "name": "Replace embedded Python invocation at evals/install/cases.sh:312",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "native.install"
+        }
+      ]
+    },
+    {
+      "path": "evals/install/release_cases.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/install/release_cases.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "native.install"
+        },
+        {
+          "name": "Replace embedded Python invocation at evals/install/release_cases.sh:96",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "native.install"
+        },
+        {
+          "name": "Replace embedded Python invocation at evals/install/release_cases.sh:100",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "native.install"
+        },
+        {
+          "name": "Replace embedded Python invocation at evals/install/release_cases.sh:110",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "native.install"
+        }
+      ]
+    },
+    {
+      "path": "evals/install/run.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/install/run.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "native.install"
+        }
+      ]
+    },
+    {
+      "path": "evals/ledger/doc_read_cases.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/ledger/doc_read_cases.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.dispatch_probes"
+        },
+        {
+          "name": "Replace embedded Python invocation at evals/ledger/doc_read_cases.sh:197",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "evals/ledger/lib.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/ledger/lib.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "evals/ledger/run.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/ledger/run.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "evals/llms/agents.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/llms/agents.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.llm_fixtures"
+        }
+      ]
+    },
+    {
+      "path": "evals/llms/fixtures.jsonl",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "evals/llms/fixtures.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/llms/fixtures.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.llm_fixtures"
+        },
+        {
+          "name": "Replace embedded Python invocation at evals/llms/fixtures.sh:7",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.llm_fixtures"
+        },
+        {
+          "name": "Replace embedded Python invocation at evals/llms/fixtures.sh:18",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.llm_fixtures"
+        },
+        {
+          "name": "Replace embedded Python invocation at evals/llms/fixtures.sh:55",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.llm_fixtures"
+        }
+      ]
+    },
+    {
+      "path": "evals/llms/run.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/llms/run.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.llm_fixtures"
+        }
+      ]
+    },
+    {
+      "path": "evals/test-agents-md.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/test-agents-md.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "evals/test-dispatch-parity.sh",
+      "disposition": "development_replacement",
+      "successor": "M07_004 Rust evaluator and fixture suites",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of evals/test-dispatch-parity.sh",
+          "successor": "M07_004 Rust evaluator and fixture suites",
+          "proof": "comparison.dispatch_probes"
+        }
+      ]
+    },
+    {
+      "path": "fixtures/doc-slop.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "fixtures/registry-invalid.json",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "fixtures/registry-valid.json",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "fixtures/unclosed-pack-block.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "llms.txt",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "opencode.json",
+      "disposition": "host_wrapper",
+      "successor": "src/host/mod.rs owned host integration",
+      "obligations": []
+    },
+    {
+      "path": "package.json",
+      "disposition": "release_assembly",
+      "successor": "M07_001 native verification and release assembly",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of package.json",
+          "successor": "M07_001 native verification and release assembly",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": "packs/language/go/rules.md",
+      "disposition": "authoritative_rules",
+      "successor": "src/core/payload.rs embedded selected sources",
+      "obligations": []
+    },
+    {
+      "path": "packs/language/mdx/rules.md",
+      "disposition": "authoritative_rules",
+      "successor": "src/core/payload.rs embedded selected sources",
+      "obligations": []
+    },
+    {
+      "path": "packs/language/python/rules.md",
+      "disposition": "authoritative_rules",
+      "successor": "src/core/payload.rs embedded selected sources",
+      "obligations": []
+    },
+    {
+      "path": "packs/language/rust/rules.md",
+      "disposition": "authoritative_rules",
+      "successor": "src/core/payload.rs embedded selected sources",
+      "obligations": []
+    },
+    {
+      "path": "packs/language/shell/rules.md",
+      "disposition": "authoritative_rules",
+      "successor": "src/core/payload.rs embedded selected sources",
+      "obligations": []
+    },
+    {
+      "path": "registry.json",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "schemas/evidence.schema.json",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "schemas/profile.schema.json",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "schemas/registry.schema.json",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    },
+    {
+      "path": "skills/orly-babysit-prs/SKILL.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "skills/orly-spec-new/SKILL.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "skills/orly-write-integration-test/SKILL.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "skills/orly-write-unit-test/SKILL.md",
+      "disposition": "project_documentation",
+      "successor": "M07_001 native command documentation",
+      "obligations": []
+    },
+    {
+      "path": "src/cli.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/cli.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/cli.test.ts",
+          "successor": "src/cli.rs",
+          "proof": "native.configuration"
+        }
+      ]
+    },
+    {
+      "path": "src/cli.ts",
+      "disposition": "native_replacement",
+      "successor": "src/cli.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/cli.ts",
+          "successor": "src/cli.rs",
+          "proof": "native.configuration"
+        }
+      ]
+    },
+    {
+      "path": "src/config.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/core/config.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/config.test.ts",
+          "successor": "src/core/config.rs",
+          "proof": "native.configuration"
+        }
+      ]
+    },
+    {
+      "path": "src/config.ts",
+      "disposition": "native_replacement",
+      "successor": "src/core/config.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/config.ts",
+          "successor": "src/core/config.rs",
+          "proof": "native.configuration"
+        }
+      ]
+    },
+    {
+      "path": "src/criteria.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/criteria.test.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.criteria"
+        }
+      ]
+    },
+    {
+      "path": "src/criteria.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/criteria.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.criteria"
+        }
+      ]
+    },
+    {
+      "path": "src/criteria_spec.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/criteria_spec.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.criteria"
+        }
+      ]
+    },
+    {
+      "path": "src/criteria_support.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/criteria_support.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.criteria"
+        }
+      ]
+    },
+    {
+      "path": "src/doc_rules.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/doc_rules.test.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.doc_rules"
+        }
+      ]
+    },
+    {
+      "path": "src/doc_rules.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/doc_rules.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.doc_rules"
+        }
+      ]
+    },
+    {
+      "path": "src/gates.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/gates.test.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.gates"
+        }
+      ]
+    },
+    {
+      "path": "src/gates.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/gates.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.gates"
+        }
+      ]
+    },
+    {
+      "path": "src/gates_spec.test.ts",
+      "disposition": "native_replacement",
+      "successor": "M07_001 assembly and source-test replacement",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/gates_spec.test.ts",
+          "successor": "M07_001 assembly and source-test replacement",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": "src/gates_test_support.ts",
+      "disposition": "native_replacement",
+      "successor": "M07_001 assembly and source-test replacement",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/gates_test_support.ts",
+          "successor": "M07_001 assembly and source-test replacement",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": "src/git_env.ts",
+      "disposition": "native_replacement",
+      "successor": "src/core/git.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/git_env.ts",
+          "successor": "src/core/git.rs",
+          "proof": "native.snapshot"
+        }
+      ]
+    },
+    {
+      "path": "src/install.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/install/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/install.test.ts",
+          "successor": "src/install/mod.rs",
+          "proof": "native.install"
+        }
+      ]
+    },
+    {
+      "path": "src/install.ts",
+      "disposition": "native_replacement",
+      "successor": "src/install/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/install.ts",
+          "successor": "src/install/mod.rs",
+          "proof": "native.install"
+        },
+        {
+          "name": "Replace generated shell pre-commit with native executable link",
+          "successor": "src/install/hooks.rs",
+          "proof": "native.install"
+        },
+        {
+          "name": "Replace generated shell pre-push with native executable link",
+          "successor": "src/install/hooks.rs",
+          "proof": "native.install"
+        }
+      ]
+    },
+    {
+      "path": "src/install_nested.test.ts",
+      "disposition": "native_replacement",
+      "successor": "M07_001 assembly and source-test replacement",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/install_nested.test.ts",
+          "successor": "M07_001 assembly and source-test replacement",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": "src/install_packs.test.ts",
+      "disposition": "native_replacement",
+      "successor": "M07_001 assembly and source-test replacement",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/install_packs.test.ts",
+          "successor": "M07_001 assembly and source-test replacement",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": "src/loaders.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/host/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/loaders.test.ts",
+          "successor": "src/host/mod.rs",
+          "proof": "native.install"
+        }
+      ]
+    },
+    {
+      "path": "src/loaders.ts",
+      "disposition": "native_replacement",
+      "successor": "src/host/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/loaders.ts",
+          "successor": "src/host/mod.rs",
+          "proof": "native.install"
+        }
+      ]
+    },
+    {
+      "path": "src/model.test.ts",
+      "disposition": "native_replacement",
+      "successor": "crates/fs/src/path.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/model.test.ts",
+          "successor": "crates/fs/src/path.rs",
+          "proof": "native.snapshot"
+        }
+      ]
+    },
+    {
+      "path": "src/model.ts",
+      "disposition": "native_replacement",
+      "successor": "crates/fs/src/path.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/model.ts",
+          "successor": "crates/fs/src/path.rs",
+          "proof": "native.snapshot"
+        }
+      ]
+    },
+    {
+      "path": "src/pack_hygiene.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/rules/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/pack_hygiene.test.ts",
+          "successor": "src/rules/mod.rs",
+          "proof": "comparison.pack_hygiene"
+        }
+      ]
+    },
+    {
+      "path": "src/pack_hygiene.ts",
+      "disposition": "native_replacement",
+      "successor": "src/rules/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/pack_hygiene.ts",
+          "successor": "src/rules/mod.rs",
+          "proof": "comparison.pack_hygiene"
+        }
+      ]
+    },
+    {
+      "path": "src/references.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/core/citations.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/references.test.ts",
+          "successor": "src/core/citations.rs",
+          "proof": "native.references"
+        }
+      ]
+    },
+    {
+      "path": "src/references.ts",
+      "disposition": "native_replacement",
+      "successor": "src/core/citations.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/references.ts",
+          "successor": "src/core/citations.rs",
+          "proof": "native.references"
+        }
+      ]
+    },
+    {
+      "path": "src/render.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/core/render.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/render.test.ts",
+          "successor": "src/core/render.rs",
+          "proof": "native.render"
+        }
+      ]
+    },
+    {
+      "path": "src/render.ts",
+      "disposition": "native_replacement",
+      "successor": "src/core/render.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/render.ts",
+          "successor": "src/core/render.rs",
+          "proof": "native.render"
+        }
+      ]
+    },
+    {
+      "path": "src/setup.test.ts",
+      "disposition": "native_replacement",
+      "successor": "M07_001 assembly and source-test replacement",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/setup.test.ts",
+          "successor": "M07_001 assembly and source-test replacement",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": "src/spec_baseline.test.ts",
+      "disposition": "native_replacement",
+      "successor": "M07_001 assembly and source-test replacement",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/spec_baseline.test.ts",
+          "successor": "M07_001 assembly and source-test replacement",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": "src/spec_template.test.ts",
+      "disposition": "native_replacement",
+      "successor": "M07_001 assembly and source-test replacement",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/spec_template.test.ts",
+          "successor": "M07_001 assembly and source-test replacement",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": "src/spec_template_io.test.ts",
+      "disposition": "native_replacement",
+      "successor": "M07_001 assembly and source-test replacement",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/spec_template_io.test.ts",
+          "successor": "M07_001 assembly and source-test replacement",
+          "proof": "comparison.release"
+        }
+      ]
+    },
+    {
+      "path": "src/surfaces.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/surfaces.test.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.surfaces"
+        }
+      ]
+    },
+    {
+      "path": "src/surfaces.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/surfaces.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.surfaces"
+        }
+      ]
+    },
+    {
+      "path": "src/telemetry.test.ts",
+      "disposition": "native_replacement",
+      "successor": "M07_001 native consented telemetry",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/telemetry.test.ts",
+          "successor": "M07_001 native consented telemetry",
+          "proof": "comparison.telemetry"
+        }
+      ]
+    },
+    {
+      "path": "src/telemetry.ts",
+      "disposition": "native_replacement",
+      "successor": "M07_001 native consented telemetry",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/telemetry.ts",
+          "successor": "M07_001 native consented telemetry",
+          "proof": "comparison.telemetry"
+        }
+      ]
+    },
+    {
+      "path": "src/telemetry_sync.ts",
+      "disposition": "native_replacement",
+      "successor": "M07_001 native consented telemetry",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/telemetry_sync.ts",
+          "successor": "M07_001 native consented telemetry",
+          "proof": "comparison.telemetry"
+        }
+      ]
+    },
+    {
+      "path": "src/validation.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/validation.test.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.validation"
+        }
+      ]
+    },
+    {
+      "path": "src/validation.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/validation.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.validation"
+        }
+      ]
+    },
+    {
+      "path": "src/verify.test.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/verify.test.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.verify"
+        }
+      ]
+    },
+    {
+      "path": "src/verify.ts",
+      "disposition": "native_replacement",
+      "successor": "src/checks/mod.rs",
+      "obligations": [
+        {
+          "name": "Preserve observable behavior of src/verify.ts",
+          "successor": "src/checks/mod.rs",
+          "proof": "comparison.verify"
+        }
+      ]
+    },
+    {
+      "path": "tsconfig.json",
+      "disposition": "preserved_data",
+      "successor": "M07_001 final resource assembly",
+      "obligations": []
+    }
+  ],
+  "ownership": {
+    "M07_002": [
+      "src/judge",
+      "fixtures/judge",
+      "tests/judge"
+    ],
+    "M07_003": [
+      "src/coverage",
+      "fixtures/coverage",
+      "tests/coverage"
+    ],
+    "M07_004": [
+      "src/checks",
+      "src/rules",
+      "fixtures/checks",
+      "fixtures/rules",
+      "tests/checks",
+      "tests/rules"
+    ]
+  }
+}

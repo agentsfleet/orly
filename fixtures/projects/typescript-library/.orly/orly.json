@@ -1,0 +1,44 @@
+{
+  "schema_version": 2,
+  "engine": "0.12.0",
+  "packs": [
+    "universal.authoring",
+    "language.typescript"
+  ],
+  "releases": ".orly/rels",
+  "commands": {
+    "conform": {
+      "argv": [
+        "bun",
+        "--version"
+      ],
+      "resources": [
+        "cargo"
+      ]
+    },
+    "verify.unit": {
+      "argv": [
+        "bun",
+        "test"
+      ],
+      "resources": [
+        "cargo"
+      ],
+      "deadline_seconds": 1800
+    }
+  },
+  "allowed_executables": [
+    "bun"
+  ],
+  "surfaces": {
+    "user": [
+      "lib/index.ts"
+    ],
+    "docs": [
+      "PROJECT_RULES.md"
+    ]
+  },
+  "data_packs": [
+    "project-pack.json"
+  ]
+}

@@ -90,7 +90,7 @@ Auto-memory is **disabled** (`autoMemoryEnabled: false` + `CLAUDE_CODE_DISABLE_A
 - No new `make` targets without a distinct caller (CI job, spec-mandated gate, or a workflow existing targets can't express) — check `make/*.mk` first; extend over near-duplicate wrappers.
 - `*.zig` → read `dispatch/write_zig.md`; ZIG GATE fires.
 - Auth-flow (token-minting handlers, credential-typed spec dimensions, the repository's auth directories) → read the repository's `docs/AUTH.md` first, where it exists.
-- **Indy's reference checkouts** (the machine-local half of the rule above): TypeScript → `oss/supabase/apps/studio` + `oss/supabase/packages/{ui,ui-patterns}` + `oss/cli`; Zig → `oss/ghostty/src/`; Rust → `oss/bun/src/` + `oss/exonum` + `oss/core_api-develop`. Missing checkout → ask, then clone into `~/Projects/oss/`.
+- **Indy's reference checkouts** (`~/Projects/`): TypeScript → `oss/supabase/apps/studio` + `oss/supabase/packages/{ui,ui-patterns}` + `oss/cli`; Zig → `oss/ghostty/src/`; Rust → `oss/rs/exonum` + `oss/rs/arrow-rs` + `agentsfleet/rustd/` + `oss/rs/builder/components/builder-core/`. Missing → search `oss/rs/`; ask before cloning.
 
 **Forge detection:** `github.com` → `gh`; `gitlab.com` → `glab`. Check `git remote -v`.
 
@@ -148,7 +148,7 @@ Guards fire pre-hoc regardless of lifecycle stage. Override: `<GATE>: SKIPPED pe
 | claim "tests pass / ready / shipping" | `verify` | `dispatch/verify.md` — verification tiers (`make` canonical; package-scoped runners are **not** verification), done-message glyph format · 🤔 judgment-only, `VERIFY GATE: <target> skipped per environment constraint (reason: ...)` only when genuinely unrunnable. |
 | name a stream/channel/Redis namespace/queue/RPC/Postgres schema, or describe a flow | `name_architecture` | `dispatch/name_architecture.md` — architecture-consult discipline; grep relevant `docs/architecture/` (chat brainstorming counts) · **no override** — doc wins until reconciled. |
 | run a lifecycle stage (open→close a stream, worktree setup, milestone bootstrap) | `lifecycle` | `dispatch/lifecycle.md` — stage runbooks: CHORE(open/close) checklists, PLAN expansions, spec discipline, deferral format, pre-PR gates, LAND · 🤔 judgment-only. |
-| edit the governance (`core/**`, `packs/**`, `schemas/**`, `src/**`, `registry.json`, generated `AGENTS.md`, `dispatch/`, audits, hooks) | `edit_rules` | `dispatch/edit_rules.md` — runs `make audit`, the `audits/agents-md.md` questionnaire, live comprehension evaluation when semantics change, and generated evidence · **no override** from the agent (user-only push: `SKIP_INVARIANCE_PUSH=1`). |
+| edit the governance (`core/**`, `packs/**`, `schemas/**`, `src/**`, `registry.json`, generated `AGENTS.md`, `dispatch/`, audits, hooks) | `edit_rules` | `dispatch/edit_rules.md` — runs `make audit`, the `audits/agents-md.md` questionnaire, live comprehension evaluation when semantics change, and generated evidence · **no override** from the agent. |
 
 ---
 

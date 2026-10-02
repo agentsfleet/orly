@@ -1,0 +1,30 @@
+name: Native foundation
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: '1.98.1'
+          components: clippy, rustfmt
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Check all targets and features
+        run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
+      - name: Run foundation, migration, and independent crate tests
+        run: cargo test --locked --workspace --all-features -- --nocapture

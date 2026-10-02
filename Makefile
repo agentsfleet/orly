@@ -109,7 +109,7 @@ dispatch-parity:
 #
 # One entry point. The live run validates fixtures + reports availability as a
 # mandatory preamble (run.sh:188) before any spend. For the zero-token
-# dry path pass CHECK=1. Pre-push uses the fixed smoke path:
+# dry path pass CHECK=1. The manual smoke path uses one fixture per agent:
 #   make llmevals          — full live graded run
 #   make llmevals SMOKE=1  — one live fixture per installed agent
 #   make llmevals CHECK=1  — validate all fixtures, no live calls

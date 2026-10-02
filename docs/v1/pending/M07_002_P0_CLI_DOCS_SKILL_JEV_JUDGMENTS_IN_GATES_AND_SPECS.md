@@ -10,275 +10,274 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
   sequencing signal. A section that contradicts these rules loses — delete it.
 -->
 
-# M07_002: Gate scripts and the spec template ask Jev typed questions, advisory, authorized, and replayed only for identical requests
+# M07_002: Jev Choice, Noul, and Score compile bounded repository decisions in Rust
 
 **Prototype:** v1.0.0
 **Milestone:** M07
 **Workstream:** 002
-**Date:** Sep 23, 2026: 10:10 AM
+**Date:** Sep 30, 2026: 09:48 AM
 **Status:** PENDING
-**Priority:** P0 — Indy made fitting the templates and scripts to Jev the priority of release 0.12
-**Categories:** CLI (Command-Line Interface), DOCS, SKILL (agent workflow skills)
-**Batch:** B1 — release 0.12. Execution order: M07_001 §1 → M07_002 → M07_003 and M07_004 → M07_005 → M07_001 §§2–5. "Alongside" permits independent implementation work, not concurrent edits to shared files.
+**Priority:** P0 — Jev is a required built-in capability of the single release
+**Categories:** Command-Line Interface (CLI), Documentation (DOCS), Infrastructure (INFRA), Agent Skills (SKILL)
+**Terms:** Continuous Integration (CI); null-byte-delimited paths; KiB = kibibytes; MiB = mebibytes.
+**Batch:** B2 — parallel with M07_003 and M07_004 after the B1 interface revision
 **Branch:** pending — set at CHORE(open)
 **Baseline revision:** pending — record the full comparison commit at CHORE(open)
-**Test Baseline:** pending — measure declared unit and integration lanes before the Pull Request (PR)
-**Baseline evidence:** pending — report revision, commands, counts, and environment
-**Depends on:** M07_001 §1 for local criterion states and evidence. GitHub-mode judging is built and verified in M07_001 §4; this workstream completes locally without it.
-**Provenance:** Large Language Model (LLM)-drafted; Claude Opus 5.5; Sep 23, 2026; revised after Codex's review as Chief Technology Officer (CTO) of `58fedbc`
-**Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §§Gates, Evidence, and a new §Judge
+**Test Baseline:** pending — measure unit and integration lanes before the Pull Request (PR)
+**Baseline evidence:** pending — report comparison revision, commands, counts, obligations, and environment
+**Depends on:** M07_005 §§1–4 only. Coverage and rule delivery provide optional evidence at B3 integration, never prerequisites for this lane.
+**Provenance:** Revised from the Sep 23 draft by Codex after the Rust/Jev direction on Sep 30, 2026; source review at `c02f1e02806204811401b01596a04ff4c039d02a`.
+**Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §M07 target: one native engine with bounded Jev judgments
+**Target version:** 0.12.0; only M07_001 publishes the combined result after required approval.
 
 ---
 
 ## Overview
 
-**Goal (testable):** With the judge enabled in the repository configuration, `TYPESAFE_API_KEY` set, and upload authorized outside the evaluated tree, `orly judge` answers each applicable question for a staged diff or a spec with a typed answer from a pinned Jev version and reports it as a `reported` criterion; an identical request replays its stored answer, and without all three conditions nothing leaves the machine and every gate behaves as before.
+**Goal (testable):** Choice, Noul, and Score turn repository evidence into constrained, inspectable, replayable decisions that Rust composes into useful project-specific plans.
 
-**Problem:**
-- The gate scripts ask eleven judgment questions, one per rule code in the gloss table of `dispatch/lib.sh`. `dispatch_judgment` prints each as "🤔 DECIDE" and never fails (`dispatch/lib.sh:236-239`), so nothing records whether anyone decided.
-- The spec gate checks structure only (`audits/spec-template.ts`). A vague precondition, an unobservable expected result, a test row that proves something else, and an Out of Scope bullet that removes required work all pass it.
-- The rule-enforcement ledger lists `[JUDGMENT → CODE]` clauses as work an agent must weigh (`docs/RULE_ENFORCEMENT.md`), and no check stands behind them.
-- The only judge of these questions today is the coding agent that wrote the diff, answering in its own context, with no typed answer and no record.
+**Problem:** The dispatch library prints judgment prompts without a recorded decision (`dispatch/lib.sh:236–239`). Spec validation proves structure (`audits/spec-template.ts:67–95`), while the old draft limits Jev to a small bank and leaves broad judgment promises unevaluated.
 
-**Solution summary:** A judged predicate is a registry rule with decision kind `judged`, a question file, and evaluation cases. `orly judge` builds versioned inputs, scans the whole serialized request, asks a pinned Jev model, keeps one result per question and input, and records the raw typed answer under the complete request. Every answer is advisory in release 0.12. Gates, dispatch prompts, the spec template, and the authoring skill read the answers. A frozen pilot compares Jev with the coding agent on labels Indy sets before seeing either.
+**Solution summary:** Treat Jev primitives as typed programming values throughout the engine: classify intended work with Choice, assess independent semantic conditions with Noul, and rank evidence or rule relevance with Score. Rust constructs candidate sets, validates distributions, composes results, and records an executable plan; inference is never parsed from prose.
 
-**Verdict and reason:** Jev returns typed answers with probabilities and cannot answer outside the options a question defines, so it cannot invent a file, function, or mechanism. Typed options constrain the shape of an answer, not its correctness: text inside the input can still steer which allowed answer comes back. Code owns applicability, evidence, scanning, records, and thresholds; the pilot measures accuracy; authority stays human.
+**Determinism boundary:** Rust owns exact facts, validation, execution, and gate status. Jev supplies probabilistic typed semantic answers. Identical validated recorded answers replay reproducibly; fresh inference can vary.
 
 ## PR Intent & comprehension handshake
 
-- **PR title (eventual):** `feat(judge): gate scripts and the spec template ask Jev typed questions`
-- **Intent:** A repository that opts in and authorizes upload gets typed, recorded answers to judgment questions its rules already ask; a repository that does not sees no change.
-- **Authoring handshake:** Indy: "ideally i want to use them since Jev provides unique ability", then: "how about revisiting templates, scripts as part of this to fit JEV and so on. That must be the priority." The CTO review of `58fedbc` returned rework; this revision applies its findings.
-- **ASSUMPTIONS I'M MAKING:** 1. Calibrated runs request `jev-1.13.0`; `jev-latest` is for marked exploration only. 2. The key comes only from `TYPESAFE_API_KEY` and never reaches a repository command. 3. Every answer is advisory in release 0.12. 4. gitleaks is the required secret scanner for upload. 5. Question files ship in the package, and the judge reads them from the installed engine, so consumer repositories carry no copies.
-- **Implementer handshake:** pending until PLAN.
+- **PR title (eventual):** `feat: ship native orly with bounded Jev review`
+- **Intent:** Make Jev useful across the important semantic gaps without handing it approvals, gate authority, filesystem paths, or command construction.
+- **Authoring handshake:** This is a spec/design revision, not implementation or permission to publish.
+- **ASSUMPTIONS I'M MAKING:** Jev means the TypeSafe System One model, not a Rust interpreter or reasoning agent. Fresh inference is probabilistic. Exact validated recorded answers make replay reproducible. Live upload is explicit; offline gates read matching records only.
+- **Implementer handshake:** pending until PLAN; restate intent, scope, and source authority before code.
 
 ## Implementing agent — read these first
 
-1. `dispatch/lib.sh` and `dispatch/write_any.sh` — `dispatch_judgment`, the gloss table, and the prompts.
-2. `registry.json` and `schemas/registry.schema.json` — `rules` entries with `decision`, `checker`, and `pass`/`fail` fixtures.
-3. `audits/rule-ledger.sh` and `audits/rule-ledger-lib.sh` — how `[JUDGMENT → CODE]` clauses are counted, and the root-relative lookups.
-4. `audits/spec-template.ts` — the parsed spec sections the spec questions read.
-5. `src/telemetry_sync.ts` — the existing HTTP call with an abort timeout.
-6. `evals/llms/run.sh` — golden-set fixtures with a no-network `--check` mode and live grading.
-7. https://docs.typesafe.ai/api.md — endpoint, request and answer shapes, error codes.
-8. https://docs.typesafe.ai/models.md — versioned model names, pricing, per-request limits, and pinning guidance.
+1. `dispatch/lib.sh` — existing judgment routing and glosses.
+2. `audits/spec-template.ts` — structural spec checks that stay deterministic.
+3. `docs/RULE_ENFORCEMENT.md` — current classification limits.
+4. `docs/ORLY_ARCHITECTURE.md` — M07 interfaces, privacy, and execution boundary.
+5. https://docs.typesafe.ai/api — current question and answer wire shapes.
+6. https://docs.typesafe.ai/models — pinning and limits.
+7. https://docs.typesafe.ai/cookbooks/citation_check — claim/evidence decomposition.
 
 ## Files Changed (blast radius)
 
+Paths name approved roles. B1 freezes an expanded per-file inventory before implementation; B2 cannot mutate shared files. This document revision touches only pending specs and the canonical architecture.
+
 | File | Action | Why |
 |---|---|---|
-| `docs/v1/pending/M07_002_P0_CLI_DOCS_SKILL_JEV_JUDGMENTS_IN_GATES_AND_SPECS.md` | CREATE, then lifecycle MOVE | Intent and proof ledger |
-| `questions/`, `fixtures/questions/`, `schemas/question.schema.json` | CREATE | Five question files, their evaluation cases, and their shape |
-| `schemas/registry.schema.json`, `registry.json`, `src/model.ts`, `src/validation.ts` | EDIT | Decision kind `judged` with a question path; ownership entries for every judgment code |
-| `schemas/gate-evidence.schema.json` | EDIT | Judgment constituents in the evidence document |
-| `src/judge.ts`, `src/judge_client.ts`, `src/judge_state.ts`, `src/judge_record.ts`, `src/judge_scan.ts` | CREATE | Runner, client with budgets, versioned input builders, records, request scanning |
-| `src/judge.test.ts`, `src/judge_client.test.ts`, `src/judge_state.test.ts`, `src/judge_record.test.ts`, `src/judge_scan.test.ts`, `src/judge_support.ts` | CREATE | Tests against a local stub server |
-| `src/cli.ts`, `src/cli_gate.ts`, `src/cli.test.ts` | EDIT | `judge` command; judge criteria in gate output |
-| `src/criteria.ts`, `src/criteria_support.ts`, `src/criteria.test.ts` | EDIT | `judge.*` criteria in the `pr` gate; provider key removed from command environments |
-| `src/config.ts`, `src/config.test.ts`, `src/validation.test.ts` | EDIT | `judge` block; blocking configuration rejected |
-| `src/telemetry.ts`, `src/telemetry.test.ts` | EDIT | `judge` in the observed command set; no content |
-| `dispatch/lib.sh`, `dispatch/write_any.sh`, `dispatch/write_zig.sh`, `dispatch/write_ts_adhere_bun.sh`, `dispatch/write_sql.sh` | EDIT | Each prompt names its owner; exact-input recorded answers print beside it |
-| `audits/parity-dispatch.sh`, `audits/rule-ledger.sh`, `audits/rule-ledger-lib.sh`, `docs/RULE_ENFORCEMENT.md` | EDIT | Ownership parity; ledger reports mapped predicates without inferring coverage |
-| `docs/TEMPLATE.md`, `dispatch/write_spec.md`, `skills/orly-spec-new/SKILL.md` | EDIT | Judge step in authoring and readiness review |
-| `package.json`, `src/pack_hygiene.test.ts` | EDIT | Ship `questions/`; prove packed-package closure |
-| `evals/judge/` | CREATE | Frozen pilot set with tuning and held-out splits, labels, and results |
-| `README.md`, `llms.txt`, `docs/ORLY_ARCHITECTURE.md` | EDIT | Optional judge setup; §Judge |
+| src/judge/ | EDIT / CREATE | Exclusive runner, HTTP client, builders, scan boundary, replay, and evaluation policy |
+| questions/, fixtures/questions/, evals/judge/ | CREATE | Question definitions, bounded examples, labeled splits, and reports |
+| tests/judge.rs, tests/judge_replay.rs, tests/judge_evals.rs | CREATE | Provider-boundary, replay, and calibration proofs |
+| tools/xtask/src/judge.rs | CREATE | Offline corpus validation and explicit live evaluation |
+| docs/fragments/judge.md | CREATE | Lane-owned setup/reference fragment merged by M07_001 |
 
 ## Applicable Rules
 
-- `docs/greptile-learnings/RULES.md`: NDC (No Dead Code), UFS (Unified Form for Symbols), FLL (File and Function Length Limits), TST-NAM (milestone-free test names), MSID (milestone identifiers banned in source), TGU (Tagged-Union over optional-field structs), TSC and TSJ (TypeScript and Bun conventions), LOG (logging discipline), PRI (Prompt-injection Resistance from user Input).
-- `dispatch/write_ts_adhere_bun.md`, `dispatch/write_any.md`, `dispatch/write_shell.md` — TypeScript and shell changes.
-- `dispatch/edit_rules.md` — `src/**`, `schemas/**`, `registry.json`, `audits/**`, and `dispatch/**` change; the questionnaire and generated evidence run.
-- `dispatch/write_spec.md` and `docs/TEMPLATE.md`; `dispatch/write_documentation.md` with `docs/DOCUMENTATION_RULES.md`.
+- `dispatch/write_rust.md`: ownership, preserved error causes, bounded concurrency, and explicit resource cleanup for the implementation.
+- `dispatch/write_any.md` §Porting a codebase between languages: preserve observable guarantees; replace interpreter workarounds with Rust mechanisms.
+- `docs/greptile-learnings/RULES.md`: No Dead Code (NDC), Use Standard Parsers (PSR), Prompt-injection Resistance (PRI), Orphan Sweep (ORP), and Tagged Unions (TGU).
+- `dispatch/edit_rules.md`: preserve every existing gate obligation; run invariance checks and the comprehension questionnaire when rule semantics change.
+- `dispatch/write_spec.md`, `docs/TEMPLATE.md`, and `dispatch/name_architecture.md`: pending metadata, test mappings, and one canonical target design.
+- `dispatch/write_documentation.md` and `docs/DOCUMENTATION_RULES.md`: distinguish proposed behavior from observed results; preserve completed historical records.
 
 ## Applicable Gates
 
 | Gate | Fires? | Satisfaction strategy |
 |---|---|---|
-| Spec Template | Yes | Pending metadata, Dimension-to-Test mapping, declared commands verbatim, at most 320 lines |
-| TypeScript file shape; File & Function Length (≤350/≤50/≤70) | Yes | Runner, client, builders, records, and scanning in separate modules |
-| Unified Form for Symbols; Logging; Milestone Identifier | Yes | Endpoint, model, limits, and reason codes as named constants; no key or input in logs |
-| Governance invariance | Yes | `make audit`, the questionnaire, and generated evidence; the ledger regenerates |
-| Rendered rules size | Yes | No change to `core/operating-model.md`; `make conform` reported 37,872 of 37,888 bytes |
-| Greptile review; Architecture consult | Yes | End-of-turn rule read; new §Judge |
-| Schema removal; Zig; interface design tokens; workflow file edit | No | None touched |
+| Spec template | Yes | Required sections, exact declared commands, mapped Dimensions, and at most 320 lines |
+| Rust; file and function length | At implementation | Idiomatic modules; existing caps remain; no unsafe code without a justified reviewed need |
+| Governance invariance | At implementation | Golden obligations, negative fixtures, questionnaire, and generated evidence; no weakening to obtain green |
+| Named constants; logging; milestone labels | At implementation | Stable reason codes and limits; source/test names describe behavior rather than milestone numbers |
+| Architecture and documentation | Yes | Target design in docs/ORLY_ARCHITECTURE.md; user guides land with behavior |
+| Workflow or release edits | Only M07_001 | Explicit implementation-session approval before changing automation or publishing |
+| Database removal; Zig source; interface tokens | No | No database migration, Zig implementation, or rendered interface |
 
 ## Prior-Art / Reference Implementations
 
-- **Registry rules:** entries carry `decision`, `checker`, and `pass`/`fail` fixtures; a judged predicate adds one decision kind and a question path.
-- **Record location:** `audits/doc-read.sh` keeps its record under the git directory, never in the tree; answer records follow it.
-- **Live evaluation:** `evals/llms/run.sh` separates fixture validation from live grading; the pilot mirrors that split.
-- **HTTP call:** `src/telemetry_sync.ts` aborts on a named timeout; the TypeSafe client adds backoff for 429 and 529 within a total deadline.
-- **TypeSafe guidance:** one narrow judgment per question, criteria defining every answer, code-owned thresholds, and a pinned version for tuned thresholds.
+TypeSafe provides Choice, Noul, and Score answers. Use the HTTP API directly from Rust; no JavaScript or Python client runtime. The citation-check cookbook supplies a bounded evidence pattern. Same-state questions are independent; Rust combines results after validation. Read the current primitives and all three primitive pages, not only the generic endpoint: [Choice](https://docs.typesafe.ai/primitives/choice), [Noul](https://docs.typesafe.ai/primitives/noul), and [Score](https://docs.typesafe.ai/primitives/score).
 
 ## Sections (implementation slices)
 
-### §1 — Questions are registry predicates with evaluation cases
+### §1 — A mapped question bank covers real semantic gaps
 
-A judged predicate is a registry `rules` entry with decision kind `judged`, its question file, and `pass` and `fail` evaluation cases; the registry is the ownership index, and ownership parity proves routing only. Each question file defines its required evidence, one predicate, the answer that counts as a finding, insufficient-evidence handling, its input-builder version, and its paths or spec items. The initial bank: an added compatibility shim, read from the added hunk with the repository version and file path; a Test Specification row's concrete preconditions; the same row's observable expected result; whether a Test Specification row's stated assertion entails its Dimension's behavior, read as a complete pair; and whether an Out of Scope bullet contradicts the Goal or a Dimension, read with the Goal and every Dimension. Each is a Choice whose options include `insufficient_evidence`. No Score question ships without ordered descriptive levels and a defined consumer. Every `dispatch_judgment` code has one owner entry: a question, a script check, a human decision, or a broad agent review; the Greptile rule audit stays a broad review, and No Legacy Retained keeps its dead-code clause with the agent. `audits/parity-dispatch.sh` fails on a code without an owner.
+Ship the question families below as compiled resources with Identifier (ID), version, input-builder version, evidence requirements, criterion options, finding polarity, source clause, consumer, and tuning/held-out examples. Every Choice includes `insufficient_evidence` and a quiet outcome. Noul returns only its yes probability; no invented confidence field. Score ships only with ordered levels and an actual consumer. Choose the primitive by the decision semantics; every primitive has a real plan/review consumer.
 
-- **Dimension 1.1** — Every question file validates; a missing evidence rule, predicate, polarity, insufficient-evidence option, or Score levels fails with the file named → Test `test_question_files_validate`
-- **Dimension 1.2** — Every judgment code has one owner entry, an unmapped new code fails the audit, and the report states that ownership proves routing only → Test `test_judgment_codes_have_owners`
-- **Dimension 1.3** — The packed package carries every question file and evaluation case → Test `test_packed_package_carries_questions`
+The bank covers: concrete spec preconditions; observable expected results; assertion-to-Dimension relevance; exclusions contradicting required scope; one behavior per Dimension; touched-code error-path completeness; resource ownership/cleanup consistency; added compatibility indirection; documentation claim support; repository architecture consistency; and additional rule-section relevance. Rust handles structural facts and exact lookup before Jev sees the bounded semantic pair.
 
-### §2 — `orly judge` asks only when authorized, scans the whole request, and replays exactly
+For test relevance, supply an explicitly linked test declaration and full assertion body plus the required behavior and changed function; do not infer that lcov proves per-test attribution. For architecture, include the selected canonical sections and full touched declaration; missing scope means insufficient evidence. Builders preserve syntax/relationship boundaries. Unsupported language extraction, missing test links, absent reference docs, oversized context, or incomplete source produces an item-level incomplete result, never a quiet finding. Implement initial syntax-aware code/test builders for Rust and TypeScript, using pinned Rust-native parser crates rather than an external compiler subprocess; other consumer languages retain deterministic checking and explicit semantic-builder availability.
 
-`orly judge [--staged | --base <commit>] [--spec <path>] [--allow-upload] [--refresh] [--json]` selects applicable questions; an input missing its required evidence becomes `insufficient_evidence` with no request. Transmission requires repository configuration, a key, and authorization supplied outside the evaluated tree: an explicit local `--allow-upload`, or the maintainer setting from M07_001 §4. Before transmission it prints the destination and the input categories. The complete serialized request, context and question text included, passes built-in credential checks and gitleaks run with the engine's own configuration; an absent scanner, a scanner error, or a finding prevents transmission. Scanning reduces accidental disclosure; it does not certify that source holds no secrets. The provider key is removed from every repository command's environment. Questions sharing a state are batched into one request. Before the live client is built, PLAN records named limits for serialized request size, total question-input pairs, attempts, concurrency, and total run duration, within the Models values in Discovery. Retries honor backoff within the total deadline; exhaustion reports the evaluation incomplete. A record is keyed by the complete canonical request, question identifier and version, input-builder version, and evaluation source; it stores the raw typed answer and the returned model, and thresholds apply after replay. Any changed request field invalidates replay; writes are atomic; a replayed answer is labelled replay; records are replay aids, never attestations. Calibrated runs request `jev-1.13.0` and verify the returned model; an alias run is marked exploration. One result is kept per question-input pair, and aggregation never discards constituents: a finding stays visible regardless of input order, and missing or uncertain inputs are counted. Every answer is a `reported` criterion; configuration requesting blocking is rejected.
+Every old judgment code has an owner: exact Rust predicate, evaluated Jev question, human authority, or broad review. A routing entry never asserts all clauses sharing a code are judged. Rule applicability is computed in Rust; Jev may add candidate sections only.
 
-- **Dimension 2.1** — Questions are selected from the diff's paths and the spec's items; an input missing required evidence becomes `insufficient_evidence` without a request → Test `test_judge_selects_applicable_questions`
-- **Dimension 2.2** — Without configuration, key, or out-of-tree authorization there are zero requests, judge criteria report why, and other gate output is unchanged → Test `test_judge_needs_three_authorizations`
-- **Dimension 2.3** — A credential in any request field, an absent scanner, or a scanner error sends nothing; the key is absent from command environments → Test `test_judge_scans_the_whole_request`
-- **Dimension 2.4** — An identical request replays with zero requests and is labelled replay; changed instructions, criteria, builder version, source, or model asks again; a corrupt record asks again → Test `test_judge_replays_only_identical_requests`
-- **Dimension 2.5** — With three inputs where one fires, the finding survives any input order, missing and uncertain inputs are counted, and evidence keeps every constituent key without source text → Test `test_judge_aggregates_without_loss`
-- **Dimension 2.6** — Responses 401, 422, 429, and 529, a timeout, a malformed or missing answer, and an exhausted budget each report incomplete with a named reason; retries stay within the deadline → Test `test_judge_failures_name_their_reason`
-- **Dimension 2.7** — Blocking configuration is rejected, a calibrated run with an alias is refused, and a returned-model mismatch is reported → Test `test_judge_is_advisory_and_pinned`
+Primitive composition is a shipped requirement:
 
-### §3 — Gates, scripts, and the spec template use the answers
+| Primitive | Repository decision | Rust consumer |
+|---|---|---|
+| Choice | Work intent among owner-declared categories; scope contradiction; evidence-supported handling choice | Select a known recipe or record no-match/insufficient evidence; never generate a command |
+| Noul | Independent predicates: semantic security impact, public behavior change, missing failure handling, additional test need | Add named review/check requirements using any-serious-condition logic; probability near 0.5 becomes uncertain, never medium severity |
+| Score | Relevance of candidate rule sections and strength of an explicitly paired test assertion | Rank existing candidates against ordered descriptive levels; preserve raw distributions and calibrated thresholds |
 
-With the judge enabled and authorized, the `pr` gate carries one `judge.<question>` criterion per question, and the evidence carries each constituent's key, typed answer, returned model, and replay flag, never the input. `dispatch_judgment` prints a recorded answer only when its key matches the exact staged or selected input; otherwise it reports missing or stale evidence and names `orly judge`. Scripts never call the network, so commits stay offline. `orly judge --spec <path>` reports per Test Specification row and per Out of Scope bullet. `docs/TEMPLATE.md`'s readiness review, `dispatch/write_spec.md`, and the orly-spec-new skill's final checklist add the step: with the judge enabled, each contradicted or insufficient item is fixed or its disposition recorded in Discovery before the spec leaves pending. The ledger reports explicitly mapped predicates, their source sections, and their calibration status; it never counts clauses sharing a code as covered.
+For Choice include all known relevant categories plus no-match and insufficient outcomes. When several labels may apply, ask independent Nouls rather than force one exclusive Choice. Score levels describe one dimension only; missing input is handled before scoring. Do not ask Jev to compute a Git diff, detect a known file extension, or parse coverage counts. State contains named facts, references, and candidate identities; each instruction names its evidence fields. Independent questions sharing that state run in one mixed-primitive batch. Use a second request only when the first answer determines evidence that must be fetched; otherwise speculative fan-out supplies the possible branches together.
 
-- **Dimension 3.1** — The `pr` gate carries `judge.*` criteria, and the evidence records keys, answers, models, and replay flags but no input text → Test `test_pr_gate_carries_judgments`
-- **Dimension 3.2** — A dispatch prompt prints an answer only for an exact-input match, reports stale or missing evidence otherwise, and opens no socket → Test `test_dispatch_prompt_matches_exact_input`
-- **Dimension 3.3** — `orly judge --spec` yields one judgment per Test Specification row question and per Out of Scope bullet → Test `test_spec_questions_cover_each_item`
-- **Dimension 3.4** — The ledger lists mapped predicates with source section and calibration status and never infers coverage from a shared code → Test `test_ledger_reports_mapped_predicates`
+Bounded decision effects make Jev central rather than a decorative report. Valid calibrated answers may choose an existing owner-declared recipe, add checks/review routes, prioritize candidate rule delivery, and classify semantic scope. They cannot remove mandatory exact checks. Rust ignores uncertain speculative answers on unused branches and records uncertainty on consumed branches. Weighted preferences are allowed for ranking; security/authority requirements use separate conditions and cannot be averaged away. All plans expose which raw answers and policy rules caused each node.
 
-### §4 — A frozen pilot compares Jev with the coding agent
+- **Dimension 1.1** — Each family → valid options, builder, consumer, source clause, and labeled positive/negative/missing cases; incomplete entries fail → Test `test_question_bank_covers_declared_semantic_families`
+- **Dimension 1.2** — Rust/TypeScript function/test pairs and missing/oversized/unsupported cases → complete syntax-aware evidence or item-level incomplete; no fabricated attribution → Test `test_builders_preserve_complete_bounded_evidence`
+- **Dimension 1.3** — Shared code with one mapped clause → only that clause listed; approval/override requests remain human-owned → Test `test_judgment_routing_does_not_inflate_coverage`
+- **Dimension 1.4** — Mixed Choice/Noul/Score batch → known recipe, independent review additions, and ordered candidate ranking; no-match/uncertainty do not fabricate facts → Test `test_all_three_primitives_have_real_plan_consumers`
+- **Dimension 1.5** — High relevance plus serious security signal → security route retained; unused speculative uncertainty ignored; no weighted safety cancellation → Test `test_primitive_composition_preserves_serious_conditions`
 
-`orly judge --calibrate --check` validates every question and evaluation case without a network call. The pilot set in `evals/judge/` holds ordinary findings, quiet cases, missing context, and adversarial text asking for an allowed quiet answer, split into tuning and held-out cases. Indy labels the cases, and the labels are committed before any evaluator output exists. Jev and the coding agent then run independently on identical bounded evidence; an existing review bot joins only where its results are comparable. The report gives, per question and evaluator, false findings, missed findings, abstentions, useful findings unique to each, end-to-end latency, request count, and token usage; unchanged requests are repeated to measure variability; disagreements are recorded one by one. The pilot supports no blocking decision.
+### §2 — Authorized requests have fixed budgets and validated answers
 
-- **Dimension 4.1** — `--calibrate --check` validates every question and case with no network call → Test `test_calibrate_check_runs_offline`
-- **Dimension 4.2** — Every pilot case carries a split and a label, and the labels' commit precedes the first result file's commit → Test `test_pilot_labels_precede_results`
-- **Dimension 4.3** — Indy labels the frozen pilot set before any evaluator output exists → Test `manual_pilot_labels`
-- **Dimension 4.4** — The pilot report for Jev and the coding agent, with repeat variability, is recorded in Session Notes → Test `manual_pilot_comparison`
+The client calls `POST https://api.typesafe.ai/v1/systemone` with `model`, `state`, and a map of `questions`; bearer authentication comes from `TYPESAFE_API_KEY`. Pin `jev-1.13.0` and reject a mismatching returned model. No moving alias is used for release evidence. Pinning controls version identity, not answer reproducibility. Before implementation recheck the cited API and fail explicitly if the pinned model is unavailable.
+
+Configuration enables the capability; a runtime key and explicit out-of-tree `--allow-upload` authorize live use. Configuration alone never grants upload. A judge invocation runs no repository commands or repository-provided plugins. It reads a bounded immutable snapshot; remote CI judging uses M07_001's separate secret-bearing job. Removing the key from subprocess environments is defense in depth, not process isolation. A machine already executing arbitrary code under the same account is outside this local trust boundary.
+
+Scan the complete canonical request, including question text, with engine-owned credential patterns and a native gitleaks executable using engine-owned configuration. Scanner absence, findings, or errors prevent upload. Scan results reduce accidental disclosure; they do not certify source secrecy. Never let repository suppressions control this upload scan. Print destination and source categories before the call; store no raw request in evidence or telemetry.
+
+Default local limits: 16 KiB state, 24 KiB serialized request, 128 question/input pairs per invocation, 16 pairs per same-state batch, two concurrent requests, three attempts per request, and 30 seconds total including scan and retries. Byte budgets and provider token budgets are distinct. Reserve prompt overhead; provider context rejection is incomplete, never silent truncation or a proof the byte limit guarantees token fit. Never split a semantic pair to fit. Excess pairs remain incomplete. Respect Retry-After for 429 and retry 529/transport failures with bounded 250 ms and 1 second backoff; no retry for 401/403/422 or schema errors. A response body cap of 1 MiB and strict typed validation reject missing, extra, non-finite, out-of-range, wrong-type, wrong-model, or invalid-distribution answers. No redirects carrying credentials; fixed provider endpoint only.
+
+- **Dimension 2.1** — Each missing authorization, dirty request, missing/erroring scanner, and repository suppression → zero provider requests and named reason → Test `test_judge_authorization_and_scan_are_required`
+- **Dimension 2.2** — Stub failures, Retry-After beyond deadline, flood, incomplete maps, wrong type/model, and invalid probabilities → bounded incomplete result; valid answer accepted → Test `test_client_limits_retries_and_validates_answers`
+- **Dimension 2.3** — Hostile project command/plugin and key sentinels → no execution, no key in records/diagnostics, and no redirect upload → Test `test_judge_never_runs_repository_code_or_leaks_key`
+
+### §3 — Exact replay supplies reproducible advisory policy
+
+Canonicalize with a versioned stable encoding and ordered keys; identity covers the whole request batch, model, every instruction/criterion, builder revision, evidence snapshot, question/input identity, and inference-affecting candidate membership. Reducer thresholds, weights, and check-routing policy are excluded from inference identity and included in the plan digest, so policy changes can reuse raw answers. Store validated typed results under worktree-local Git state. Each item points to its batch digest and own question/input pair. Concurrent writes use an exclusive per-key lock and atomic replacement. Broken records are rejected; default retention is 30 days and 32 MiB, evicting oldest records deterministically. Explicit refresh creates a new run record without overwriting the original response chosen for an existing replay identity; show which run was selected.
+
+`orly judge --replay-only` performs no network call and needs no key. Changed request membership, evidence, model, question, or builder invalidates replay. `gate`, native hooks, and runtime adapters always use replay-only behavior. Records prove reproducibility of a local decision, never remote provenance or truth. CI ignores repository-supplied records. Lower-confidence or incomplete inputs stay visible individually; aggregation cannot average away a finding.
+
+All semantic review criteria remain `reported` in 0.12.0; the gate exit status is determined by Rust's exact checks. Explicit judge commands return exit 2 for an incomplete authorized evaluation, so a user cannot confuse an outage with successful judgment. No configuration enables model-only blocking. Rule-selection additions require the calibrated question's documented threshold and valid candidate identifiers; questions without a calibrated threshold remain reported suggestions. Owner approval, suppressions, overrides, deferrals, migration edits, and command vectors never come from Jev.
+
+- **Dimension 3.1** — Identical canonical batch → zero calls; each changed field or corrupt record → stale; refresh preserves prior answer and records selected run → Test `test_replay_identity_is_complete_and_offline`
+- **Dimension 3.2** — Finding, quiet, uncertain, missing, and replayed pairs in varied order → all retained; deterministic failure and exit authority unchanged → Test `test_advisory_policy_preserves_all_constituents`
+- **Dimension 3.3** — Concurrent writers, interrupted rename, expired and full cache → valid records or explicit miss; no partial accepted record → Test `test_replay_store_handles_concurrency_and_retention`
+
+### §4 — Freeze labels and measure usefulness before release
+
+Validate the bank and evaluation corpus offline with `cargo xtask judge-check`. For each shipped family commit at least 20 tuning and 20 held-out examples with labels and required evidence before evaluator output. The repository owner validates labels; label author and reviewed commit are recorded without inventing sign-off. Include quiet cases, incomplete evidence, contradictory scope, benign lookalikes, and injected instructions requesting an allowed quiet answer.
+
+Run Jev and the coding agent independently on identical frozen evidence. Freeze each question's metric and ground truth with its consumer: Choice uses the reviewed category including no-match; Noul uses positive/quiet labels; Score uses ordered levels and, for ranking, reviewed candidate pairs. Repeat every held-out request three times with refresh; each repeat must pass independently, and report cross-repeat disagreement separately. Abstention includes insufficient evidence, unresolved confidence, and provider incompleteness; quiet/no-match is a substantive answer. Report raw numerators/denominators, coverage, false findings, missed findings, unique useful findings, tokens, requests, and end-to-end latency.
+
+For every Choice question require at least 90% correct labels among substantive answers and 80% substantive answers among complete labeled examples. For every Noul question require at least 90% actionable precision (true positives / all predicted positives), 80% recall (true positives / all labeled positives, including abstentions), and 80% substantive answers. For every Score question require at least 90% substantive answers within one ordered level and 80% substantive coverage; ranking consumers additionally require 90% pairwise ordering agreement on reviewed unequal-level pairs, with predicted ties counted wrong. A Score threshold driving a binary addition also meets the Noul precision/recall criteria. Every applicable denominator must be nonzero; absent labels, predicted positives, or unequal ranking pairs fail release. Include both positive and quiet cases per binary question. Release requires all consumed questions' complete reports and zero forbidden-authority decisions. These are chosen thresholds, not measured accuracy claims; failure returns to tuning and a new uncontaminated held-out set.
+
+Rule additions use a per-question threshold selected on tuning data and validated on the held-out split. Human review of false positives and negatives remains required. Stub-based tests prove client and policy behavior; a live report proves the provider integration and observed usefulness. Missing credentials or label review can block release while offline implementation continues. M07_001 assembles the skill/template commands and the native binary entry point; this lane exposes typed handlers without editing shared routing.
+
+- **Dimension 4.1** — Bank, splits, label history, and injected/quiet cases → complete corpus validated with no network → Test `test_judge_evaluation_corpus_and_offline_validation`
+- **Dimension 4.2** — Owner validates label commit; implementer records independent live runs and repeats → thresholds, raw counts, and disagreements in release Session Notes → Test `manual_judge_labels_and_held_out_report`
 
 ## Interfaces
 
-```
+```text
 orly judge [--staged | --base <commit>] [--spec <path>] [--allow-upload] [--refresh] [--json]
-orly judge --calibrate [--check] [--ids <list>]
-
-Configuration (.orly/orly.json after M07_005); "blocking" is rejected in release 0.12:
-  "judge": { "provider": "typesafe", "model": "jev-1.13.0" }
-Key: TYPESAFE_API_KEY from the environment; never passed to repository commands.
-
-Question file (schemas/question.schema.json):
-{ "id": "spec.exclusion_contradicts_scope", "version": 1, "builder": "spec.goal_dimensions_bullet@1",
-  "type": "choice", "evidence": ["goal", "dimensions", "out_of_scope_bullet"],
-  "instructions": "Does this exclusion remove work the Goal or a Dimension requires?",
-  "criteria": { "contradicts": "...", "consistent": "...", "insufficient_evidence": "..." },
-  "finding": "contradicts" }
-
-Request: POST https://api.typesafe.ai/v1/systemone
-  { "model": "jev-1.13.0", "state": { ... }, "questions": { "<id>": { "type", "instructions", "criteria" } } }
-Record (<git dir>/orly/judgments/<key>.json):
-  { "key", "source", "question", "version", "builder", "requested_model", "returned_model",
-    "answer", "probabilities", "confidence", "usage", "recorded_at" }
+orly judge --replay-only [--staged | --spec <path>] [--json]
+orly judge --snapshot <path> --allow-upload --json
+orly judge --calibrate [--check]
+judge config: provider=typesafe; model=jev-1.13.0; blocking=false (true is rejected).
+Question output: typed answer, probabilities where defined, returned model, source digest, replay/run identity.
+Incomplete evaluation: named item status; explicit command exit 2; gate criterion reported.
+Provider key comes only from the environment in the authorized judge process.
+orly assess [--staged | --base <commit>] [--allow-upload] [--replay-only] [--json]
+DecisionEnvelope → pure Rust policy reducer → DecisionPlan; selected nodes reference declared identifiers.
 ```
 
 ## Failure Modes
 
 | Mode | Cause | Handling (system response + what the caller observes) |
 |---|---|---|
-| Not authorized | No configuration, key, or out-of-tree authorization | Zero requests; judge criteria report why; `test_judge_needs_three_authorizations` |
-| Scanner unavailable | gitleaks absent or erroring | Nothing sent; evaluation incomplete; `test_judge_scans_the_whole_request` |
-| Credential in request | A token anywhere in the serialized request | Nothing sent; `test_judge_scans_the_whole_request` |
-| Insufficient evidence | A required input is missing | `insufficient_evidence` without a request; `test_judge_selects_applicable_questions` |
-| Provider failure | 401, 422, 429, 529, timeout, malformed answer | Incomplete with a named reason; `test_judge_failures_name_their_reason` |
-| Budget exhausted | Pair, attempt, or duration limit reached | Incomplete; remaining pairs counted; `test_judge_failures_name_their_reason` |
-| Stale replay | Any request field changed | Asked again; `test_judge_replays_only_identical_requests` |
-| Lost finding | Several inputs, one firing | Finding survives aggregation; `test_judge_aggregates_without_loss` |
-| Model moved | Returned model differs from requested | Reported; calibrated runs refuse aliases; `test_judge_is_advisory_and_pinned` |
-| Injected input | Diff or spec text asks for a quiet answer | Measured by adversarial pilot cases; `manual_pilot_comparison` |
-| Blocking requested | Configuration asks to block | Rejected; `test_judge_is_advisory_and_pinned` |
+| Authorization absent | Configuration, key, or out-of-tree permission missing | Zero requests; test_judge_authorization_and_scan_are_required |
+| Unsafe upload | Scanner unavailable/erroring or credential finding | Nothing sent; test_judge_authorization_and_scan_are_required |
+| Missing semantic scope | Absent test link, unsupported extraction, or oversized pair | Item incomplete, not quiet; test_builders_preserve_complete_bounded_evidence |
+| Provider/schema failure | Authentication, quota, deadline, malformed map, or wrong model | Bounded retry only where allowed; test_client_limits_retries_and_validates_answers |
+| Stale/corrupt replay | Changed request or interrupted/concurrent record | Reject and report missing; test_replay_identity_is_complete_and_offline |
+| Prompt injection | Source asks for an allowed quiet answer | No authority granted; cases scored; test_judgment_routing_does_not_inflate_coverage and manual_judge_labels_and_held_out_report |
 
 ## Invariants
 
-1. No request without configuration, key, and out-of-tree authorization — the client requires an authorization value only the command-line flag or the maintainer setting produces.
-2. No request before the complete serialized request passes built-in checks and the scanner — the client accepts only a scanned-request type.
-3. The provider key never enters a repository command's environment — the command runner strips it.
-4. Every answer is advisory in release 0.12 — the configuration schema rejects blocking.
-5. Replay happens only for an identical complete request — the key covers every request field.
-6. A judgment never resolves authority — no question targets overrides, deferrals, or owner consults.
-7. Every judgment code has an owner entry — `audits/parity-dispatch.sh` runs in `make audit`.
+1. Rust owns applicable scope, evidence construction, validation, aggregation, and exit authority.
+2. No upload without all authorization and scan conditions; the client accepts only a scanned authorized request value.
+3. No model output supplies executable text, paths, credentials, overrides, or owner approval.
+4. Replay identity includes the complete canonical batch and source identity; local records are never attestations.
+5. Every semantic family has a builder, consumer, clause mapping, and frozen evaluation cases.
+6. Offline gates and adapters open no provider connection; live judging runs no repository commands.
+7. Every shipped primitive has a typed plan/review consumer; raw judgments and policy decisions remain separately inspectable.
 
 ## Metrics & Observability
 
 | Metric / event | Owner | Fires when | Properties allowed | Privacy guard | Test proof |
 |---|---|---|---|---|---|
-| Usage observation for `judge` | product | `orly judge` completes with prior anonymous consent | Existing fields; command value `judge` | No question, input, answer, key, or path | `test_judge_needs_three_authorizations` |
+| Local command evidence | operator | Explicit command completes | States, counts, digests, bounded durations | No source, key, environment, or raw output; stays local | `test_question_bank_covers_declared_semantic_families` |
+
+Existing anonymous telemetry remains opt-in. Feature review adds no source-bearing event or new analytics funnel. Source-bearing evaluation inputs are private local state or explicitly authorized judge transport.
 
 ## Test Specification (tiered)
 
 | Dimension | Tier | Test | Asserts (concrete inputs → expected output) |
 |---|---|---|---|
-| 1.1 | unit | `test_question_files_validate` | Valid bank passes; each missing field or Score without levels → failure naming the file |
-| 1.2 | integration | `test_judgment_codes_have_owners` | Current scripts → every code owned; a new unmapped code → audit fails |
-| 1.3 | integration | `test_packed_package_carries_questions` | `npm pack` output → every question and case present |
-| 2.1 | integration | `test_judge_selects_applicable_questions` | TypeScript hunk → shim question only; spec without Goal → `insufficient_evidence`, zero requests |
-| 2.2 | integration | `test_judge_needs_three_authorizations` | Each of the three missing → zero stub requests and a named reason |
-| 2.3 | integration | `test_judge_scans_the_whole_request` | Token in context or question text, scanner absent, scanner error → nothing sent; command sees no key |
-| 2.4 | integration | `test_judge_replays_only_identical_requests` | Rerun → zero requests, replay label; each changed field → one request; corrupt record → one request |
-| 2.5 | integration | `test_judge_aggregates_without_loss` | Three inputs, one firing, shuffled → finding kept; counts of missing and uncertain correct |
-| 2.6 | integration | `test_judge_failures_name_their_reason` | Stub 401, 422, 429, 529, delay, malformed body, budget → named incomplete reasons; attempts within deadline |
-| 2.7 | unit | `test_judge_is_advisory_and_pinned` | Blocking config → rejected; calibrate with alias → refused; mismatched returned model → reported |
-| 3.1 | integration | `test_pr_gate_carries_judgments` | Enabled and authorized judge → `judge.*` criteria; evidence has no input text |
-| 3.2 | integration | `test_dispatch_prompt_matches_exact_input` | Matching key → answer; edited staged hunk → stale; no socket opened |
-| 3.3 | integration | `test_spec_questions_cover_each_item` | Spec with three rows and two exclusions → one judgment per row question and per exclusion |
-| 3.4 | unit | `test_ledger_reports_mapped_predicates` | Two clauses sharing a code, one mapped → one listed with calibration status |
-| 4.1 | unit | `test_calibrate_check_runs_offline` | Every case validated; no socket opened |
-| 4.2 | unit | `test_pilot_labels_precede_results` | Pilot history → every case labelled and split; labels committed before results |
-| 4.3 | manual | `manual_pilot_labels` | Indy labels the frozen set; the commit is his |
-| 4.4 | manual | `manual_pilot_comparison` | Implementer runs Jev and the coding agent on the held-out split; report with repeats in Session Notes |
+| 1.1 | unit | `test_question_bank_covers_declared_semantic_families` | Each family → valid options, builder, consumer, source clause, and labeled positive/negative/missing cases; incomplete entries fail |
+| 1.2 | integration | `test_builders_preserve_complete_bounded_evidence` | Rust/TypeScript function/test pairs and missing/oversized/unsupported cases → complete syntax-aware evidence or item-level incomplete; no fabricated attribution |
+| 1.3 | unit | `test_judgment_routing_does_not_inflate_coverage` | Shared code with one mapped clause → only that clause listed; approval/override requests remain human-owned |
+| 1.4 | integration | `test_all_three_primitives_have_real_plan_consumers` | Mixed Choice/Noul/Score batch → known recipe, independent review additions, and ordered candidate ranking; no-match/uncertainty do not fabricate facts |
+| 1.5 | unit | `test_primitive_composition_preserves_serious_conditions` | High relevance plus serious security signal → security route retained; unused speculative uncertainty ignored; no weighted safety cancellation |
+| 2.1 | integration | `test_judge_authorization_and_scan_are_required` | Each missing authorization, dirty request, missing/erroring scanner, and repository suppression → zero provider requests and named reason |
+| 2.2 | integration | `test_client_limits_retries_and_validates_answers` | Stub failures, Retry-After beyond deadline, flood, incomplete maps, wrong type/model, and invalid probabilities → bounded incomplete result; valid answer accepted |
+| 2.3 | integration | `test_judge_never_runs_repository_code_or_leaks_key` | Hostile project command/plugin and key sentinels → no execution, no key in records/diagnostics, and no redirect upload |
+| 3.1 | integration | `test_replay_identity_is_complete_and_offline` | Identical canonical batch → zero calls; each changed field or corrupt record → stale; refresh preserves prior answer and records selected run |
+| 3.2 | unit | `test_advisory_policy_preserves_all_constituents` | Finding, quiet, uncertain, missing, and replayed pairs in varied order → all retained; deterministic failure and exit authority unchanged |
+| 3.3 | integration | `test_replay_store_handles_concurrency_and_retention` | Concurrent writers, interrupted rename, expired and full cache → valid records or explicit miss; no partial accepted record |
+| 4.1 | integration | `test_judge_evaluation_corpus_and_offline_validation` | Bank, splits, label history, and injected/quiet cases → complete corpus validated with no network |
+| 4.2 | manual | `manual_judge_labels_and_held_out_report` | Owner validates label commit; implementer records independent live runs and repeats → thresholds, raw counts, and disagreements in release Session Notes |
+
+At implementation, apply the unit-test and integration-test skills to every changed Section. Include negative paths and boundary injection; stubs prove local behavior only. Manual proof names the responsible person and durable release Session Notes. Nothing above is marked run.
 
 ## Acceptance Rubric (single scoring surface)
 
+A1/A2 quote the current configuration verbatim and remain required through private B1/B2 development. M07_001 switches configuration/Make recipes to Rust atomically with complete native check registration and old-path deletion at B3; update the five rubric declarations in that same change. Future native commands below are lane acceptance requirements, not commands available in this checkout yet.
+
 | # | Criterion (observable outcome) | Verify (copy-paste) | Expected | Priority | Graded (VERIFY) |
 |---|---|---|---|---|---|
-| R1 | Questions validate, ship, and every code has an owner (§1) | `bun test src -t "test_question_files\|test_judgment_codes\|test_packed_package_carries"` | exit 0 | P0 | |
-| R2 | Nothing leaves the machine without authorization and a clean scan (§2) | `bun test src -t "test_judge_needs_three\|test_judge_scans"` | exit 0 | P0 | |
-| R3 | Replay, aggregation, failures, and pinning behave as specified (§2) | `bun test src -t "test_judge_replays\|test_judge_aggregates\|test_judge_failures\|test_judge_is_advisory"` | exit 0 | P0 | |
-| R4 | Gates, scripts, specs, and the ledger use the answers (§3) | `bun test src -t "test_pr_gate_carries\|test_dispatch_prompt\|test_spec_questions\|test_ledger_reports"` | exit 0 | P0 | |
-| R5 | Pilot validates offline and keeps labels ahead of results (§4) | `bun test src -t "test_calibrate_check\|test_pilot_labels"` | exit 0 | P0 | |
-| R6 | Scope holds | `git diff --name-only origin/main...HEAD` | 0 paths missing from Files Changed | P0 | |
-| S1 | Declared conformance | `make conform` | exit 0 | P0 | |
-| S2 | Declared verification | `bun test src` | exit 0 | P0 | |
-| S3 | Governance invariance | `make audit` | exit 0 | P0 | |
-| S4 | No secrets | `gitleaks detect` | exit 0 | P0 | |
-| S5 | No oversize source file | `git diff --name-only origin/main...HEAD \| grep -v '\.md$' \| xargs wc -l 2>/dev/null \| awk '$1>350 && $2!="total"'` | no output | P0 | |
+| R1 | Typed client, privacy, and bounded requests | `cargo test --locked --test judge` | exit 0 | P0 |  |
+| R2 | Exact replay and offline policy | `cargo test --locked --test judge_replay` | exit 0 | P0 |  |
+| R3 | Question corpus completeness | `cargo xtask judge-check` | exit 0 | P0 |  |
+| R4 | Observed held-out quality and live integration | `manual_judge_labels_and_held_out_report` | Recorded required proof and thresholds met | P0 |  |
+| A1 | Current declared conformance; Rust implementation replaces internals | `make conform` | exit 0 | P0 |  |
+| A2 | Current declared unit lane; atomically replaced at B3 | `bun test src` | exit 0 | P0 |  |
+| S1 | Native full unit boundary | `cargo test --workspace --locked` | exit 0 | P0 |  |
+| S2 | Governance obligations remain enforced | `make audit` | exit 0 | P0 |  |
+| S3 | No secrets | `gitleaks detect` | exit 0 | P0 |  |
+| S4 | Expanded inventory mapping and exclusive scope | `cargo xtask port-check --map` | exit 0; zero unassigned obligations | P0 |  |
 
 ## Dead Code Sweep
 
-N/A — no files deleted. Dispatch prompts keep printing; each gains its owner and any exact-input answer.
+No executable files are deleted in this lane. M07_004 replaces dispatch judgment prompts with native routing, and M07_001 deletes old scripts and assembles the template/skill references. No question or builder may ship without a registered consumer.
 
 ## Out of Scope
 
-- Blocking enforcement. If proposed later, every selected blocking question must produce a valid, sufficiently certain result for every required input, and missing credentials, withholding, oversized input, exhausted budgets, invalid responses, or an unavailable service fail evaluation as incomplete.
-- The broader diff bank, kept as design notes until builders and evaluation cases exist: No Legacy Retained with touched-file context; Tagged-Union with the whole result type; File Shape Decision for TypeScript and Zig; Architecture consult naming; Bun conventions with runtime evidence; Deinit IDEMpotency with lifecycle and tests; Legacy-Design Consult as a trigger only; one-behavior Dimensions.
-- Semantic coverage claims in the ledger; judge providers other than TypeSafe; committed answer records.
-- Classifying session corrections and review comments; judging test bodies against covered lines; PR descriptions; commit-time requests; changes to `core/operating-model.md`.
+- Jev as a substitute for exact Rust checks, permissions, credentials, or release authority.
+- Per-test runtime attribution and mutation testing; assertion relevance requires explicit evidence links.
+- Provider routing, daemon, hidden upload, generated reasoning prose, or moving model aliases.
+- Automatic semantic builders for every consumer language; availability is explicit and deterministic checks remain supported.
 
 ## Product Clarity (authoring record)
 
-1. **Successful user moment** — Indy runs `orly judge --spec --allow-upload` on a draft, and an Out of Scope bullet that drops required work comes back as `contradicts` with its probability before PLAN approval.
-2. **Preserved user behaviour** — Without configuration, key, and authorization, every gate, prompt, and exit status is unchanged, and every deterministic check keeps running.
-3. **Optimal-way check** — The strongest question judges a test body against the production lines it covers, which needs coverage from the next Milestone; the bank, runner, records, and pilot come first because later questions reuse them.
-4. **Rebuild-vs-iterate** — Iterate: registry rules, the ledger, dispatch prompts, and M07_001's states already carry the shape.
-5. **What we build** — Five questions with evaluation cases, the `judged` decision kind, the authorized runner and scanner, exact-request records, gate, script, and template wiring, and the pilot.
-6. **What we do NOT build** — Blocking enforcement, the broader diff bank, other providers, committed records, a dashboard.
-7. **Fit with existing features** — Reports through M07_001's states and evidence; the commit hook stays offline.
-8. **Surface order** — Command line first; gates and templates call the same command.
-9. **Dashboard restraint** — No scores or badges; each judgment shows its question, answer, probability, and whether it is a replay.
-10. **Confused-user next step** — `orly judge --calibrate --check` validates the setup offline and names the missing key, setting, authorization, or scanner.
+1. **Successful user moment** — A maintainer assesses a mixed change and gets the applicable declared checks, rule sections, and review routes without inventing a workflow.
+2. **Preserved user behaviour** — Offline gates remain usable with no account; authorization is separate from capability installation.
+3. **Optimal-way check** — Batch narrow independent questions over the same bounded evidence to reduce repeated context.
+4. **Rebuild-vs-iterate** — Build a native client and reusable evidence boundary; avoid porting prompt-printing scripts.
+5. **What we build** — Choice/Noul/Score decision bank, Rust composition, bounded plans, HTTP client, replay, and project-specific evaluation.
+6. **What we do NOT build** — No model-controlled gate, approval, migration, or command execution.
+7. **Fit with existing features** — Uses the foundation snapshot and emits evidence consumed by coverage and rule-delivery integration.
+8. **Surface order** — Command line first; optional CI judging is a separate isolated job.
+9. **Dashboard restraint** — Show answers and uncertainty rather than a synthetic quality score.
+10. **Confused-user next step** — Use `orly judge --calibrate --check` offline; errors name the missing authorization or evidence.
 
 ## Decomposition & alternatives (patch vs refactor)
 
-- **Chosen shape:** Four Sections: questions, authorized runner, wiring, pilot. The pilot lands last because it measures the bank the earlier Sections build.
-- **Alternatives considered:** Asking Jev inside each bash prompt would put network calls in every commit. Keeping blocking in release 0.12 would need the incompleteness rule in Out of Scope plus held-out evidence the pilot has not produced. A reasoning-model judge returns prose without typed probabilities; the provider field keeps it possible.
-- **Patch-vs-refactor verdict:** this is an additive **patch** on existing registry, ledger, and gate shapes.
+The lane implements questions, client, replay, and calibration independently of coverage and delivery. Their optional evidence packets join at B3. A generic ask-the-model wrapper would hide missing context and repeated request cost; bounded builders make both testable.
 
 ## Discovery (consult log)
 
-- **Consults** — Sep 23, 2026: TypeSafe's Models page lists `jev-1.13.0` with aliases `jev-latest` and `jev-preview`, input at $0.042 per million tokens, free output, 64k tokens per request and 32k for state plus the longest question, rate limits of 250,000 tokens per second and 1,200 requests per minute that change without notice, and advice to pin a version for tuned thresholds. These are published terms, not measured costs; no fresh-call reproducibility guarantee exists. Eleven distinct `dispatch_judgment` codes across `dispatch/lib.sh`, `dispatch/write_any.sh`, `dispatch/write_zig.sh`, `dispatch/write_ts_adhere_bun.sh`, and `dispatch/write_sql.sh`. Codex's CTO review of `58fedbc` returned rework; its findings were verified against source and applied, including advisory-only enforcement and the smaller bank. The fifth question, row entailment, goes beyond its four because it targets tests that prove something other than their Dimension. Indy's direction is quoted in the handshake.
-- **Metrics review** — `judge` joins the observed command set; no analytics or funnel change.
-- **Skill-chain outcomes** — Authoring followed `skills/orly-spec-new/SKILL.md` by hand. Implementation proofs, `/review`, the pilot, and post-push monitoring are pending.
-- **Deferrals** — None. Out of Scope lists items proposed for the next Milestone, subject to Indy's approval of this spec.
+- **Consults** — Verified current HTTP API, Models, Confidence, citation checks, and parallel-question guidance on Sep 30, 2026. [TypeSafe API](https://docs.typesafe.ai/api) defines the wire types; [Models](https://docs.typesafe.ai/models) recommends pinned versions; [Confidence](https://docs.typesafe.ai/confidence) describes uncertainty. No fresh-call identity guarantee is assumed. User direction requires Jev in significant areas; advisory policy and concrete acceptance thresholds are agent design decisions, not measured results.
+- **Metrics review** — No new analytics funnel. Local diagnostics and the existing consented telemetry retain separate privacy rules.
+- **Skill-chain outcomes** — Source/spec adversarial review performed during authoring; native implementation, live calibration, platform journeys, and boundary verification remain pending.
+- **Deferrals** — None recorded. The explicit native-command OpenCode guarantee replaces the former executable plugin approach; no missing required release proof is treated as deferred.

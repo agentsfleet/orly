@@ -1,0 +1,23 @@
+[package]
+name = "xtask"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+orly-fs.workspace = true
+orly-decision.workspace = true
+orly = { workspace = true }
+serde_json = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+syn = { workspace = true, features = ["full"] }
+thiserror = { workspace = true }
+schemars = { workspace = true }
+clap = { workspace = true, features = ["derive"] }
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,8 @@
+{
+  "repository": "agentsfleet",
+  "revision": "e5a6964797dd2b841988d5ddbc730834947c5374",
+  "rust_manifest": "rustd/Cargo.toml",
+  "cli_manifest": "cli/package.json",
+  "zig_build": "build.zig",
+  "fixture": "synthetic source; inspected paths only"
+}

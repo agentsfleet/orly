@@ -42,7 +42,78 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
-## Prerequisites
+## 0.12.0: native Rust engine
+
+The 0.12.0 release combines the Rust foundation, Jev System One decisions,
+coverage, and rule enforcement. The [architecture](docs/ORLY_ARCHITECTURE.md)
+defines their shared boundaries; the implementation specs track completion.
+Installation instructions for the current 0.10 release follow this section.
+
+### Installation and project layout
+
+One Cargo package provides a reusable Rust library and the `orly` executable.
+Users install through Cargo or download a prebuilt release archive for their platform.
+Cargo builds the source package; prebuilt downloads let users run orly without installing Rust.
+
+Project setup runs inside the Rust binary.
+
+After installation, `orly init` copies the verified executable into ignored `.orly/bin/orly-0.12.0` and writes committed configuration and rules.
+Windows uses `.orly/bin/orly-0.12.0.exe` (`src/core/constants.rs:21–23`).
+
+```text
+your-repo/
+├── AGENTS.md              project-owned instructions
+└── .orly/
+    ├── orly.json          pinned version, packs, policy, and command declarations
+    ├── AGENTS.md          generated operating rules
+    ├── dispatch/          selected rule pages
+    ├── docs/              selected supporting documents
+    └── bin/orly-0.12.0    verified local executable; ignored
+```
+
+Local caches and reports use worktree-specific Git state. Each clone runs setup to install its local executable and hooks.
+
+Migration preserves project-owned content and hooks. For `agentsfleet`, explicit `--no-hooks` installation preserves its custom Git hooks.
+
+### What the Rust engine captures and checks
+
+An **immutable snapshot** fixes the input bytes for one assessment and plan.
+With `--staged`, it uses Git index contents, including staged versions that differ from files currently open in your editor.
+The snapshot contains source bytes, changed ranges, path/mode metadata, and captured configuration, rule versions, and source identities.
+
+Required unchanged context comes from the same captured tree. Restaging or changing relevant configuration invalidates the old plan.
+
+**Bounded semantic evidence** is the selected context a Jev question needs.
+A test question can include a complete changed function, a linked test assertion, the required behavior, and fixed answer options.
+Defaults limit state to 16 kibibytes (KiB) and the complete request to 24 KiB.
+
+Missing or oversized context produces an incomplete result; orly preserves complete semantic units instead of silently cutting them.
+Live upload requires an enabled capability, a provider key, explicit `--allow-upload`, and successful credential scanning.
+
+**Exact facts** are computed values: changed paths, source identities, applicable rules, command results, and matching coverage hits.
+**Mandatory checks** test those facts against the selected repository rules.
+
+Examples include engine-version agreement, valid configuration, declared error codes, file-length limits, and required changed-line coverage.
+A passing model answer cannot remove a mandatory check.
+
+### Assess, plan, and run
+
+`orly assess --staged --allow-upload` requests bounded Jev decisions for staged changes.
+`orly plan --staged --replay-only` combines exact facts, recorded decisions, and project policy into known steps and dependencies.
+
+`orly run --plan <PLAN_PATH>` validates the saved plan and runs its declared commands against captured source bytes.
+`<PLAN_PATH>` is the file containing the saved plan.
+
+Choice selects known recipes, Noul evaluates independent conditions, and Score ranks known candidates.
+Fresh answers can vary; the same recorded answers, snapshot, policy, and engine identity produce the same plan.
+
+Offline hooks use recorded answers. Missing semantic answers remain visible while independent exact checks can still run.
+
+See the [architecture](docs/ORLY_ARCHITECTURE.md#adaptable-decision-runtime-choice-noul-and-score) for decision boundaries and required project trials.
+
+---
+
+## Prerequisites for the current release
 
 | You need | Why | Version |
 |---|---|---|
@@ -56,7 +127,7 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
-## Install
+## Install the current release
 
 Run this inside the repository you want governed.
 
@@ -72,6 +143,7 @@ orly scans your source, detects your languages, and installs only the rules that
 
 The Git hooks use the installed `orly` executable. Keep it on `PATH`.
 Complete any setup items printed by `init`, then run `orly doctor` and commit the generated files.
+
 Teammates get the rules on clone and run `orly init` to install their hooks.
 
 Declare `conform` and at least one `verify.*` command in `.oracle/orly.json`.
@@ -215,9 +287,14 @@ Each edit activates the rule page for that file kind. A gate proves whether the 
 | `CLAUDE.md` | **you** | written only when missing; never edited after |
 | `opencode.json` | **you** | gains the two rule files in `instructions`; nothing else touched |
 
-`AGENTS.md` stays yours — orly writes its rules beside it and points at them from one delimited block.
+`AGENTS.md` stays yours. orly writes its rules beside it and points at them from one delimited block.
 
-The last two files exist because installing a rules file is not the same as delivering it, and no runtime loads `AGENTS.orly.md` on its own. Codex and Amp auto-load `AGENTS.md`, which carries the pointer block onward. Claude Code loads `CLAUDE.md` and nothing else. opencode loads only what its `instructions` name. So orly writes the one import line each of those needs, and leaves any file you already wrote alone — a `CLAUDE.md` of your own is your answer to the question and orly does not touch it — including a symlink, whether it points at your rules file, somewhere else in the repository, or at nothing yet. Only a link out of the repository is refused, because a write through it would land outside the repository you ran orly in.
+The last two files deliver rules through each runtime's loader. Codex and Amp auto-load `AGENTS.md`, which carries the pointer block onward.
+
+Claude Code loads `CLAUDE.md` and nothing else. opencode loads only what its `instructions` name.
+
+orly writes the required import line when the loader is missing. Existing project-owned loaders stay unchanged, including symlinks to rules, other repository files, or missing targets.
+orly refuses loader links outside the repository because writing through them would change another checkout.
 
 > [!WARNING]
 > orly refuses to replace a hook or rule page it did not write. `--force` and `--no-hooks` are the ways through. A refused run changes nothing.
@@ -326,8 +403,8 @@ make audit
 `make audit` is the bar. If it passes, the change is reviewable. Its steps run in parallel, around half a minute:
 
 - **typecheck and unit tests**
-- **render determinism** — the same sources always produce the same rules
-- **gate fixtures** — every gate proved against one passing and one failing case
+- **render determinism:** the same sources always produce the same rules
+- **gate fixtures:** every gate proved against one passing and one failing case
 
 Coverage is gated at a 90% line floor. The workflow fails below it.
 

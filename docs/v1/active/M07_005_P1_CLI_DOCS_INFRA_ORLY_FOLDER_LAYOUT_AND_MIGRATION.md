@@ -23,8 +23,8 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Batch:** B1 — foundation; all Sections complete before B2 starts
 **Branch:** docs/m07-open-source-first-run
 **Baseline revision:** c02f1e02806204811401b01596a04ff4c039d02a
-**Test Baseline:** pending — measure unit and integration lanes before the Pull Request (PR)
-**Baseline evidence:** pending — report comparison revision, commands, counts, obligations, and environment
+**Test Baseline:** unit=268 integration=n/a — no integration command declared; native suites add separate proofs.
+**Baseline evidence:** target/platform-evidence/baseline-unit.log
 **Depends on:** None. M07_001 is the integration successor, not a prerequisite.
 **Provenance:** Revised from the Sep 23 draft by Codex after the Rust/Jev direction on Sep 30, 2026; source review at `c02f1e02806204811401b01596a04ff4c039d02a`.
 **Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §M07 target: one native engine with bounded Jev judgments
@@ -38,7 +38,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 **Problem:** The launcher requires Bun (`bin/orly:16–26`); installation generates Bash hooks (`src/install.ts:242–261`). Managed files live beside project documents, and configuration lives in `.oracle/` (`src/config.ts:19`).
 
-**Solution summary:** Build one production Rust crate and one unpublished development runner. Freeze shared types, schemas, and feature entry points; move managed content into `.orly/` through a verified resumable migration. B2 implements isolated features against these interfaces. The product is a repository decision engine, not a hard-coded reproduction of the current milestone lifecycle. Its common flow is capture immutable facts → obtain typed decisions → compile a bounded plan → run native checks → report evidence. A repository chooses its own triggers and recipes. Existing work/verify/pr verbs are preset entry points into the same engine; new users do not need numbered milestones, a private review skill, or this repository's workflow.
+**Solution summary:** Build small production Rust crates behind one native binary, plus one unpublished development runner. Freeze shared types, schemas, and feature entry points; move managed content into `.orly/` through a verified resumable migration. B2 implements isolated features against these interfaces. The product is a repository decision engine, not a hard-coded reproduction of the current milestone lifecycle. Its common flow is capture immutable facts → obtain typed decisions → compile a bounded plan → run native checks → report evidence. A repository chooses its own triggers and recipes. Existing work/verify/pr verbs are preset entry points into the same engine; new users do not need numbered milestones, a private review skill, or this repository's workflow.
 
 **Determinism boundary:** Rust owns exact facts, validation, execution, and gate status. Jev supplies probabilistic typed semantic answers. Identical validated recorded answers replay reproducibly; fresh inference can vary.
 
@@ -46,9 +46,9 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 - **PR title (eventual):** `feat: ship native orly with bounded Jev review`
 - **Intent:** Establish the native executable and shared boundaries that let the three feature workstreams proceed independently.
-- **Authoring handshake:** This is a spec/design revision, not implementation or permission to publish.
+- **Authoring handshake:** Implement the foundation in this branch; publishing remains outside this workstream.
 - **ASSUMPTIONS I'M MAKING:** Markdown remains readable source data. Git remains an explicit native dependency. Consumer languages remain supported. Migration recognizes the recorded installation version; it does not maintain a second runtime layout.
-- **Implementer handshake:** pending until PLAN; restate intent, scope, and source authority before code.
+- **Implementer handshake:** Build the native foundation in this branch; preserve current verification and unrelated changes. The canonical architecture and this spec govern shared interfaces. Consumer proofs use isolated Git fixtures; no release is authorized.
 
 ## Implementing agent — read these first
 
@@ -61,7 +61,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ## Files Changed (blast radius)
 
-Paths name approved roles. B1 freezes an expanded per-file inventory before implementation; B2 cannot mutate shared files. This document revision touches only pending specs and the canonical architecture.
+Paths name approved roles. B1 freezes an expanded per-file inventory before implementation; B2 cannot mutate shared files.
 
 | File | Action | Why |
 |---|---|---|
@@ -74,8 +74,14 @@ Paths name approved roles. B1 freezes an expanded per-file inventory before impl
 | fixtures/port/, fixtures/layout-0.10/, tests/foundation.rs, tests/migration.rs | CREATE | Observable obligations and interrupted migration fixtures |
 | fixtures/port/native-orly.json, .gitignore | CREATE / EDIT | Validate target configuration without replacing live old config/Make recipes; ignore machine state |
 | docs/v1/pending/*.md | EDIT | Only shared-interface hydration at B1; live declared-command hydration is B3 |
-| src/core/decision.rs, src/core/plan.rs, src/core/packs.rs, schemas/decision-plan.schema.json, schemas/pack.schema.json | CREATE | Versioned composable decisions, acyclic plans, and data-only extension packs |
+| crates/decision/src/lib.rs, src/core/plan.rs, src/core/packs.rs, schemas/decision-plan.schema.json, schemas/pack.schema.json | CREATE | Versioned composable decisions, acyclic plans, and data-only extension packs |
 | fixtures/projects/rust-cli/, fixtures/projects/typescript-library/, fixtures/projects/agentsfleet-profile/ | CREATE | Three adaptation targets; the mixed project profile pins inspected evidence |
+| core/operating-model.md, packs/language/rust/rules.md, dispatch/write_rust.md, AGENTS.md | EDIT / REGENERATE | User-requested Rust reference paths: Exonum, Apache Arrow, and read-only agentsfleet/rustd |
+| src/core/, src/install/, tests/foundation/, tests/migration/, fixtures/port/, schemas/native-config.schema.json, docs/ORLY_ARCHITECTURE.md | EDIT | User-approved configurable shared storage and Windows/Linux/macOS foundation support |
+| crates/fs/, crates/decision/, Cargo.toml, Cargo.lock, tools/xtask/Cargo.toml, src/, tests/ | CREATE / EDIT | User-approved small independent crates; direct imports and cause-preserving error composition |
+| .github/workflows/native-foundation.yml | CREATE | Explicitly approved tests-only Windows, Linux, and macOS execution proof |
+| README.md, audits/agents-md.md | EDIT | Versioned native path documentation and explicitly approved three-row questionnaire alignment |
+| audits/agents-md.md, dispatch/write_spec.md, dispatch/edit_rules.md, Makefile, evals/llms/fixtures.jsonl, docs/HARNESS_VERIFY_OUTPUT.md | EDIT | Approved questionnaire/output-guide alignment and bypass-promise removal; executable checks and fixture verdicts stay intact |
 
 ## Applicable Rules
 
@@ -95,7 +101,7 @@ Paths name approved roles. B1 freezes an expanded per-file inventory before impl
 | Governance invariance | At implementation | Golden obligations, negative fixtures, questionnaire, and generated evidence; no weakening to obtain green |
 | Named constants; logging; milestone labels | At implementation | Stable reason codes and limits; source/test names describe behavior rather than milestone numbers |
 | Architecture and documentation | Yes | Target design in docs/ORLY_ARCHITECTURE.md; user guides land with behavior |
-| Workflow or release edits | Only M07_001 | Explicit implementation-session approval before changing automation or publishing |
+| Workflow or release edits | Tests-only workflow here; release in M07_001 | Explicit approval covers native-foundation.yml; publishing requires separate approval |
 | Database removal; Zig source; interface tokens | No | No database migration, Zig implementation, or rendered interface |
 
 ## Prior-Art / Reference Implementations
@@ -104,13 +110,27 @@ The current containment checks in `src/model.ts` define behavior to preserve. Ca
 
 ## Sections (implementation slices)
 
-### §1 — Freeze the complete port inventory and common interfaces
+### §1 — Freeze the complete port inventory and common interfaces — DONE
 
-Enumerate tracked paths from the recorded comparison revision using null-byte-delimited Git output. Assign every Markdown file, executable script, hook, source module, fixture, and package file a disposition in `fixtures/port/inventory.json`. Include extensionless launchers, Makefile recipes, Python invocations inside scripts, and source strings generating hooks. Each executable obligation names a Rust successor and a positive and negative proof. This inventory is a coverage map, never a baseline that excuses findings.
+**Expanded implementation inventory (frozen before code):**
+- Build: `Cargo.toml`, `Cargo.lock`, `rust-toolchain.toml`, `.cargo/config.toml`, `build.rs`, `.gitignore`.
+- Root: `src/{lib,main,cli,cli_config,cli_plan,cli_output,error}.rs`; independent crates: `crates/fs/`, `crates/decision/`.
+- Filesystem crate: `crates/fs/src/{lib,error,constants,path,digest,filesystem,filesystem_parent,filesystem_atomic,file_input,permissions}.rs`, `crates/fs/tests/atomic.rs`; decision crate: `crates/decision/src/{lib,error}.rs`, `crates/decision/tests/replay.rs`.
+- Core: `src/core/{mod,constants,env,logging,document,dependencies,capabilities,selection,config,storage,evidence,plan,plan_compile,plan_validate,packs,git,snapshot,snapshot_capture,execution,runner,process,process_group,process_streams,scheduler,scheduler_graph,payload,payload_materialize,render,render_markers,citations}.rs`.
+- Installation: `src/install/{mod,preflight,preflight_migration,hooks,state,operation,recovery}.rs`; hosts: `src/host/mod.rs`.
+- Frozen feature roots: `src/{judge,coverage,rules,checks}/mod.rs`.
+- Development: `tools/xtask/Cargo.toml`, `tools/xtask/src/{main,error,manifest,manifest_model,manifest_proofs,manifest_tests}.rs`.
+- Schemas: the eight schema paths in Files Changed; generated from the shared Rust types.
+- Tests: `tests/{foundation,migration}.rs`, `tests/support/{mod,execution,installation,command_fixture,platform,probe,process}.rs`, `tests/foundation/{env,errors,scope,packs,scheduling,plan,plan_inputs,snapshot,runner,payload,interfaces,filesystem,projects}.rs`, `tests/migration/{install,recovery,recovery_fixture,recovery_payload,ownership,citations,host,storage}.rs`.
+- Fixtures: `fixtures/port/{inventory,interfaces,native-orly,proofs}.json`, `fixtures/port/README.md`, `fixtures/layout-0.10/`, `fixtures/projects/{rust-cli,typescript-library,agentsfleet-profile}/`.
+- Successor specs: only shared-interface hydration under `docs/v1/pending/`; no live verification changes.
+
+
+Read tracked paths and modes from the recorded Git tree through the shared object store. Native replacement, development replacement, and release assembly dispositions require behavior proofs. Git executable modes independently require proofs even when labeled as data. Assign every Markdown file, executable script, hook, source module, fixture, and package file a disposition in `fixtures/port/inventory.json`. Include extensionless launchers, Python invocations inside scripts, and source strings generating hooks. Each executable obligation names a Rust successor and a positive and negative proof. This inventory is a coverage map, never a baseline that excuses findings.
 
 Classify Markdown as authoritative rule source, generated destination, host wrapper, project documentation, historical record, or private notes. `registry.json` remains the source-to-installed map; `packs/language/rust/rules.md` generates `dispatch/write_rust.md`, rather than creating two editable authorities. Preserve every selected language pack, safety rule, size cap, and opt-in requirement. Private notes and personal packs do not enter the default payload.
 
-Create a root production crate with library and binary plus `tools/xtask`, which is unpublished development tooling. Pin the Rust toolchain and resolved dependencies at B1, after reading the reference implementations. Prefer `clap`, `serde`, `serde_json`, `toml`, `pulldown-cmark`, `globset`, `sha2`, `reqwest` with Rust-native transport security, and standard filesystem/process APIs. Dependency versions belong in Cargo.lock; no shell install commands run on a product path.
+Create one Cargo workspace with `orly-fs` for contained files and digests, `orly-decision` for typed answers and questions, the root native library/binary, and unpublished `tools/xtask`. Independently usable modules own their types, errors, tests, and lean dependency sets under Microsoft guideline `M-SMALLER-CRATES`. Pin the Rust toolchain and resolved dependencies at B1, after reading the reference implementations. Prefer `clap`, `serde`, `serde_json`, `toml`, `pulldown-cmark`, `globset`, `sha2`, `reqwest` with Rust-native transport security, and standard filesystem/process APIs. Dependency versions belong in Cargo.lock; no shell install commands run on a product path.
 
 Freeze `EvaluationContext`, `Snapshot`, `CriterionResult`, `CommandInvocation`, `EvidencePacket`, and typed `Judge`, `Coverage`, `Rules`, and `Checks` extension entry points. The B2 module roots compile before their implementation; unavailable features return an explicit unavailable result. Reserve configuration fields and schemas for all features now. Shared schema changes later require a serialized revision before affected lanes resume.
 
@@ -118,12 +138,12 @@ Freeze `DecisionEnvelope` and `DecisionPlan` too. A decision envelope retains pr
 
 Extensibility has two deliberate surfaces. Data-only packs carry namespaced/versioned questions, source rule sections, evidence recipes using built-in selectors, candidate references, calibrated thresholds, and pure policy composition. New exact capabilities are Rust `Check`/`EvidenceBuilder` implementations compiled into the engine with fixtures. No downloaded executable plugin, shell snippet, arbitrary evaluator expression, or `eval`. Repository overrides can add checks and domain choices but cannot remove core safety checks. Version/digest every pack; reject duplicate identities, unresolved capabilities, invalid criteria, and incompatible engine requirements. Source text is state, never executable instructions. Command declarations preserve relative working directory, environment key names, output identities, and named resource claims; capacity-one claims serialize shared Cargo, JavaScript-test, and datastore resources while disjoint nodes can overlap. Credentials remain outside captured model evidence. Conformance uses builtin native nodes; reject a command route that re-enters its own gate. Commit/index, push/range, and remote event-base/head scope are explicit inputs; missing event identity fails, never becomes empty staged success.
 
-- **Dimension 1.1** — Tracked Markdown, scripts, generated hooks, and fixtures → one disposition and successor per obligation; an omitted path fails → Test `test_port_inventory_has_no_unassigned_path`
-- **Dimension 1.2** — Foundation build → typed extension seams compile; unavailable capability cannot claim passed → Test `test_shared_interfaces_compile_without_features`
-- **Dimension 1.3** — Same facts/envelope/policy → same digest; unknown commands/cycles/gate recursion reject; resource claims serialize conflicts and preserve working directory; missing remote identity fails; offline missing key/replay → exact core runs, missing required input fails, semantic branches reported → Test `test_decision_plan_reducer_is_replayable_and_acyclic`
-- **Dimension 1.4** — New project question/section/policy → works through built-in selectors without binary rewrite; conflicting/version-incompatible/executable pack rejects → Test `test_data_pack_extends_policy_without_executable_plugins`
+- **Dimension 1.1 — DONE** — Tracked Markdown, scripts, generated hooks, and fixtures → one disposition and successor per obligation; an omitted path fails → Test `test_port_inventory_has_no_unassigned_path`
+- **Dimension 1.2 — DONE** — Foundation build → typed extension seams compile; unavailable capability cannot claim passed → Test `test_shared_interfaces_compile_without_features`
+- **Dimension 1.3 — DONE** — Same facts/envelope/policy → same digest; unknown commands/cycles/gate recursion reject; resource claims serialize conflicts and preserve working directory; missing remote identity fails; offline missing key/replay → exact core runs, missing required input fails, semantic branches reported → Test `test_decision_plan_reducer_is_replayable_and_acyclic`
+- **Dimension 1.4 — DONE** — New project question/section/policy → works through built-in selectors without binary rewrite; conflicting/version-incompatible/executable pack rejects → Test `test_data_pack_extends_policy_without_executable_plugins`
 
-### §2 — Native snapshots, execution, and truthful evidence
+### §2 — Native snapshots, execution, and truthful evidence — IN_PROGRESS
 
 Render selected packs with fence-aware markers and standard Markdown parsing. Embed registry, schemas, rules, and selected resource files into the binary at build time; record their canonical digest. Build ordering is sorted and timestamp-free. A relocated binary needs no source checkout. Materialized documents remain readable under `.orly/`.
 
@@ -133,25 +153,31 @@ Before executing project commands, materialize the selected index/head snapshot 
 
 Results are tagged states: `passed`, `failed`, `skipped`, `reported`, or `overridden`, always with a reason. Missing evidence for an applicable required check is failed; non-applicability is skipped. Preserve original failures and invocation records beneath a user override. Human and JSON rendering reuse each invocation once. The reproducible result projection excludes clocks, invocation identifiers, and durations; operational metadata keeps those separately. Evidence exposes digests, codes, counts, and relative paths, never raw command output, environment values, source, or free-text override reasons.
 
-- **Dimension 2.1** — Stage A and keep B on disk, including alternate-index/rename cases → checks and scratch-executed tests read A; source mutation invalidates proof → Test `test_snapshot_reads_index_not_worktree`
-- **Dimension 2.2** — Missing binary, timeout, surviving grandchild, signal, and output flood → named failure with children reaped and bounded records → Test `test_native_runner_bounds_and_reaps`
-- **Dimension 2.3** — No spec, absent surfaces, unavailable feature, original override, and repeated snapshot → explicit states and identical semantic projection → Test `test_evidence_states_and_reproducible_projection`
+- **Dimension 2.1 — DONE** — Stage A and keep B on disk, including alternate-index/rename cases → checks and scratch-executed tests read A; source mutation invalidates proof → Test `test_snapshot_reads_index_not_worktree`
+- **Dimension 2.2 — DONE** — Missing binary, timeout, surviving grandchild, signal, and output flood → named failure with children reaped and bounded records → Test `test_native_runner_bounds_and_reaps`
+- **Dimension 2.3 — DONE** — No spec, absent surfaces, unavailable feature, original override, and repeated snapshot → explicit states and identical semantic projection → Test `test_evidence_states_and_reproducible_projection`
+- **Dimension 2.4 — DONE** — Default `.orly/rels/`, a configured root, and escaping or colliding paths → shared material stays contained, preserved, and trackable → Test `storage_install_preserves_documents_and_changing_root_does_not_move_them`; companion storage tests cover path and collision refusals.
+- **Dimension 2.5 — IN_PROGRESS** — Windows, Linux, and macOS foundations → captured inputs, bounded child execution, installation, and recovery behave consistently → Test `manual_foundation_platform_report`
 
-### §3 — Contained installation and resumable migration
+Shared release/spec material defaults to repository-relative `.orly/rels/` and uses an owner-configurable contained root. It remains separate from generated rules, ignored binaries, and private installation state. Preserve existing documents; no silent relocation or deletion. Standard crates and operating-system APIs provide portable process and filesystem behavior. Record real Windows, Linux, and macOS execution evidence before closing; cross-compilation alone is not runtime proof.
+
+### §3 — Contained installation and resumable migration — DONE
 
 Consumer configuration is `.orly/orly.json`; rules are `.orly/AGENTS.md`; managed pages retain source-relative destinations under `.orly/`. Host entry files preserve repository-owned content. Machine-local evidence and caches use Git-resolved, worktree-specific state paths; they are not committed or trusted attestations. A binary entry point owns `init`, `update`, `doctor`, `render`, and `verify`.
 
 Preflight the full operation before writes: prior-version inventory, source digests, destination conflicts, ancestor/file symlinks, executable modes, loader ownership, and hook ownership. Reject writes through symlinks. Acquire an exclusive worktree installation lock. Retain a versioned operation manifest in local Git state containing source revision, inventory, operation identity, prior digests, and completed entries. Whole-file writes use sibling temporary files, flushes, and atomic renames; each retry revalidates source and destination identity. Switch loaders, then hooks, then configuration only after verifying the complete payload. Delete only recorded unchanged managed copies after their destinations and switches verify. Keep recovery state until cleanup finishes; a conflicting retry refuses without further writes.
 
+Retain the repository, Git-state, and installation-state directory handles throughout one installation. Lock, journal, planning, effects, and cleanup share these verified resources. Refuse detected directory replacement before the next effect or journal action; preserve the prior journal for verified retry. Directory checks do not claim a sandbox against another process changing files during a system call. Prove replacement before effects and during journal publication through real filesystem operations in `tests/migration/ownership.rs`. Also move a linked worktree using Git, reuse its old path, refuse the stale invocation, and recover from the moved location. Use cap-std directory handles, same-file identity comparison, standard file locks, and borrowed owners.
+
 Git hooks are native executable links to the verified local engine, named `pre-commit` and `pre-push`; invocation-name routing selects the hook entry point. No generated shell wrapper. Install the versioned binary atomically under ignored `.orly/bin/`, record its digest and mode, then switch hook links. Existing repository-owned hooks remain untouched and receive an explicit integration instruction. A fresh clone runs `orly init` or `update` before native hooks are installed. Test actual Git hook invocation on every supported platform at the release boundary.
 
 Rewrite recognized managed references using the source-to-destination map. Parse Markdown links and explicit command-example tokens; preserve URLs, literal examples, and completed historical specs. `doctor` names stale repository-owned callers and old `.oracle/` paths by file and line. After migration only the migration recognizer accepts the old input layout; normal commands never fall back to it.
 
-- **Dimension 3.1** — Fresh, repeated, nested, and foreign-hook installs → contained layout, preserved content, correct binary links, and no redundant writes → Test `test_install_is_contained_and_idempotent`
-- **Dimension 3.2** — Inject interruption at each rename, loader switch, hook switch, config switch, and deletion → verified retry completes; edited/symlinked/concurrent destinations refuse → Test `test_migration_resumes_every_write_and_cleanup`
-- **Dimension 3.3** — Old managed command, literal fenced example, URL, and historical record → only real callers rewritten or reported → Test `test_doctor_and_citations_identify_stale_callers`
+- **Dimension 3.1 — DONE** — Fresh, repeated, nested, and foreign-hook installs → contained layout, preserved content, correct binary links, and no redundant writes → Test `test_install_is_contained_and_idempotent`
+- **Dimension 3.2 — DONE** — Inject interruption at each rename, loader switch, hook switch, config switch, and deletion → verified retry completes; edited/symlinked/concurrent destinations refuse → Test `test_migration_resumes_every_write_and_cleanup`
+- **Dimension 3.3 — DONE** — Old managed command, literal fenced example, URL, and historical record → only real callers rewritten or reported → Test `test_doctor_and_citations_identify_stale_callers`
 
-### §4 — Establish the Rust verification boundary before fan-out
+### §4 — Establish the Rust verification boundary before fan-out — DONE
 
 Run the old engine against frozen observable fixtures while it remains available privately. Record outputs and rule obligations, not implementation shape or private personal state. Differences caused by approved target behavior, including explicit skip states and staged-blob correctness, have named expected outcomes and negative tests. No live credential is needed for this preparation.
 
@@ -159,8 +185,8 @@ Freeze the target Rust command declarations and native schema as validated fixtu
 
 B1 completes when the native foundation and migration tests pass, the interface/schema revision is recorded, module/file ownership is disjoint, and the successor workstreams compile. Each B2 workstream then opens its own approved worktree from that revision. Do not open extra worktrees during this authoring task. Compare behavioral obligation counts across the language rewrite; separately report old and Rust test counts, because one framework's discovery count is not another's baseline.
 
-- **Dimension 4.1** — Relocated binary with no Bun, Node, Python, or Bash on its executable search path → render, validation, doctor, and dry-run installation work → Test `test_foundation_binary_works_without_interpreters`
-- **Dimension 4.2** — Frozen target-command fixture and expanded inventory → valid Rust command declarations and exclusive B2 paths; conflicting ownership fails → Test `test_native_command_declarations_and_lane_ownership`
+- **Dimension 4.1 — DONE** — Relocated binary with no Bun, Node, Python, or Bash on its executable search path → render, validation, doctor, and dry-run installation work → Test `test_foundation_binary_works_without_interpreters`
+- **Dimension 4.2 — DONE** — Frozen target-command fixture and expanded inventory → valid Rust command declarations and exclusive B2 paths; conflicting ownership fails → Test `test_native_command_declarations_and_lane_ownership`
 
 ## Interfaces
 
@@ -214,29 +240,32 @@ Existing anonymous telemetry remains opt-in. Feature review adds no source-beari
 | 2.1 | integration | `test_snapshot_reads_index_not_worktree` | Stage A and keep B on disk, including alternate-index/rename cases → checks and scratch-executed tests read A; source mutation invalidates proof |
 | 2.2 | integration | `test_native_runner_bounds_and_reaps` | Missing binary, timeout, surviving grandchild, signal, and output flood → named failure with children reaped and bounded records |
 | 2.3 | unit | `test_evidence_states_and_reproducible_projection` | No spec, absent surfaces, unavailable feature, original override, and repeated snapshot → explicit states and identical semantic projection |
+| 2.4 | integration | `storage_install_preserves_documents_and_changing_root_does_not_move_them` | Default and configured contained roots preserve shared documents and remain trackable; companion storage cases refuse escaping or colliding paths |
+| 2.5 | manual | `manual_foundation_platform_report` | Record actual snapshot, process, installation, and retry runs on Windows, Linux, and macOS |
 | 3.1 | integration | `test_install_is_contained_and_idempotent` | Fresh, repeated, nested, and foreign-hook installs → contained layout, preserved content, correct binary links, and no redundant writes |
 | 3.2 | integration | `test_migration_resumes_every_write_and_cleanup` | Inject interruption at each rename, loader switch, hook switch, config switch, and deletion → verified retry completes; edited/symlinked/concurrent destinations refuse |
 | 3.3 | unit | `test_doctor_and_citations_identify_stale_callers` | Old managed command, literal fenced example, URL, and historical record → only real callers rewritten or reported |
 | 4.1 | e2e | `test_foundation_binary_works_without_interpreters` | Relocated binary with no Bun, Node, Python, or Bash on its executable search path → render, validation, doctor, and dry-run installation work |
 | 4.2 | integration | `test_native_command_declarations_and_lane_ownership` | Frozen target-command fixture and expanded inventory → valid Rust command declarations and exclusive B2 paths; conflicting ownership fails |
 
-At implementation, apply the unit-test and integration-test skills to every changed Section. Include negative paths and boundary injection; stubs prove local behavior only. Manual proof names the responsible person and durable release Session Notes. Nothing above is marked run.
+Apply the unit-test and integration-test skills to every changed Section. Include negative paths and boundary injection; stubs prove local behavior only. Platform proof records the executing system, revision, commands, results, and evidence location.
 
 ## Acceptance Rubric (single scoring surface)
 
-A1/A2 quote the current configuration verbatim and remain required through private B1/B2 development. M07_001 switches configuration/Make recipes to Rust atomically with complete native check registration and old-path deletion at B3; update the five rubric declarations in that same change. Future native commands below are lane acceptance requirements, not commands available in this checkout yet.
+A1/A2 quote the current configuration verbatim and remain required through private B1/B2 development. M07_001 switches live commands to Rust with complete native check registration and old-path deletion. The native commands below are additional foundation checks available in this checkout.
 
 | # | Criterion (observable outcome) | Verify (copy-paste) | Expected | Priority | Graded (VERIFY) |
 |---|---|---|---|---|---|
 | R1 | Native foundation and index correctness | `cargo test --locked --test foundation` | exit 0 | P0 |  |
 | R2 | Contained migration and recovery | `cargo test --locked --test migration` | exit 0 | P0 |  |
 | R3 | Inventory and feature ownership | `cargo xtask port-check --map` | exit 0 | P0 |  |
-| A1 | Current declared conformance; Rust implementation replaces internals | `make conform` | exit 0 | P0 |  |
-| A2 | Current declared unit lane; atomically replaced at B3 | `bun test src` | exit 0 | P0 |  |
+| A1 | Current declared conformance; Rust implementation replaces internals | `make conform` | exit 0 | P0 | ✅ `ALL CHECKS PASSED`; target/platform-evidence/conform.log |
+| A2 | Current declared unit lane; atomically replaced at B3 | `bun test src` | exit 0 | P0 | ✅ 268 pass, 0 fail inside make audit; target/platform-evidence/audit.log |
 | S1 | Native full unit boundary | `cargo test --workspace --locked` | exit 0 | P0 |  |
-| S2 | Governance obligations remain enforced | `make audit` | exit 0 | P0 |  |
+| S2 | Governance obligations remain enforced | `make audit` | exit 0 | P0 | ✅ unit 268/0; dispatch 46/0; parity 10/0; ledger 25/0; target/platform-evidence/audit.log |
 | S3 | No secrets | `gitleaks detect` | exit 0 | P0 |  |
-| S4 | Expanded inventory mapping and exclusive scope | `cargo xtask port-check --map` | exit 0; zero unassigned obligations | P0 |  |
+| S4 | Expanded inventory mapping and exclusive scope | `cargo xtask port-check --map` | exit 0; zero unassigned obligations | P0 | ✅ 220 tracked paths; 110 assigned obligations; 0 unassigned; target/platform-evidence/port-map.log |
+| S5 | Supported foundation systems | `manual_foundation_platform_report` | Windows, Linux, and macOS runtime evidence | P0 |  |
 
 ## Dead Code Sweep
 
@@ -246,7 +275,7 @@ M07_001 deletes the old executable inventory after replacement proofs exist. Thi
 
 - Implementation of the three B2 features; their seams are defined here.
 - Editing sibling consumers; each migrates on its own approved branch.
-- Windows binaries: 0.12.0 supports the Linux and macOS matrix in M07_001. Unsupported platforms receive an explicit diagnostic.
+- Release packaging and publishing remain in M07_001; Windows, Linux, and macOS foundation behavior is required here.
 - Global daemon, database, runtime path aliases, or model-generated migration decisions.
 
 ## Product Clarity (authoring record)
@@ -269,6 +298,21 @@ One cross-cutting workstream establishes shared interfaces and installation auth
 ## Discovery (consult log)
 
 - **Consults** — Reviewed launcher, containment, installer, loaders, registry mappings, and command declarations at the recorded source revision. The user explicitly requests Rust and removal of TypeScript and shell implementation. The local recovery manifest is an agent-selected mechanism required by interrupted multi-file migration; it replaces the draft prohibition on such recovery state.
+- **Resource ownership decision** — Indy: "Okay fix that, when will i see this issue?" Authorizes retaining installation resources and refusing directory replacement; the isolated ownership probe reproduced separate held locks and redirected journal publication.
 - **Metrics review** — No new analytics funnel. Local diagnostics and the existing consented telemetry retain separate privacy rules.
-- **Skill-chain outcomes** — Source/spec adversarial review performed during authoring; native implementation, live calibration, platform journeys, and boundary verification remain pending.
-- **Deferrals** — None recorded. The explicit native-command OpenCode guarantee replaces the former executable plugin approach; no missing required release proof is treated as deferred.
+- **Capture ownership** — User direction: "is SnapshotCapture a struct that captures snaphots, tracks, untracks, knows working file and so on? That must be the design". Capture now owns those operations and its byte budget; the immutable snapshot remains the execution input.
+- **Scheduler decision** — User approval: "Implement the scheduler refactor (recommended)". Dependency counters, ordered readiness, and resource waiters replace repeated full scans. Tests cover dependency order, overlapping resource queues, bounded concurrency, invocation deduplication, and measured node-visit budgets.
+- **Skill-chain outcomes** — Native adversarial findings repaired; current foundation 78/0, development runner 6/0, and journal regression 1/0. Repeated broad verification and review are skipped on the delivery instruction below; Windows proof runs after push, and live comprehension remains parked.
+- **Deferrals** — Live comprehension is parked; failed smoke results remain failures. Resume those runs only on Indy's instruction.
+> Indy (2026-10-02 20:36): "Let us park 3. and move on to other to get a PR when 1, 2, 4 are done." — context: live Claude/OpenCode checks; timestamp is the saved checkpoint's capture time.
+- **Platform decision** — Indy selected "Windows, Linux, and macOS now" on Oct 01, 2026. The foundation and release scopes include all three systems; platform execution evidence remains required.
+- **Storage decision** — Indy selected "Use configurable .orly/rels/ now" on Oct 01, 2026. Shared release/spec storage is configurable; existing documents remain preserved until an explicit migration.
+- **Simplicity decision** — Indy: "orly is a single user cli, and it wont be used too concurrently. Donot over engineer and cut the crap". Prefer local path checks and existing tools; add concurrency machinery only when a demonstrated need requires it.
+- **Platform automation** — Indy: "Yes, add the tests-only workflow". This permits .github/workflows/native-foundation.yml; compiler 1.98.1, formatting, Clippy, and native tests only.
+- **Docker decision** — Indy revoked the earlier hold: "You are free to run docker now, there is space". Real runtime proof remains required on every supported system.
+- **Questionnaire decision** — Indy: "yes apply the 3 corrections". Align only rows 6.4, 12.3, and 14.6 with declared verification commands, ready pull requests, and Aiwa's name.
+- **Questionnaire reconciliation** — Indy: "yes go ahead, i need a workstream based report". Apply the reviewed four-file corrections and report each workstream's verified status.
+- **Governance choices** — Indy: "Keep exceptions; narrow questionnaire (recommended)"; "Remove unsupported bypass promise". Align row 4.7c and remove the unused bypass from source rules, generated instructions, dispatch, and fixture explanation.
+- **Review repairs** — Indy: "Fix nested object validation (recommended)"; "Fix exact hook-path parsing (recommended)". Regressions fail on the original parser and hook reader; repairs preserve valid objects and foreign hook activation.
+- **Governance sign-off wording** — Indy: "Apply wording corrections (recommended)"; "Align both descriptions (recommended)"; "Apply both corrections (recommended)". Match the questionnaire to actual audit scope, evidence conditions, and ledger comparison; executable checks remain unchanged.
+- **Delivery instruction** — Indy: "get your rear moving to a PR. donot repeatedly review and test and the loop again." Also: "shoot for a PR if you did verify recently and a review and test would add no more benefit, if so you must skip and push the PR". Use the recent proofs, push the existing Pull Request, and retain Windows as pending until the hosted run proves it. The final 15 questionnaire corrections were approved as "Apply the wording corrections (recommended)".

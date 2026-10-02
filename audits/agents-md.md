@@ -2,9 +2,9 @@
 
 A three-part proof that generated `AGENTS.md` still holds the line after edits:
 
-1. **Deterministic layer** — `audits/agents-md.sh` (mechanical, fast, runs in `pre-commit`).
+1. **Deterministic layer** — `audits/agents-md.sh` (mechanical, fast; declared conformance and the governance pre-push audit run it).
 2. **Prompt-invariance layer** — this file. A Large Language Model (LLM) agent reads `AGENTS.md` and answers every question below. Every answer must be **YES**. A NO means the ruleset regressed.
-3. **Evidence layer** — `orly verify --write-evidence` records the source commit, registry digest, profile checks, and prompt result.
+3. **Evidence layer** — `orly verify --write-evidence` records checkout HEAD, profile checks, and the declared prompt result. It records no registry digest.
 
 Run this suite before and after an operating-model change. Both runs must produce the same all-YES result. A pass that flips to NO is a broken invariant.
 
@@ -59,10 +59,10 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 
 | # | Question | Expected |
 |---|---|---|
-| 4.1 (UI) | For every `*.tsx`/`*.jsx` under `ui/packages/app/`, must raw HTML be substituted with a design-system primitive when one exists? | YES |
-| 4.1a (UI) | For every `*.tsx`/`*.jsx` under `ui/packages/{app,website}/`, does DESIGN TOKEN GATE block arbitrary `*-[...]` Tailwind classes (`text-[Npx]`, `leading-[...]`, `tracking-[...]`, `max-w-[Npx|Nch]`, `text-[clamp(...)]`, raw palette colours) when an equivalent token utility exists in `ui/packages/design-system/src/theme.css`? | YES |
+| 4.1 (UI) | For production `*.tsx`/`*.jsx` under `ui/packages/{app,website}/`, excluding the documented test files and browser-test specs, must raw HTML use a design-system primitive when one exists? | YES |
+| 4.1a (UI) | For production `*.tsx`/`*.jsx` under `ui/packages/{app,website}/`, excluding the documented test files and browser-test specs, does DESIGN TOKEN GATE block arbitrary Tailwind values when an equivalent token utility exists in `ui/packages/design-system/src/theme.css`? |Nch]`, `text-[clamp(...)]`, raw palette colours) when an equivalent token utility exists in `ui/packages/design-system/src/theme.css`? | YES |
 | 4.1b (UI) | Is the DESIGN TOKEN GATE override `// DESIGN TOKEN: SKIPPED per user override (reason: ...)` user-only — i.e. auto-mode does NOT cover it, and reasons must cite a concrete external constraint (not "looks the same" / "shorter to write")? | YES |
-| 4.1c (UI) | Does the project-side `audits/design-tokens.sh` audit run as part of `make lint` (`_website_lint` + `_app_lint`) and block on any arbitrary that has a token equivalent? (Default scope: full ui/packages working tree via `git ls-files`; the diff-scoped mode is retired.) | YES |
+| 4.1c (UI) | Does the design-token façade require a clean project-side `audits/design-tokens.sh` run before CONFORM and delegate its `make lint` integration to the consumer repository, with full tracked working-tree scope and the retired diff mode rejected? | YES |
 | 4.2 (Zig) | For every `*.zig` Edit/Write outside `vendor/`/`third_party/`/`.zig-cache/`, does ZIG GATE fire? | YES |
 | 4.3 (Zig) | Must FILE SHAPE DECISION print before the first Write to a new `*.zig` under `src/` — and is that override **not** covered by auto-mode? | YES |
 | 4.4 (Zig) | Does PUB GATE delegate mechanical consumer-grep to `zlint`'s `unused-decls: error` rule (run by `make lint`), leaving the gate body to enforce shape verdict + no-inheritance + per-edit proof? | YES |
@@ -73,22 +73,22 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 4.6 (TS/JS) | Are milestone IDs (`M{N}_{NNN}`, `§X.Y`, `T7`, `dim 5.8.15`) banned in source files (incl. tests)? | YES |
 | 4.7 (TS/JS) | Does RULE UFS require string literals used in ≥2 sites to become a named constant? | YES |
 | 4.7a (TS/JS/Zig) | Does RULE UFS extend to numeric literals carrying semantic meaning (conversion factors, thresholds, sub-cent rates) — required to become a named constant even at the first use site, with a pin-test carve-out? | YES |
-| 4.7b (cross-runtime) | Must cross-runtime constants share an identical SCREAMING_SNAKE name across Zig + TS + JS (e.g. `NANOS_PER_USD` everywhere, never `NANOS_PER_DOLLAR` in one and `NANOS_PER_USD` in another)? | YES |
-| 4.7c (test fixtures) | Are test fixtures, mock returns, and assertion arguments **not** RULE UFS exceptions — i.e. wire-format strings and semantic numerics in test code must use the named constant just like production code does? | YES |
+| 4.7b (cross-runtime) | Must cross-runtime constants preserve the same semantic name across languages, allowing only the case changes a language requires? | YES |
+| 4.7c (test fixtures) | Outside the Rust test exemptions in `dispatch/write_rust.md`, must wire-format strings and semantic numerics in fixtures, mock returns, and assertions use the named constants required for production code? | YES |
 | 4.8 (Shell) | Are shell scripts subject to the File & Function Length Gate (≤350 / ≤50 / ≤70)? | YES |
 | 4.8a (Length) | Is 350 a **ceiling rather than a budget** — must a source file be split below the cap whenever the agent's own rubric (test coverage, simplicity, optimisation, performance, concurrency, adversarial review) says two files beat one, with two ~150-line files a good outcome rather than an over-split, and is a file with no headroom left for its own tests already too long? | YES |
 | 4.8b (Length scope) | Does the File & Function Length Gate cover **test files and extensionless executables** too — no `.test.`/`_test`/`/tests/` carve-out anywhere, and an extensionless staged file carrying a shebang gated by `dispatch_add_shebang_files` because an ambiguous extension makes the gate fire by default? | YES |
 | 4.9 (Shell) | Must `gitleaks` pass before any commit/push? | YES |
 | 4.10 (CI) | Are CI/CD edits (`.github/workflows/**`, deploy configs) **forbidden without explicit user approval** even in auto mode? | YES |
 | 4.11 (Bun) | For `*.ts`/`*.tsx`/`*.js`/`*.jsx` edits, does AGENTS.md route to `dispatch/write_ts_adhere_bun.md` (TS FILE SHAPE DECISION at PLAN, const/import/Bun-primitive discipline)? | YES |
-| 4.12 (Logging) | For every Edit/Write that adds/removes/changes a log emit (Zig `std.log.*`/`std.debug.print`/`obs.scoped`, Rust `tracing::*`/print macros under `rustd/`, TS/JS `console.*`/custom logger, shell `echo` to `&2`), does LOGGING GATE require reading `docs/LOGGING_STANDARD.md` and printing the per-edit gate block citing §3 (wire format) / §4 (severity) / §5 (error codes) / §6 (PII) / §7, §8, or §8A (language binding) / §10A (tightenings)? | YES |
-| 4.13 (Logging) | Are `std.debug.print`, Rust `println!`/`eprintln!`/`dbg!`, Rust tracing without `event` or with positional formatting, and `console.log` in their non-test production scopes automatic blocking violations, with no "temporary" carve-out? | YES |
+| 4.12 (Logging) | When an edit changes a log emit in the façade's production scopes, must the agent read `docs/LOGGING_STANDARD.md` and print the one-line gate result, using the full section-citing block on a violation? | YES |
+| 4.13 (Logging) | Do direct diagnostic print macros, Rust tracing without `event` or with positional formatting, and `console.log` block in their production scopes, while intentional program-interface stream output requires a non-empty `// logging: <reason>` annotation and has no temporary carve-out? | YES |
 | 4.14 (Logging) | Must a new registry-scheme `error_code` reference (agentsfleet: `UZ-XXX-NNN`) land in the same commit as its registry entry (used-but-undeclared = blocking)? | YES |
 | 4.15 (Lifecycle) | For every Edit/Write that adds/reshapes a lifecycle method in `*.zig` (`pub fn init|deinit|close|release|destroy|shutdown|dispose|free`) or an `errdefer`/`defer` adjacent to allocation, does LIFECYCLE GATE require reading `docs/LIFECYCLE_PATTERNS.md` and printing the per-edit gate block? | YES |
 | 4.16 (Lifecycle) | Is `defer X.free(Y)` + `errdefer X.free(Y)` on the same allocation in the same scope a blocking violation? | YES |
-| 4.17 (Lifecycle) | Must the LAST `errdefer` in init lexically precede the LAST allocation it protects (no batched-at-bottom errdefer)? | YES |
-| 4.18 (Spec template) | For every Edit/Write to a spec under `docs/v*/{pending,active,done}/` or to `docs/TEMPLATE.md`, does SPEC TEMPLATE GATE forbid time/effort estimates, complexity ratings, percentage-complete fields, owners, and dates (per `TEMPLATE.md` "Prohibited" section)? | YES |
-| 4.19 (Spec template) | Does `spec-template.sh` run as part of `make lint` and block on prohibited-section regex matches? | YES |
+| 4.17 (Lifecycle) | Must each fallible acquisition in a multi-step init be followed immediately by its `errdefer`, with no batched cleanup at the bottom? | YES |
+| 4.18 (Spec template) | For every Edit/Write to a spec under `docs/v*/{pending,active,done}/` or to `docs/TEMPLATE.md`, does SPEC TEMPLATE GATE forbid time/effort estimates, complexity ratings, percentage-complete fields, assigned owners, and implementation dates (per `TEMPLATE.md` "Prohibited" section)? | YES |
+| 4.19 (Spec template) | Does `audits/spec-template.sh` reject prohibited sections, with `orly gate pr` invoking it through the `spec.gate` criterion? | YES |
 | 4.20 (Doc read) | For every Edit/Write whose file pattern matches a row in the EXECUTE doc-reads table, does DOC READ GATE require a `📖 DOC READ: <path>` proof-line — either citing §N applied OR the cited-skip variant — before the turn's first triggering edit? | YES |
 | 4.21 (Doc read) | Is the `📖 DOC READ:` proof-line required **per triggered document per turn** (not once per session — every new turn that edits the trigger surface needs a fresh line)? | YES |
 | 4.22 (Doc read) | Are auto-mode and "I read this earlier" both invalid grounds to skip the per-turn proof-line — already-loaded sections are cited rather than re-read, but the line itself is never skipped? | YES |
@@ -106,7 +106,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | # | Question | Expected |
 |---|---|---|
 | 5.1 | Is the agent required to verify CWD is inside the active worktree before resuming (`pwd` + `git worktree list`)? | YES |
-| 5.2 | Must the agent re-read RULES.md when sub-task shape changes (new layer/language/resume after break)? | YES |
+| 5.2 | Must the agent section-scan and re-read the relevant `docs/greptile-learnings/RULES.md` sections when the sub-task shape changes, such as a new layer or language? | YES |
 | 5.3 | If the spec is in `active/`, does CHORE(close) follow the final implementation commit or an explicit request to park, while Section commits continue implementation? | YES |
 | 5.4 | If unexpected changes appear in files the agent is editing, must the agent stop and ask (not overwrite as stale)? | YES |
 
@@ -117,16 +117,16 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 6.1 | Does CONFORM enumerate every gate as a row in its verdict block and invoke the active profile's `conform` commands? | YES |
 | 6.2 | Does any remaining violation in CONFORM return the lifecycle to EXECUTE without advancing? | YES |
 | 6.3 | Is `/orly-write-unit-test` the FIRST verify action, with skipping = CHORE(close) violation? | YES |
-| 6.4 | Are `make lint` + `make test` always required (tier 1)? | YES |
+| 6.4 | Must verification run the repository-declared commands, with narrower package checks unable to replace the full boundary? | YES |
 | 6.5 | Is the repository's declared `verify.integration` required when the diff touches HTTP/schema/DB/Redis or integration-test surfaces? | YES |
-| 6.6 | Is at least one declared `verify.integration` run from clean state required per branch before ship-ready (where the repository declares one)? | YES |
+| 6.6 | Before the Pull Request, must a code-changing branch run the full declared integration suite where one exists, following the repository's declared command and applicable reset recipe, while a branch with no code skips integration? | YES |
 | 6.7 | Are package-scoped runners (`bun run test`, `vitest <file>`, `zig build test` w/o integration) explicitly **not** verification? | YES |
-| 6.8 | Must memleak evidence (last 3 lines verbatim) appear in PR Session Notes when touching `src/http/**` / `src/cmd/serve.zig` / allocator wiring? | YES |
+| 6.8 | Must memory-leak evidence be pasted into Pull Request Session Notes, or its Continuous Integration (CI) URL cited? | YES |
 | 6.9 | Does CHORE(open) DECLARE the `Test Baseline:` line in the spec header while measuring nothing, with the counts from the repository's declared `verify.*` commands landing before the Pull Request (a product pack may name a dedicated counter)? | YES |
 | 6.9a | Does the baseline identify the full comparison commit, with matching run evidence or an isolated checkout, declared unit and integration counts, and a report reference? | YES |
 | 6.9b | Does `orly gate pr` reject missing declared baseline counts, allow reasoned `n/a` only without code or baseline lanes, and run all declared verification commands independently of custom hooks? | YES |
 | 6.9c | Does setup require `conform` and a named `verify.*` command, allowing `verify.docs` without application test suites while reporting incomplete configuration? | YES |
-| 6.10 | Does VERIFY end with a Test Delta row (growth vs the branch point's baseline) plus a lacking-areas verdict, with zero/negative unit delta on a code-adding diff requiring justification or a return to EXECUTE? | YES |
+| 6.10 | Does VERIFY end with a Test Delta row against the recorded comparison revision, with zero or negative unit growth on a code-adding diff requiring justification or a return to EXECUTE? | YES |
 | 6.11 | Do the lifecycle stage runbooks (CHORE(open/close) checklists, PLAN expansions, deferral quote format, pre-PR gates, LAND) resolve from `dispatch/lifecycle.md`, with AGENTS.md keeping each stage's binding essence? | YES |
 
 ### Scenario 7 — Review discipline before merge
@@ -138,7 +138,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 7.3 | Is gstack `/review` the single review route for every runtime (Claude, Codex, OpenCode, Amp) — local and pre-commit, distinct from post-push reviewer triage? | YES |
 | 7.4 | Does `orly-babysit-prs` run after every push and stop only on two consecutive empty polls? | YES |
 | 7.5 | Is using `gh pr checks --watch` for greptile explicitly disallowed? | YES |
-| 7.6 | If an MCP-backed skill is unavailable, must PR Session Notes record the skip + a "rerun before merge" note? | YES |
+| 7.6 | If the required reviewer is unavailable, must Pull Request Session Notes record the reason, timestamp, and rerun-before-merge requirement, while the required unit-test skill is never skipped or deferred? | YES |
 | 7.7 | Is merging/closing/ready-from-draft of another user's PR forbidden without explicit approval? | YES |
 | 7.8 | Does AGENTS.md require an Indy-acked verbatim quote (in PR Session Notes or the spec's Discovery section, format `> Indy (YYYY-MM-DD HH:MM): "<quote>"`) for any claim that a spec Section/Dimension was "deferred to follow-up" — and does an agent-unilateral deferral count as incomplete scope (not deferral), blocking CHORE(close) until either the item lands or the quote is captured? | YES |
 | 7.9 | Does AGENTS.md treat `HANDOFF.md` (or `HANDOFF_*.md` at any depth) as a faithful state report — i.e. must a pickup agent reading a HANDOFF that claims items were deferred without ack-quotes treat those items as in-scope and surface the contradiction to Kishore before continuing? | YES |
@@ -184,16 +184,16 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 |---|---|---|
 | 12.1 | Does auto-mode autonomy require BOTH auto-mode-active AND (active spec OR forward-looking start instruction) before commit/push/PR proceed without re-asking? | YES |
 | 12.2 | Do action-triggered guards still block under auto mode (autonomy bypasses none)? | YES |
-| 12.3 | Under standing authorization, does `gh pr create` default to `--draft`, requiring the user to explicitly ask for a ready PR? | NO |
+| 12.3 | Under standing authorization, does `gh pr create` omit `--draft` unless the user asks for a draft? | YES |
 
 ### Scenario 13 — Ruleset changes (Invariance Suite meta-gate)
 
 | # | Question | Expected |
 |---|---|---|
 | 13.1 | When the agent edits `core/**`, `packs/**`, `schemas/**`, `src/**`, `registry.json`, generated `AGENTS.md`, `audits/agents-md.md`, governance hooks, or any dispatch entry, does `edit_rules` require the audit and questionnaire before declaring done? | YES |
-| 13.2 | Is the agent forbidden from self-overriding the Invariance Suite Gate? (Only the user may bypass at push time via `SKIP_INVARIANCE_PUSH=1`.) | YES |
-| 13.3 | Does generated evidence bind the source commit, registry digest, profile results, and prompt-comprehension result? | YES |
-| 13.4 | Does the pre-push hook run the deterministic chain and regenerate evidence against the pushed commit, with live prompt evaluation deliberately off the push path (the hook records `--llm-result not-required` with its rationale; `make llmevals` is the manual matrix)? | YES |
+| 13.2 | Is the agent forbidden from self-overriding the Invariance Suite Gate, with governance pushes running the required audit? | YES |
+| 13.3 | Does generated evidence record checkout HEAD, profile-check results, and the declared prompt result, without recording a registry digest? | YES |
+| 13.4 | Does pre-push run the deterministic chain and regenerate evidence for checkout HEAD, without forwarding pushed revisions to the verifier, and record `--llm-result not-required` while live comprehension runs manually? | YES |
 
 ### Scenario 14 — Communication discipline
 
@@ -204,7 +204,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 14.3 | Does AGENTS.md require a pre-send self-check scanning outgoing text for unexpanded acronyms (regex `\b[A-Z][A-Z0-9]{1,5}\b`), treating skip as on par with skipping a gate (`ACRONYM CHECK: SKIPPED per user override (reason: ...)`)? | YES |
 | 14.4 | Does the tone rule permit dry humour and swear words, while requiring that technical clarity is never traded for it? | YES |
 | 14.5 | Does the verification done-message use ✅ / 🔴 / 🟠 glyphs and the explicit format defined in `dispatch/verify.md`? | YES |
-| 14.6 | Does AGENTS.md identify the human as Kishore (casual handle Indy) and the agent as Oracle (casual handle Orly), with address tags 🤠 Indy / 🦉 Orly so addressing resolves unambiguously? | YES |
+| 14.6 | Does AGENTS.md identify the human as Kishore (casual handle Indy) and the agent as Oracle (casual handle Aiwa), with address tags 🤠 Indy / 🦉 Aiwa so addressing resolves unambiguously? | YES |
 
 ### Scenario 15 — Architecture-edit ordering
 
@@ -242,7 +242,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 
 | # | Question | Expected |
 |---|---|---|
-| 19.1 | Does CONFORM include a combined awk pass over `git diff -U0 HEAD` that emits `MS-ID:`, `PUB:`, and `UI:` hits? | YES |
+| 19.1 | Does CONFORM include `audits/msid-ui.sh`, whose default staged diff emits milestone-identifier and interface-substitution hits, with public-declaration checks handled separately? | YES |
 | 19.2 | Is non-empty awk output a violation that must be addressed before CONFORM passes? | YES |
 
 ### Scenario 20 — Rule extension protocol
@@ -265,10 +265,10 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 
 | # | Question | Expected |
 |---|---|---|
-| 22.1 | When `make harness-verify` (the pre-commit ceremony) invokes `ufs.sh`, `design-tokens.sh`, `deinit-pairs.sh`, `error-codes.sh`, `logging.sh`, or `spec-template.sh`, do those scripts default to scanning the full working tree via `git ls-files` — so staged-but-not-yet-committed content is in scope? | YES |
+| 22.1 | Must each audit use its documented scope: source audits select their full source trees by default, while spec bulk scans use pending/active working files for prohibited patterns and `--staged` checks full readiness from index bytes? | YES |
 | 22.2 | Is the `--diff` (BASE...HEAD) mode of `ufs.sh` and `design-tokens.sh` retired — explicitly rejected with exit 2 and a pointer to the gate body? | YES |
 | 22.3 | Does `msid-ui.sh` (renamed from `combined.sh` after the PUB clause moved to zlint + agent chat-output discipline) remain the lone diff-shaped audit (still default `--staged`) — because its sub-checks (MS-ID / UI substitution) assert on *added* lines, not file state, and `git diff --cached` reads the index? | YES |
-| 22.4 | Does every dispatch façade that absorbed a converted full-codebase leaf audit (`dispatch/write_any.md` ← logging/error-registry/UFS, `dispatch/write_ts_adhere_bun.md` ← design-token, `dispatch/write_zig.md` ← lifecycle/deinit, `dispatch/write_spec.md` ← spec-template) carry a "Scope" section documenting full-codebase semantics and the staged-content forcing function? | YES |
+| 22.4 | Do the relevant dispatch scope sections describe each source audit and its staged mode, while `dispatch/write_spec.md` distinguishes index readiness, single-file working-copy readiness, and prohibited-only bulk scans? | YES |
 
 ### Scenario 23 — Agent comprehension robustness
 
@@ -280,9 +280,9 @@ The questions force *proof of reading* over *recall*.
 
 | # | Question | Expected |
 |---|---|---|
-| 23.1 | When answering a rule-specific question, must the agent quote the dispatch **façade** (`dispatch/<entry>.md`), not the one-line dispatch-index summary — because the index is explicitly "a floor, not a ceiling" and paraphrasing the façade is a hallucination risk? | YES |
-| 23.2 | When a recalled memory, `CLAUDE.md` snippet, or prior-session note conflicts with the current `AGENTS.md`/gate body, must the agent defer to the file-on-disk and surface the conflict (recall is stale-by-default)? | YES |
-| 23.3 | Must override strings be reproduced **verbatim** (`<GATE>: SKIPPED per user override (reason: ...)`) and never paraphrased, since the harness matches the literal string? | YES |
+| 23.1 | Must the agent section-scan the triggered dispatch façade and read the sections the change touches, instead of treating the dispatch-index summary as the full rule? | YES |
+| 23.2 | Must the agent read the current triggered rules and surface a mid-task conflict before continuing, with a contradicting spec amended to match the rule? | YES |
+| 23.3 | Must a user-invoked action-guard override use the specified `<GATE>: SKIPPED per user override (reason: ...)` form immediately before the edit? | YES |
 | 23.4 | When two rules fire on the same edit (e.g. PUB + LIFECYCLE on `pub fn init`, or a spec that contradicts a rule), must the agent apply **both**/escalate rather than silently picking one? | YES |
 | 23.5 | For an auto-mode / override question, must the agent trace the full conditional chain (auto-mode AND (active-spec OR start-instruction); action-triggered guards still block) rather than collapsing it to "auto mode = yes"? | YES |
 | 23.6 | Is the negative-test harness (`evals/test-agents-md.sh`) required to pass — proving each deterministic check still *bites* — whenever `audits/agents-md.sh` itself changes? | YES |
@@ -301,7 +301,7 @@ memory file — the exact drift the `## Memory Discipline` section exists to pre
 |---|---|---|
 | 24.1 | Is writing to `**/memory/*.md` or any `MEMORY.md` forbidden, because the harness neither records nor recalls them under `autoMemoryEnabled: false`? | YES |
 | 24.2 | Does a rule that fires on a file-type / lifecycle trigger belong in `dispatch/<entry>.md` behind its gate, not in a memory note? | YES |
-| 24.3 | Does in-flight state (branch / PR / next steps) belong in a `HANDOFF_*.md` + PR Session Notes + the spec, surfaced by the `pickup` / `handoff` skills? | YES |
+| 24.3 | Does in-flight state such as the branch, Pull Request, and next steps belong in `HANDOFF_*.md`, Pull Request Session Notes, and the spec? | YES |
 | 24.4 | Is a durable architecture fact homed in the product repo's `docs/architecture/*.md`, not memory? | YES |
 | 24.5 | If a fact has no firing gate and no doc home, is the correct move to add the rule (Rule extension protocol) or drop it — never to create a memory file? | YES |
 
@@ -309,7 +309,7 @@ memory file — the exact drift the `## Memory Discipline` section exists to pre
 
 The M126 adversarial review mined ghostty's Allocator and concurrency practice into eleven
 citable rules in `dispatch/write_zig.md`. These questions force *reading the façade rule
-bodies* (per 23.1 — quote the façade, not the index), because their failure mode is an
+bodies* (per 23.1 — read the façade, not just the index), because their failure mode is an
 editing agent that omits the discipline the way the liveness sweeper diverged from its
 siblings.
 
@@ -319,9 +319,9 @@ siblings.
 | 25.2 (A2) | Does rule A2 require an `errdefer` immediately after each fallible acquisition in a multi-step init (never batched at the bottom), with `errdefer comptime unreachable` after the last fallible op? | YES |
 | 25.3 (A3) | Does rule A3 require leaf structures to take `alloc` per call and store nothing, reserving a stored `alloc` field for lifecycle roots only? | YES |
 | 25.4 (A4) | Does rule A4 make an arena the ownership unit (`_arena` per config/request object, scratch arena per transient op, arena-in-message across a thread boundary) and forbid using an arena to mask a missing free in a reusable helper? | YES |
-| 25.5 (A5) | Does rule A5 require ownership stated in the fixed phrases "caller must free" / "takes ownership" on every allocating public fn plus `self.* = undefined` poisoning in every deinit — with the phrase/poison checks blocking inside the discipline roster and advisory outside? | YES |
+| 25.5 (A5) | Does rule A5 require ownership stated in the fixed phrases "caller must free" / "takes ownership" on every allocating public fn plus `self.* = undefined` poisoning in every deinit — with these requirements enforced by review rather than repository lint? | YES |
 | 25.6 (A6) | Does rule A6 require every multi-step init in the roster to carry comptime-erased tripwire fail points and a loop-all-failpoints test under `std.testing.allocator` asserting both that the errdefer chain freed everything and that state rolled back? | YES |
-| 25.7 (C1) | Does rule C1 require cross-thread channels to be Single-Producer Single-Consumer (SPSC), with the payload carrying its own allocator and the receiver freeing in a `defer` at the top of the handler? | YES |
+| 25.7 (C1) | Does rule C1 require new cross-thread channels to be Single-Producer Single-Consumer (SPSC), with the payload carrying its own allocator and the receiver freeing in a `defer` at the top of the handler? | YES |
 | 25.8 (C2) | Does rule C2 define shutdown as stop-signal → join → deinit, explicitly forbidding freeing shared state on a drain timeout while a straggler thread can still touch it? | YES |
 | 25.9 (C3) | Does rule C3 forbid a blocking push/socket-write while holding a lock the consumer needs (try-instant, else notify + unlock + block + relock), with lock state an explicit parameter? | YES |
 | 25.10 (C4) | Does rule C4 require exactly one documented mutex per shared aggregate whose doc comment names precisely what it protects, with `lock(); defer unlock();` adjacent? | YES |
@@ -330,17 +330,21 @@ siblings.
 
 ### Scenario 26 — Rules propagation
 
+Questions in this scenario describe the released 0.10.14 consumer installation.
+The unpublished native foundation has separate installation and loader proofs;
+M07_001 switches the public commands and updates these propagation questions.
+
 | # | Question | Expected |
 |---|---|---|
-| 26.1 | Is `registry.json` the canonical profile and pack registry, with `core/operating-model.md` as the global operating-model source? | YES |
-| 26.2 | Is every repository's rule set carried by its own commit — `AGENTS.orly.md` beside the repository's own `AGENTS.md` — with **no** symlink from any agent home into this checkout, so a teammate's clone is governed without installing anything? | YES |
+| 26.1 | Is `registry.json` the canonical registry of core documents, packs, and rules, with `core/operating-model.md` as the operating-model source and command configuration owned by each repository? | YES |
+| 26.2 | Is every repository's rule set carried by its own commit — `AGENTS.orly.md` beside the repository's own `AGENTS.md` — without depending on agent-home symlinks into this checkout, while architecture names Kishore's machine-local exception? | YES |
 | 26.3 | Do consumer repositories carry their orly-managed files as tracked, committed snapshots — rule pages, gate scripts, skills, hooks, and `.oracle/orly.json` — rather than resolving them from `ORLY_ROOT` or a symlink into dotfiles? | YES |
 | 26.4 | Are `orly sync`, `orly render`, and `orly validate` gone — `orly update` covering this checkout because pack sources living inside the target are skipped, `orly init --dry-run` covering the preview, and `orly verify` validating the registry on its way through — with every verb run from inside the repository it acts on? | YES |
-| 26.5 | Does the `agentsfleet` profile map CONFORM to `make harness-verify` while VERIFY remains behavior proof? | YES |
-| 26.6 | Does `README.md` document initialization, explicit synchronization, status, and doctor commands for new repositories? | YES |
+| 26.5 | Does the `agentsfleet` operating model name `make harness-verify` for CONFORM while VERIFY proves behavior, with each repository declaring its actual commands in `.oracle/orly.json`? | YES |
+| 26.6 | Does `README.md` document the released initialization, update, doctor, and gate commands for new repositories? | YES |
 | 26.7 | Does `orly gate pr` discover a spec closed to `done/` on the branch (its `Branch:` header names the branch) and run the spec criteria — including `spec.moved`, `spec.baseline`, `spec.ordering`, and `spec.deferrals` — instead of skip-passing as spec-less? | YES |
 | 26.8 | Does the install write one loader per runtime that has a deterministic way into context — a bare, unbackticked `@AGENTS.orly.md` import line inside the pointer block, a `CLAUDE.md` carrying `@AGENTS.md` where the repository has none, and both rule files in `opencode.json`'s `instructions` — so delivery never depends on an agent noticing a markdown link? | YES |
-| 26.9 | Are those loaders the repository's files rather than orly's — absent from `managed`, `CLAUDE.md` written only when missing (a symlink at the host counted as delivery, any other symlink left alone), `opencode.json` edited only by appending a missing `instructions` entry, and an unparseable one left byte for byte? | YES |
+| 26.9 | Are loaders repository-owned and absent from `managed`, with foreign Claude content preserved, an older generated Claude loader refreshed, missing OpenCode instruction entries added through its parsed configuration, and an unparseable OpenCode file left byte for byte? | YES |
 
 ### Scenario 27 — Rule-path residence & reachability
 
@@ -354,7 +358,7 @@ both must hold in every session, in every worktree, after every restart.
 | # | Question | Expected |
 |---|---|---|
 | 27.1 | Does AGENTS.md state that every `dispatch/…`, `docs/…`, and `audits/…` rule path resolves inside **this** repository, materialised by `orly init`/`update` from the packs its own sources selected — so a path the repository lacks means its sources never selected that pack, not a broken reference? | YES |
-| 27.2 | Does every rule document an agent is told to read exist inside the repository it is working in — so no read depends on a permission prompt, a second checkout, or a path outside the work tree? | YES |
+| 27.2 | Does every installed rule page live inside its repository, with external reference implementations and upstream guidelines separately identified as read-only sources? | YES |
 | 27.3 | Must rule docs be cited relative to the installing repository — never through the `~/Projects/dotfiles/` anchor — in dispatch façades, `docs/TEMPLATE.md`, `docs/EXECUTE_DOC_READS.md`, and spec Applicable-Rules lists, with `audits/rule-paths.sh` failing `make audit` on an **anchored** reference in any surface `orly init` materialises (engine-only files exempt)? | YES |
 
 ### Scenario 28 — Rule-enforcement ledger & recorded doc reads
@@ -368,7 +372,7 @@ than only the one with a Read hook.
 
 | # | Question | Expected |
 |---|---|---|
-| 28.1 | Is `docs/RULE_ENFORCEMENT.md` generated by `audits/rule-ledger.sh --write` and currency-checked by `make audit` (`--check` regenerates and byte-compares), so an edited rule doc reds the audit until the scoreboard is regenerated — and is the render a pure function of the tree, carrying no timestamp or commit hash? | YES |
+| 28.1 | Is `docs/RULE_ENFORCEMENT.md` generated by `audits/rule-ledger.sh --write` and currency-checked by `make audit` (`--check` regenerates and byte-compares), so a rule edit that changes the rendered scoreboard reds the audit until it is regenerated — and is the render a pure function of the tree, carrying no timestamp or commit hash? | YES |
 | 28.2 | Do the ledger's clause counts INFORM only — never failing a build — with the reds reserved for structural conditions (a cited-but-unregistered doc, a registered path missing from disk, a façade `.sh` declaring no `dispatch_init` scope, a stale scoreboard)? | YES |
 | 28.3 | Does the DOC READ GATE require recording each triggered read with `bash audits/doc-read.sh log <path>` — runnable in every runtime, automatic in Claude Code via the `PostToolUse` Read hook — with `.githooks/pre-commit` comparing the record against the staged diff? | YES |
 | 28.4 | When no read record exists (a runtime without hook support, before the command is run), does `audits/doc-read.sh check` warn 🟠 and exit 0 rather than red — because a check that fires where it cannot work teaches people to ignore it? | YES |
@@ -408,23 +412,24 @@ comprehension layer closes that gap:
   non-compliant model. In the FULL graded run an absent or credit-blocked
   agent FAILS the gate — "every agent adheres" cannot be proven by an agent
   that never answered; smoke logs + excludes it, never silently.
-- **Evidence** — `orly verify --write-evidence` binds the result to the
-  current source commit and registry digest; pre-push records the live result
-  as `not-required` unless a manual `make llmevals` run supplied one.
+- **Evidence** — `orly verify --write-evidence` records checkout HEAD, profile
+  checks, and the declared prompt result. It records no registry digest.
+  Pre-push always declares the live result `not-required`; a manual passing
+  run may separately write evidence with `--llm-result pass`.
 
 ---
 
 ## Step 3 — Generate evidence
 
-After all questions answer YES and the report below is complete, generate the
-machine-readable evidence file:
+After all questions answer YES, the report below is complete, and live comprehension passes, generate the
+machine-readable evidence file. An owner-approved live deferral remains `not-required`, never `pass`:
 
 ```bash
 orly verify --write-evidence --llm-result pass
 ```
 
 The evidence is local and ignored by Git. The pre-push hook regenerates it
-against the exact commit being pushed.
+for checkout HEAD, which need not be the revision named by a push ref.
 
 ## Step 4 — Tabulated audit report
 
@@ -484,14 +489,14 @@ OVERALL: PASS | FAIL — <reason if fail>
 
 ---
 
-## Wiring it into `pre-commit`
+## Commit and push enforcement
 
-The dotfiles `.githooks/pre-commit` runs `make audit` when generated rules,
-canonical sources, profiles, dispatch pages, audits, or governance hooks are
-staged. It is fast and deterministic.
+This checkout's `.githooks/pre-commit` checks recorded document reads for staged
+governance changes. `.githooks/pre-push` runs `make audit` when governance changed,
+then writes evidence for checkout HEAD.
 
-The Step-2 questionnaire is read during the edit. A live smoke run is hooked
-only for semantic governance changes because:
+The Step-2 questionnaire is read during the edit. Live comprehension remains a
+manual requirement for semantic governance changes because:
 
 - It needs an LLM, which means latency, cost, and credentials in the hook environment.
 - It only adds value when operating-model semantics change.
@@ -502,7 +507,7 @@ Required workflow when you edit Oracle rules:
 1. Run Step 1 (`bash audits/agents-md.sh`).
 2. Answer every question in this file against the generated `AGENTS.md` and dispatch pages.
 3. Emit the report. All-YES permits commit; any NO returns to the edit.
-4. Let pre-push run one fixture per installed agent and generate commit-bound evidence.
+4. For semantic changes, run the live comprehension matrix manually and record its result. Pre-push runs deterministic verification and generates commit-bound evidence.
 
 ---
 

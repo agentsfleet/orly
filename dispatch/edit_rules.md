@@ -20,8 +20,7 @@ This dispatch fires for edits to:
 - `.githooks/pre-commit`, `.githooks/pre-push`, or governance `Makefile` targets
 - `README.md` setup or propagation instructions
 
-The agent has no override. Indy may use `SKIP_INVARIANCE_PUSH=1` for one push
-when the reason is recorded in the newest commit message.
+The agent has no override. Governance pushes run the required audit.
 
 ## Required action
 
@@ -33,7 +32,9 @@ when the reason is recorded in the newest commit message.
    push path by policy (the hook records `--llm-result not-required` with its
    rationale); run the matrix manually with `make llmevals` (or `SMOKE=1`)
    when semantics change.
-5. Run `orly verify --write-evidence --llm-result pass`.
+5. Write evidence with `orly verify --write-evidence --llm-result pass` only
+   after a passing live run. The push policy below uses `not-required`;
+   an owner-approved live deferral never becomes a passing result.
 6. Emit the invariance report before declaring the work complete.
 
 Render command (writes this checkout's root `AGENTS.md`; pack sources already
@@ -49,9 +50,10 @@ Any failure returns to the edit. Do not patch the checker to silence its result.
 
 ## Push enforcement
 
-Pre-commit records the doc-read proof when governance files are staged, and
-defers `make audit` to pre-push. Pre-push runs the deterministic chain, runs one live fixture per installed agent for semantic
-changes, and regenerates `.oracle/evidence.json` against the pushed commit.
+Pre-commit checks existing doc-read records when governance files are staged
+and defers `make audit` to pre-push. Pre-push runs the deterministic chain and
+regenerates `.oracle/evidence.json` for checkout HEAD; it does not pass pushed
+revisions to the verifier. Live comprehension runs manually for semantic changes.
 
 Repository synchronization remains explicit. Governance verification never
 mutates a consumer repository or sibling worktree.
