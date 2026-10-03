@@ -132,11 +132,14 @@ Public command registration and its specified incomplete exit status belong to M
 
 ## Remaining proof and release ownership
 
-Dimension 4.2 is in progress; no owner sign-off on labels is recorded.
+Dimension 4.2 is in progress; Indy approved the frozen question bank and corpus.
+Approved input revision: `85a7f1594a7ba35c0cebf1b7b2e1f21cc1515344`.
+The spec's Discovery section records the verbatim label approval and its revision.
+The frozen inputs remain unchanged; the host supplies this revision through `--reviewed-commit`.
 Indy approved opening the Pull Request with this proof required before merge.
 The verbatim "Yes go" acknowledgement is recorded in the spec's Discovery section.
-It authorizes the `spec.dimensions` publication exception, not measured accuracy or label approval.
-Its required inputs are an owner-reviewed frozen label commit, authorized runtime key,
+That earlier acknowledgement authorizes the `spec.dimensions` publication exception, not measured accuracy.
+The remaining inputs are an authorized runtime key
 and independent coding-agent held-out predictions.
 The live evaluator must then record tuning and three fresh held-out repeats per family.
 No synthetic metric is presented as observed Jev quality.

@@ -285,3 +285,6 @@ The lane implements questions, client, replay, and calibration independently of 
 - **Skill-chain outcomes** — One gstack review and its native adversarial pass found four defects; all were fixed and regression-tested. Post-review judge targets: 47 passed, zero failed. Default and transport-feature Clippy passed. Evidence and skill ledgers: `evals/judge/verification.md`. No repeated review or convergence claim; live calibration and final Pull Request gate remain pending.
 - **Publication exception** — Opening the Pull Request before Dimension 4.2 completes is approved. The spec remains active; live Jev proof is required before merge.
 > Indy (Oct 03, 2026: 05:52 PM): "Yes go" — context: approves the proposed `spec.dimensions` exception to open M07_002 while live Jev proof remains required before merge.
+
+- **Label approval** — Indy approved the frozen question bank and corpus at `85a7f1594a7ba35c0cebf1b7b2e1f21cc1515344`. Live measurements remain pending; future feedback can trigger a new reviewed input revision.
+> Indy (Oct 03, 2026: 07:07 PM): "well Your sign-off on frozen labels and question bank - Approved by Indy (also i can test and provide feedback) so approved now." — context: approves the exact frozen inputs linked in the preceding request.

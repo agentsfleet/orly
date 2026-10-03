@@ -48,20 +48,57 @@ Validate the question bank and corpus without a key:
 cargo xtask judge-check
 ```
 
-For live evaluation, first review the labels at a frozen commit containing the exact bank and corpus.
+Obtain your own API key from the [TypeSafe dashboard](https://console.typesafe.ai/keys), as described in its [quick start](https://docs.typesafe.ai/introduction/quickstart).
+Both credential methods below provide `TYPESAFE_API_KEY` to the authorized process.
+The native runner reads the process environment; it does not read a key from repository configuration.
+
+For a vault-backed run, save the key in 1Password and copy the concealed field's secret reference.
+Replace `<VAULT>`, `<ITEM>`, and `<FIELD>` with the locations in that reference:
+
+```sh
+export TYPESAFE_API_KEY='op://<VAULT>/<ITEM>/<FIELD>'
+```
+
+Expected output: none. The parent shell holds the reference.
+Prefix the live evaluation command below with `op run --`.
+[1Password's run command](https://www.1password.dev/cli/reference/commands/run) resolves the reference into the child process environment for that command.
+
+An independent contributor can use their own TypeSafe account and a terminal session instead.
+In Bash, run these lines interactively and enter the key at the prompt:
+
+```bash
+read -r -s -p 'TypeSafe API key: ' TYPESAFE_API_KEY
+printf '\n'
+export TYPESAFE_API_KEY
+```
+
+Expected output: `TypeSafe API key: ` followed by a newline; the entered value is hidden.
+Start `bash` first when your current shell is Zsh.
+Run the live command directly, then clear the terminal's credential variable:
+
+```sh
+unset TYPESAFE_API_KEY
+```
+
+Expected output: none. Future commands from that shell no longer inherit the key.
+Keep credential values out of source, shell profiles, command arguments, and report output.
+Offline validation and replay need no provider credential.
+
+For live evaluation, first obtain owner approval of the labels at a frozen commit containing the exact bank and corpus.
 Prepare independent coding-agent predictions for every complete held-out case, bound to the corpus digest.
 Set `TYPESAFE_API_KEY` in the authorized process, then run:
 
 ```sh
 cargo run --locked -p xtask --features orly/judge-transport -- judge-eval \
   --allow-upload \
-  --reviewed-commit <reviewed-commit> \
+  --reviewed-commit <REVIEWED_COMMIT> \
   --agent-report /host/private/agent-report.json \
   --scanner /absolute/trusted/gitleaks \
   --state /host/private/judge-state \
   --report /host/private/judge-report.json
 ```
 
+`<REVIEWED_COMMIT>` is the full Git revision approved by the repository owner.
 The runner checks the frozen Git inputs and independent predictions before inference.
 Live transport requires the `orly/judge-transport` feature shown in the command.
 It selects a threshold per question using tuning cases only.
