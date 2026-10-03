@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NativeRegistry",
+  "type": "object",
+  "properties": {
+    "core_documents": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "packs": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/RegistryPack"
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": true
+    },
+    "schema_version": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "core_documents",
+    "packs",
+    "rules"
+  ],
+  "$defs": {
+    "ManagedResource": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "target"
+      ]
+    },
+    "RegistryPack": {
+      "type": "object",
+      "properties": {
+        "extensions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "managed_files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ManagedResource"
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "extensions",
+        "managed_files"
+      ]
+    }
+  }
+}

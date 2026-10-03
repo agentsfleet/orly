@@ -1,0 +1,51 @@
+{
+  "schema_version": 2,
+  "engine": "0.12.0",
+  "packs": [
+    "universal.authoring",
+    "language.rust",
+    "language.typescript",
+    "language.zig"
+  ],
+  "releases": ".orly/rels",
+  "commands": {
+    "conform": {
+      "argv": [
+        "cargo",
+        "--version"
+      ],
+      "resources": [
+        "cargo"
+      ]
+    },
+    "verify.unit": {
+      "argv": [
+        "cargo",
+        "test",
+        "--manifest-path",
+        "rustd/Cargo.toml",
+        "--locked"
+      ],
+      "resources": [
+        "cargo"
+      ],
+      "deadline_seconds": 1800
+    }
+  },
+  "allowed_executables": [
+    "cargo"
+  ],
+  "surfaces": {
+    "user": [
+      "rustd/src/lib.rs",
+      "cli/src/index.ts",
+      "build.zig"
+    ],
+    "docs": [
+      "PROJECT_RULES.md"
+    ]
+  },
+  "data_packs": [
+    "project-pack.json"
+  ]
+}

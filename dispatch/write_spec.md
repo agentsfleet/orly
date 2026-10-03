@@ -35,6 +35,8 @@ parsed Markdown tree. Code examples and quoted headings cannot supply sections.
   decides their applicability from the actual branch diff. Additional
   spec-specific commands and explicitly named manual checks remain valid.
 
+## Scope
+
 `--staged` reads spec contents, configuration, and local references from the Git
 index. `--file <path>` checks the working copy. Missing runtime or configuration
 fails these readiness checks. Bulk `--all` and `--include-done` scans retain
@@ -88,4 +90,4 @@ Incident-derived rules the deterministic half can't check — apply while writin
 
 - `docs/TEMPLATE.md` — canonical Prohibited section + required sections.
 - `orly-spec-new` skill — creates specs from the template; inserts the banner.
-- `audits/spec-template.sh` — mechanical regex enforcement, runs in `make lint`.
+- `audits/spec-template.sh` — structural and prohibited-section checks; `orly gate pr` invokes it through `spec.gate`.

@@ -1,0 +1,431 @@
+{
+  "snapshot": {
+    "source": {
+      "kind": "index"
+    },
+    "base": "fixture-base",
+    "head": "fixture-head",
+    "manifest_digest": "fixture-manifest",
+    "configuration_digest": "fixture-configuration",
+    "engine": "0.12.0",
+    "dependencies": {
+      "files": {
+        "Cargo.lock": {
+          "digest": "fixture-lock",
+          "mode": "regular"
+        }
+      }
+    }
+  },
+  "sources": [
+    {
+      "kind": "index"
+    },
+    {
+      "kind": "head"
+    },
+    {
+      "kind": "event",
+      "base": "fixture-base",
+      "head": "fixture-head"
+    },
+    {
+      "kind": "working_tree",
+      "untracked": [
+        "Cargo.lock"
+      ]
+    }
+  ],
+  "results": [
+    {
+      "state": "passed",
+      "reason": "required_check_passed"
+    },
+    {
+      "state": "failed",
+      "reason": "required_evidence_missing"
+    },
+    {
+      "state": "skipped",
+      "reason": "not_applicable"
+    },
+    {
+      "state": "reported",
+      "reason": "semantic_unresolved"
+    },
+    {
+      "state": "overridden",
+      "reason": "user_override",
+      "original": {
+        "state": "failed",
+        "reason": "required_evidence_missing"
+      },
+      "invocation": "recorded-override"
+    }
+  ],
+  "evidence": {
+    "version": 1,
+    "engine": "0.12.0",
+    "snapshot_digest": "fixture-snapshot",
+    "config_digest": "fixture-configuration",
+    "results": {
+      "required": {
+        "state": "passed",
+        "reason": "required_check_passed"
+      },
+      "optional": {
+        "state": "reported",
+        "reason": "semantic_unresolved"
+      }
+    },
+    "required": [
+      "required"
+    ],
+    "invocations": {
+      "fixture-invocation": {
+        "identity": "fixture-invocation",
+        "command_digest": "fixture-command",
+        "snapshot_digest": "fixture-snapshot",
+        "config_digest": "fixture-configuration",
+        "result": {
+          "state": "passed",
+          "reason": "required_check_passed"
+        },
+        "exit_code": 0,
+        "signal": null,
+        "stdout_bytes": 0,
+        "stderr_bytes": 0,
+        "output_complete": true
+      }
+    },
+    "counts": {
+      "checks": 1
+    },
+    "paths": [
+      "src/main.rs"
+    ]
+  },
+  "questions": [
+    {
+      "builder": "project.source.files",
+      "builder_version": "1.0.0",
+      "model_version": "fixture-model",
+      "rule_section": "docs/rules.md#review",
+      "primitive": {
+        "kind": "choice"
+      },
+      "id": "project.review.choice",
+      "version": "1.0.0",
+      "candidates": [
+        "focused",
+        "full"
+      ]
+    },
+    {
+      "builder": "project.source.files",
+      "builder_version": "1.0.0",
+      "model_version": "fixture-model",
+      "rule_section": "docs/rules.md#review",
+      "primitive": {
+        "kind": "noul"
+      },
+      "id": "project.review.noul",
+      "version": "1.0.0",
+      "candidates": [
+        "public_change",
+        "security_change"
+      ]
+    },
+    {
+      "builder": "project.source.files",
+      "builder_version": "1.0.0",
+      "model_version": "fixture-model",
+      "rule_section": "docs/rules.md#review",
+      "primitive": {
+        "kind": "score",
+        "levels": [
+          "strong",
+          "weak"
+        ]
+      },
+      "id": "project.review.score",
+      "version": "1.0.0",
+      "candidates": [
+        "source_rules"
+      ]
+    }
+  ],
+  "decisions": [
+    {
+      "version": 1,
+      "question_id": "project.review.choice",
+      "question_version": "1.0.0",
+      "builder_version": "1.0.0",
+      "model_version": "fixture-model",
+      "input_digest": "fixture-snapshot",
+      "assessment_id": "recorded-1",
+      "answer": {
+        "primitive": "choice",
+        "probabilities": {
+          "focused": 0.9,
+          "full": 0.1
+        }
+      }
+    },
+    {
+      "version": 1,
+      "question_id": "project.review.noul",
+      "question_version": "1.0.0",
+      "builder_version": "1.0.0",
+      "model_version": "fixture-model",
+      "input_digest": "fixture-snapshot",
+      "assessment_id": "recorded-2",
+      "answer": {
+        "primitive": "noul",
+        "probabilities": {
+          "public_change": 0.8,
+          "security_change": 0.2
+        }
+      }
+    },
+    {
+      "version": 1,
+      "question_id": "project.review.score",
+      "question_version": "1.0.0",
+      "builder_version": "1.0.0",
+      "model_version": "fixture-model",
+      "input_digest": "fixture-snapshot",
+      "assessment_id": "recorded-3",
+      "answer": {
+        "primitive": "score",
+        "distributions": {
+          "source_rules": {
+            "strong": 0.9,
+            "weak": 0.1
+          }
+        }
+      }
+    }
+  ],
+  "pack": {
+    "id": "project.review",
+    "version": "1.0.0",
+    "engine_requirement": "^0.12",
+    "questions": [
+      {
+        "builder": "project.source.files",
+        "builder_version": "1.0.0",
+        "model_version": "fixture-model",
+        "rule_section": "docs/rules.md#review",
+        "primitive": {
+          "kind": "choice"
+        },
+        "id": "project.review.choice",
+        "version": "1.0.0",
+        "candidates": [
+          "focused",
+          "full"
+        ]
+      },
+      {
+        "builder": "project.source.files",
+        "builder_version": "1.0.0",
+        "model_version": "fixture-model",
+        "rule_section": "docs/rules.md#review",
+        "primitive": {
+          "kind": "noul"
+        },
+        "id": "project.review.noul",
+        "version": "1.0.0",
+        "candidates": [
+          "public_change",
+          "security_change"
+        ]
+      },
+      {
+        "builder": "project.source.files",
+        "builder_version": "1.0.0",
+        "model_version": "fixture-model",
+        "rule_section": "docs/rules.md#review",
+        "primitive": {
+          "kind": "score",
+          "levels": [
+            "strong",
+            "weak"
+          ]
+        },
+        "id": "project.review.score",
+        "version": "1.0.0",
+        "candidates": [
+          "source_rules"
+        ]
+      }
+    ],
+    "selectors": {
+      "project.source.files": "src/**/*.rs"
+    },
+    "capabilities": [],
+    "policy": {
+      "version": 1,
+      "nodes": [
+        {
+          "id": "review",
+          "dependencies": [],
+          "required": false,
+          "action": {
+            "kind": "select",
+            "question_id": "project.review.choice",
+            "condition": {
+              "primitive": "choice",
+              "candidate": "focused",
+              "threshold": 0.8
+            },
+            "on_true": "conform",
+            "on_false": "verify.unit"
+          }
+        }
+      ]
+    }
+  },
+  "plan": {
+    "version": 1,
+    "snapshot_digest": "fixture-snapshot",
+    "configuration_digest": "fixture-configuration",
+    "policy_digest": "fixture-policy",
+    "decisions_digest": "fixture-decisions",
+    "pack_digests": {
+      "project.review": "fixture-pack"
+    },
+    "nodes": [
+      {
+        "id": "core.snapshot",
+        "dependencies": [],
+        "required": true,
+        "action": {
+          "state": "check",
+          "capability": "core.snapshot"
+        }
+      },
+      {
+        "id": "core.payload",
+        "dependencies": [],
+        "required": true,
+        "action": {
+          "state": "check",
+          "capability": "core.payload"
+        }
+      },
+      {
+        "id": "project.command",
+        "dependencies": [
+          "core.payload",
+          "core.snapshot"
+        ],
+        "required": false,
+        "action": {
+          "state": "command",
+          "command_id": "conform"
+        }
+      },
+      {
+        "id": "project.resolved",
+        "dependencies": [
+          "core.payload",
+          "core.snapshot"
+        ],
+        "required": false,
+        "action": {
+          "state": "resolved",
+          "result": {
+            "state": "reported",
+            "reason": "semantic_unresolved"
+          }
+        }
+      },
+      {
+        "id": "project.unresolved",
+        "dependencies": [
+          "core.payload",
+          "core.snapshot"
+        ],
+        "required": false,
+        "action": {
+          "state": "unresolved",
+          "question_id": "project.review.choice"
+        }
+      }
+    ],
+    "digest": "sha256:aafb589a3f6cbc867076a545ce13cbee109652732ef6fa3e9f1a2ef5cbde211a"
+  },
+  "coverage": {
+    "version": 1,
+    "snapshot_digest": "fixture-snapshot",
+    "invocation_identity": "fixture-invocation",
+    "producer": "fixture-producer",
+    "lines": [
+      {
+        "path": "src/main.rs",
+        "line": 1,
+        "hits": 1
+      }
+    ],
+    "result": {
+      "state": "passed",
+      "reason": "required_check_passed"
+    }
+  },
+  "delivery": {
+    "version": 1,
+    "snapshot_digest": "fixture-snapshot",
+    "rule_digest": "fixture-rule",
+    "paths": [
+      ".orly/AGENTS.md"
+    ],
+    "emitted": {
+      "state": "passed",
+      "reason": "required_check_passed"
+    },
+    "self_reported_read": {
+      "state": "reported",
+      "reason": "semantic_unresolved"
+    },
+    "compliance": {
+      "state": "reported",
+      "reason": "semantic_unresolved"
+    }
+  },
+  "registry": {
+    "schema_version": 2,
+    "core_documents": [
+      "core/operating-model.md"
+    ],
+    "packs": {
+      "language.rust": {
+        "extensions": [
+          ".rs"
+        ],
+        "managed_files": [
+          {
+            "source": "packs/language/rust/rules.md",
+            "target": "dispatch/write_rust.md"
+          }
+        ]
+      }
+    },
+    "rules": []
+  },
+  "file_states": [
+    {
+      "kind": "missing"
+    },
+    {
+      "kind": "file",
+      "digest": "fixture-file",
+      "mode": 420
+    },
+    {
+      "kind": "link",
+      "target": "src/main.rs"
+    }
+  ]
+}

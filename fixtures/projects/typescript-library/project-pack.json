@@ -1,0 +1,47 @@
+{
+  "id": "typescript.library",
+  "version": "1.0.0",
+  "engine_requirement": "^0.12",
+  "selectors": {
+    "typescript.library.sources": "lib/**/*.ts"
+  },
+  "capabilities": [],
+  "questions": [
+    {
+      "primitive": {
+        "kind": "choice"
+      },
+      "id": "typescript.library.layout",
+      "version": "1.0.0",
+      "builder": "typescript.library.sources",
+      "builder_version": "1.0.0",
+      "model_version": "recorded-fixture",
+      "candidates": [
+        "focused",
+        "broad"
+      ],
+      "rule_section": "PROJECT_RULES.md#layout"
+    }
+  ],
+  "policy": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "typescript.library.review",
+        "dependencies": [],
+        "required": false,
+        "action": {
+          "kind": "select",
+          "question_id": "typescript.library.layout",
+          "condition": {
+            "primitive": "choice",
+            "candidate": "focused",
+            "threshold": 0.8
+          },
+          "on_true": "conform",
+          "on_false": "verify.unit"
+        }
+      }
+    ]
+  }
+}

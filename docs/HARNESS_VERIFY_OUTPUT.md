@@ -7,13 +7,16 @@ Runs after EXECUTE, before VERIFY. Aggregates every gate verdict; lifecycle cann
 
 ## Combined end-of-turn audit
 
-Single awk over `git diff -U0 HEAD`, replaces 4 separate self-audits. For every `+` line:
+`audits/msid-ui.sh` makes one awk pass over added lines. Its default
+`--staged` mode reads `git diff --cached -U0`; `--diff` reads the comparison
+revision through checkout HEAD (`audits/msid-ui.sh:76–85`). It emits:
 
 - Emit `MS-ID:` hits when file is source/config and matches `M[0-9]+_[0-9]+|§[0-9]+(\.[0-9]+)+|\bT[0-9]+\b|\bdim [0-9]+\.[0-9]+\b`.
-- Emit `PUB:` hits when `*.zig` and line matches `^\+(pub | *pub fn | *[A-Z][a-zA-Z]+,$)`.
 - Emit `UI:` hits when under `ui/packages/app/**.{tsx,jsx}` and line contains `<(section|button|input|dialog|article|nav|header|form)\b`.
 
-Non-empty = address before CONFORM passes.
+Non-empty = address before CONFORM passes. Public declarations remain subject
+to the separate Public (PUB) Gate: zlint checks unused declarations, and the
+agent records the shape decision (`audits/msid-ui.sh:16–33`).
 
 ## Required output
 

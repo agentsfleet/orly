@@ -14,6 +14,22 @@ commands — it declares them in `.oracle/orly.json`.
 
 ## Reference guideline (mandatory in review)
 
+Before designing Rust modules, read the relevant implementation in Exonum,
+Apache Arrow's Rust implementation, or the local `agentsfleet` Rust workspace.
+Indy's checkouts are `~/Projects/oss/rs/exonum`,
+`~/Projects/oss/rs/arrow-rs`, `~/Projects/agentsfleet/rustd/`, and
+`~/Projects/oss/rs/builder/components/builder-core/`.
+Use Exonum for state and API boundaries and Arrow for typed data and workspace
+structure. Use `agentsfleet/rustd/crates/agentsfleetd/` specifically for errors
+and the command-line interface (CLI); inspect its actual call sites before designing.
+Use `afd_core::env::EnvSource` for injected process and test environments.
+Builder's `ConfigFile` trait supplies prior art for composable file loading and
+cause-preserving parsing. Read its call sites; retain current edition safety and
+library logging rather than copying its older global environment mutation or logger.
+Read only relevant modules and name the pattern applied or the reason to diverge.
+These are read-only references; consumer changes require their own authorization.
+Other machines locate the equivalent checkout before asking to clone one.
+
 Microsoft's Pragmatic Rust Guidelines are this pack's depth — thorough,
 agent-facing, and continuously maintained upstream. The local copy lives at
 `~/Projects/oss/rust-guidelines/all.txt`; fetch it when absent:
