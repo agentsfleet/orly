@@ -32,7 +32,7 @@ fn anchored_writes_keep_ownership_when_an_ancestor_swap_is_attempted() -> Result
         assert_eq!(fs::read(root.path().join("managed/input"))?, b"owned");
         assert!(!root.path().join("original").exists());
         assert!(!outside.path().join("input").exists());
-        return Ok(());
+        Ok(())
     }
     #[cfg(unix)]
     {
