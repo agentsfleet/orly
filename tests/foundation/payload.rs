@@ -12,6 +12,8 @@ use orly_fs::path::RelativePath;
 use std::{collections::BTreeSet, fs, path::Path, process::Command};
 
 const NATIVE_CONFIG: &[u8] = include_bytes!("../../fixtures/port/native-orly.json");
+#[path = "../support/interpreters.rs"]
+mod interpreters;
 
 struct RelocatedBinary {
     directory: tempfile::TempDir,
@@ -39,6 +41,10 @@ impl RelocatedBinary {
             .args(args)
             .output()?;
         assert_eq!(output.status.code(), Some(exit), "{args:?}: {output:?}");
+        assert!(
+            !self.directory.path().join(interpreters::INVOKED).exists(),
+            "native engine attempted to launch an interpreter: {args:?}"
+        );
         Ok(serde_json::from_slice(&output.stdout)?)
     }
 
@@ -56,19 +62,22 @@ impl RelocatedBinary {
         command
     }
 
-    fn assert_no_interpreters(&self) -> Result<()> {
-        let probe = self.directory.path().join(format!(
-            "interpreter-search{}",
-            std::env::consts::EXE_SUFFIX
-        ));
-        fs::copy(crate::support::probe::executable(), &probe)?;
-        // Windows searches the parent's executable directory and environment as well as PATH.
-        let output = self
-            .command(self.directory.path(), &probe)
-            .arg("interpreter-search")
-            .output()?;
-        assert!(output.status.success(), "{output:?}");
-        fs::remove_file(probe)?;
+    fn deny_interpreters(&self) -> Result<()> {
+        let marker = self.directory.path().join(interpreters::INVOKED);
+        for name in interpreters::NAMES {
+            let guard = self
+                .directory
+                .path()
+                .join(format!("{name}{}", std::env::consts::EXE_SUFFIX));
+            fs::copy(crate::support::probe::executable(), &guard)?;
+            let output = self
+                .command(self.directory.path(), &guard)
+                .arg("success")
+                .output()?;
+            assert_eq!(output.status.code(), Some(1), "{output:?}");
+            assert_eq!(fs::read(&marker)?, b"refused");
+            fs::remove_file(&marker)?;
+        }
         Ok(())
     }
 }
@@ -114,7 +123,7 @@ fn provide_git(source: &Path, directory: &Path) -> Result<()> {
 fn test_foundation_binary_works_without_interpreters() -> Result<()> {
     let repository = Repository::new()?;
     let binary = RelocatedBinary::new()?;
-    binary.assert_no_interpreters()?;
+    binary.deny_interpreters()?;
     repository.write(CONFIG_PATH, NATIVE_CONFIG)?;
     let root = repository.root();
     let rendered = binary.run(root, &["render"], 0)?;

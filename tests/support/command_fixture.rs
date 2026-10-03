@@ -6,8 +6,10 @@ use std::{
     time::Duration,
 };
 type Result<T> = io::Result<T>;
+mod interpreters;
 
 fn run() -> Result<()> {
+    refuse_interpreter_launch()?;
     match std::env::args().nth(1).as_deref() {
         Some("success") => {}
         Some("failure") => return Err(io::Error::other("requested failure")),
@@ -24,7 +26,6 @@ fn run() -> Result<()> {
         Some("linger") => std::thread::sleep(Duration::from_secs(3)),
         Some(operation @ ("detached" | "parent-sleep" | "grandchild")) => spawn_child(operation)?,
         Some("signal") => std::process::abort(),
-        Some("interpreter-search") => assert_interpreters_absent()?,
         Some("mutate") => std::fs::write("source.txt", b"changed")?,
         Some("environment") => {
             println!(
@@ -53,16 +54,15 @@ fn run() -> Result<()> {
     Ok(())
 }
 
-fn assert_interpreters_absent() -> Result<()> {
-    for interpreter in ["bun", "node", "python", "python3", "bash", "sh"] {
-        match Command::new(interpreter).output() {
-            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-            output => {
-                return Err(io::Error::other(format!(
-                    "{interpreter} must be unavailable: {output:?}"
-                )));
-            }
-        }
+fn refuse_interpreter_launch() -> Result<()> {
+    let executable = std::env::current_exe()?;
+    if executable
+        .file_stem()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| interpreters::NAMES.contains(&name))
+    {
+        std::fs::write(executable.with_file_name(interpreters::INVOKED), b"refused")?;
+        return Err(io::Error::other("interpreter launch refused"));
     }
     Ok(())
 }
