@@ -14,6 +14,8 @@ const STATE_DIRECTORY: &str = "orly";
 const JOURNAL_NAME: &str = "installation.json";
 const RETAINED_DIRECTORY: &str = "retained-orly";
 const TRUE_COMMAND: &str = "/usr/bin/true";
+#[cfg(windows)]
+const SHARING_VIOLATION: i32 = 32;
 
 #[test]
 fn state_directory_replacement_refuses_effects_and_preserves_recovery() -> Result<()> {
@@ -31,17 +33,31 @@ fn state_directory_replacement_refuses_effects_and_preserves_recovery() -> Resul
     let directory = Git::state_path(root, STATE_DIRECTORY)?;
     let retained = directory.with_file_name(RETAINED_DIRECTORY);
     let before = fs::read(directory.join(JOURNAL_NAME))?;
-    fs::rename(&directory, &retained)?;
-    fs::create_dir(&directory)?;
-    assert!(
-        matches!(planner.resume(&mut manifest), Err(Error::Conflict(path)) if path == directory)
-    );
-    assert!(matches!(manifest.save(&state), Err(Error::Conflict(path)) if path == directory));
-    assert!(!root.join(ORLY_AGENTS_FILENAME).exists());
-    assert_eq!(fs::read(retained.join(JOURNAL_NAME))?, before);
-    assert!(fs::read_dir(&directory)?.next().is_none());
-    fs::remove_dir(&directory)?;
-    fs::rename(&retained, &directory)?;
+    let replaced = fs::rename(&directory, &retained);
+    #[cfg(windows)]
+    {
+        assert_eq!(
+            replaced.unwrap_err().raw_os_error(),
+            Some(SHARING_VIOLATION)
+        );
+        assert_eq!(fs::read(directory.join(JOURNAL_NAME))?, before);
+        assert!(!retained.exists());
+        assert!(!root.join(ORLY_AGENTS_FILENAME).exists());
+    }
+    #[cfg(unix)]
+    {
+        replaced?;
+        fs::create_dir(&directory)?;
+        assert!(
+            matches!(planner.resume(&mut manifest), Err(Error::Conflict(path)) if path == directory)
+        );
+        assert!(matches!(manifest.save(&state), Err(Error::Conflict(path)) if path == directory));
+        assert!(!root.join(ORLY_AGENTS_FILENAME).exists());
+        assert_eq!(fs::read(retained.join(JOURNAL_NAME))?, before);
+        assert!(fs::read_dir(&directory)?.next().is_none());
+        fs::remove_dir(&directory)?;
+        fs::rename(&retained, &directory)?;
+    }
     let mut loaded = OperationManifest::load(&state)?.unwrap();
     planner.resume(&mut loaded)?;
     assert!(root.join(ORLY_AGENTS_FILENAME).exists());
@@ -59,13 +75,31 @@ fn journal_writer_retains_its_directory_during_the_callback() -> Result<()> {
     let retained = directory.with_file_name(RETAINED_DIRECTORY);
     let bytes = b"completed operation";
     let result = state.write_with(MANIFEST_PATH, bytes.len(), |output| {
-        fs::rename(&directory, &retained)?;
-        fs::create_dir(&directory)?;
+        let replaced = fs::rename(&directory, &retained);
+        #[cfg(windows)]
+        assert_eq!(
+            replaced.unwrap_err().raw_os_error(),
+            Some(SHARING_VIOLATION)
+        );
+        #[cfg(unix)]
+        {
+            replaced?;
+            fs::create_dir(&directory)?;
+        }
         Ok(output.write_all(bytes)?)
     });
-    assert!(matches!(result, Err(Error::Conflict(path)) if path == directory));
-    assert_eq!(fs::read(retained.join(JOURNAL_NAME))?, bytes);
-    assert!(fs::read_dir(&directory)?.next().is_none());
+    #[cfg(windows)]
+    {
+        result?;
+        assert_eq!(fs::read(directory.join(JOURNAL_NAME))?, bytes);
+        assert!(!retained.exists());
+    }
+    #[cfg(unix)]
+    {
+        assert!(matches!(result, Err(Error::Conflict(path)) if path == directory));
+        assert_eq!(fs::read(retained.join(JOURNAL_NAME))?, bytes);
+        assert!(fs::read_dir(&directory)?.next().is_none());
+    }
     Ok(())
 }
 
@@ -97,14 +131,35 @@ fn moved_worktree_recovers_without_installing_into_a_reused_path() -> Result<()>
     let before = fs::read(&journal)?;
     let old_path = original.to_str().unwrap();
     let new_path = moved.to_str().unwrap();
-    Git::output(repository.root(), &["worktree", "move", old_path, new_path])?;
-    add_worktree(&repository, &original)?;
-    assert!(
-        matches!(planner.resume(&mut manifest), Err(Error::Conflict(path)) if path == original.canonicalize().unwrap())
-    );
-    assert!(!original.join(ORLY_AGENTS_FILENAME).exists());
-    assert_eq!(fs::read(&journal)?, before);
+    let relocated = Git::output(repository.root(), &["worktree", "move", old_path, new_path]);
+    #[cfg(windows)]
+    {
+        assert!(
+            matches!(relocated, Err(Error::Git(reason)) if reason.starts_with("worktree move "))
+        );
+        assert!(original.is_dir());
+        assert!(!moved.exists());
+        assert!(!original.join(ORLY_AGENTS_FILENAME).exists());
+        assert_eq!(fs::read(&journal)?, before);
+    }
+    #[cfg(unix)]
+    {
+        relocated?;
+        add_worktree(&repository, &original)?;
+        assert!(
+            matches!(planner.resume(&mut manifest), Err(Error::Conflict(path)) if path == original.canonicalize().unwrap())
+        );
+        assert!(!original.join(ORLY_AGENTS_FILENAME).exists());
+        assert_eq!(fs::read(&journal)?, before);
+    }
     drop(lock);
+    drop(state);
+    drop(installer);
+    #[cfg(windows)]
+    {
+        Git::output(repository.root(), &["worktree", "move", old_path, new_path])?;
+        add_worktree(&repository, &original)?;
+    }
     Installer::new(&moved)?.install(&config, binary, false, false, false)?;
     assert!(moved.join(CONFIG_PATH).exists());
     assert!(!journal.exists());
