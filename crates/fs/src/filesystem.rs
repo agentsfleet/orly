@@ -28,7 +28,7 @@ pub enum FileState {
     // Empty struct variants let Serde reject fields beyond the kind tag.
     Missing {},
     File { digest: String, mode: u32 },
-    Link { target: String },
+    Link { target: PathBuf },
 }
 
 impl FileState {
@@ -91,11 +91,7 @@ impl RepositoryFs {
         };
         match parent.directory.symlink_metadata(&parent.name) {
             Ok(meta) if meta.file_type().is_symlink() && allow_link => Ok(FileState::Link {
-                target: parent
-                    .directory
-                    .read_link_contents(&parent.name)?
-                    .to_string_lossy()
-                    .into_owned(),
+                target: parent.directory.read_link_contents(&parent.name)?,
             }),
             Ok(meta) if meta.is_file() => {
                 let file = parent.open_regular()?;

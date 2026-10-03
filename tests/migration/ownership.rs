@@ -132,6 +132,8 @@ fn moved_worktree_recovers_without_installing_into_a_reused_path() -> Result<()>
     let before = fs::read(&journal)?;
     let old_path = original.to_str().unwrap();
     let new_path = moved.to_str().unwrap();
+    #[cfg(windows)]
+    let applied_rules = fs::read(original.join(ORLY_AGENTS_FILENAME))?;
     let relocated = Git::output(repository.root(), &["worktree", "move", old_path, new_path]);
     #[cfg(windows)]
     {
@@ -140,7 +142,10 @@ fn moved_worktree_recovers_without_installing_into_a_reused_path() -> Result<()>
         );
         assert!(original.is_dir());
         assert!(!moved.exists());
-        assert!(!original.join(ORLY_AGENTS_FILENAME).exists());
+        assert_eq!(
+            fs::read(original.join(ORLY_AGENTS_FILENAME))?,
+            applied_rules
+        );
         assert_eq!(fs::read(&journal)?, before);
     }
     #[cfg(unix)]

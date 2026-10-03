@@ -16,12 +16,12 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** M07
 **Workstream:** 005
 **Date:** Sep 30, 2026: 09:48 AM
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P0 — the cross-cutting foundation removes runtime ambiguity before parallel work starts
 **Categories:** Command-Line Interface (CLI), Documentation (DOCS), Infrastructure (INFRA), Agent Skills (SKILL)
 **Terms:** Continuous Integration (CI); null-byte-delimited paths; KiB = kibibytes; MiB = mebibytes.
 **Batch:** B1 — foundation; all Sections complete before B2 starts
-**Branch:** docs/m07-open-source-first-run
+**Branch:** feat/m07-native-foundation
 **Baseline revision:** c02f1e02806204811401b01596a04ff4c039d02a
 **Test Baseline:** unit=268 integration=n/a — no integration command declared; native suites add separate proofs.
 **Baseline evidence:** target/platform-evidence/baseline-unit.log
@@ -77,9 +77,9 @@ Paths name approved roles. B1 freezes an expanded per-file inventory before impl
 | crates/decision/src/lib.rs, src/core/plan.rs, src/core/packs.rs, schemas/decision-plan.schema.json, schemas/pack.schema.json | CREATE | Versioned composable decisions, acyclic plans, and data-only extension packs |
 | fixtures/projects/rust-cli/, fixtures/projects/typescript-library/, fixtures/projects/agentsfleet-profile/ | CREATE | Three adaptation targets; the mixed project profile pins inspected evidence |
 | core/operating-model.md, packs/language/rust/rules.md, dispatch/write_rust.md, AGENTS.md | EDIT / REGENERATE | User-requested Rust reference paths: Exonum, Apache Arrow, and read-only agentsfleet/rustd |
-| src/core/, src/install/, tests/foundation/, tests/migration/, fixtures/port/, schemas/native-config.schema.json, docs/ORLY_ARCHITECTURE.md | EDIT | User-approved configurable shared storage and Windows/Linux/macOS foundation support |
+| src/core/, src/install/, tests/foundation/, tests/migration/, fixtures/port/, schemas/native-config.schema.json, docs/ORLY_ARCHITECTURE.md | EDIT | User-approved configurable shared storage and Linux/macOS foundation support |
 | crates/fs/, crates/decision/, Cargo.toml, Cargo.lock, tools/xtask/Cargo.toml, src/, tests/ | CREATE / EDIT | User-approved small independent crates; direct imports and cause-preserving error composition |
-| .github/workflows/native-foundation.yml | CREATE | Explicitly approved tests-only Windows, Linux, and macOS execution proof |
+| .github/workflows/native-foundation.yml | CREATE / EDIT | Approved tests-only Linux/macOS execution proof; Windows parked by owner |
 | README.md, audits/agents-md.md | EDIT | Versioned native path documentation and explicitly approved three-row questionnaire alignment |
 | audits/agents-md.md, dispatch/write_spec.md, dispatch/edit_rules.md, Makefile, evals/llms/fixtures.jsonl, docs/HARNESS_VERIFY_OUTPUT.md | EDIT | Approved questionnaire/output-guide alignment and bypass-promise removal; executable checks and fixture verdicts stay intact |
 
@@ -91,7 +91,6 @@ Paths name approved roles. B1 freezes an expanded per-file inventory before impl
 - `dispatch/edit_rules.md`: preserve every existing gate obligation; run invariance checks and the comprehension questionnaire when rule semantics change.
 - `dispatch/write_spec.md`, `docs/TEMPLATE.md`, and `dispatch/name_architecture.md`: pending metadata, test mappings, and one canonical target design.
 - `dispatch/write_documentation.md` and `docs/DOCUMENTATION_RULES.md`: distinguish proposed behavior from observed results; preserve completed historical records.
-
 ## Applicable Gates
 
 | Gate | Fires? | Satisfaction strategy |
@@ -143,7 +142,7 @@ Extensibility has two deliberate surfaces. Data-only packs carry namespaced/vers
 - **Dimension 1.3 — DONE** — Same facts/envelope/policy → same digest; unknown commands/cycles/gate recursion reject; resource claims serialize conflicts and preserve working directory; missing remote identity fails; offline missing key/replay → exact core runs, missing required input fails, semantic branches reported → Test `test_decision_plan_reducer_is_replayable_and_acyclic`
 - **Dimension 1.4 — DONE** — New project question/section/policy → works through built-in selectors without binary rewrite; conflicting/version-incompatible/executable pack rejects → Test `test_data_pack_extends_policy_without_executable_plugins`
 
-### §2 — Native snapshots, execution, and truthful evidence — IN_PROGRESS
+### §2 — Native snapshots, execution, and truthful evidence — DONE
 
 Render selected packs with fence-aware markers and standard Markdown parsing. Embed registry, schemas, rules, and selected resource files into the binary at build time; record their canonical digest. Build ordering is sorted and timestamp-free. A relocated binary needs no source checkout. Materialized documents remain readable under `.orly/`.
 
@@ -157,9 +156,9 @@ Results are tagged states: `passed`, `failed`, `skipped`, `reported`, or `overri
 - **Dimension 2.2 — DONE** — Missing binary, timeout, surviving grandchild, signal, and output flood → named failure with children reaped and bounded records → Test `test_native_runner_bounds_and_reaps`
 - **Dimension 2.3 — DONE** — No spec, absent surfaces, unavailable feature, original override, and repeated snapshot → explicit states and identical semantic projection → Test `test_evidence_states_and_reproducible_projection`
 - **Dimension 2.4 — DONE** — Default `.orly/rels/`, a configured root, and escaping or colliding paths → shared material stays contained, preserved, and trackable → Test `storage_install_preserves_documents_and_changing_root_does_not_move_them`; companion storage tests cover path and collision refusals.
-- **Dimension 2.5 — IN_PROGRESS** — Windows, Linux, and macOS foundations → captured inputs, bounded child execution, installation, and recovery behave consistently → Test `manual_foundation_platform_report`
+- **Dimension 2.5 — DONE** — Linux and macOS foundations → captured inputs, bounded child execution, installation, and recovery behave consistently → Test `manual_foundation_platform_report`
 
-Shared release/spec material defaults to repository-relative `.orly/rels/` and uses an owner-configurable contained root. It remains separate from generated rules, ignored binaries, and private installation state. Preserve existing documents; no silent relocation or deletion. Standard crates and operating-system APIs provide portable process and filesystem behavior. Record real Windows, Linux, and macOS execution evidence before closing; cross-compilation alone is not runtime proof.
+Shared release/spec material defaults to repository-relative `.orly/rels/` and uses an owner-configurable contained root. It remains separate from generated rules, ignored binaries, and private installation state. Preserve existing documents; no silent relocation or deletion. Standard crates and operating-system APIs provide portable process and filesystem behavior. Record real Linux and macOS execution evidence before closing; cross-compilation alone is not runtime proof. Windows support is parked outside 0.12.0.
 
 ### §3 — Contained installation and resumable migration — DONE
 
@@ -241,7 +240,7 @@ Existing anonymous telemetry remains opt-in. Feature review adds no source-beari
 | 2.2 | integration | `test_native_runner_bounds_and_reaps` | Missing binary, timeout, surviving grandchild, signal, and output flood → named failure with children reaped and bounded records |
 | 2.3 | unit | `test_evidence_states_and_reproducible_projection` | No spec, absent surfaces, unavailable feature, original override, and repeated snapshot → explicit states and identical semantic projection |
 | 2.4 | integration | `storage_install_preserves_documents_and_changing_root_does_not_move_them` | Default and configured contained roots preserve shared documents and remain trackable; companion storage cases refuse escaping or colliding paths |
-| 2.5 | manual | `manual_foundation_platform_report` | Record actual snapshot, process, installation, and retry runs on Windows, Linux, and macOS |
+| 2.5 | manual | `manual_foundation_platform_report` | Record actual snapshot, process, installation, and retry runs on Linux and macOS |
 | 3.1 | integration | `test_install_is_contained_and_idempotent` | Fresh, repeated, nested, and foreign-hook installs → contained layout, preserved content, correct binary links, and no redundant writes |
 | 3.2 | integration | `test_migration_resumes_every_write_and_cleanup` | Inject interruption at each rename, loader switch, hook switch, config switch, and deletion → verified retry completes; edited/symlinked/concurrent destinations refuse |
 | 3.3 | unit | `test_doctor_and_citations_identify_stale_callers` | Old managed command, literal fenced example, URL, and historical record → only real callers rewritten or reported |
@@ -256,16 +255,16 @@ A1/A2 quote the current configuration verbatim and remain required through priva
 
 | # | Criterion (observable outcome) | Verify (copy-paste) | Expected | Priority | Graded (VERIFY) |
 |---|---|---|---|---|---|
-| R1 | Native foundation and index correctness | `cargo test --locked --test foundation` | exit 0 | P0 |  |
-| R2 | Contained migration and recovery | `cargo test --locked --test migration` | exit 0 | P0 |  |
-| R3 | Inventory and feature ownership | `cargo xtask port-check --map` | exit 0 | P0 |  |
+| R1 | Native foundation and index correctness | `cargo test --locked --test foundation` | exit 0 | P0 | ✅ Linux/macOS: 81 passed, 0 failed at ee16d65; run 37100342773 |
+| R2 | Contained migration and recovery | `cargo test --locked --test migration` | exit 0 | P0 | ✅ Linux/macOS: 45 passed, 0 failed; 91 operations × 3 interruption timings; run 37100342773 |
+| R3 | Inventory and feature ownership | `cargo xtask port-check --map` | exit 0 | P0 | ✅ 220 tracked paths; 110 assigned obligations; 0 unassigned; target/platform-evidence/port-map.log |
 | A1 | Current declared conformance; Rust implementation replaces internals | `make conform` | exit 0 | P0 | ✅ `ALL CHECKS PASSED`; target/platform-evidence/conform.log |
 | A2 | Current declared unit lane; atomically replaced at B3 | `bun test src` | exit 0 | P0 | ✅ 268 pass, 0 fail inside make audit; target/platform-evidence/audit.log |
-| S1 | Native full unit boundary | `cargo test --workspace --locked` | exit 0 | P0 |  |
+| S1 | Native full unit boundary | `cargo test --workspace --locked` | exit 0 | P0 | ✅ Hosted all-feature workspace: Linux/macOS exit 0 at ee16d65; run 37100342773 |
 | S2 | Governance obligations remain enforced | `make audit` | exit 0 | P0 | ✅ unit 268/0; dispatch 46/0; parity 10/0; ledger 25/0; target/platform-evidence/audit.log |
-| S3 | No secrets | `gitleaks detect` | exit 0 | P0 |  |
+| S3 | No secrets | `gitleaks detect` | exit 0 | P0 | ✅ Required pre-push scan: no leaks; pull request Session notes 6 records final scan |
 | S4 | Expanded inventory mapping and exclusive scope | `cargo xtask port-check --map` | exit 0; zero unassigned obligations | P0 | ✅ 220 tracked paths; 110 assigned obligations; 0 unassigned; target/platform-evidence/port-map.log |
-| S5 | Supported foundation systems | `manual_foundation_platform_report` | Windows, Linux, and macOS runtime evidence | P0 |  |
+| S5 | Supported foundation systems | `manual_foundation_platform_report` | Linux and macOS runtime evidence | P0 | ✅ Both native jobs passed; run 37100342773; Windows parked by owner |
 
 ## Dead Code Sweep
 
@@ -275,7 +274,7 @@ M07_001 deletes the old executable inventory after replacement proofs exist. Thi
 
 - Implementation of the three B2 features; their seams are defined here.
 - Editing sibling consumers; each migrates on its own approved branch.
-- Release packaging and publishing remain in M07_001; Windows, Linux, and macOS foundation behavior is required here.
+- Release packaging and publishing remain in M07_001; Linux and macOS foundation behavior is required here. Windows support is parked outside 0.12.0.
 - Global daemon, database, runtime path aliases, or model-generated migration decisions.
 
 ## Product Clarity (authoring record)
@@ -294,7 +293,6 @@ M07_001 deletes the old executable inventory after replacement proofs exist. Thi
 ## Decomposition & alternatives (patch vs refactor)
 
 One cross-cutting workstream establishes shared interfaces and installation authority. The three independent features follow in B2; release integration follows in B3. A shell-wrapper port keeps the same distribution failure; the native rewrite removes it.
-
 ## Discovery (consult log)
 
 - **Consults** — Reviewed launcher, containment, installer, loaders, registry mappings, and command declarations at the recorded source revision. The user explicitly requests Rust and removal of TypeScript and shell implementation. The local recovery manifest is an agent-selected mechanism required by interrupted multi-file migration; it replaces the draft prohibition on such recovery state.
@@ -318,3 +316,5 @@ One cross-cutting workstream establishes shared interfaces and installation auth
 - **Delivery instruction** — Indy: "get your rear moving to a PR. donot repeatedly review and test and the loop again." Also: "shoot for a PR if you did verify recently and a review and test would add no more benefit, if so you must skip and push the PR". Use the recent proofs, push the existing Pull Request, and retain Windows as pending until the hosted run proves it. The final 15 questionnaire corrections were approved as "Apply the wording corrections (recommended)".
 - **Hosted checkout repair** — The first native Linux run passed foundation 78/0 and migration 45/0; three inventory tests could not read the recorded comparison commit because checkout fetched one revision. The authorized tests-only workflow now fetches history; all proof checks remain intact. Evidence: GitHub run 37039450903, job 110945660727.
 - **Windows repair** — Indy: "YEs PR#52 is merged, pull origin into your branch and push with the fixes". Run 37040722481 passed Linux/macOS and failed six Windows foundation cases; fixes preserve held-directory ownership, normalize native link targets, reject nonregular inputs, and isolate interpreter/output-limit proofs. Native logs now use library-provided `logfmt` with unconditional error/warning filtering; patched Windows execution remains pending.
+- **Supported-system close** — Run 37100342773 at ee16d65 passed Linux/macOS: foundation 81/0, migration 45/0, development runner 6/0. Windows foundation passed 79/0; migration failed 39/5. Linux and macOS are supported for 0.12.0; Windows support is parked and has no passing-proof claim. The local branch is feat/m07-native-foundation; the remote keeps pull request 51 open pending the rename decision.
+> Indy (Oct 03, 2026: 11:45 AM): "i want you to move the spec to done with the windows support being parked for 0.12" — context: Windows proof no longer blocks the completed Linux/macOS foundation.

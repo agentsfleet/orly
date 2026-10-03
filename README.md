@@ -54,11 +54,11 @@ Installation instructions for the current 0.10 release follow this section.
 One Cargo package provides a reusable Rust library and the `orly` executable.
 Users install through Cargo or download a prebuilt release archive for their platform.
 Cargo builds the source package; prebuilt downloads let users run orly without installing Rust.
+The 0.12.0 release supports Linux and macOS. Windows support is parked and is not included in this release.
 
 Project setup runs inside the Rust binary.
 
 After installation, `orly init` copies the verified executable into ignored `.orly/bin/orly-0.12.0` and writes committed configuration and rules.
-Windows uses `.orly/bin/orly-0.12.0.exe` (`src/core/constants.rs:21–23`).
 
 ```text
 your-repo/

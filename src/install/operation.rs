@@ -90,7 +90,7 @@ impl Operation {
                 path,
                 before,
                 FileState::Link {
-                    target: target.clone(),
+                    target: target.into(),
                 },
             )),
             Self::Delete { path, before } => Some((path, before, FileState::Missing {})),

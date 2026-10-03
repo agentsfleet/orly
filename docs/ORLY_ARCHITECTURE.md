@@ -394,11 +394,12 @@ Emission, self-reported reading, and compliance are separately labeled facts.
 The only public version is 0.12.0, tagged `v0.12.0`, after all workstreams join.
 The root Cargo version controls engine/resources/source package/native assets.
 Required runnable targets are both macOS architectures, both Linux musl
-architectures, and `x86_64-pc-windows-msvc`, as named in M07_001. Indy selected
-Windows, Linux, and macOS support on Oct 01, 2026. Platform support requires
+architectures, as named in M07_001. Indy limited 0.12.0 support to Linux and
+macOS on Oct 03, 2026; Windows support is parked outside this release.
+Platform support requires
 actual execution evidence; compilation alone does not establish it.
 The approved tests-only `native-foundation.yml` workflow runs the foundation on
-Windows, Linux, and macOS with Rust 1.98.1. Release automation stays in M07_001.
+Linux and macOS with Rust 1.98.1. Release automation stays in M07_001.
 The release ships embedded rules/questions/schemas, license, checksums, and a
 build manifest. It needs Git and declared native tools, without an orly runtime
 interpreter. Native startup/check benchmarks and actual target journeys are

@@ -123,6 +123,35 @@ fn atomic_copy_preserves_modes_and_refuses_changed_sources_and_links() -> Result
 impl ObjectDocument for Document {}
 
 #[test]
+fn link_state_compares_native_paths_and_preserves_the_json_shape() -> Result<()> {
+    let root = tempfile::tempdir()?;
+    fs::create_dir_all(root.path().join("managed/bin"))?;
+    fs::write(root.path().join("managed/bin/orly"), b"native")?;
+    let filesystem = RepositoryFs::open(root.path())?;
+    let path = RelativePath::new("managed/hook")?;
+    let expected = FileState::Link {
+        target: "bin/orly".into(),
+    };
+    filesystem.link(&path, "bin/orly")?;
+    let observed = filesystem.inspect(&path, true)?;
+    assert_eq!(observed, expected);
+    assert!(
+        matches!(filesystem.read(&path, 16), Err(orly_fs::Error::Invalid(reason))
+        if reason == "input must be a regular file")
+    );
+    let document = serde_json::json!({"kind": "link", "target": "bin/orly"});
+    assert_eq!(serde_json::to_value(&expected)?, document);
+    assert_eq!(serde_json::from_value::<FileState>(document)?, observed);
+    assert_ne!(
+        observed,
+        FileState::Link {
+            target: "bin/foreign".into()
+        }
+    );
+    Ok(())
+}
+
+#[test]
 fn document_inputs_refuse_symlink_leaves() -> Result<()> {
     let repository = tempfile::tempdir()?;
     let external = tempfile::tempdir()?;

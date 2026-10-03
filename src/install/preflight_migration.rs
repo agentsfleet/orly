@@ -99,7 +99,7 @@ impl InstallPlanner<'_> {
             if old != (FileState::Missing {})
                 && old
                     != (FileState::Link {
-                        target: target.clone(),
+                        target: target.as_str().into(),
                     })
             {
                 return Err(Error::Conflict(path.join(root)));
