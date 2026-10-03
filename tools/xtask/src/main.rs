@@ -1,5 +1,6 @@
 use orly_decision::Question;
 mod error;
+mod judge;
 mod manifest;
 mod manifest_model;
 mod manifest_proofs;
@@ -57,6 +58,21 @@ struct Cli {
 }
 #[derive(Subcommand)]
 enum Task {
+    JudgeCheck,
+    JudgeEval {
+        #[arg(long)]
+        allow_upload: bool,
+        #[arg(long)]
+        reviewed_commit: String,
+        #[arg(long)]
+        agent_report: std::path::PathBuf,
+        #[arg(long)]
+        scanner: std::path::PathBuf,
+        #[arg(long)]
+        state: std::path::PathBuf,
+        #[arg(long)]
+        report: std::path::PathBuf,
+    },
     PortCheck {
         #[arg(long)]
         map: bool,
@@ -65,7 +81,23 @@ enum Task {
 }
 impl Cli {
     fn run(&self) -> Result<()> {
-        match self.command {
+        match &self.command {
+            Task::JudgeCheck => judge::check(),
+            Task::JudgeEval {
+                allow_upload,
+                reviewed_commit,
+                agent_report,
+                scanner,
+                state,
+                report,
+            } => judge::evaluate(
+                *allow_upload,
+                reviewed_commit,
+                agent_report,
+                scanner,
+                state,
+                report,
+            ),
             Task::PortCheck { .. } => {
                 let report =
                     manifest_model::PortManifest::read(Path::new("."))?.check(Path::new("."))?;

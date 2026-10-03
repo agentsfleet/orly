@@ -25,6 +25,10 @@ pub enum Error {
     Utf8(#[from] std::str::Utf8Error),
     #[error("input is not valid Unicode text")]
     OwnedUtf8(#[from] std::string::FromUtf8Error),
+    #[error(transparent)]
+    Language(#[from] tree_sitter::LanguageError),
+    #[error(transparent)]
+    Judge(#[from] crate::judge::error::Failure),
     #[error("invalid input: {0}")]
     Invalid(String),
     #[error("refusing conflicting path: {0}")]
@@ -87,6 +91,8 @@ impl Error {
             | Self::Glob(_)
             | Self::Utf8(_)
             | Self::OwnedUtf8(_) => INVALID_INPUT,
+            Self::Language(_) => INVALID_INPUT,
+            Self::Judge(failure) => failure.code(),
             Self::Conflict(_) => PATH_CONFLICT,
             Self::Locked => INSTALL_LOCKED,
             Self::Stale => STALE_IDENTITY,

@@ -23,8 +23,8 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Batch:** B2 — parallel with M07_003 and M07_004 after the B1 interface revision
 **Branch:** feat/m07-jev-judgments
 **Baseline revision:** e804c6c888ff804183d3a4cc0cb4b60a0d9ebb0e
-**Test Baseline:** pending — measure unit and integration lanes before the Pull Request (PR)
-**Baseline evidence:** pending — report comparison revision, commands, counts, obligations, and environment
+**Test Baseline:** unit=268 integration=n/a — no declared integration lane; Pull Request (PR) boundary runs the declared unit lane
+**Baseline evidence:** evals/judge/verification.md — comparison revision, commands, measured counts, native proof limits, and environment
 **Depends on:** M07_005 §§1–4 only. Coverage and rule delivery provide optional evidence at B3 integration, never prerequisites for this lane.
 **Provenance:** Revised from the Sep 23 draft by Codex after the Rust/Jev direction on Sep 30, 2026; source review at `c02f1e02806204811401b01596a04ff4c039d02a`.
 **Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §M07 target: one native engine with bounded Jev judgments
@@ -44,7 +44,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ## PR Intent & comprehension handshake
 
-- **PR title (eventual):** `feat: ship native orly with bounded Jev review`
+- **PR title (eventual):** `feat: add typed Jev judgments with authorized inference and exact replay`
 - **Intent:** Make Jev useful across the important semantic gaps without handing it approvals, gate authority, filesystem paths, or command construction.
 - **Authoring handshake:** This is a spec/design revision, not implementation or permission to publish.
 - **ASSUMPTIONS I'M MAKING:** Jev means the TypeSafe System One model, not a Rust interpreter or reasoning agent. Fresh inference is probabilistic. Exact validated recorded answers make replay reproducible. Live upload is explicit; offline gates read matching records only.
@@ -68,7 +68,7 @@ Paths name approved roles. B1 freezes an expanded per-file inventory before impl
 |---|---|---|
 | src/judge/ | EDIT / CREATE | Exclusive runner, HTTP client, builders, scan boundary, replay, and evaluation policy |
 | questions/, fixtures/questions/, evals/judge/ | CREATE | Question definitions, bounded examples, labeled splits, and reports |
-| tests/judge.rs, tests/judge_replay.rs, tests/judge_evals.rs | CREATE | Provider-boundary, replay, and calibration proofs |
+| tests/judge.rs, tests/judge_replay.rs, tests/judge_evals.rs, tests/judge/ | CREATE | Provider-boundary, replay, and calibration proofs; cohesive helpers under the existing length caps |
 | tools/xtask/src/judge.rs | CREATE | Offline corpus validation and explicit live evaluation |
 | docs/fragments/judge.md | CREATE | Lane-owned setup/reference fragment merged by M07_001 |
 | Cargo.toml, Cargo.lock, src/error.rs, tools/xtask/src/main.rs | EDIT | Approved prerequisite: syntax parsers, preserved causes, judge-check registration |
@@ -122,11 +122,11 @@ For Choice include all known relevant categories plus no-match and insufficient 
 
 Bounded decision effects make Jev central rather than a decorative report. Valid calibrated answers may choose an existing owner-declared recipe, add checks/review routes, prioritize candidate rule delivery, and classify semantic scope. They cannot remove mandatory exact checks. Rust ignores uncertain speculative answers on unused branches and records uncertainty on consumed branches. Weighted preferences are allowed for ranking; security/authority requirements use separate conditions and cannot be averaged away. All plans expose which raw answers and policy rules caused each node.
 
-- **Dimension 1.1** — Each family → valid options, builder, consumer, source clause, and labeled positive/negative/missing cases; incomplete entries fail → Test `test_question_bank_covers_declared_semantic_families`
-- **Dimension 1.2** — Rust/TypeScript function/test pairs and missing/oversized/unsupported cases → complete syntax-aware evidence or item-level incomplete; no fabricated attribution → Test `test_builders_preserve_complete_bounded_evidence`
-- **Dimension 1.3** — Shared code with one mapped clause → only that clause listed; approval/override requests remain human-owned → Test `test_judgment_routing_does_not_inflate_coverage`
-- **Dimension 1.4** — Mixed Choice/Noul/Score batch → known recipe, independent review additions, and ordered candidate ranking; no-match/uncertainty do not fabricate facts → Test `test_all_three_primitives_have_real_plan_consumers`
-- **Dimension 1.5** — High relevance plus serious security signal → security route retained; unused speculative uncertainty ignored; no weighted safety cancellation → Test `test_primitive_composition_preserves_serious_conditions`
+- **Dimension 1.1** — DONE — Each family → valid options, builder, consumer, source clause, and labeled positive/negative/missing cases; incomplete entries fail → Test `test_question_bank_covers_declared_semantic_families`
+- **Dimension 1.2** — DONE — Rust/TypeScript function/test pairs and missing/oversized/unsupported cases → complete syntax-aware evidence or item-level incomplete; no fabricated attribution → Test `test_builders_preserve_complete_bounded_evidence`
+- **Dimension 1.3** — DONE — Shared code with one mapped clause → only that clause listed; approval/override requests remain human-owned → Test `test_judgment_routing_does_not_inflate_coverage`
+- **Dimension 1.4** — DONE — Mixed Choice/Noul/Score batch → known recipe, independent review additions, and ordered candidate ranking; no-match/uncertainty do not fabricate facts → Test `test_all_three_primitives_have_real_plan_consumers`
+- **Dimension 1.5** — DONE — High relevance plus serious security signal → security route retained; unused speculative uncertainty ignored; no weighted safety cancellation → Test `test_primitive_composition_preserves_serious_conditions`
 
 ### §2 — Authorized requests have fixed budgets and validated answers
 
@@ -138,9 +138,9 @@ Scan the complete canonical request, including question text, with engine-owned 
 
 Default local limits: 16 KiB state, 24 KiB serialized request, 128 question/input pairs per invocation, 16 pairs per same-state batch, two concurrent requests, three attempts per request, and 30 seconds total including scan and retries. Byte budgets and provider token budgets are distinct. Reserve prompt overhead; provider context rejection is incomplete, never silent truncation or a proof the byte limit guarantees token fit. Never split a semantic pair to fit. Excess pairs remain incomplete. Respect Retry-After for 429 and retry 529/transport failures with bounded 250 ms and 1 second backoff; no retry for 401/403/422 or schema errors. A response body cap of 1 MiB and strict typed validation reject missing, extra, non-finite, out-of-range, wrong-type, wrong-model, or invalid-distribution answers. No redirects carrying credentials; fixed provider endpoint only.
 
-- **Dimension 2.1** — Each missing authorization, dirty request, missing/erroring scanner, and repository suppression → zero provider requests and named reason → Test `test_judge_authorization_and_scan_are_required`
-- **Dimension 2.2** — Stub failures, Retry-After beyond deadline, flood, incomplete maps, wrong type/model, and invalid probabilities → bounded incomplete result; valid answer accepted → Test `test_client_limits_retries_and_validates_answers`
-- **Dimension 2.3** — Hostile project command/plugin and key sentinels → no execution, no key in records/diagnostics, and no redirect upload → Test `test_judge_never_runs_repository_code_or_leaks_key`
+- **Dimension 2.1** — DONE — Each missing authorization, dirty request, missing/erroring scanner, and repository suppression → zero provider requests and named reason → Test `test_judge_authorization_and_scan_are_required`
+- **Dimension 2.2** — DONE — Stub failures, Retry-After beyond deadline, flood, incomplete maps, wrong type/model, and invalid probabilities → bounded incomplete result; valid answer accepted → Test `test_client_limits_retries_and_validates_answers`
+- **Dimension 2.3** — DONE — Hostile project command/plugin and key sentinels → no execution, no key in records/diagnostics, and no redirect upload → Test `test_judge_never_runs_repository_code_or_leaks_key`
 
 ### §3 — Exact replay supplies reproducible advisory policy
 
@@ -150,9 +150,9 @@ Canonicalize with a versioned stable encoding and ordered keys; identity covers 
 
 All semantic review criteria remain `reported` in 0.12.0; the gate exit status is determined by Rust's exact checks. Explicit judge commands return exit 2 for an incomplete authorized evaluation, so a user cannot confuse an outage with successful judgment. No configuration enables model-only blocking. Rule-selection additions require the calibrated question's documented threshold and valid candidate identifiers; questions without a calibrated threshold remain reported suggestions. Owner approval, suppressions, overrides, deferrals, migration edits, and command vectors never come from Jev.
 
-- **Dimension 3.1** — Identical canonical batch → zero calls; each changed field or corrupt record → stale; refresh preserves prior answer and records selected run → Test `test_replay_identity_is_complete_and_offline`
-- **Dimension 3.2** — Finding, quiet, uncertain, missing, and replayed pairs in varied order → all retained; deterministic failure and exit authority unchanged → Test `test_advisory_policy_preserves_all_constituents`
-- **Dimension 3.3** — Concurrent writers, interrupted rename, expired and full cache → valid records or explicit miss; no partial accepted record → Test `test_replay_store_handles_concurrency_and_retention`
+- **Dimension 3.1** — DONE — Identical canonical batch → zero calls; each changed field or corrupt record → stale; refresh preserves prior answer and records selected run → Test `test_replay_identity_is_complete_and_offline`
+- **Dimension 3.2** — DONE — Finding, quiet, uncertain, missing, and replayed pairs in varied order → all retained; deterministic failure and exit authority unchanged → Test `test_advisory_policy_preserves_all_constituents`
+- **Dimension 3.3** — DONE — Concurrent writers, interrupted rename, expired and full cache → valid records or explicit miss; no partial accepted record → Test `test_replay_store_handles_concurrency_and_retention`
 
 ### §4 — Freeze labels and measure usefulness before release
 
@@ -164,8 +164,8 @@ For every Choice question require at least 90% correct labels among substantive 
 
 Rule additions use a per-question threshold selected on tuning data and validated on the held-out split. Human review of false positives and negatives remains required. Stub-based tests prove client and policy behavior; a live report proves the provider integration and observed usefulness. Missing credentials or label review can block release while offline implementation continues. M07_001 assembles the skill/template commands and the native binary entry point; this lane exposes typed handlers without editing shared routing.
 
-- **Dimension 4.1** — Bank, splits, label history, and injected/quiet cases → complete corpus validated with no network → Test `test_judge_evaluation_corpus_and_offline_validation`
-- **Dimension 4.2** — Owner validates label commit; implementer records independent live runs and repeats → thresholds, raw counts, and disagreements in release Session Notes → Test `manual_judge_labels_and_held_out_report`
+- **Dimension 4.1** — DONE — Bank, splits, label history, and injected/quiet cases → complete corpus validated with no network → Test `test_judge_evaluation_corpus_and_offline_validation`
+- **Dimension 4.2** — IN_PROGRESS — Owner validates label commit; implementer records independent live runs and repeats → thresholds, raw counts, and disagreements in release Session Notes → Test `manual_judge_labels_and_held_out_report`
 
 ## Interfaces
 
@@ -229,24 +229,24 @@ Existing anonymous telemetry remains opt-in. Feature review adds no source-beari
 | 4.1 | integration | `test_judge_evaluation_corpus_and_offline_validation` | Bank, splits, label history, and injected/quiet cases → complete corpus validated with no network |
 | 4.2 | manual | `manual_judge_labels_and_held_out_report` | Owner validates label commit; implementer records independent live runs and repeats → thresholds, raw counts, and disagreements in release Session Notes |
 
-At implementation, apply the unit-test and integration-test skills to every changed Section. Include negative paths and boundary injection; stubs prove local behavior only. Manual proof names the responsible person and durable release Session Notes. Nothing above is marked run.
+Unit-test and integration-test skills were applied to the changed Sections and boundary. `evals/judge/verification.md` records negative paths, boundary injection, and local proof limits. Stubs prove local behavior only. Manual Dimension 4.2 still requires owner review and durable live evidence.
 
 ## Acceptance Rubric (single scoring surface)
 
-A1/A2 quote the current configuration verbatim and remain required through private B1/B2 development. M07_001 switches configuration/Make recipes to Rust atomically with complete native check registration and old-path deletion at B3; update the five rubric declarations in that same change. Future native commands below are lane acceptance requirements, not commands available in this checkout yet.
+A1/A2 quote the current configuration verbatim and remain required through private B1/B2 development. M07_001 switches configuration/Make recipes to Rust atomically with complete native check registration and old-path deletion at B3. Native development commands below are available; public command registration remains M07_001's work.
 
 | # | Criterion (observable outcome) | Verify (copy-paste) | Expected | Priority | Graded (VERIFY) |
 |---|---|---|---|---|---|
-| R1 | Typed client, privacy, and bounded requests | `cargo test --locked --test judge` | exit 0 | P0 |  |
-| R2 | Exact replay and offline policy | `cargo test --locked --test judge_replay` | exit 0 | P0 |  |
-| R3 | Question corpus completeness | `cargo xtask judge-check` | exit 0 | P0 |  |
-| R4 | Observed held-out quality and live integration | `manual_judge_labels_and_held_out_report` | Recorded required proof and thresholds met | P0 |  |
-| A1 | Current declared conformance; Rust implementation replaces internals | `make conform` | exit 0 | P0 |  |
-| A2 | Current declared unit lane; atomically replaced at B3 | `bun test src` | exit 0 | P0 |  |
-| S1 | Native full unit boundary | `cargo test --workspace --locked` | exit 0 | P0 |  |
-| S2 | Governance obligations remain enforced | `make audit` | exit 0 | P0 |  |
-| S3 | No secrets | `gitleaks detect` | exit 0 | P0 |  |
-| S4 | Expanded inventory mapping and exclusive scope | `cargo xtask port-check --map` | exit 0; zero unassigned obligations | P0 |  |
+| R1 | Typed client, privacy, and bounded requests | `cargo test --locked --test judge` | exit 0 | P0 |✅ 30 judge tests passed with live transport enabled; exit 0 |
+| R2 | Exact replay and offline policy | `cargo test --locked --test judge_replay` | exit 0 | P0 |✅ 10 replay tests passed; exit 0 |
+| R3 | Question corpus completeness | `cargo xtask judge-check` | exit 0 | P0 |✅ 12 families; 504 cases; 480 complete labels; exit 0 |
+| R4 | Observed held-out quality and live integration | `manual_judge_labels_and_held_out_report` | Recorded required proof and thresholds met | P0 |❌ Required owner-reviewed live proof pending |
+| A1 | Current declared conformance; Rust implementation replaces internals | `make conform` | exit 0 | P0 |✅ Final work gate ran make conform; exit 0; 20 checks passed |
+| A2 | Current declared unit lane; atomically replaced at B3 | `bun test src` | exit 0 | P0 |✅ 268 passed; zero failed in governance audit |
+| S1 | Native full unit boundary | `cargo test --workspace --locked` | exit 0 | P0 |✅ 172 passed before review; 47 changed judge tests passed after fixes |
+| S2 | Governance obligations remain enforced | `make audit` | exit 0 | P0 |✅ Governance audit passed before review; push audit remains required |
+| S3 | No secrets | `gitleaks detect` | exit 0 | P0 |✅ Staged final source: no leaks found |
+| S4 | Expanded inventory mapping and exclusive scope | `cargo xtask port-check --map` | exit 0; zero unassigned obligations | P0 |✅ 220 tracked paths; 110 assigned obligations; zero unassigned |
 
 ## Dead Code Sweep
 
@@ -279,7 +279,8 @@ The lane implements questions, client, replay, and calibration independently of 
 ## Discovery (consult log)
 
 - **Scope approval** — Indy (Oct 03, 2026): "yes approved, i assume all go into the  PR you create for spec  M07_002" — approves the shared prerequisite files listed above in this lane's Pull Request. Release integration remains M07_001's work.
+- **Engine scope** — Indy selected "Jev implementation plus engine interface (Recommended)". `DecisionEngine::infer` supports other implementations; this lane adds Jev only. Provider routing and aggregation remain outside this spec.
 - **Consults** — Verified current HTTP API, Models, Confidence, citation checks, and parallel-question guidance on Sep 30, 2026. [TypeSafe API](https://docs.typesafe.ai/api) defines the wire types; [Models](https://docs.typesafe.ai/models) recommends pinned versions; [Confidence](https://docs.typesafe.ai/confidence) describes uncertainty. No fresh-call identity guarantee is assumed. User direction requires Jev in significant areas; advisory policy and concrete acceptance thresholds are agent design decisions, not measured results.
 - **Metrics review** — No new analytics funnel. Local diagnostics and the existing consented telemetry retain separate privacy rules.
-- **Skill-chain outcomes** — Source/spec adversarial review performed during authoring; native implementation, live calibration, platform journeys, and boundary verification remain pending.
+- **Skill-chain outcomes** — One gstack review and its native adversarial pass found four defects; all were fixed and regression-tested. Post-review judge targets: 47 passed, zero failed. Default and transport-feature Clippy passed. Evidence and skill ledgers: `evals/judge/verification.md`. No repeated review or convergence claim; live calibration and final Pull Request gate remain pending.
 - **Deferrals** — None recorded. The explicit native-command OpenCode guarantee replaces the former executable plugin approach; no missing required release proof is treated as deferred.
