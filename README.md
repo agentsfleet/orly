@@ -96,6 +96,10 @@ Live upload requires an enabled capability, a provider key, explicit `--allow-up
 Examples include engine-version agreement, valid configuration, declared error codes, file-length limits, and required changed-line coverage.
 A passing model answer cannot remove a mandatory check.
 
+Native diagnostics use `logfmt` on standard error, with timestamps, event names,
+and stable error codes. Errors remain visible when logging filters are off.
+`--json` keeps standard output as one JSON document.
+
 ### Assess, plan, and run
 
 `orly assess --staged --allow-upload` requests bounded Jev decisions for staged changes.

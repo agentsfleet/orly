@@ -71,11 +71,11 @@ impl Cli {
             Err(error) => {
                 let event = RUN_FAILED;
                 let error_code = error.code();
-                tracing::error!(
+                crate::core::logging::Logging::error(
+                    CLI_SCOPE,
                     event,
                     error_code,
-                    scope = CLI_SCOPE,
-                    "native command refused"
+                    "native command refused",
                 );
                 let outcome = CliOutcome {
                     document: serde_json::json!({"state":"failed","reason":error_code}),

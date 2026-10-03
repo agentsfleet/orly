@@ -5,7 +5,7 @@ use orly::{
         env::MapEnv,
         execution::EvaluationContext,
         git::{Git, INDEX_KEY},
-        logging::{LOG_FILTER, Logging},
+        logging::{LOG_FILTER, LOG_LEVEL, Logging},
         runner::NativeRunner,
         snapshot::{GitSnapshotSource, SourceKind},
     },
@@ -127,4 +127,67 @@ fn logging_uses_injected_filters_and_invalid_values_have_a_stable_default() {
         Logging::new(&MapEnv::default()).filter().to_string(),
         "info"
     );
+}
+
+#[test]
+fn native_logs_use_logfmt_without_changing_json_stdout() -> Result<()> {
+    let (document, records) = native_verify_logs(&[(LOG_FILTER, "orly=debug")])?;
+    let expected = [
+        "level=debug scope=cli event=command_started msg=\"native command started\"".into(),
+        "level=debug scope=cli event=command_failed msg=\"native command finished\"".into(),
+        format!(
+            "level=err scope=cli event=command_failed error_code={} msg=\"native command refused\"",
+            document["reason"].as_str().unwrap()
+        ),
+    ];
+    assert_eq!(records.lines().count(), expected.len(), "{records}");
+    for (record, expected) in records.lines().zip(expected) {
+        let (timestamp, fields) = record.split_once(' ').unwrap();
+        assert!(
+            timestamp
+                .strip_prefix("ts_ms=")
+                .unwrap()
+                .parse::<u64>()
+                .unwrap()
+                > 0
+        );
+        assert_eq!(fields, expected);
+    }
+    Ok(())
+}
+
+#[test]
+fn native_failure_logs_remain_visible_when_environment_filters_are_off() -> Result<()> {
+    for environment in [
+        vec![(LOG_FILTER, "off")],
+        vec![(LOG_FILTER, "orly=off")],
+        vec![(LOG_LEVEL, "off")],
+    ] {
+        let (document, records) = native_verify_logs(&environment)?;
+        assert_eq!(records.lines().count(), 1, "{records}");
+        assert!(records.contains(&format!(
+            "level=err scope=cli event=command_failed error_code={} msg=\"native command refused\"",
+            document["reason"].as_str().unwrap()
+        )));
+    }
+    Ok(())
+}
+
+fn native_verify_logs(environment: &[(&str, &str)]) -> Result<(serde_json::Value, String)> {
+    let repository = tempfile::tempdir()?;
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_orly"))
+        .args([
+            "--root",
+            repository.path().to_str().unwrap(),
+            "--json",
+            "verify",
+        ])
+        .env_remove(LOG_FILTER)
+        .env_remove(LOG_LEVEL)
+        .envs(environment.iter().copied())
+        .output()?;
+    assert_eq!(output.status.code(), Some(2));
+    let document: serde_json::Value = serde_json::from_slice(&output.stdout)?;
+    assert_eq!(document["state"], "failed");
+    Ok((document, String::from_utf8(output.stderr)?))
 }

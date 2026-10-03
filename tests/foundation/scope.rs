@@ -141,11 +141,15 @@ fn configured_untracked_configuration_matches_captured_bytes() -> Result<()> {
 fn snapshot_capture_refuses_special_untracked_inputs_without_reading_them() -> Result<()> {
     let repository = Repository::new()?;
     std::fs::create_dir(repository.root().join("directory"))?;
-    let status = std::process::Command::new("mkfifo")
-        .arg(repository.root().join("pipe"))
-        .status()?;
-    assert!(status.success());
-    for name in ["directory", "pipe"] {
+    #[cfg(unix)]
+    nix::unistd::mkfifo(
+        &repository.root().join("pipe"),
+        nix::sys::stat::Mode::S_IRUSR,
+    )?;
+    for name in ["directory"]
+        .into_iter()
+        .chain(cfg!(unix).then_some("pipe"))
+    {
         let path = RelativePath::new(name)?;
         let result = orly::core::snapshot::Snapshot::capture_dependencies(
             repository.root(),
@@ -160,14 +164,33 @@ fn snapshot_capture_refuses_special_untracked_inputs_without_reading_them() -> R
     Ok(())
 }
 
+#[cfg(unix)]
 #[test]
 fn working_tree_capture_refuses_a_tracked_file_replaced_by_a_named_pipe() -> Result<()> {
     let repository = Repository::new()?;
     std::fs::remove_file(repository.root().join("source.txt"))?;
-    let status = std::process::Command::new("mkfifo")
-        .arg(repository.root().join("source.txt"))
-        .status()?;
-    assert!(status.success());
+    nix::unistd::mkfifo(
+        &repository.root().join("source.txt"),
+        nix::sys::stat::Mode::S_IRUSR,
+    )?;
+    let result = GitSnapshotSource::new(
+        repository.root(),
+        SourceKind::WorkingTree {
+            untracked: BTreeSet::new(),
+        },
+        "HEAD",
+        None,
+    )
+    .capture("configuration".into());
+    assert!(matches!(result, Err(Error::Invalid(_))));
+    Ok(())
+}
+
+#[test]
+fn working_tree_capture_refuses_a_tracked_file_replaced_by_a_directory() -> Result<()> {
+    let repository = Repository::new()?;
+    std::fs::remove_file(repository.root().join("source.txt"))?;
+    std::fs::create_dir(repository.root().join("source.txt"))?;
     let result = GitSnapshotSource::new(
         repository.root(),
         SourceKind::WorkingTree {

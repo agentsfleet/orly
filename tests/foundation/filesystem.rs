@@ -1,4 +1,6 @@
-use crate::support::platform::{symlink_directory, symlink_file as symlink};
+#[cfg(unix)]
+use crate::support::platform::symlink_directory;
+use crate::support::platform::symlink_file as symlink;
 use orly::{Result, core::document::ObjectDocument};
 use orly_fs::digest::ContentDigest;
 use orly_fs::file_input::RegularInput;
@@ -13,25 +15,40 @@ struct Document {
 }
 
 #[test]
-fn anchored_writes_stay_in_the_open_directory_after_an_ancestor_swap() -> Result<()> {
+fn anchored_writes_keep_ownership_when_an_ancestor_swap_is_attempted() -> Result<()> {
     let root = tempfile::tempdir()?;
     let outside = tempfile::tempdir()?;
     fs::create_dir(root.path().join("managed"))?;
     let filesystem = RepositoryFs::open(root.path())?;
     let path = RelativePath::new("managed/input")?;
     let write = filesystem.atomic(&path)?;
-    fs::rename(root.path().join("managed"), root.path().join("original"))?;
-    symlink_directory(outside.path(), root.path().join("managed"))?;
-    write.write(b"owned", 0o640)?;
-    assert_eq!(fs::read(root.path().join("original/input"))?, b"owned");
-    assert!(!outside.path().join("input").exists());
-    assert!(filesystem.read(&path, 16).is_err());
-    assert!(filesystem.write(&path, b"refused", 0o600).is_err());
-    assert!(filesystem.remove(&path).is_err());
-    assert!(filesystem.link(&path, "target").is_err());
-    assert!(filesystem.lock_file(&path).is_err());
-    assert!(!outside.path().join("input").exists());
-    Ok(())
+    let swapped = fs::rename(root.path().join("managed"), root.path().join("original"));
+    #[cfg(windows)]
+    {
+        const SHARING_VIOLATION: i32 = 32;
+        // cap-std denies directory deletion sharing, so the attempted swap must fail.
+        assert_eq!(swapped.unwrap_err().raw_os_error(), Some(SHARING_VIOLATION));
+        write.write(b"owned", 0o640)?;
+        assert_eq!(fs::read(root.path().join("managed/input"))?, b"owned");
+        assert!(!root.path().join("original").exists());
+        assert!(!outside.path().join("input").exists());
+        return Ok(());
+    }
+    #[cfg(unix)]
+    {
+        swapped?;
+        symlink_directory(outside.path(), root.path().join("managed"))?;
+        write.write(b"owned", 0o640)?;
+        assert_eq!(fs::read(root.path().join("original/input"))?, b"owned");
+        assert!(!outside.path().join("input").exists());
+        assert!(filesystem.read(&path, 16).is_err());
+        assert!(filesystem.write(&path, b"refused", 0o600).is_err());
+        assert!(filesystem.remove(&path).is_err());
+        assert!(filesystem.link(&path, "target").is_err());
+        assert!(filesystem.lock_file(&path).is_err());
+        assert!(!outside.path().join("input").exists());
+        Ok(())
+    }
 }
 
 #[test]
@@ -39,7 +56,10 @@ fn regular_inputs_refuse_directories_and_byte_overflow() -> Result<()> {
     let root = tempfile::tempdir()?;
     fs::write(root.path().join("input"), b"12345")?;
     assert!(RegularInput::open(&root.path().join("input"), 4).is_err());
-    assert!(RegularInput::open(root.path(), 16).is_err());
+    assert!(matches!(
+        RegularInput::open(root.path(), 16),
+        Err(orly_fs::Error::Invalid(reason)) if reason == "input must be a regular file"
+    ));
     let input = RegularInput::open(&root.path().join("input"), 5)?;
     fs::write(root.path().join("input"), b"123456")?;
     assert!(input.read().is_err());

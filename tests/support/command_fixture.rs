@@ -24,6 +24,7 @@ fn run() -> Result<()> {
         Some("linger") => std::thread::sleep(Duration::from_secs(3)),
         Some(operation @ ("detached" | "parent-sleep" | "grandchild")) => spawn_child(operation)?,
         Some("signal") => std::process::abort(),
+        Some("interpreter-search") => assert_interpreters_absent()?,
         Some("mutate") => std::fs::write("source.txt", b"changed")?,
         Some("environment") => {
             println!(
@@ -47,6 +48,20 @@ fn run() -> Result<()> {
                 io::ErrorKind::InvalidInput,
                 "unknown fixture operation",
             ));
+        }
+    }
+    Ok(())
+}
+
+fn assert_interpreters_absent() -> Result<()> {
+    for interpreter in ["bun", "node", "python", "python3", "bash", "sh"] {
+        match Command::new(interpreter).output() {
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+            output => {
+                return Err(io::Error::other(format!(
+                    "{interpreter} must be unavailable: {output:?}"
+                )));
+            }
         }
     }
     Ok(())

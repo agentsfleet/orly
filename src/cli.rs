@@ -96,14 +96,14 @@ pub struct CliOutcome {
 impl Cli {
     pub fn run(&self) -> Result<CliOutcome> {
         let event = RUN_STARTED;
-        tracing::debug!(event, scope = CLI_SCOPE, "native command started");
+        crate::core::logging::Logging::debug(CLI_SCOPE, event, "native command started");
         let outcome = self.dispatch();
         let event = if outcome.is_ok() {
             RUN_COMPLETED
         } else {
             RUN_FAILED
         };
-        tracing::debug!(event, scope = CLI_SCOPE, "native command finished");
+        crate::core::logging::Logging::debug(CLI_SCOPE, event, "native command finished");
         outcome
     }
     fn dispatch(&self) -> Result<CliOutcome> {

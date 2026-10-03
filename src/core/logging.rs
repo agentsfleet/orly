@@ -1,12 +1,15 @@
 use super::env::EnvSource;
-use std::io::IsTerminal;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tracing::level_filters::LevelFilter;
-use tracing_subscriber::{EnvFilter, layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_subscriber::{
+    EnvFilter, Layer, filter::FilterExt, layer::SubscriberExt, util::SubscriberInitExt,
+};
 
 pub const LOG_FILTER: &str = "RUST_LOG";
 pub const LOG_LEVEL: &str = "ORLY_LOG_LEVEL";
 const DEFAULT_LEVEL: LevelFilter = LevelFilter::INFO;
-const NO_COLOR: &str = "NO_COLOR";
+const DEBUG_LEVEL: &str = "debug";
+const ERROR_LEVEL: &str = "err";
 
 pub struct Logging<'a> {
     environment: &'a dyn EnvSource,
@@ -36,15 +39,44 @@ impl<'a> Logging<'a> {
 impl Logging<'_> {
     pub fn install(&self) -> bool {
         tracing_subscriber::registry()
-            .with(self.filter())
             .with(
-                tracing_subscriber::fmt::layer()
+                tracing_logfmt::builder()
+                    .with_timestamp(false)
+                    .with_level(false)
+                    .with_target(false)
+                    .layer()
                     .with_writer(std::io::stderr)
-                    .with_ansi(
-                        std::io::stderr().is_terminal() && self.environment.get(NO_COLOR).is_none(),
-                    ),
+                    .with_filter(self.filter().or(LevelFilter::WARN)),
             )
             .try_init()
             .is_ok()
+    }
+
+    pub fn debug(scope: &str, event: &str, message: &str) {
+        tracing::debug!(
+            ts_ms = Self::timestamp(),
+            level = DEBUG_LEVEL,
+            scope,
+            event,
+            msg = message
+        );
+    }
+
+    pub fn error(scope: &str, event: &str, error_code: &str, message: &str) {
+        tracing::error!(
+            ts_ms = Self::timestamp(),
+            level = ERROR_LEVEL,
+            scope,
+            event,
+            error_code,
+            msg = message
+        );
+    }
+
+    fn timestamp() -> u128 {
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis()
     }
 }

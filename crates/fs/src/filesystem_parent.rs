@@ -17,6 +17,14 @@ impl Parent {
     }
 
     pub(super) fn regular_with(&self, options: &OpenOptions) -> Result<File> {
+        match self.directory.symlink_metadata(&self.name) {
+            Ok(metadata) if !metadata.is_file() => {
+                return Err(Error::Invalid(REGULAR_INPUT_REQUIRED.into()));
+            }
+            Ok(_) => {}
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => return Err(error.into()),
+        }
         let file = self.directory.open_with(&self.name, options)?.into_std();
         if !file.metadata()?.is_file() {
             return Err(Error::Invalid(REGULAR_INPUT_REQUIRED.into()));

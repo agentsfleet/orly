@@ -54,6 +54,7 @@ toml = "1.1.6"
 tokio = { version = "1.53.1", default-features = false }
 subc-jobobject = "0.1.1"
 tracing = "0.1.44"
+tracing-logfmt = { version = "0.3.7", default-features = false }
 tracing-subscriber = { version = "0.3.23" }
 tree-sitter = "0.26.3"
 tree-sitter-bash = "0.25.1"
@@ -75,6 +76,7 @@ tokio = { workspace = true, features = ["rt", "process", "io-util", "time"] }
 toml = { workspace = true }
 reqwest = { workspace = true, default-features = false, features = ["rustls", "json"], optional = true }
 tracing = { workspace = true }
+tracing-logfmt = { workspace = true }
 tracing-subscriber = { workspace = true, features = ["env-filter"] }
 anstyle = { workspace = true }
 shlex = { workspace = true }

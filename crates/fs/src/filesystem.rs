@@ -151,15 +151,17 @@ impl RepositoryFs {
         staged.symlink_contents(target, LINK_STAGE)?;
         #[cfg(windows)]
         {
+            // Native Windows symlink targets require native separators, including parent paths.
+            let target: PathBuf = Path::new(target).components().collect();
             let destination = Path::new(path.as_str()).parent().unwrap_or(Path::new(""));
             if self
                 .directory
-                .metadata(destination.join(target))
+                .metadata(destination.join(&target))
                 .is_ok_and(|metadata| metadata.is_dir())
             {
-                staged.symlink_dir(target, LINK_STAGE)?;
+                staged.symlink_dir(&target, LINK_STAGE)?;
             } else {
-                staged.symlink_file(target, LINK_STAGE)?;
+                staged.symlink_file(&target, LINK_STAGE)?;
             }
         }
         staged.rename(LINK_STAGE, &parent.directory, &parent.name)?;

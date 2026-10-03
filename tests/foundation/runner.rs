@@ -115,30 +115,50 @@ fn test_native_runner_bounds_and_reaps() -> Result<()> {
         (vec![executable, "grandchild"], "command_descendant_leak"),
     ] {
         let mut command = Repository::command(&argv);
-        command.deadline_seconds = 1;
+        // Output volume and timeout are independent limits; Windows pipe reads need more time.
+        command.deadline_seconds = if reason == "command_output_limit" {
+            10
+        } else {
+            1
+        };
         let context = repository.context(command)?;
         let execution = NativeRunner.run(&context, &context.configuration.commands["conform"])?;
-        assert_eq!(execution.invocation.result, CriterionResult::failed(reason));
-        assert!(execution.stdout.len() <= MAX_OUTPUT_BYTES);
-        assert!(execution.stderr.len() <= MAX_OUTPUT_BYTES);
-        if reason == "command_output_limit" {
-            assert!(!execution.invocation.output_complete);
-        }
-        if reason == "command_signal" {
-            assert_eq!(execution.invocation.signal, Some(6));
-        }
-        if reason == "command_descendant_leak" {
-            let pid = std::str::from_utf8(&execution.stdout)
-                .unwrap()
-                .trim()
-                .parse::<i32>()
-                .unwrap();
-            process::assert_process_exited(pid);
-        }
-        let evidence = serde_json::to_string(&execution.invocation)?;
-        assert!(!evidence.contains("stdout\""));
-        assert!(!evidence.contains("source.txt"));
+        assert_bounded_failure(&execution, reason, &argv)?;
     }
+    Ok(())
+}
+
+fn assert_bounded_failure(
+    execution: &orly::core::runner::Execution,
+    reason: &str,
+    argv: &[&str],
+) -> Result<()> {
+    assert_eq!(
+        execution.invocation.result,
+        CriterionResult::failed(reason),
+        "{argv:?}: stdout={} stderr={}",
+        execution.stdout.len(),
+        execution.stderr.len()
+    );
+    assert!(execution.stdout.len() <= MAX_OUTPUT_BYTES);
+    assert!(execution.stderr.len() <= MAX_OUTPUT_BYTES);
+    if reason == "command_output_limit" {
+        assert!(!execution.invocation.output_complete);
+    }
+    if reason == "command_signal" {
+        assert_eq!(execution.invocation.signal, Some(6));
+    }
+    if reason == "command_descendant_leak" {
+        let pid = std::str::from_utf8(&execution.stdout)
+            .unwrap()
+            .trim()
+            .parse::<i32>()
+            .unwrap();
+        process::assert_process_exited(pid);
+    }
+    let evidence = serde_json::to_string(&execution.invocation)?;
+    assert!(!evidence.contains("stdout\""));
+    assert!(!evidence.contains("source.txt"));
     Ok(())
 }
 

@@ -33,7 +33,17 @@ impl RelocatedBinary {
     }
 
     fn run(&self, root: &Path, args: &[&str], exit: i32) -> Result<serde_json::Value> {
-        let mut command = Command::new(self.directory.path().join(engine_name()));
+        let output = self
+            .command(root, &self.directory.path().join(engine_name()))
+            .arg("--json")
+            .args(args)
+            .output()?;
+        assert_eq!(output.status.code(), Some(exit), "{args:?}: {output:?}");
+        Ok(serde_json::from_slice(&output.stdout)?)
+    }
+
+    fn command(&self, root: &Path, executable: &Path) -> Command {
+        let mut command = Command::new(executable);
         command
             .current_dir(root)
             .env_clear()
@@ -43,9 +53,23 @@ impl RelocatedBinary {
             "SystemRoot",
             std::env::var_os("SystemRoot").unwrap_or_default(),
         );
-        let output = command.arg("--json").args(args).output()?;
-        assert_eq!(output.status.code(), Some(exit), "{args:?}: {output:?}");
-        Ok(serde_json::from_slice(&output.stdout)?)
+        command
+    }
+
+    fn assert_no_interpreters(&self) -> Result<()> {
+        let probe = self.directory.path().join(format!(
+            "interpreter-search{}",
+            std::env::consts::EXE_SUFFIX
+        ));
+        fs::copy(crate::support::probe::executable(), &probe)?;
+        // Windows searches the parent's executable directory and environment as well as PATH.
+        let output = self
+            .command(self.directory.path(), &probe)
+            .arg("interpreter-search")
+            .output()?;
+        assert!(output.status.success(), "{output:?}");
+        fs::remove_file(probe)?;
+        Ok(())
     }
 }
 
@@ -90,14 +114,7 @@ fn provide_git(source: &Path, directory: &Path) -> Result<()> {
 fn test_foundation_binary_works_without_interpreters() -> Result<()> {
     let repository = Repository::new()?;
     let binary = RelocatedBinary::new()?;
-    for interpreter in ["bun", "node", "python", "python3", "bash", "sh"] {
-        let error = Command::new(interpreter)
-            .env_clear()
-            .env("PATH", binary.directory.path())
-            .output()
-            .expect_err("interpreter must be absent from the fixture search path");
-        assert_eq!(error.kind(), std::io::ErrorKind::NotFound);
-    }
+    binary.assert_no_interpreters()?;
     repository.write(CONFIG_PATH, NATIVE_CONFIG)?;
     let root = repository.root();
     let rendered = binary.run(root, &["render"], 0)?;
