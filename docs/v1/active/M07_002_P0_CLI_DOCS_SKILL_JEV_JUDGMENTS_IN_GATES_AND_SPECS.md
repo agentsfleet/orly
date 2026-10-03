@@ -16,13 +16,13 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** M07
 **Workstream:** 002
 **Date:** Sep 30, 2026: 09:48 AM
-**Status:** PENDING
+**Status:** IN_PROGRESS
 **Priority:** P0 — Jev is a required built-in capability of the single release
 **Categories:** Command-Line Interface (CLI), Documentation (DOCS), Infrastructure (INFRA), Agent Skills (SKILL)
 **Terms:** Continuous Integration (CI); null-byte-delimited paths; KiB = kibibytes; MiB = mebibytes.
 **Batch:** B2 — parallel with M07_003 and M07_004 after the B1 interface revision
-**Branch:** pending — set at CHORE(open)
-**Baseline revision:** pending — record the full comparison commit at CHORE(open)
+**Branch:** feat/m07-jev-judgments
+**Baseline revision:** e804c6c888ff804183d3a4cc0cb4b60a0d9ebb0e
 **Test Baseline:** pending — measure unit and integration lanes before the Pull Request (PR)
 **Baseline evidence:** pending — report comparison revision, commands, counts, obligations, and environment
 **Depends on:** M07_005 §§1–4 only. Coverage and rule delivery provide optional evidence at B3 integration, never prerequisites for this lane.
@@ -48,7 +48,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 - **Intent:** Make Jev useful across the important semantic gaps without handing it approvals, gate authority, filesystem paths, or command construction.
 - **Authoring handshake:** This is a spec/design revision, not implementation or permission to publish.
 - **ASSUMPTIONS I'M MAKING:** Jev means the TypeSafe System One model, not a Rust interpreter or reasoning agent. Fresh inference is probabilistic. Exact validated recorded answers make replay reproducible. Live upload is explicit; offline gates read matching records only.
-- **Implementer handshake:** pending until PLAN; restate intent, scope, and source authority before code.
+- **Implementer handshake:** Typed Jev answers support bounded semantic plans; Rust retains exact checks, approval, execution, and exit authority. The approved shared prerequisite changes and lane implementation land in one Pull Request.
 
 ## Implementing agent — read these first
 
@@ -71,6 +71,7 @@ Paths name approved roles. B1 freezes an expanded per-file inventory before impl
 | tests/judge.rs, tests/judge_replay.rs, tests/judge_evals.rs | CREATE | Provider-boundary, replay, and calibration proofs |
 | tools/xtask/src/judge.rs | CREATE | Offline corpus validation and explicit live evaluation |
 | docs/fragments/judge.md | CREATE | Lane-owned setup/reference fragment merged by M07_001 |
+| Cargo.toml, Cargo.lock, src/error.rs, tools/xtask/src/main.rs | EDIT | Approved prerequisite: syntax parsers, preserved causes, judge-check registration |
 
 ## Applicable Rules
 
@@ -277,6 +278,7 @@ The lane implements questions, client, replay, and calibration independently of 
 
 ## Discovery (consult log)
 
+- **Scope approval** — Indy (Oct 03, 2026): "yes approved, i assume all go into the  PR you create for spec  M07_002" — approves the shared prerequisite files listed above in this lane's Pull Request. Release integration remains M07_001's work.
 - **Consults** — Verified current HTTP API, Models, Confidence, citation checks, and parallel-question guidance on Sep 30, 2026. [TypeSafe API](https://docs.typesafe.ai/api) defines the wire types; [Models](https://docs.typesafe.ai/models) recommends pinned versions; [Confidence](https://docs.typesafe.ai/confidence) describes uncertainty. No fresh-call identity guarantee is assumed. User direction requires Jev in significant areas; advisory policy and concrete acceptance thresholds are agent design decisions, not measured results.
 - **Metrics review** — No new analytics funnel. Local diagnostics and the existing consented telemetry retain separate privacy rules.
 - **Skill-chain outcomes** — Source/spec adversarial review performed during authoring; native implementation, live calibration, platform journeys, and boundary verification remain pending.
