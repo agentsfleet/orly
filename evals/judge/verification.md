@@ -132,7 +132,10 @@ Public command registration and its specified incomplete exit status belong to M
 
 ## Remaining proof and release ownership
 
-Dimension 4.2 is in progress, with no deferral or owner sign-off recorded.
+Dimension 4.2 is in progress; no owner sign-off on labels is recorded.
+Indy approved opening the Pull Request with this proof required before merge.
+The verbatim "Yes go" acknowledgement is recorded in the spec's Discovery section.
+It authorizes the `spec.dimensions` publication exception, not measured accuracy or label approval.
 Its required inputs are an owner-reviewed frozen label commit, authorized runtime key,
 and independent coding-agent held-out predictions.
 The live evaluator must then record tuning and three fresh held-out repeats per family.

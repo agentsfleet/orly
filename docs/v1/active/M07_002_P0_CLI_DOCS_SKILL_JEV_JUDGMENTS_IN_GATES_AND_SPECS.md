@@ -24,7 +24,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Branch:** feat/m07-jev-judgments
 **Baseline revision:** e804c6c888ff804183d3a4cc0cb4b60a0d9ebb0e
 **Test Baseline:** unit=268 integration=n/a — no declared integration lane; Pull Request (PR) boundary runs the declared unit lane
-**Baseline evidence:** evals/judge/verification.md — comparison revision, commands, measured counts, native proof limits, and environment
+**Baseline evidence:** evals/judge/verification.md
 **Depends on:** M07_005 §§1–4 only. Coverage and rule delivery provide optional evidence at B3 integration, never prerequisites for this lane.
 **Provenance:** Revised from the Sep 23 draft by Codex after the Rust/Jev direction on Sep 30, 2026; source review at `c02f1e02806204811401b01596a04ff4c039d02a`.
 **Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §M07 target: one native engine with bounded Jev judgments
@@ -283,4 +283,5 @@ The lane implements questions, client, replay, and calibration independently of 
 - **Consults** — Verified current HTTP API, Models, Confidence, citation checks, and parallel-question guidance on Sep 30, 2026. [TypeSafe API](https://docs.typesafe.ai/api) defines the wire types; [Models](https://docs.typesafe.ai/models) recommends pinned versions; [Confidence](https://docs.typesafe.ai/confidence) describes uncertainty. No fresh-call identity guarantee is assumed. User direction requires Jev in significant areas; advisory policy and concrete acceptance thresholds are agent design decisions, not measured results.
 - **Metrics review** — No new analytics funnel. Local diagnostics and the existing consented telemetry retain separate privacy rules.
 - **Skill-chain outcomes** — One gstack review and its native adversarial pass found four defects; all were fixed and regression-tested. Post-review judge targets: 47 passed, zero failed. Default and transport-feature Clippy passed. Evidence and skill ledgers: `evals/judge/verification.md`. No repeated review or convergence claim; live calibration and final Pull Request gate remain pending.
-- **Deferrals** — None recorded. The explicit native-command OpenCode guarantee replaces the former executable plugin approach; no missing required release proof is treated as deferred.
+- **Publication exception** — Opening the Pull Request before Dimension 4.2 completes is approved. The spec remains active; live Jev proof is required before merge.
+> Indy (Oct 03, 2026: 05:52 PM): "Yes go" — context: approves the proposed `spec.dimensions` exception to open M07_002 while live Jev proof remains required before merge.
