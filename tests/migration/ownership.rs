@@ -27,7 +27,7 @@ fn state_directory_replacement_refuses_effects_and_preserves_recovery() -> Resul
     let config = Repository::configuration(Repository::command(&[TRUE_COMMAND]))?;
     let binary = Path::new(env!("CARGO_BIN_EXE_orly"));
     let planner = InstallPlanner::new(&state, &payload, &config, binary, false, false);
-    let mut manifest = planner.plan()?;
+    let manifest = planner.plan()?;
     manifest.save(&state)?;
     let _lock = InstallationLock::acquire(&state)?;
     let directory = Git::state_path(root, STATE_DIRECTORY)?;
@@ -46,6 +46,7 @@ fn state_directory_replacement_refuses_effects_and_preserves_recovery() -> Resul
     }
     #[cfg(unix)]
     {
+        let mut manifest = manifest;
         replaced?;
         fs::create_dir(&directory)?;
         assert!(
