@@ -16,14 +16,14 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** M08
 **Workstream:** 001
 **Date:** Oct 04, 2026
-**Status:** PENDING
+**Status:** IN_PROGRESS
 **Priority:** P1 — prove useful review guidance before choosing another runtime
 **Categories:** CLI DOCS SKILL
 **Batch:** B1 — one workstream
-**Branch:** pending — set at CHORE(open)
-**Baseline revision:** pending — set at CHORE(open)
-**Test Baseline:** pending — measure before a Pull Request
-**Baseline evidence:** pending — local command log with revision and counts
+**Branch:** feat/m08-jev-typescript-011
+**Baseline revision:** bc3e62f14c5ad420c6986bda4155f11c1470b8c3
+**Test Baseline:** unit 268 passed, 0 failed; no separate integration command is declared
+**Baseline evidence:** `/private/tmp/orly-ts-011-Oct_04_13_50/baseline-unit.log` — `bun test src`, Bun on macOS; 268 tests across 23 files
 **Depends on:** none
 **Provenance:** agent-generated from Indy's explicit TypeScript experiment request, Oct 04, 2026
 **Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §§Gates, Evidence, TypeScript judgment experiment
