@@ -21,6 +21,4 @@ gstack/
 .claude/scheduled_tasks.lock
 /coverage/
 .npmrc
-target/
-.orly/bin/
-.orly/hooks/
+.oracle/judgments/

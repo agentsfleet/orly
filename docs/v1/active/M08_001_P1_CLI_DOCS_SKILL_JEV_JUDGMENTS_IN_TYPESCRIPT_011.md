@@ -73,7 +73,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | Native-only schema files added by `e804c6c` | Remove native configuration, decision, delivery and evidence schemas |
 | `.github/workflows/native-foundation.yml` | Remove the canceled engine's workflow as part of explicit Rust removal |
 | `evals/judge/`, `docs/fragments/judge.md`, `docs/v1/{pending,active,done}/M07_*` | Archive then remove superseded native work and plans |
-| `evals/judgments/*.md` | New TypeScript experiment report and questionnaire |
+| `evals/judgments/*.md` | TypeScript experiment report, questionnaire and verification ledger |
 | `docs/v1/{pending,active,done}/M08_001_*` | This workstream and measured results |
 | Fresh private `agentsfleet` worktree | Controlled consumer edits and local installation; no original checkout edits |
 
@@ -102,7 +102,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | Governance invariance | yes | `make audit`, questionnaire, comprehension check |
 | Secret scanning | yes | `gitleaks` before commits and every live upload |
 | Work and verification | yes | Declared `make conform` and `bun test src` |
-| PR boundary | only if a PR is requested | No publication or merge in this experiment |
+| PR boundary | yes, existing PR update authorized | Existing branch and PR; no package publication or merge |
 
 ## Prior-Art / Reference Implementations
 
@@ -111,7 +111,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | `src/cli.ts`, `src/model.ts`, `src/git_env.ts` | Existing entrypoint, errors, bounded inputs and child Git environment |
 | Inspected `agentsfleet` `cli/src/services/http-client.ts` | Timeouts, structured failures, opt-in authorization and redaction |
 | TypeSafe official API, `https://docs.typesafe.ai/api` | Choice and Noul formats; state as data; response validation |
-| TypeScript compiler API documentation | Complete function and test selection without text-based syntax guesses |
+| Babel parser documentation, `https://babeljs.io/docs/babel-parser` | JavaScript syntax parsing with TypeScript support; no compiler executable in the installed runtime |
 | Bun package documentation | Existing package command and local package trial |
 
 Canonical Supabase and command-line reference checkouts are absent locally. The existing consumer implementation supplies language prior art; no repository is cloned.
@@ -120,35 +120,35 @@ Canonical Supabase and command-line reference checkouts are absent locally. The 
 
 ### §1 — Remove the canceled engine
 
-- [ ] **Dimension 1.1** — Preserve dirty native work in a private backup before deletion. → Test `backup_preserves_native_changes`
-- [ ] **Dimension 1.2** — Remove native implementation, fixtures, workflow and superseded Milestone 07 plans, while retaining independent rules. → Test `native_files_are_removed`
-- [ ] **Dimension 1.3** — Keep the Bun package executable and deterministic gates usable. → Test `existing_commands_remain_usable`
+- **Dimension 1.1** — DONE — Preserve dirty native work in a private backup before deletion. → Test `backup_preserves_native_changes`
+- **Dimension 1.2** — DONE — Remove native implementation, fixtures, workflow and superseded Milestone 07 plans, while retaining independent rules. → Test `native_files_are_removed`
+- **Dimension 1.3** — DONE — Keep the Bun package executable and deterministic gates usable. → Test `existing_commands_remain_usable`
 
 ### §2 — Select bounded, atomic evidence
 
-- [ ] **Dimension 2.1** — Validate a manifest containing a stage and named question items with required behavior and source references. → Test `manifest_rejects_invalid_items`
-- [ ] **Dimension 2.2** — Select complete TypeScript functions, named tests, Markdown sections or bounded whole files from inside the project root. → Test `evidence_selects_complete_units`
-- [ ] **Dimension 2.3** — Reject missing required evidence, duplicates, excessive inputs, path escape and ambiguous symbols before network access. → Test `evidence_refuses_unsafe_context`
+- **Dimension 2.1** — DONE — Validate a manifest containing a stage and named question items with required behavior and source references. → Test `manifest_rejects_invalid_items`
+- **Dimension 2.2** — DONE — Select complete TypeScript functions, named tests, Markdown sections or bounded whole files from inside the project root. → Test `evidence_selects_complete_units`
+- **Dimension 2.3** — DONE — Reject missing required evidence, duplicates, excessive inputs, path escape and ambiguous symbols before network access. → Test `evidence_refuses_unsafe_context`
 
 ### §3 — Request typed advice safely
 
-- [ ] **Dimension 3.1** — Require explicit `--refresh`, runtime credentials and a passing secret scan for a live request. → Test `unsafe_upload_never_calls_provider`
-- [ ] **Dimension 3.2** — Bound request count, bytes and duration; abort fetch and body reading together without automatic retries. → Test `transport_bounds_and_cancels_work`
-- [ ] **Dimension 3.3** — Validate complete provider answers and distributions before choosing cataloged advice. → Test `provider_answers_are_validated`
-- [ ] **Dimension 3.4** — Replay only exact model, question, requirement and selected-source identities; changed inputs remain incomplete. → Test `replay_rejects_stale_and_tampered_data`
+- **Dimension 3.1** — DONE — Require explicit `--refresh`, runtime credentials and a passing secret scan for a live request. → Test `unsafe_upload_never_calls_provider`
+- **Dimension 3.2** — DONE — Bound request count, bytes and duration; abort fetch and body reading together without automatic retries. → Test `transport_bounds_and_cancels_work`
+- **Dimension 3.3** — DONE — Validate complete provider answers and distributions before choosing cataloged advice. → Test `provider_answers_are_validated`
+- **Dimension 3.4** — DONE — Replay only exact model, question, requirement and selected-source identities; changed inputs remain incomplete. → Test `replay_rejects_stale_and_tampered_data`
 
 ### §4 — Expose advice at the right stage
 
-- [ ] **Dimension 4.1** — Route `orly judge <plan|verify|review|document> --input <path>` through the shipped entrypoint. → Test `installed_command_reads_manifest`
-- [ ] **Dimension 4.2** — Print fixed next actions, uncertainty, references, timing and usage; never claim model approval. → Test `advice_stays_in_catalog`
-- [ ] **Dimension 4.3** — Document atomic inputs and criteria, and optional invocation before implementation and accepting test evidence. → Test `help_matches_question_catalog`
-- [ ] **Dimension 4.4** — Keep hooks offline and keep all deterministic gate outcomes independent of model answers. → Test `gate_commands_remain_offline`
+- **Dimension 4.1** — DONE — Route `orly judge <plan|verify|review|document> --input <path>` through the shipped entrypoint. → Test `installed_command_reads_manifest`
+- **Dimension 4.2** — DONE — Print fixed next actions, uncertainty, references, timing and usage; never claim model approval. → Test `advice_stays_in_catalog`
+- **Dimension 4.3** — DONE — Document atomic inputs and criteria, and optional invocation before implementation and accepting test evidence. → Test `help_matches_question_catalog`
+- **Dimension 4.4** — DONE — Keep hooks offline and keep all deterministic gate outcomes independent of model answers. → Test `gate_commands_remain_offline`
 
 ### §5 — Test the unpublished package in the consumer
 
-- [ ] **Dimension 5.1** — Install the local 0.11.0 package in a new `agentsfleet` worktree and verify normal setup. → Test `consumer_installs_local_package`
-- [ ] **Dimension 5.2** — Compare a healthy exact assertion, a seeded wrong locale with a weak assertion, and the strengthened assertion on identical code. → Test `stronger_assertion_catches_seeded_bug`
-- [ ] **Dimension 5.3** — Repeat live advice on the controlled cases, record every response, and report useful actions, misses, variability, cost inputs and limits. → Test `live_controls_have_complete_receipts`
+- **Dimension 5.1** — DONE — Install the local 0.11.0 package in a new `agentsfleet` worktree and verify normal setup. → Test `consumer_installs_local_package`
+- **Dimension 5.2** — DONE — Compare a healthy exact assertion, a seeded wrong locale with a weak assertion, and the strengthened assertion on identical code. → Test `stronger_assertion_catches_seeded_bug`
+- **Dimension 5.3** — DONE — Repeat live advice on the controlled cases, record every response, and report useful actions, misses, variability, cost inputs and limits. → Test `live_controls_have_complete_receipts`
 
 ## Interfaces
 
@@ -217,15 +217,23 @@ Unit and integration audit skills run over changed source. Adversarial review fo
 
 | Outcome | Verify | Expected | Graded |
 |---|---|---|---|
-| Canceled native implementation removed | `git ls-files '*.rs' Cargo.toml rust-toolchain.toml` | zero retained engine paths in final commit | pending |
-| Source conforms | `make conform` | exit 0 | pending |
-| Declared unit lane holds | `bun test src` | zero failures; count and baseline recorded | pending |
-| Governance remains invariant | `make audit` | ALL CHECKS PASSED | pending |
-| Evaluation fixtures valid | `make llmevals CHECK=1` | exit 0 | pending |
-| Unsafe upload and stale replay refused | `bun test src/judgments` | zero failures | pending |
-| Consumer installation works | named local package trial | version 0.11.0 and doctor pass | pending |
-| Useful advice demonstrated | controlled consumer trial | weak assertion found; stronger test fails on seeded bug | pending |
-| Limitations reported | experiment report | all controls, misses and uncertainty recorded | pending |
+| Canceled native implementation removed | `git ls-files '*.rs' Cargo.toml rust-toolchain.toml` | zero retained engine paths in final commit | 293 archived paths; zero retained on disk (`native-removal-check.log`) |
+| Source conforms | `make conform` | exit 0 | exit 0 through final `make audit` |
+| Declared unit lane holds | `bun test src` | zero failures; count and baseline recorded | 339 passed; zero failed; baseline 268; growth 71 |
+| Governance remains invariant | `make audit` | ALL CHECKS PASSED | ALL CHECKS PASSED; size 37781/37888 bytes |
+| Evaluation fixtures valid | `make llmevals CHECK=1` | exit 0 | 57 valid fixtures; exit 0 |
+| Unsafe upload and stale replay refused | `bun test src/judgments` | zero failures | 71 passed; zero failed; 210 assertions |
+| Consumer installation works | named local package trial | version 0.11.0 and doctor pass | 0.11.0; doctor exit 0; macOS and Linux aarch64 package checks |
+| Useful advice demonstrated | controlled consumer trial | weak assertion found; stronger test fails on seeded bug | weak 49/0; exact on same bug 48/1; Jev weak 3/3 |
+| Limitations reported | experiment report | all controls, misses and uncertainty recorded | 19 final replies recorded; planning uncertainty retained |
+
+### Completion checks still open
+
+The implementation Dimensions above are called and tested, but the workstream remains `IN_PROGRESS`.
+The required gstack review repaired defects across three fix cycles; it stopped at its invocation limit without a final zero-edit adversarial pass.
+The manual live rules-comprehension smoke check remains incomplete because one agent could not authenticate and another exhausted its account quota.
+These are unfinished checks, not owner-approved deferrals; no clean-review or merge-readiness claim is made.
+Sources: [verification ledger](../../../evals/judgments/verification.md), `llmevals-smoke.log`, and `comprehension-diagnostic.log` under the private receipt root.
 
 ## Dead Code Sweep
 
@@ -266,3 +274,4 @@ Unit and integration audit skills run over changed source. Adversarial review fo
 - Native work was archived at `/private/tmp/orly-ts-011-Oct_04_13_50/removed-rust-backup` before removal. The original unrelated `SOUL_LOG.md` remains unchanged.
 - User decisions govern teardown. Jev advice remains explicit and cannot dispose of a gate finding.
 - **Oct 04, 2026: 02:05 PM:** Indy requested the existing branch and PR, a push, TypeScript 7 and Bun. No Node runtime is supported.
+- **Oct 04, 2026:** Indy clarified: "this is an extention of 0.10.x type of install and the focus is on judgement". Use `bunx`; retain Bun source execution and keep TypeScript 7 as development tooling. Evidence selection uses a JavaScript parser without a native compiler dependency in the shipped runtime. Installation checks focus on macOS and Linux.
