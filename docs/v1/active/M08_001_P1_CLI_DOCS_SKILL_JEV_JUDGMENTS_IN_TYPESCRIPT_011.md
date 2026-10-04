@@ -23,7 +23,8 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Branch:** feat/m07-jev-judgments
 **Baseline revision:** bc3e62f14c5ad420c6986bda4155f11c1470b8c3
 **Test Baseline:** unit=268 — 0 failed; no separate integration command is declared
-**Baseline evidence:** `/private/tmp/orly-ts-011-Oct_04_13_50/baseline-unit.log` — `bun test src`, Bun on macOS; 268 tests across 23 files
+**Baseline evidence:** evals/judgments/verification.md
+**Baseline command:** `bun test src`, Bun on macOS; 268 passed, zero failed across 23 files; raw receipt `/private/tmp/orly-ts-011-Oct_04_13_50/baseline-unit.log`
 **Depends on:** none
 **Provenance:** agent-generated from Indy's explicit TypeScript experiment request, Oct 04, 2026
 **Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §§Gates, Evidence, TypeScript judgment experiment
