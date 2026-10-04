@@ -118,9 +118,9 @@ PY
   ok "$name"
 }
 
-# Hooks need a persistent executable; initialization alone does not install one.
-install_readme_installs_executable_before_init() {
-  local name="README installs the executable before initializing hooks"
+# bunx runs setup; existing hooks still need an executable on their search path.
+install_readme_uses_bunx_and_names_hook_prerequisite() {
+  local name="README uses bunx and names the hook executable prerequisite"
   local section
   section="$(awk '/^## Install/{flag=1; next} /^## /{flag=0} flag' "$ROOT/README.md")"
   if [[ -z "$section" ]]; then bad "$name" "no '## Install' section found"; return; fi
@@ -130,7 +130,10 @@ install_readme_installs_executable_before_init() {
   if [[ "$blocks" -ne 1 ]]; then bad "$name" "expected exactly 1 bash command block, found $blocks"; return; fi
   local commands
   commands="$(printf '%s\n' "$section" | awk '/^```bash$/{block=1; next} /^```$/{block=0} block')"
-  if [[ "$commands" != $'bun add -g @agentsfleet/orly\norly init' ]]; then bad "$name" "expected executable installation followed by init: $commands"; return; fi
+  if [[ "$commands" != 'bunx --bun @agentsfleet/orly init' ]]; then bad "$name" "expected the bunx initialization command: $commands"; return; fi
+  if [[ "$section" != *'Existing Git hooks require `orly` on `PATH`'* ]]; then
+    bad "$name" "missing the hook executable prerequisite"; return
+  fi
   ok "$name"
 }
 

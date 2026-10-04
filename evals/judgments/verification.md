@@ -150,7 +150,14 @@ The live check remains incomplete; no owner-approved deferral or passing evidenc
 The first remote audit and coverage runs each failed the three real scanner tests because Gitleaks was unavailable.
 The audit recorded 336 passed and three failed; the scanner error appears at `ci-audit-failed.log:443`.
 Indy subsequently requested repair of the harness and coverage jobs. Both workflows now install Gitleaks 8.30.1 through pinned mise-action before running the existing suites (`.github/workflows/harness.yml`, `.github/workflows/test.yml`).
-Hosted verification of this repair remains pending; the separately proposed release-workflow edit is outside this repair's scope.
+Hosted coverage at `ed9b237` passed 339 tests with zero failures and 910 assertions; line coverage was 96% (2847/2943), above 90%.
+The [coverage run](https://github.com/agentsfleet/orly/actions/runs/37212507132) also passed scanner setup and upload.
+The [harness run](https://github.com/agentsfleet/orly/actions/runs/37212507140) passed its audit, then failed the README check's global-install expectation.
+That check now requires the owner-requested bunx command and preserves the existing hook executable prerequisite.
+Local `make install-evals` reports 23 passed and zero failed (`ci-readme-install-evals.log`).
+Scratch README mutations with the wrong command or missing hook prerequisite each fail (`ci-readme-mutations.log`).
+Follow-up hosted results are tracked in [pull request 53](https://github.com/agentsfleet/orly/pull/53).
+The separately proposed release-workflow edit remains outside this repair's scope.
 No test was skipped and no assertion was weakened.
 
 The source sweep retains independent Rust authoring rules and prior records; all 293 archived teardown paths are absent (`native-removal-check.log`).

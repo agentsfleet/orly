@@ -74,6 +74,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | Native-only schema files added by `e804c6c` | Remove native configuration, decision, delivery and evidence schemas |
 | `.github/workflows/native-foundation.yml` | Remove the canceled engine's workflow as part of explicit Rust removal |
 | `.github/workflows/harness.yml`, `.github/workflows/test.yml` | Install pinned Gitleaks before the existing audit and coverage suites; explicitly requested by Indy |
+| `evals/install/release_cases.sh` | Align the harness README check with Indy's explicit bunx setup and retain the existing hook executable prerequisite |
 | `evals/judge/`, `docs/fragments/judge.md`, `docs/v1/{pending,active,done}/M07_*` | Archive then remove superseded native work and plans |
 | `evals/judgments/*.md` | TypeScript experiment report, questionnaire and verification ledger |
 | `docs/v1/{pending,active,done}/M08_001_*` | This workstream and measured results |
@@ -239,7 +240,10 @@ Sources: [verification ledger](../../../evals/judgments/verification.md), `llmev
 
 The first remote audit and coverage runs each failed three real scanner tests because their runners lack Gitleaks.
 Indy authorized repair of the harness and coverage jobs: "well the CI jobs harness, test-coverage fails, fix that" (Continuous Integration).
-Those two workflows now install pinned Gitleaks before the existing suites; hosted verification remains pending.
+Those two workflows now install pinned Gitleaks before the existing suites; hosted coverage passed at `ed9b237` with 339 tests and 96% line coverage.
+The harness then reached a README check that required the rejected global-install command; the check now requires bunx and the existing hook prerequisite.
+Local `make install-evals` now reports 23 passed and zero failed (`ci-readme-install-evals.log`); wrong-command and missing-prerequisite mutations each fail (`ci-readme-mutations.log`).
+Sources: [coverage run](https://github.com/agentsfleet/orly/actions/runs/37212507132), [harness run](https://github.com/agentsfleet/orly/actions/runs/37212507140). Follow-up hosted results are tracked in [pull request 53](https://github.com/agentsfleet/orly/pull/53).
 The separately proposed release-workflow change remains outside this repair's scope.
 Sources: `ci-audit-failed.log:443`, `ci-coverage-failed.log:394`, and `ci-proposal/scanner-setup.patch` under the private receipt root.
 
