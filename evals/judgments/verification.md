@@ -100,6 +100,8 @@ These are targeted regression-killing proofs, not a full mutation-testing campai
 | Baseline `bun test src` at `bc3e62f14c5ad420c6986bda4155f11c1470b8c3` | 268 passed; zero failed; 700 assertions; 23 files (`baseline-unit.log`) |
 | Final `make audit` | 339 passed; zero failed; 910 assertions; 35 files (`audit-final-339.log`) |
 | `bun test src/judgments --coverage --randomize --seed 104` | 71 passed; zero failed; 210 assertions; 12 files (`judgments-final-coverage.log`) |
+| Full `bun test src --coverage --coverage-reporter=lcov --coverage-reporter=text` | 339 passed; zero failed; 910 assertions (`full-coverage-final.log`) |
+| Existing workflow's line-coverage calculation | 96% (2847/2943) against the unchanged 90% floor (`coverage-floor-final.log`) |
 | `make llmevals CHECK=1` | 57 valid fixtures; no live calls (`llmevals-check.log`) |
 | Generated-rules invariance | 19 dispatch entries; 10 trigger extensions; 9 lifecycle stages; 6 bans; 37,781 bytes against 37,888 (`audit-final-339.log`) |
 | Prompt questionnaire | 180 of 180 answers YES ([questionnaire](questionnaire.md)) |
@@ -144,6 +146,11 @@ The outside review provider was disabled by the installed review configuration; 
 The live rules-comprehension smoke run failed: Claude could not authenticate, and OpenCode exceeded its account quota.
 Codex and Amp each answered the selected question correctly (`llmevals-smoke.log`, `comprehension-diagnostic.log`).
 The live check remains incomplete; no owner-approved deferral or passing evidence is recorded.
+
+The first remote audit and coverage runs each failed the three real scanner tests because Gitleaks was unavailable.
+The audit recorded 336 passed and three failed; the scanner error appears at `ci-audit-failed.log:443`.
+A pinned test-tool setup patch for the three Bun verification workflows is prepared privately; workflow-edit approval remains pending under `AGENTS.md:72–73`.
+No test was skipped and no assertion was weakened.
 
 The source sweep retains independent Rust authoring rules and prior records; all 293 archived teardown paths are absent (`native-removal-check.log`).
 The questionnaire's Scenario 26 introduction still names the canceled Milestone 07 plan (`audits/agents-md.md:335`).

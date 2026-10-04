@@ -22,7 +22,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Batch:** B1 — one workstream
 **Branch:** feat/m07-jev-judgments
 **Baseline revision:** bc3e62f14c5ad420c6986bda4155f11c1470b8c3
-**Test Baseline:** unit 268 passed, 0 failed; no separate integration command is declared
+**Test Baseline:** unit=268 — 0 failed; no separate integration command is declared
 **Baseline evidence:** `/private/tmp/orly-ts-011-Oct_04_13_50/baseline-unit.log` — `bun test src`, Bun on macOS; 268 tests across 23 files
 **Depends on:** none
 **Provenance:** agent-generated from Indy's explicit TypeScript experiment request, Oct 04, 2026
@@ -232,8 +232,13 @@ Unit and integration audit skills run over changed source. Adversarial review fo
 The implementation Dimensions above are called and tested, but the workstream remains `IN_PROGRESS`.
 The required gstack review repaired defects across three fix cycles; it stopped at its invocation limit without a final zero-edit adversarial pass.
 The manual live rules-comprehension smoke check remains incomplete because one agent could not authenticate and another exhausted its account quota.
-These are unfinished checks, not owner-approved deferrals; no clean-review or merge-readiness claim is made.
+These checks remain open; no clean-review or merge-readiness claim is made.
 Sources: [verification ledger](../../../evals/judgments/verification.md), `llmevals-smoke.log`, and `comprehension-diagnostic.log` under the private receipt root.
+
+The first remote audit and coverage runs each failed three real scanner tests because their runners lack Gitleaks.
+A pinned test-tool setup patch for the three Bun verification workflows is prepared privately, with approval pending under `AGENTS.md:72–73`.
+The workflow files remain outside the approved edit scope; the patch adds a test dependency and preserves the existing release guard.
+Sources: `ci-audit-failed.log:443`, `ci-coverage-failed.log:394`, and `ci-proposal/scanner-setup.patch` under the private receipt root.
 
 ## Dead Code Sweep
 
