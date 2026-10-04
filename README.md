@@ -42,78 +42,17 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
-## 0.12.0: native Rust engine
+## 0.11.0 experiment: explicit Jev advice
 
-The 0.12.0 release combines the Rust foundation, Jev System One decisions,
-coverage, and rule enforcement. The [architecture](docs/ORLY_ARCHITECTURE.md)
-defines their shared boundaries; the implementation specs track completion.
-Installation instructions for the current 0.10 release follow this section.
+The Bun command line adds `orly judge` for selected planning, test, review and
+documentation questions.
 
-### Installation and project layout
+- **Judgments** — selected evidence produces a fixed next action; existing checks retain control of gate results.
+- **Installation** — `bunx` runs the source package through Bun, continuing the `0.10.x` setup on macOS and Linux.
 
-One Cargo package provides a reusable Rust library and the `orly` executable.
-Users install through Cargo or download a prebuilt release archive for their platform.
-Cargo builds the source package; prebuilt downloads let users run orly without installing Rust.
-The 0.12.0 release supports Linux and macOS. Windows support is parked and is not included in this release.
-
-Project setup runs inside the Rust binary.
-
-After installation, `orly init` copies the verified executable into ignored `.orly/bin/orly-0.12.0` and writes committed configuration and rules.
-
-```text
-your-repo/
-├── AGENTS.md              project-owned instructions
-└── .orly/
-    ├── orly.json          pinned version, packs, policy, and command declarations
-    ├── AGENTS.md          generated operating rules
-    ├── dispatch/          selected rule pages
-    ├── docs/              selected supporting documents
-    └── bin/orly-0.12.0    verified local executable; ignored
-```
-
-Local caches and reports use worktree-specific Git state. Each clone runs setup to install its local executable and hooks.
-
-Migration preserves project-owned content and hooks. For `agentsfleet`, explicit `--no-hooks` installation preserves its custom Git hooks.
-
-### What the Rust engine captures and checks
-
-An **immutable snapshot** fixes the input bytes for one assessment and plan.
-With `--staged`, it uses Git index contents, including staged versions that differ from files currently open in your editor.
-The snapshot contains source bytes, changed ranges, path/mode metadata, and captured configuration, rule versions, and source identities.
-
-Required unchanged context comes from the same captured tree. Restaging or changing relevant configuration invalidates the old plan.
-
-**Bounded semantic evidence** is the selected context a Jev question needs.
-A test question can include a complete changed function, a linked test assertion, the required behavior, and fixed answer options.
-Defaults limit state to 16 kibibytes (KiB) and the complete request to 24 KiB.
-
-Missing or oversized context produces an incomplete result; orly preserves complete semantic units instead of silently cutting them.
-Live upload requires an enabled capability, a provider key, explicit `--allow-upload`, and successful credential scanning.
-
-**Exact facts** are computed values: changed paths, source identities, applicable rules, command results, and matching coverage hits.
-**Mandatory checks** test those facts against the selected repository rules.
-
-Examples include engine-version agreement, valid configuration, declared error codes, file-length limits, and required changed-line coverage.
-A passing model answer cannot remove a mandatory check.
-
-Native diagnostics use `logfmt` on standard error, with timestamps, event names,
-and stable error codes. Errors remain visible when logging filters are off.
-`--json` keeps standard output as one JSON document.
-
-### Assess, plan, and run
-
-`orly assess --staged --allow-upload` requests bounded Jev decisions for staged changes.
-`orly plan --staged --replay-only` combines exact facts, recorded decisions, and project policy into known steps and dependencies.
-
-`orly run --plan <PLAN_PATH>` validates the saved plan and runs its declared commands against captured source bytes.
-`<PLAN_PATH>` is the file containing the saved plan.
-
-Choice selects known recipes, Noul evaluates independent conditions, and Score ranks known candidates.
-Fresh answers can vary; the same recorded answers, snapshot, policy, and engine identity produce the same plan.
-
-Offline hooks use recorded answers. Missing semantic answers remain visible while independent exact checks can still run.
-
-See the [architecture](docs/ORLY_ARCHITECTURE.md#adaptable-decision-runtime-choice-noul-and-score) for decision boundaries and required project trials.
+Use `orly judge --help` and the [judgment reference](docs/JUDGMENTS.md) for the
+manifest, atomic criteria and explicit source upload. The local 0.11.0 package
+is unpublished; install the current published package for ordinary use.
 
 ---
 
@@ -136,17 +75,17 @@ See the [architecture](docs/ORLY_ARCHITECTURE.md#adaptable-decision-runtime-choi
 Run this inside the repository you want governed.
 
 ```bash
-bun add -g @agentsfleet/orly
-orly init
+bunx --bun @agentsfleet/orly init
 ```
 
 orly scans your source, detects your languages, and installs only the rules that apply.
 
 > [!TIP]
-> Try `orly init --dry-run` first. It previews the generated rules and changes nothing.
+> Try `bunx --bun @agentsfleet/orly init --dry-run` first. It previews the generated rules and changes nothing.
 
-The Git hooks use the installed `orly` executable. Keep it on `PATH`.
-Complete any setup items printed by `init`, then run `orly doctor` and commit the generated files.
+Complete any setup items printed by `init`, then run `bunx --bun @agentsfleet/orly doctor` and commit the generated files.
+Use `bunx --bun @agentsfleet/orly <COMMAND>` for the commands below; `<COMMAND>` names the command and its options.
+Existing Git hooks require `orly` on `PATH`, as in `0.10.x`; the judgment experiment does not replace those hooks.
 
 Teammates get the rules on clone and run `orly init` to install their hooks.
 

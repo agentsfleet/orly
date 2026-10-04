@@ -83,6 +83,15 @@ codebase, and it's the artifact that makes "is the skill applied?" auditable.
 
 ## Three execution modes
 
+**Optional Jev advice:** Before accepting a linked test as proof, describe its
+required behavior in a `verify.assertion` manifest with complete implementation
+and test evidence. Use `orly judge verify --input <manifest>` for exact replay;
+`--refresh` explicitly permits scanned source upload. Use `orly judge --help`
+for the manifest and limits.
+A weak assertion answer suggests an exact-result assertion. Run that assertion
+against correct and controlled incorrect behavior. Jev advice never supplies
+test results, waives missing coverage or changes a deterministic gate.
+
 Pick one. Don't run all categories on every file.
 
 | Mode | When | Required categories |

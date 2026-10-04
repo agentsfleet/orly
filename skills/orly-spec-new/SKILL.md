@@ -60,6 +60,13 @@ Determinism starts here. Before copying the template:
 
 ## Step 2 — Lock review-readiness (so the PR ships clean)
 
+**Optional Jev advice:** After capturing one concrete requirement, prepare a
+`plan` manifest for `plan.prerequisites` or `plan.observable_result`.
+Use `orly judge plan --input <manifest>` for exact offline replay. Add
+`--refresh` only when selected source upload is authorized; use
+`orly judge --help` for the manifest and limits. Inspect uncertain or adverse answers before accepting
+the plan. Advice never replaces this skill's checklist or owner decisions.
+
 This is the step that prevents greptile findings — the spec becomes a pre-commitment to the rules its code must obey:
 
 - **Applicable Rules** — name the *specific* `docs/greptile-learnings/RULES.md` rule IDs the diff will trip (e.g. NDC, NLR, NLG, UFS), plus the per-surface dispatch façades / rule files: `dispatch/write_zig.md` (`*.zig`), `docs/REST_API_DESIGN_GUIDELINES.md` (`src/http/handlers/**`), `docs/SCHEMA_CONVENTIONS.md` (`schema/*`), `dispatch/write_ts_adhere_bun.md`, `docs/LOGGING_STANDARD.md`, `docs/LIFECYCLE_PATTERNS.md`. Generic "follow RULES.md" earns a greptile finding; named IDs the implementer obeys by construction do not. Cite rule docs by their repo-local `docs/…` paths — the selected packs materialise them into every repository; cite only files that exist here (`test -f` each).

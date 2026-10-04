@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "orly_version": "0.10.14",
+  "orly_version": "0.11.0",
   "packs": [
     "universal.authoring",
     "language.zig",
