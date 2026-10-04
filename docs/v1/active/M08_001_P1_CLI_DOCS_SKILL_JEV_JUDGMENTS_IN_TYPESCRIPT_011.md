@@ -73,6 +73,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | `fixtures/layout-0.10/`, `fixtures/port/`, `fixtures/projects/`, `fixtures/questions/`, `questions/` | Remove native migration and judgment fixtures |
 | Native-only schema files added by `e804c6c` | Remove native configuration, decision, delivery and evidence schemas |
 | `.github/workflows/native-foundation.yml` | Remove the canceled engine's workflow as part of explicit Rust removal |
+| `.github/workflows/harness.yml`, `.github/workflows/test.yml` | Install pinned Gitleaks before the existing audit and coverage suites; explicitly requested by Indy |
 | `evals/judge/`, `docs/fragments/judge.md`, `docs/v1/{pending,active,done}/M07_*` | Archive then remove superseded native work and plans |
 | `evals/judgments/*.md` | TypeScript experiment report, questionnaire and verification ledger |
 | `docs/v1/{pending,active,done}/M08_001_*` | This workstream and measured results |
@@ -237,8 +238,9 @@ These checks remain open; no clean-review or merge-readiness claim is made.
 Sources: [verification ledger](../../../evals/judgments/verification.md), `llmevals-smoke.log`, and `comprehension-diagnostic.log` under the private receipt root.
 
 The first remote audit and coverage runs each failed three real scanner tests because their runners lack Gitleaks.
-A pinned test-tool setup patch for the three Bun verification workflows is prepared privately, with approval pending under `AGENTS.md:72–73`.
-The workflow files remain outside the approved edit scope; the patch adds a test dependency and preserves the existing release guard.
+Indy authorized repair of the harness and coverage jobs: "well the CI jobs harness, test-coverage fails, fix that" (Continuous Integration).
+Those two workflows now install pinned Gitleaks before the existing suites; hosted verification remains pending.
+The separately proposed release-workflow change remains outside this repair's scope.
 Sources: `ci-audit-failed.log:443`, `ci-coverage-failed.log:394`, and `ci-proposal/scanner-setup.patch` under the private receipt root.
 
 ## Dead Code Sweep

@@ -149,7 +149,8 @@ The live check remains incomplete; no owner-approved deferral or passing evidenc
 
 The first remote audit and coverage runs each failed the three real scanner tests because Gitleaks was unavailable.
 The audit recorded 336 passed and three failed; the scanner error appears at `ci-audit-failed.log:443`.
-A pinned test-tool setup patch for the three Bun verification workflows is prepared privately; workflow-edit approval remains pending under `AGENTS.md:72–73`.
+Indy subsequently requested repair of the harness and coverage jobs. Both workflows now install Gitleaks 8.30.1 through pinned mise-action before running the existing suites (`.github/workflows/harness.yml`, `.github/workflows/test.yml`).
+Hosted verification of this repair remains pending; the separately proposed release-workflow edit is outside this repair's scope.
 No test was skipped and no assertion was weakened.
 
 The source sweep retains independent Rust authoring rules and prior records; all 293 archived teardown paths are absent (`native-removal-check.log`).
