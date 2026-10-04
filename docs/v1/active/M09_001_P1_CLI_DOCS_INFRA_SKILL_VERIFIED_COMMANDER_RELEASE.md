@@ -16,12 +16,12 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** M09
 **Workstream:** 001
 **Date:** Oct 04, 2026
-**Status:** PENDING
+**Status:** IN_PROGRESS
 **Priority:** P1 — install and verify the package used in `agentsfleet`
 **Categories:** CLI DOCS INFRA SKILL (command-line interface, documentation, infrastructure, skills)
 **Batch:** B1 — one release stream; remote delegation stays disabled
-**Branch:** pending — set at CHORE(open)
-**Baseline revision:** pending — record the full comparison commit at CHORE(open)
+**Branch:** feat/m09-verified-012
+**Baseline revision:** 41850ee0d2893857c301ce3d07380415c5aa5861
 **Test Baseline:** pending — measure declared unit and integration lanes before the Pull Request
 **Baseline evidence:** pending — report revision, environment, commands and passed/failed/skipped counts
 **Depends on:** M08_001 implementation; its unfinished review and comprehension checks remain required here before closure
