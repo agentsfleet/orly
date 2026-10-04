@@ -20,7 +20,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Priority:** P1 — prove useful review guidance before choosing another runtime
 **Categories:** CLI DOCS SKILL
 **Batch:** B1 — one workstream
-**Branch:** feat/m08-jev-typescript-011
+**Branch:** feat/m07-jev-judgments
 **Baseline revision:** bc3e62f14c5ad420c6986bda4155f11c1470b8c3
 **Test Baseline:** unit 268 passed, 0 failed; no separate integration command is declared
 **Baseline evidence:** `/private/tmp/orly-ts-011-Oct_04_13_50/baseline-unit.log` — `bun test src`, Bun on macOS; 268 tests across 23 files
@@ -265,3 +265,4 @@ Unit and integration audit skills run over changed source. Adversarial review fo
 - **Oct 04, 2026: 01:50 PM:** Indy requested a 0.11 experiment, a new `agentsfleet` worktree, and removal of Rust work and pending Jev/native specs.
 - Native work was archived at `/private/tmp/orly-ts-011-Oct_04_13_50/removed-rust-backup` before removal. The original unrelated `SOUL_LOG.md` remains unchanged.
 - User decisions govern teardown. Jev advice remains explicit and cannot dispose of a gate finding.
+- **Oct 04, 2026: 02:05 PM:** Indy requested the existing branch and PR, a push, TypeScript 7 and Bun. No Node runtime is supported.
