@@ -94,7 +94,7 @@ Brace groups enumerate the only planned files in each group. Production catalog 
 
 - `src/spec_rehearsal.test.ts`: disposable repositories with actual gate refusals and observable behavior.
 - `src/judgments/questions.ts`, `src/judgments/replay.ts`: fixed questions and exact identity; editable replay is not independent measurement.
-- `src/command_runner.ts`: deadlines, bounded output and owned process cleanup; reuse for task execution.
+- `src/command_process.ts`: reuse its supervisor from an evaluator-owned adapter in `comparison/tasks.ts`. `src/command_runner.ts` retains failure receipts and returns prose; leave both production files unchanged. The adapter owns structured result capture and temporary-directory cleanup.
 - `evals/release/inventory.ts`: changed source invalidates prior evidence; bind final results similarly.
 - `docs/TEMPLATE.md` command-line guidance: separate parsing, pure decisions and rendering. The evaluation is a contributor command, so no new public verb or configuration setting is needed.
 
@@ -110,11 +110,11 @@ Prerequisite: opening metadata committed from current main. No provider credenti
 
 ### §2 — Establish independent labels and discriminating controls
 
-Depends on §1. Cover healthy, defective, ambiguous and insufficient-evidence cases for each baseline and candidate question, with at least two development and two held-out cases per class. Split by originating defect family before prompt tuning; copied mutations stay in one split. These are minimum corpus requirements, not an accuracy claim.
+Depends on §1. Cover healthy, defective, ambiguous and insufficient-evidence cases for each baseline and candidate question, with at least two independently resolved development and two independently resolved held-out cases per class. Pending/disputed cases do not satisfy these minimums. Split by originating defect family before prompt tuning; copied mutations stay in one split. These are minimum corpus requirements, not an accuracy claim.
 
-- **Dimension 2.1** — Labels name an independent behavioral oracle or reviewer, rationale and source. Freeze labels before consuming model answers; pending/disputed labels are unscored. Never claim the fixture author independently reviewed their own labels. → Test `labels_require_independent_evidence`
+- **Dimension 2.1** — Each label records task class, expected native answer, rationale, source/revision, fixture author and independent oracle or reviewer, plus adjudication status. A reviewer must differ from the fixture author; an oracle must ground the expected answer outside the evaluated implementation/reply. An independence flag alone is insufficient. Freeze before observing answers; absent support or insufficient resolved counts makes `--check` fail. → Test `labels_require_independent_evidence`
 - **Dimension 2.2** — Pair weak-pass, exact-fail and repair-pass controls on one fixed requirement; cover circular expectations, omitted obligations, uncalled helpers, unrelated negative tests and superficial repairs. → Test `controls_discriminate_wrong_implementations`
-- **Dimension 2.3** — Report defect recall, false concerns, ambiguous abstentions, insufficient-context detection, invalid/unavailable replies and unsupported completion separately, with numerators and denominators. Empty denominators are unavailable, not perfect scores. → Test `metrics_preserve_missing_outcomes`
+- **Dimension 2.3** — Freeze the per-question mappings and denominator rules in Interfaces before reading observations. Score native-answer correctness separately from task health; retain invalid/unavailable attempts. Empty denominators and distinctions the answer format cannot express are unavailable, not perfect scores. → Test `metrics_preserve_missing_outcomes`
 
 ### §3 — Evaluate complete tasks with hidden assertions
 
@@ -123,7 +123,9 @@ Depends on §1–§2. Build at least five task families: missing obligation, mis
 - **Dimension 3.1** — Record initial/final source, installed package identity, allowed actions, command arguments, exits and cleanup; stale or incomplete task receipts refuse scoring. → Test `task_receipts_bind_actual_execution`
 - **Dimension 3.2** — Hidden behavioral assertions reject each false completion even when submitted tests pass; labels and hidden assertions cannot enter the actor payload. → Test `hidden_assertions_reject_false_completion`
 - **Dimension 3.3** — Distinguish completed, failed and truthfully blocked tasks; a missing permission cannot count as completed, and blocked prose cannot conceal a failed required assertion. → Test `task_outcomes_preserve_authority`
-- **Dimension 3.4** — Enforce deadline/output bounds and cleanup on failure, timeout and interruption; scripted local controls make zero provider requests. → Test `offline_tasks_bound_and_clean_owned_work`
+- **Dimension 3.4** — The evaluator owns workspace, receipts and processes. Capture source/command identity, actual exit or explicit unavailable exit, failure kind, elapsed time and output counts before cleanup. For success, nonzero exit, timeout, excessive output and handled interruption, stop/reap owned processes and remove both temporary directories; preserve an unrelated sentinel. Missing results remain incomplete. Scripted controls make zero provider requests. → Test `offline_tasks_bound_and_clean_owned_work`
+
+Cleanup runs under an outer evaluation owner so stopping a task or its supervisor cannot bypass it. Abrupt loss of that owner cannot promise immediate cleanup: record ownership at creation, refuse a clean receipt, and recover only its verified stale resources on restart. No cleanup scans or removes another run's paths/processes. The durable bounded report survives cleanup outside temporary directories; hidden expectations never enter it.
 
 Actual fresh commander sessions and new live Jev responses remain excluded. Scripted task runs verify the evaluator and deterministic behavior; reports must identify them as scripted and leave autonomous model completion unmeasured. Stored observations are eligible only when their source, question, split and independent-label provenance match exactly.
 
@@ -134,19 +136,21 @@ Depends on §2–§3. Evaluate each candidate against the same held-out task fam
 - **Dimension 4.1** — Synthetic replies, owner-editable replay, missing independent labels, insufficient samples and unmatched comparison inputs cannot qualify for adoption; emit one reasoned retain/reject/eligible decision per candidate. → Test `adoption_requires_independent_measured_benefit`
 - **Dimension 4.2** — Default 0.12.0 decision retains all six runtime questions when live evidence is unavailable; no new question is registered merely because an offline suite passes. → Test `unmeasured_candidates_remain_evaluation_only`
 
-Independently reviewed historical observations may be imported; unresolved label disagreements require a separate reviewer or Indy to adjudicate before they contribute to semantic scores. Absence blocks that score and adoption, while deterministic evaluator checks can still complete. Any new model-assisted labeling or live comparison requires renewed approval. The existing `0.8` advice threshold remains uncalibrated and unchanged.
+Independently reviewed historical observations may be imported; unresolved label disagreements require a separate reviewer or Indy to adjudicate. Missing observations block accuracy claims and adoption, but do not block an independently grounded offline corpus. Unresolved labels cannot satisfy §2 or release acceptance. Any new model-assisted labeling or live comparison requires renewed approval. The existing `0.8` advice threshold remains uncalibrated and unchanged.
 
 ### §5 — Preserve package behavior and deliver 0.12.0 for review
 
 Depends on §1–§4. Keep actual measurements distinct from missing live evidence. Current package/runtime sources, not M08 completion markers, govern this work.
 
-- **Dimension 5.1** — Exercise packaged 0.12.0 setup/update in disposable repositories: preserve the 0.11.0 `.orly/` managed layout and rewritten Markdown references, owner bytes, hook choices, commands, conflict refusal and interrupted recovery; remote sentinel never runs and failed local checks stay failed. → Test `package_preserves_ownership_recovery_and_gates`
+- **Dimension 5.1** — Exercise packaged 0.12.0 setup/update in disposable repositories: preserve the inherited `.orly/` layout/references, owner bytes, hook choices, conflict refusal and interrupted recovery. Real generated hooks must run the digest-bound candidate through real `bunx`, observe successful checks and actually run failing checks; package-resolution failure is not gate-refusal proof. Remote sentinel calls remain zero. Dedicated 0.11-to-0.12 migration proof is owner-excluded. → Test `package_preserves_ownership_recovery_and_gates`
 - **Dimension 5.2** — Synchronize version, help/reference claims, changelog and evaluation report; package output identifies 0.12.0 and the actual six-question catalog. → Test `test_e2e_package_reports_evaluated_scope`
 - **Dimension 5.3** — Complete canonical checks, baseline delta, unit/integration audits, adversarial review and source-bound inventory; prepare one ready PR with all exclusions and exact receipts. → Test `release_evidence_matches_final_source`
 
 ## Interfaces
 
 **Inherited installed layout:** `src/installation/plan.ts` already maps managed audits, dispatch, standards, skills and hooks into `.orly/` and rewrites their Markdown references. Root instruction files and host skill directories retain thin discovery entries. Repository-owned specs and architecture stay under the consumer's `docs/`; this authoring repository retains root source paths. Test fresh and upgraded package contents and reference resolution, including skill instructions, with no duplicated root managed payload. This preserves 0.11.0 behavior; it is not a new migration.
+
+**Hook package binding:** Serve the packed candidate and pinned dependency closure from a disposable loopback registry with an isolated package cache/configuration. Use real generated hooks and real `bunx`; no resolver or gate-success stub. Record candidate tarball digest and the resolved entrypoint/dependency-tree digests, check them against the packed sources, and reject same-version/different-byte packages. Require a check-specific side effect before crediting a refusal. Missing package resolution is a separate failed setup result; registry/cache cleanup belongs to the evaluation owner. No live publication or public-registry fallback is allowed.
 
 | Candidate | Evidence required | Fixed next action |
 |---|---|---|
@@ -156,7 +160,17 @@ Depends on §1–§4. Keep actual measurements distinct from missing live eviden
 | `review.failure_coverage` | One failure scenario, handler and discriminating test | Add the missing negative proof |
 | `review.finding_resolution` | Original finding/path, repair diff and regression | Repair the cause or leave the finding open |
 
-The candidate schema belongs only to the evaluation corpus; `evidence.sufficiency` does not introduce a runtime stage. Candidate answers are `supported`, `defective`, `ambiguous` or `insufficient`; baseline answers retain their original types and an explicit mapping for comparison. No answer contains an executable command.
+The candidate schema belongs only to the evaluation corpus; `evidence.sufficiency` does not introduce a runtime stage. Baseline assessment uses the unchanged `src/judgments/advice.ts` threshold and native types. Task class and expected native answer are separate fields; applicability never implies a defective implementation. Freeze this mapping in `catalog.json` before observations. No answer contains an executable command.
+
+| Question | Scored meaning |
+|---|---|
+| `plan.prerequisites`, `plan.observable_result`, `review.failure_path`, `document.claim` | Confident yes supports that question's property; confident no detects that property's defect; uncertain answers abstain |
+| `review.rule_applicability` | Score yes/no against independently labeled applicability; a correct yes on healthy code is correct, not a false defect concern; defect metrics are unavailable for this question |
+| `verify.assertion` | Confident `exact` supports; confident `weak`, `wrong_target` or `missing` detects a defective assertion; `insufficient` requests context; other uncertain answers abstain |
+| All five candidates | `supported`, `defective`, `ambiguous`, `insufficient` map to the independently labeled property; explicit ambiguity and insufficiency are scored separately |
+
+**Denominators:** Native correctness = correct answers / all attempted resolved cases. Defect recall = correct defect detections / all attempted defective cases for an applicable question; invalid/unavailable replies are misses. False concerns report both observed false concerns / attempted healthy cases and the conservative bound (false concerns + invalid/unavailable healthy replies) / attempted healthy cases; adoption uses the bound. Ambiguous abstentions and explicit insufficient detections divide by all attempts in their respective classes. A yes/no abstention cannot distinguish those two classes: report shared abstention coverage and mark specific insufficiency detection unavailable. Zero attempts means unavailable. Report invalid/unavailable counts separately; do not drop attempts, select favorable retries or infer model observations from scripted controls.
+
 Contributor entrypoints: `bun evals/judgments/comparison/run.ts --check` validates the corpus; `--offline` runs deterministic controls and writes a source-bound local report. Both refuse live mode and unknown arguments. Report validation failure exits 2; a failed deterministic assertion exits 1; completed offline checks exit 0 with live metrics explicitly unavailable. Generated reports cannot serve as their own independent expectations.
 
 ## Failure Modes
@@ -165,13 +179,14 @@ Contributor entrypoints: `bun evals/judgments/comparison/run.ts --check` validat
 |---|---|
 | Missing evidence, unknown candidate or invalid class | Refuse before scoring; `candidate_inputs_are_complete` |
 | Shared development/held-out origin, duplicate case or changed digest | Reject contaminated/stale input; `comparison_rejects_invalid_provenance` |
-| Self-labeled model answers, unresolved disagreement or absent independent source | Keep semantic score unavailable; `labels_require_independent_evidence` |
+| Self-certified label, absent independent source or unresolved minimum corpus | `--check` exits 2; unresolved extras remain unscored and cannot fill a required group; `labels_require_independent_evidence` |
 | Truthy/circular assertion or test-only caller | Wrong implementation must fail independent oracle; `controls_discriminate_wrong_implementations` |
 | No observations, malformed reply, unavailable provider or missing repetition | Retain attempted outcome; no invented denominator or success; `metrics_preserve_missing_outcomes` |
 | Hidden assertion/label appears in actor inputs | Reject run as contaminated; `hidden_assertions_reject_false_completion` |
 | Edited receipt, different source or fake successful command | Refuse task result; `task_receipts_bind_actual_execution` |
 | Unsupported completion or instruction to waive a rule | Fail task, preserve owner boundary; `task_outcomes_preserve_authority` |
-| Timeout, oversized output or interrupted child | Stop owned work, retain failed result and remove owned temporary resources; `offline_tasks_bound_and_clean_owned_work` |
+| Timeout, oversized output, interrupted child or lost evaluation owner | Capture incomplete/failed result, stop owned work, clean both directories; lost-owner restart verifies ownership before recovery; `offline_tasks_bound_and_clean_owned_work` |
+| Same-version wrong package or missing package masquerades as failed check | Refuse mismatched digests; resolution failure gets no gate-refusal credit; `package_preserves_ownership_recovery_and_gates` |
 | Favorable synthetic score or inadequate sample | Refuse adoption; `adoption_requires_independent_measured_benefit` |
 | Edited owner file, unowned destination, interrupted install or enabled remote mode | Existing refusal/recovery guarantees hold; `package_preserves_ownership_recovery_and_gates` |
 | Version mismatch or unsupported published claim | Fail package/report proof; `test_e2e_package_reports_evaluated_scope` |
@@ -180,7 +195,7 @@ Contributor entrypoints: `bun evals/judgments/comparison/run.ts --check` validat
 
 1. Production ownership and deterministic gates remain authoritative; existing installer and gate tests plus package controls enforce them.
 2. Baseline identity covers exact six question definitions and model; changed definitions invalidate comparisons.
-3. Labels and held-out expectations never derive from evaluated replies; provenance checks reject missing evidence and split contamination.
+3. Labels and held-out expectations never derive from evaluated replies; provenance checks reject missing evidence and split contamination, and resolved-label minimums block an empty semantic corpus.
 4. Task actors receive only allowlisted workspace content; evaluator assertions remain outside it and are checked for disclosure.
 5. Every attempted observation is represented, and missing evidence cannot raise scores or count as task completion.
 6. Evaluation commands cannot issue provider calls or activate remote execution; refusal and sentinel tests enforce this.
@@ -204,16 +219,16 @@ Existing external telemetry is unchanged; these are local evaluation artifacts, 
 | 1.1 | unit | `comparison_preserves_runtime_baseline` | Exact catalog retained; altered instruction or action refuses comparison |
 | 1.2 | unit | `candidate_inputs_are_complete` | All five definitions validate; missing roles and unknown values refuse |
 | 1.3 | unit | `comparison_rejects_invalid_provenance` | Disjoint origins pass; overlap, duplicate or changed evidence refuses |
-| 2.1 | unit | `labels_require_independent_evidence` | Sourced oracle/reviewer accepted; self-certified, pending or disputed labels unscored |
+| 2.1 | unit | `labels_require_independent_evidence` | All-pending, missing-source and self-review corpora fail; resolved minimums without model observations pass validation only |
 | 2.2 | integration | `controls_discriminate_wrong_implementations` | Same defect weak-pass/exact-fail; repaired exact-pass across five candidate families |
-| 2.3 | unit | `metrics_preserve_missing_outcomes` | Exact counters and denominators; absent/invalid/unavailable attempts remain visible |
+| 2.3 | unit | `metrics_preserve_missing_outcomes` | Healthy/applicable/yes is correct; missing-prerequisite/no detects; 0.5 abstains without inventing insufficiency; zero responses unavailable; removing failures cannot improve scores |
 | 3.1 | integration | `task_receipts_bind_actual_execution` | Real Git/process receipts accepted; stale source and fabricated exits refuse |
 | 3.2 | integration | `hidden_assertions_reject_false_completion` | Every tempting false completion fails; actor inputs contain no hidden expectations |
 | 3.3 | integration | `task_outcomes_preserve_authority` | Healthy completes, defect fails, required permission blocks without completion credit |
-| 3.4 | integration | `offline_tasks_bound_and_clean_owned_work` | Timeout/output/interruption cleanup observed; provider and remote sentinel calls zero |
+| 3.4 | integration | `offline_tasks_bound_and_clean_owned_work` | All five exit paths capture results, leave no owned child/workspace/receipt directory, preserve unrelated sentinel; abrupt-owner-loss recovery refuses unverified ownership; provider/remote calls zero |
 | 4.1 | unit | `adoption_requires_independent_measured_benefit` | Each missing measurement/threshold/provenance requirement independently refuses adoption |
 | 4.2 | unit | `unmeasured_candidates_remain_evaluation_only` | Offline success produces retain decisions and unchanged six-question runtime |
-| 5.1 | integration | `package_preserves_ownership_recovery_and_gates` | Fresh/update retain `.orly/` payload and correct references, owner docs/bytes and recovery; local failure stays red |
+| 5.1 | integration | `package_preserves_ownership_recovery_and_gates` | Fresh/update preserve layout/owner bytes/recovery; real hooks run digest-matched candidate checks; wrong bytes refuse; missing package cannot satisfy failed-check proof; no dedicated 0.11 migration claim |
 | 5.2 | e2e | `test_e2e_package_reports_evaluated_scope` | Packed subprocess reports 0.12.0 and six questions; rejects unsupported inputs |
 | 5.3 | integration | `release_evidence_matches_final_source` | Required receipts match final inputs; changed source invalidates old review claims |
 
@@ -221,12 +236,12 @@ Existing external telemetry is unchanged; these are local evaluation artifacts, 
 
 | Outcome | Verify | Expected | Priority | Graded |
 |---|---|---|---|---|
-| Corpus, provenance and baseline valid | `bun evals/judgments/comparison/run.ts --check` | Exit 0; six baseline and five candidate definitions; all four classes in both splits; no unresolved scored labels | P0 | |
+| Corpus, provenance and baseline valid | `bun evals/judgments/comparison/run.ts --check` | Exit 0; six baseline and five candidates; at least two independently resolved cases per question/class/split; mappings frozen; pending/disputed cases excluded from minimums | P0 | |
 | Controls and task evaluation discriminate failures | `bun evals/judgments/comparison/run.ts --offline` | Exit 0; all negative controls caught; no unsupported completed task; missing live metrics explicitly unavailable | P0 | |
 | Conformity | `make conform` | Exit 0 | P0 | |
 | Declared unit and included integration lane | `bun test src` | Zero failures; comparison revision and passed/failed/skipped counts recorded | P0 | |
 | Governance and type checks | `make audit` | Exit 0; ALL CHECKS PASSED; current questionnaire and evidence recorded | P0 | |
-| Disposable package preservation | `make install-evals`; `bun test src/judgment_tasks.test.ts` | Zero failures; 0.12.0 package; `.orly/` managed references resolve; owner docs/bytes and recovery preserved | P0 | |
+| Disposable package preservation | `make install-evals`; `bun test src/judgment_tasks.test.ts` | Zero failures; digest-bound 0.12.0 hook success/failure observed; wrong-package and resolution controls rejected; `.orly/` references, owner bytes and recovery preserved; dedicated 0.11 migration excluded | P0 | |
 | Offline rules fixture validation | `make llmevals CHECK=1` | Exit 0; zero live requests; no live comprehension success claimed | P0 | |
 | Secret scanning | `gitleaks detect --redact` | Exit 0; zero leaks | P0 | |
 | Version and candidate policy | `bin/orly --version`; `bun test src/judgment_comparison.test.ts` | Version 0.12.0; no candidate adopted without eligible independent measurements | P0 | |
@@ -236,7 +251,7 @@ Existing external telemetry is unchanged; these are local evaluation artifacts, 
 
 - **Grounding rule:** Missing, scripted or model-generated evidence never becomes independent proof of task completion or model accuracy.
 - **Golden set:** `evals/judgments/comparison/` covers baseline/candidates, four label classes, disjoint origins, five task families, unavailable evidence and instruction-bearing input.
-- **Ship threshold:** All deterministic controls pass, all attempts are accounted for, and all five adoption decisions are recorded. Eligible measurements must meet §4 before any runtime adoption; unavailable observations keep candidates evaluation-only.
+- **Ship threshold:** All independently resolved corpus minimums and deterministic controls pass, all attempts are accounted for, and all five adoption decisions are recorded. Eligible measurements must meet §4 before any runtime adoption; unavailable observations keep candidates evaluation-only.
 - **Fallback:** Retain the six runtime questions and name the missing evidence or approval. No new question is needed to complete the offline 0.12.0 deliverable.
 
 ## Dead Code Sweep
@@ -247,6 +262,7 @@ Move only the M08 specification; preserve historical receipts. Discovery command
 
 - Live Jev/commander/comprehension calls and model-assisted labeling; native builds or another runtime.
 - Live `agentsfleet` changes or deployment: Indy performs deployment separately. Disposable repositories remain in scope.
+- Dedicated 0.11-to-0.12 migration proof is excluded by Indy's item-5 decision. The intended `agentsfleet` migration is 0.10.x to 0.12; this release makes no verified claim for that migration. Existing installation/recovery controls remain required.
 - Remote execution activation, autonomous merge/publication, release tags, hosting changes or new credentials.
 - Workflow/hook/gate changes, scanner suppressions and cross-repository documentation edits without explicit fresh approval.
 - Previously excluded telemetry privacy and publication lookup/recovery findings A40, A20 and A21; no repair claim.
@@ -277,7 +293,10 @@ Move only the M08 specification; preserve historical receipts. Discovery command
 - **Consults:** Authoring inspected fetched main `153a3816b0713f1b0e5a7e363bad7d5b1bd5052d`, the six definitions in `src/judgments/questions.ts`, required reports and ownership/remote architecture. Candidate scope and thresholds are proposed requirements, not observed results.
 - **Metrics review:** Local comparison/task outcomes only; existing telemetry and analytics/funnel guidance unchanged.
 - **Skill-chain outcomes:** `orly-spec-new` used for authoring. Structural verification, unit/integration audit skills, adversarial review and post-push monitoring remain pending until their actual execution.
-- **Deferrals:** M08 is parked by the quote below; its historical missing checks remain recorded there. M10 contains no agent-unilateral scope cuts. Live model evidence, merge and publication retain the original request's exclusions and approval boundaries.
+- **Deferrals:** M08 parking and M10 review item 5 are owner-directed exclusions recorded below; neither is passing evidence. Live model evidence, merge and publication retain the original request's exclusions and approval boundaries.
+- **Pre-build review disposition:** Items 1–4 amend §2–§5, Interfaces, failures, tests and acceptance: resolved-label minimums, native scoring, owned receipt cleanup and digest-bound real hooks. This records design repairs only; implementation proofs remain pending.
+
+> Indy (2026-10-06, time not recorded): "5 can be skipped as we ill migrate agentsfleet repor fro 0.10.x to 0.12" — context: exclude the proposed dedicated 0.11-to-0.12 upgrade test; retain existing preservation checks, and do not certify the separate live migration.
 
 > Indy (2026-10-06 12:57): "I think move the M08 to parked and docs/v2/done/ and create a M10 new spec with what is needed now and acceptance?" — context: park M08, preserve unfinished evidence and author M10 with current acceptance.
 
