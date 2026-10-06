@@ -74,13 +74,48 @@ install_retired_verbs_are_gone_and_unreferenced() {
     if [[ "$out" != *"unknown command: $verb"* ]]; then bad "$name" "$verb did not report as unknown: $out"; return; fi
   done
 
-  local leaked
-    # The pattern must survive a quoted path: `"$DOTFILES/bin/orly" sync` shipped
-  # green under an anchored `(bin/)?orly ` because of the closing quote.
-  # agents-md.md is excluded with the history files: the questionnaire has to
-  # name a retired verb to assert it is retired.
-  leaked="$(cd "$ROOT" && git grep -nE 'orly"? (sync|render|validate)([^a-z-]|$)' -- . ':!docs/v1/done/*' ':!docs/v1/active/*' ':!evals/install/*' ':!SOUL_LOG.md' ':!audits/agents-md.md' 2>/dev/null || true)"
+  local leaked; leaked="$(retired_command_references "$ROOT")"
   if [[ -n "$leaked" ]]; then bad "$name" "tracked references to a retired verb remain: $(printf '%s' "$leaked" | head -1)"; return; fi
+  ok "$name"
+}
+
+retired_command_references() {
+  # The pattern must survive a quoted path: `"$DOTFILES/bin/orly" sync` shipped
+  # green under an anchored `(bin/)?orly ` because of the closing quote.
+  # The questionnaire and its archived receipts name removed verbs to prove
+  # their removal. Active source and documentation still belong to the scan.
+  git -C "$1" grep -nE 'orly"? (sync|render|validate)([^a-z-]|$)' -- . \
+    ':!docs/v1/done/*' ':!docs/v1/active/*' ':!evals/install/*' \
+    ':!evals/release/receipts/*' ':!SOUL_LOG.md' ':!audits/agents-md.md' 2>/dev/null || true
+}
+
+install_retired_reference_scope_preserves_archived_receipts() {
+  local name="archived questionnaire receipts do not count as active command calls"
+  local repo archive found; repo="$(mk_repo)"
+  archive="$repo/evals/release/receipts/fixture/native-inspection"
+  mkdir -p "$archive"
+  printf '%s\n' '{"question":"Are orly sync, orly render and orly validate gone?"}' > "$archive/questionnaire.json"
+  printf '%s\n' 'Are `orly sync`, `orly render` and `orly validate` gone?' > "$archive/questionnaire.md"
+  git -C "$repo" add -A
+  found="$(retired_command_references "$repo")"
+  if [[ -n "$found" ]]; then bad "$name" "archived evidence counted as a caller: $found"; return; fi
+  ok "$name"
+}
+
+install_retired_reference_scope_rejects_active_calls() {
+  local name="active obsolete calls remain visible outside the receipt archive"
+  local repo found path; repo="$(mk_repo)"
+  mkdir -p "$repo/docs" "$repo/evals/release/receipts-active"
+  printf '%s\n' 'orly sync' > "$repo/src/current.sh"
+  printf '%s\n' '"$TOOLS/bin/orly" render' > "$repo/run.sh"
+  printf '%s\n' 'orly validate' > "$repo/docs/current.md"
+  printf '%s\n' 'orly sync' > "$repo/evals/release/receipts-active/current.md"
+  git -C "$repo" add -A
+  found="$(retired_command_references "$repo")"
+  for path in src/current.sh run.sh docs/current.md evals/release/receipts-active/current.md; do
+    if [[ "$found" != *"$path:1:"* ]]; then bad "$name" "missing active caller $path: $found"; return; fi
+  done
+  if [[ "$(printf '%s\n' "$found" | wc -l | tr -d ' ')" != 4 ]]; then bad "$name" "expected exactly four active callers: $found"; return; fi
   ok "$name"
 }
 
