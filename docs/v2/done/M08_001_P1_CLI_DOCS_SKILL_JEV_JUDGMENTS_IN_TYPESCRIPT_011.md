@@ -16,7 +16,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** M08
 **Workstream:** 001
 **Date:** Oct 04, 2026
-**Status:** IN_PROGRESS
+**Status:** DEFERRED
 **Priority:** P1 — prove useful review guidance before choosing another runtime
 **Categories:** CLI DOCS SKILL
 **Batch:** B1 — one workstream
@@ -232,11 +232,12 @@ Unit and integration audit skills run over changed source. Adversarial review fo
 
 ### Completion checks still open
 
-The implementation Dimensions above are called and tested, but the workstream remains `IN_PROGRESS`.
+The implementation Dimensions above retain their recorded results; the workstream is parked as `DEFERRED` by Indy's instruction.
+Its location in `docs/v2/done/` is an archive location, not a completion claim. The original Prototype and branch identify the historical work.
 The required gstack review repaired defects across three fix cycles; it stopped at its invocation limit without a final zero-edit adversarial pass.
 The manual live rules-comprehension smoke check remains incomplete because one agent could not authenticate and another exhausted its account quota.
 These checks remain open; no clean-review or merge-readiness claim is made.
-Sources: [verification ledger](../../../evals/judgments/verification.md), `llmevals-smoke.log`, and `comprehension-diagnostic.log` under the private receipt root.
+Sources: [verification ledger](../../../../evals/judgments/verification.md), `llmevals-smoke.log`, and `comprehension-diagnostic.log` under the private receipt root.
 
 The first remote audit and coverage runs each failed three real scanner tests because their runners lack Gitleaks.
 Indy authorized repair of the harness and coverage jobs: "well the CI jobs harness, test-coverage fails, fix that" (Continuous Integration).
@@ -281,6 +282,10 @@ Sources: `ci-audit-failed.log:443`, `ci-coverage-failed.log:394`, and `ci-propos
 - **Surface-area checklist:** OpenAPI no; command line yes; user docs yes; version yes; SQL schema no; native-only JSON schemas removed; rules conflict none.
 
 ## Discovery (consult log)
+
+> Indy (2026-10-06 12:57): "I think move the M08 to parked and docs/v2/done/ and create a M10 new spec with what is needed now and acceptance?" — context: archive M08 as parked and author a separate M10 specification; no historical completion proof is added.
+
+- **Parking record (Oct 06, 2026: 12:57 PM):** Use the template's `DEFERRED` status for parked archival work. Preserve all prior test results and the open final-review and live-comprehension checks above. Reactivation requires an explicit request to resume M08 and renewed authorization before any excluded live call. M10 defines fresh 0.12.0 acceptance; it does not retroactively certify M08.
 
 - **Oct 04, 2026: 01:50 PM:** Indy requested a 0.11 experiment, a new `agentsfleet` worktree, and removal of Rust work and pending Jev/native specs.
 - Native work was archived at `/private/tmp/orly-ts-011-Oct_04_13_50/removed-rust-backup` before removal. The original unrelated `SOUL_LOG.md` remains unchanged.
