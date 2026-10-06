@@ -32,7 +32,8 @@ if command -v gitleaks >/dev/null 2>&1; then
     exit 1
   fi
 else
-  echo "pre-push: gitleaks NOT INSTALLED — secret scan skipped (mise use -g gitleaks)" >&2
+  echo "pre-push: required gitleaks is not installed — install it with mise before pushing" >&2
+  exit 1
 fi
 
 GOVERNANCE_PATTERN='^((core|packs|schemas|src)/|(registry|repositories)\.json|AGENTS\.md|SOUL\.md|dispatch/|audits/|docs/(EXECUTE_DOC_READS|ORLY_ARCHITECTURE|HARNESS_VERIFY_OUTPUT|DOCUMENTATION_RULES|TEMPLATE)\.md|evals/|fixtures/|\.githooks/|Makefile|README\.md|package\.json|bun\.lock|tsconfig\.json)'

@@ -1,0 +1,12 @@
+
+src/command_process.test.ts:
+(pass) a successful deadline stop is not repeated during supervisor cleanup [137.36ms]
+(pass) killing the gate owner stops its detached workload [194.82ms]
+(pass) supervisor SIGTERM stops its owned workload [53.26ms]
+(pass) supervisor SIGINT stops its owned workload [52.33ms]
+(pass) supervisor SIGHUP stops its owned workload [59.91ms]
+
+ 5 pass
+ 0 fail
+ 18 expect() calls
+Ran 5 tests across 1 file. [546.00ms]

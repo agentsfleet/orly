@@ -1,0 +1,21 @@
+{
+  "recorded_at": "2026-10-05T18:56:38.927274+00:00",
+  "artifacts": {
+    "questionnaire-review.json": {
+      "sha256": "f5c869d2ce8996a2973ba6807c6549933891c4c001ddd46f7f09047c570e25f0",
+      "bytes": 106173
+    },
+    "questionnaire-review.md": {
+      "sha256": "0f61735efb03e7aec8421c5ca4a60a7262ff56b2fa2f9abd117be2c76ba14944",
+      "bytes": 78145
+    },
+    "finding-dispositions.json": {
+      "sha256": "e3724a18c7b716cce86c08106a3519e8002b2676ecf6974fc95ff82570dc7483",
+      "bytes": 89479
+    },
+    "finding-dispositions.md": {
+      "sha256": "bc17440ce5e9616cb500aaca0d7ba5a287a19fb113077d26e1fdcd468a83b86b",
+      "bytes": 26808
+    }
+  }
+}

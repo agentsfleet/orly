@@ -63,6 +63,9 @@ JUDGMENT_TAG='\[JUDGMENT → [A-Za-z0-9_:-]+\]'
 UNENFORCED_TAG='\[UNENFORCED → [^]]+\]'
 
 LEDGER_ROOT="${ORLY_ROOT:-$(git rev-parse --show-toplevel 2>/dev/null || pwd)}"
+LEDGER_SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LEDGER_RULES_ROOT="$LEDGER_ROOT"
+case "$LEDGER_SOURCE_ROOT" in */.orly) LEDGER_RULES_ROOT="$LEDGER_SOURCE_ROOT" ;; esac
 
 # A tag alone on its line (the `> [DETERMINISTIC → FLL]` form dispatch/*.md
 # already uses) covers every clause under it until the next heading. A tag at
@@ -139,7 +142,7 @@ ledger_doc_codes() {
 # code that loses its helper stops claiming enforcement here the same commit.
 ledger_code_script() {
   local code="$1" script
-  script="$(grep -hoE "^dispatch_run_helper +\"$code\" +\"[^\"]+\"" "$LEDGER_ROOT"/dispatch/*.sh 2>/dev/null \
+  script="$(grep -hoE "^dispatch_run_helper +\"$code\" +\"[^\"]+\"" "$LEDGER_RULES_ROOT"/dispatch/*.sh 2>/dev/null \
     | sed -E 's/.*"([^"]+)"$/\1/' | head -1)"
   printf '%s' "${script:-$UNWIRED_CODE_LABEL}"
 }
@@ -153,7 +156,7 @@ UNWIRED_CODE_LABEL="no helper row"
 # form and the ~/Projects/dotfiles/-anchored form appear in the corpus, so the
 # anchor is stripped before comparison.
 ledger_cited_docs() {
-  grep -rhoE '(~/Projects/dotfiles/)?docs/[A-Za-z0-9_/-]+\.md' "$LEDGER_ROOT"/dispatch/*.md 2>/dev/null \
+  grep -rhoE '(~/Projects/dotfiles/)?docs/[A-Za-z0-9_/-]+\.md' "$LEDGER_RULES_ROOT"/dispatch/*.md 2>/dev/null \
     | sed -E 's|^~/Projects/dotfiles/||' \
     | sort -u
 }
@@ -199,7 +202,7 @@ FACADE_SCOPE_TAG='^[[:space:]]*<!--[[:space:]]*oracle-scope:[^>]*-->[[:space:]]*
 
 ledger_facade_pages() {
   local file
-  for file in "$LEDGER_ROOT"/dispatch/*.md; do
+  for file in "$LEDGER_RULES_ROOT"/dispatch/*.md; do
     [ -f "$file" ] || continue
     printf '%s\n' "$file"
   done
@@ -223,7 +226,7 @@ ledger_facade_scope() {
 
 ledger_facade_scripts() {
   local file
-  for file in "$LEDGER_ROOT"/dispatch/*.sh; do
+  for file in "$LEDGER_RULES_ROOT"/dispatch/*.sh; do
     [ -f "$file" ] || continue
     [ "$(basename "$file")" = "$DISPATCH_LIB_BASENAME" ] && continue
     printf '%s\n' "$file"
@@ -267,7 +270,7 @@ ledger_match_count() {
 # the bare and the ~/Projects/dotfiles/-anchored spelling of the same path.
 ledger_facades_citing() {
   local doc="$1" page
-  for page in "$LEDGER_ROOT"/dispatch/*.md; do
+  for page in "$LEDGER_RULES_ROOT"/dispatch/*.md; do
     [ -f "$page" ] || continue
     grep -qF "$doc" "$page" 2>/dev/null && printf '%s\n' "$(basename "$page" .md)"
   done
@@ -288,7 +291,7 @@ ledger_doc_trigger() {
   while IFS= read -r stem; do
     [ -n "$stem" ] || continue
     cited=0
-    script="$LEDGER_ROOT/dispatch/$stem.sh"
+    script="$LEDGER_RULES_ROOT/dispatch/$stem.sh"
     [ -f "$script" ] || continue
     [ -n "$(ledger_facade_globs "$script")" ] || continue
     printf '%s' "$TRIGGER_MECHANICAL"

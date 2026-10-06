@@ -1,0 +1,10 @@
+bun test v1.4.2 (744846f84)
+
+src/config_validation.test.ts:
+(pass) both configuration readers reject invalid unknown_setting value true [3.60ms]
+
+ 1 pass
+ 19 filtered out
+ 0 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [31.00ms]

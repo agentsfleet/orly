@@ -1,0 +1,67 @@
+{
+  "skill": "adversarial-review",
+  "timestamp": "2026-10-05T19:22:19.083741+00:00",
+  "status": "issues_found",
+  "source": "in-host",
+  "host": "codex",
+  "outside_provider": "claude-code",
+  "outside_status": "disabled",
+  "phase": "adversarial",
+  "tier": "always",
+  "gate": "informational",
+  "commit": "4be34f7",
+  "completed": true,
+  "converged": false,
+  "issues_found": 3,
+  "critical": 0,
+  "findings": [
+    {
+      "id": "N01",
+      "kind": "FIXABLE",
+      "priority": 2,
+      "confidence": "high",
+      "location": "src/command_process.ts:44 (captured candidate)",
+      "title": "Receipt setup failure can orphan the detached workload",
+      "trigger": "Writing child.pid fails after successful detached Bun.spawn, before entry to the cleanup try/finally. For example, a full filesystem or removal of the receipt directory makes writeFileSync throw.",
+      "proof": "The captured source spawned at lines 38-42 and wrote child.pid at line 44; its cleanup region began at line 65. src/command_runner.ts:24-26 kills the separate supervisor process group, then ignores failure to read the missing workload PID.",
+      "repair": "Own the workload immediately after successful spawn; enclose all subsequent setup and execution in cleanup that always stops the owned process group.",
+      "required_proof": "Inject PID receipt write failure after a real bounded child starts, and assert its process group exits. No reproduction or suite was run by this reviewer.",
+      "disposition": "Parent accepted for repair; candidate freeze lifted during this attempt. This record describes the captured candidate and does not certify the changed tree."
+    },
+    {
+      "id": "N02",
+      "kind": "FIXABLE",
+      "priority": 3,
+      "confidence": "high",
+      "location": "README.md:133-135,243-256 (captured candidate)",
+      "title": "Consumer installation guide contradicts current paths and loader behavior",
+      "trigger": "A consumer follows the installation tree, expects old files, or expects an existing generated Claude import and unresolved symbolic links to remain unchanged.",
+      "proof": "src/installation/plan.ts:14-17 installs managed content beneath .orly. src/loaders.ts:162-170 refreshes recognized owned loader content. src/model.ts:85-90 refuses unresolved symbolic links. Interrupted installation recovery also retains journaled partial writes; the blanket no-change claim exceeds that guarantee.",
+      "repair": "Describe .orly paths, preserved foreign content, refreshed recognized owned imports, unresolved-link refusal, and recovery limits accurately.",
+      "required_proof": "Read the corrected README alongside production installation and loader code; no publication or live consumer success follows from this documentation check.",
+      "disposition": "Sent to parent; requires verification on a fresh candidate."
+    },
+    {
+      "id": "N03",
+      "kind": "FIXABLE",
+      "priority": 3,
+      "confidence": "high",
+      "location": "skills/orly-write-integration-test/SKILL.md:396 (captured candidate)",
+      "title": "Integration guidance still requires explicit draining despite wrapper-owned cleanup",
+      "trigger": "An agent follows this integration skill with PgQuery, whose owner deinit drains on early exits, or with a repository lacking a declared drain checker.",
+      "proof": "The skill requires same-function .drain and the declared drain check, while dispatch/write_zig.md:298 accepts wrapper-owned cleanup and only actually declared checks. The canonical recipe at lines 479-494 uses defer q.deinit, which auto-drains.",
+      "repair": "Require draining before connection release on every exit, accept verified wrapper-owned cleanup, and run only actually declared checks while reviewing the owner path.",
+      "required_proof": "Read current skill, dispatch and questionnaire wording together after the correction. No Zig build is authorized or performed.",
+      "disposition": "Sent to parent; requires verification on a fresh candidate."
+    }
+  ],
+  "base": "41850ee0d2893857c301ce3d07380415c5aa5861",
+  "scope": "Production and governance diff, staged additions and actual callers; tests and fixture payloads in summary mode for this native pass. Earlier approved repair inspection read the small new regression tests fully. Retained receipts and inventory were inspected only within their stated proof limits.",
+  "limits": [
+    "No repository edits, forge writes, native builds, test suites, live model calls, sibling reads or additional agents were performed.",
+    "Inventory counts are byte-purpose inventory, not universal semantic-review completion. Review receipts and self-referential inventory data retain that limitation.",
+    "Local inspection does not establish passing coverage, hosted Continuous Integration, Greptile completion, cross-platform publication or a live agentsfleet deployment.",
+    "The parent lifted the candidate freeze for a supported repair before this attempt finished. The binding must not certify the changed tree."
+  ],
+  "recommendation": "Recommendation: Fix the receipt setup cleanup and the two documentation mismatches because the captured candidate can orphan an owned workload and gives contradictory consumer instructions."
+}

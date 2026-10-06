@@ -1,0 +1,55 @@
+{
+  "skill": "review",
+  "timestamp": "2026-10-05T17:11:26Z",
+  "status": "issues_found",
+  "issues_found": 0,
+  "critical": 0,
+  "informational": 0,
+  "quality_score": 10,
+  "specialists": {},
+  "findings": [
+    {
+      "fingerprint": "audits/agents-md.md:64:questionnaire-table-shape",
+      "severity": "INFORMATIONAL",
+      "action": "auto-fixed",
+      "evidence_paths": [
+        "audits/agents-md.md"
+      ]
+    },
+    {
+      "fingerprint": ".github/workflows/release.yml:101:rules-file-assertion",
+      "severity": "INFORMATIONAL",
+      "action": "fixed",
+      "evidence_paths": [
+        ".github/workflows/release.yml",
+        "evals/release/receipts/Oct_05_21_14/release-layout-applied.json"
+      ]
+    },
+    {
+      "fingerprint": "llms.txt:63:current-installation-references",
+      "severity": "INFORMATIONAL",
+      "action": "auto-fixed",
+      "evidence_paths": [
+        "llms.txt",
+        "audits/agents-md.md",
+        "skills/orly-babysit-prs/SKILL.md"
+      ]
+    }
+  ],
+  "commit": "4be34f7",
+  "completed": false,
+  "converged": false,
+  "cycles": 3,
+  "coverage_limit": "The work-alone instruction excludes required native adversarial and specialist agents; no outside live calls were authorized. Three editing cycles were reached; this invocation stops incomplete without a fourth pass.",
+  "commit_full": "4be34f70a14ffdffa6b26bbdaac4111379771817",
+  "tree": "f497a4944ad8093ee8371cba76952bc54b2c1784",
+  "dirty": true,
+  "review_binding": {
+    "state": "changed",
+    "start_wtree": "54f5dc03891036b96feac1fc4e9e101bd6b96c69",
+    "end_wtree": "9fdbfddbd882a5815cd16e91af2bc1165d9e4bef",
+    "started_at": "2026-10-05T17:04:40.387Z",
+    "branch_id": "201ea3efa12fa163ab7281e65fc05f1a21f0f4ef72bf75096fa225dd9aad9fa6"
+  },
+  "shared_libs_coverage_version": 1
+}

@@ -1,0 +1,9 @@
+{
+  "evidence": [
+    {"capture":"006","command":"bun test src/installation_preservation.test.ts","contract":"Original input digests refuse owner saves during staging and preserve exact owner bytes","expected":"4 passed, 0 failed, 23 assertions; refused updates retain the owner's content and create no recovery journal","classification":"pass"},
+    {"capture":"007","command":"bun test src/command_process.test.ts","contract":"Owner disappearance and supervisor stop signals stop owned workloads without repeated group kills","expected":"5 passed, 0 failed, 18 assertions; no workload survives cancellation or signal cleanup","classification":"pass"},
+    {"capture":"008","command":"bun test src/installation/migration.test.ts","contract":"Migration preserves owner hooks, validates metadata and recovers each declared interruption point","expected":"36 passed, 0 failed, 812 assertions; owner setting and exact bytes retained, ordered recovery completes","classification":"pass"},
+    {"capture":"009","command":"bun test src/surfaces.test.ts src/spec_template_io.test.ts","contract":"Dotted-version specifications are excluded from user documentation and staged content is validated independently of working-tree repairs","expected":"19 passed, 0 failed, 52 assertions; invalid index refuses, valid index accepts despite unstaged damage","classification":"pass"}
+  ],
+  "limits": ["Required plan revalidation after the original five-minute smoke expired; its deadline was not reset.","One current functional report combines original smoke history with these current-input checks.","Disposable local Git, filesystem and process effects; no browser, deployment, native build, live consumer or model call."]
+}

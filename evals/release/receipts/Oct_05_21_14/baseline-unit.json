@@ -1,0 +1,25 @@
+{
+  "revision": "41850ee0d2893857c301ce3d07380415c5aa5861",
+  "source": "isolated Git archive; separately installed frozen dependencies",
+  "environment": {
+    "os": "Darwin",
+    "architecture": "arm64",
+    "bun": "1.4.2"
+  },
+  "command": [
+    "bun",
+    "test",
+    "src"
+  ],
+  "exit_code": 0,
+  "passed": 339,
+  "failed": 0,
+  "skipped": 0,
+  "assertions": 910,
+  "test_files": 35,
+  "integration_lane": "not separately declared; real input/output cases are included in bun test src",
+  "output": "evals/release/receipts/Oct_05_21_14/baseline-unit.txt",
+  "output_sha256": "504481f3be6cd6d78bcf3804b4556fa9bc0015873e6691121c907ac8fcad6297",
+  "package_sha256": "6cf983921cf61f7afc69c1d90e1e9ddbd5b8dd63b51c4879a9a2d221ddcb5ba8",
+  "lockfile_sha256": "b20e8d5225eea85b8ea99941db432a4e20a2639d156cf3dfe792fd15b82b458e"
+}

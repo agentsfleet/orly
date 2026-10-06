@@ -1,0 +1,1125 @@
+{
+  "method": "Compare exact runtime case labels, retaining multiplicities. New/renamed labels are conservatively classified by explicit failure or boundary behavior; mixed labels also contain adjacent positives. This is a case ledger, not measured branch coverage.",
+  "baseline_passed": 339,
+  "candidate_passed": 498,
+  "net_test_delta": 159,
+  "added_or_renamed": 178,
+  "removed_or_renamed": 19,
+  "negative_or_boundary_cases": 128,
+  "negative_or_boundary_percent": 71.91,
+  "cases": [
+    {
+      "test_name": "installation loaders and hooks > an existing AGENTS.md survives byte for byte and orly lands beside it",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "installation loaders and hooks > the orly pointer block is idempotent across repeated installs",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "installation loaders and hooks > a repository with no AGENTS.md still gets both files",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "installation loaders and hooks > an unrecorded generated banner cannot authorize deleting repository content",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "installation loaders and hooks > rule pages cite the file orly actually wrote, not the repository's",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "installation loaders and hooks > update rewrites orly's file and leaves the repository's own alone",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "installation loaders and hooks > a hook orly did not write is refused, not clobbered",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "installation loaders and hooks > generated_hooks_mark_telemetry_invocation",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "installation loaders and hooks > --no-hooks installs the rules over an existing hook without touching it",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "installation loaders and hooks > refuses to retarget a hooksPath already claimed by something else",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "installation loaders and hooks > --no-hooks proceeds even when hooksPath is claimed by something else",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "installation loaders and hooks > --force retargets a hooksPath claimed by something else",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "installation loaders and hooks > re-running init after it already set hooksPath is not a claim by another tool",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "review and summary fetches include every page and bind checks to the pushed revision",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "incomplete fetch-failed review evidence cannot establish a green poll",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "incomplete malformed review evidence cannot establish a green poll",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "incomplete changed review evidence cannot establish a green poll",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "incomplete changed-check review evidence cannot establish a green poll",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "incomplete stale review evidence cannot establish a green poll",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "incomplete missing-review review evidence cannot establish a green poll",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "empty check discovery stays incomplete",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "fetch-failed check discovery stays incomplete",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "failed check discovery stays incomplete",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "GitLab polling collects nested project review pages using supported flags",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "GitLab incomplete fetch-failed evidence cannot establish a green poll",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "GitLab incomplete malformed evidence cannot establish a green poll",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "GitLab incomplete changed evidence cannot establish a green poll",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "GitLab incomplete changed-check evidence cannot establish a green poll",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "GitLab empty pipeline discovery stays incomplete",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "GitLab fetch-failed pipeline discovery stays incomplete",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "GitLab failed pipeline discovery stays incomplete",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a dangling multi-link destination refuses before creating outside content",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "runtime loaders > an unrecorded Claude banner cannot authorize deleting existing instructions",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "inventory_covers_repository_and_package without inheriting a changed-byte review",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "a review missing a digest cannot authorize current bytes",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "inventory and review records require an external snapshot binding",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "opt-in pack selection > independent consumers keep their own database, build and documentation policies",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "opt-in pack selection > explicit product selection retains its teardown guard and build graph",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "install > refuses to replace a managed file edited after installation",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "install > refuses when the .orly lock directory path is a symlink escaping the target repository",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "install > a successful install leaves .orly/ intact for the lock the caller writes next",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "a NOT_DONE Dimension remains incomplete",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a UNDONE Dimension remains incomplete",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a DONE_LATER Dimension remains incomplete",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a IN_PROGRESS \u2014 DONE mentioned in the explanation Dimension remains incomplete",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "example and quoted Dimension markers cannot supply completion",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "an exact DONE marker completes the declared Dimension",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "an unrelated owner quote cannot acknowledge another Dimension",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a quote in a code example cannot acknowledge a deferral",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a quote outside Discovery cannot acknowledge a deferral",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "an item-bound owner quote acknowledges only the named deferral",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "an unnamed deferral must name its obligation before acknowledgement",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "strong_assertion_exposes_real_defect",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a push fails when its required scanner is missing",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a clean scan permits an unrelated push",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "a scanner finding blocks the push",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "changed prompt bytes invalidate saved results without a new commit",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "host selection and adapter settings cannot reuse incompatible saved proof",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "malformed journal counts are discarded instead of becoming a pass",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a missing required host keeps full coverage incomplete",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "full completion requires every selected fixture on all required local stub hosts",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "both configuration readers reject invalid packs value null",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid packs value [false]",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid managed value {}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid managed value [\"\"]",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid digests value []",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid digests value {\"path\":false}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid digests value {\"path\":\"broken\"}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid orly_version value {}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid orly_version value \"yesterday\"",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid schema_version value 2",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid unknown_setting value true",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid limits value []",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid limits value {\"verify.unit\":{\"timeout_ms\":0}}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid limits value {\"verify.unit\":{\"output_bytes\":-1}}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid limits value {\"verify.unit\":{\"timeout_ms\":1.5}}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid limits value {\"verify.unit\":{\"typo\":10}}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "both configuration readers reject invalid limits value {\"verify.unit\":null}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "configuration limits survive a rewrite and override only their named lane",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "a minimal seeded configuration normalizes optional ownership records",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "disabled execution settings round-trip while active remote execution refuses",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a document read round-trips the path \"we\\\"ird.md\" and complete citation",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "a document read round-trips the path \"tab\\tpage.md\" and complete citation",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "a document read round-trips the path \"line\\npage.md\" and complete citation",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "a document read round-trips the path \"control\\u0001page.md\" and complete citation",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "malformed saved rows cannot invent a current document read",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a filled spec blocks missing production wiring and wrong behavior before accepting the real command",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "the authoring skill copies the executable spec body and preserves behavior test names",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "productLeakErrors > checks string core documents and retains source lines after product blocks",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "productLeakErrors > allows a product-only command when the installer excludes its block",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "evaluation cleanup preserves caller state after evals/ledger/run.sh",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "evaluation cleanup preserves caller state after evals/dispatch/parity.sh",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "ledger command-substitution fixtures are removed after a failing caller",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "ledger command-substitution fixtures are removed after termination",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a successful deadline stop is not repeated during supervisor cleanup",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "evidence refuses a directory symlink escape without replacing owner bytes",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "writeConfig > writeConfig creates the .orly/ parent directory",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "a deadline stops the owned child group and keeps captured output",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "the output budget covers both streams and stops the owned child group",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "an explicit lane override applies through the public gate criteria",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "missing bunx fails the hook without running a different installer",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "staged literal checks grade index bytes with staged violation %s",
+      "observed_cases": 2,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "explicit dispatch checks working bytes and forwards only the named file",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "successful concurrent dispatch receipts have distinct readable private owners",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "staged Rust aliases come from the same index with alias present %s",
+      "observed_cases": 2,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "single-line initializers outside src need cleanup only when allocating %s",
+      "observed_cases": 2,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "managed paths parse structurally with pretty configuration %s",
+      "observed_cases": 2,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "malformed managed metadata refuses before a clean verdict: {",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "malformed managed metadata refuses before a clean verdict: {\"managed\":\"src/code.ts\"}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "malformed managed metadata refuses before a clean verdict: {\"managed\":[false]}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "staged renames are checked and deleted paths are skipped",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "ufs.sh preserves help and rejects unknown or mixed options",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "logging.sh preserves help and rejects unknown or mixed options",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "deinit-pairs.sh preserves help and rejects unknown or mixed options",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "sql-mod.sh preserves help and rejects unknown or mixed options",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "error-codes.sh preserves help and rejects unknown or mixed options",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "rust-error.sh preserves help and rejects unknown or mixed options",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "design-tokens.sh preserves help and rejects unknown or mixed options",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "inherited SCOPE defaults select the index and ignore unstaged bytes",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "diff marker checks grade staged quoted paths with staged violation %s",
+      "observed_cases": 2,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "diff marker explicit files use working bytes and missing comparisons refuse",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "indexed source links cannot read outside their owned snapshot",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "stale cleanup cannot remove a lock acquired by another installer",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a live owner excludes contenders and a released lock can be acquired again",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "a dead owner can be recovered without changing unrelated owner files",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "an unrecognized lock file is preserved for owner inspection",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "interrupted_install_recovers at journal 0",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "interrupted_install_recovers at write 0",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "interrupted_install_recovers at write 1",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "interrupted_install_recovers at write 2",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "interrupted_install_recovers at write 3",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "interrupted_install_recovers at write 4",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "interrupted_install_recovers at write 5",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "interrupted_install_recovers at metadata 0",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "interrupted_install_recovers at delete 0",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "interrupted_install_recovers at delete 1",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "interrupted_install_recovers at delete 2",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at journal 0",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at write 0",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at write 1",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at write 2",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at write 3",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at write 4",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at write 5",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at write 6",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at write 7",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at metadata 0",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at delete 0",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at delete 1",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "hook installation recovers interruption at delete 2",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "migration_preserves_owned_content refuses edited or unowned dispatch/check.md",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "migration_preserves_owned_content refuses edited or unowned AGENTS.orly.md",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "migration_preserves_owned_content refuses edited or unowned .orly/dispatch/check.md",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "recovery refuses an edited destination before deleting any old source",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "changed journal cannot authorize recovery",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "a current installation preserves an independent previous configuration",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "recovery preserves an owner-changed hooks setting with resumed hooks %s",
+      "observed_cases": 2,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 2
+    },
+    {
+      "test_name": "owner hook changes during destination writes are refused before metadata or cleanup",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "migration removes only proven obsolete instruction references",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "lifecycle_plan_names_actual_commands",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "disabled_adapter_has_no_side_effects",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "remote_adapter_is_disabled rejects malformed or active configuration: null",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "remote_adapter_is_disabled rejects malformed or active configuration: {}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "remote_adapter_is_disabled rejects malformed or active configuration: {\"remote\":{}}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "remote_adapter_is_disabled rejects malformed or active configuration: {\"remote\":{\"mode\":\"enabled\"}}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "remote_adapter_is_disabled rejects malformed or active configuration: {\"remote\":{\"mode\":\"disabled\",\"launcher\":\"agentsfleet run\"}}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "remote_adapter_is_disabled rejects malformed or active configuration: {\"remote\":{\"mode\":\"disabled\",\"launcher\":[]}}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "remote_adapter_is_disabled rejects malformed or active configuration: {\"remote\":{\"mode\":\"disabled\",\"launcher\":[\"\"]}}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "remote_adapter_is_disabled rejects malformed or active configuration: {\"remote\":{\"mode\":\"disabled\",\"launcher\":[\"x\\u0000y\"]}}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "remote_adapter_is_disabled rejects malformed or active configuration: {\"remote\":{\"mode\":\"disabled\",\"activate\":true}}",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    },
+    {
+      "test_name": "disabled_adapter_never_becomes_pass",
+      "observed_cases": 1,
+      "classification": "positive_or_mixed_control",
+      "negative_case_lower_bound": 0
+    },
+    {
+      "test_name": "missing adapter defaults to disabled and missing repository fails",
+      "observed_cases": 1,
+      "classification": "negative_or_boundary_control",
+      "negative_case_lower_bound": 1
+    }
+  ],
+  "removed_or_renamed_labels": [
+    {
+      "name": "runtime loaders > a CLAUDE.md orly wrote itself is refreshed, not left stale",
+      "cases": 1
+    },
+    {
+      "name": "install > replaces a file it wrote, hand-edited or not \u2014 git shows the replacement",
+      "cases": 1
+    },
+    {
+      "name": "install > an existing AGENTS.md survives byte for byte and orly lands beside it",
+      "cases": 1
+    },
+    {
+      "name": "install > the orly pointer block is idempotent across repeated installs",
+      "cases": 1
+    },
+    {
+      "name": "install > a repository with no AGENTS.md still gets both files",
+      "cases": 1
+    },
+    {
+      "name": "install > a single-file install migrates to the split without losing a repository line",
+      "cases": 1
+    },
+    {
+      "name": "install > rule pages cite the file orly actually wrote, not the repository's",
+      "cases": 1
+    },
+    {
+      "name": "install > update rewrites orly's file and leaves the repository's own alone",
+      "cases": 1
+    },
+    {
+      "name": "install > a hook orly did not write is refused, not clobbered",
+      "cases": 1
+    },
+    {
+      "name": "install > generated_hooks_mark_telemetry_invocation",
+      "cases": 1
+    },
+    {
+      "name": "install > --no-hooks installs the rules over an existing hook without touching it",
+      "cases": 1
+    },
+    {
+      "name": "install > refuses to retarget a hooksPath already claimed by something else",
+      "cases": 1
+    },
+    {
+      "name": "install > --no-hooks proceeds even when hooksPath is claimed by something else",
+      "cases": 1
+    },
+    {
+      "name": "install > --force retargets a hooksPath claimed by something else",
+      "cases": 1
+    },
+    {
+      "name": "install > re-running init after it already set hooksPath is not a claim by another tool",
+      "cases": 1
+    },
+    {
+      "name": "install > refuses when the .oracle lock directory path is a symlink escaping the target repository",
+      "cases": 1
+    },
+    {
+      "name": "install > a successful install leaves .oracle/ intact for the lock the caller writes next",
+      "cases": 1
+    },
+    {
+      "name": "writeConfig > writeConfig creates the .oracle/ parent directory",
+      "cases": 1
+    },
+    {
+      "name": "a missing executable prints installation guidance without running an installer",
+      "cases": 1
+    }
+  ],
+  "negative_case_lower_bound": 124,
+  "negative_lower_bound_percent": 69.66,
+  "classification_limit": "Counts use observed labels and reviewed fixture behavior. Four mixed two-input groups count only one negative input each; positive/mixed groups otherwise contribute zero. This does not measure branch coverage."
+}

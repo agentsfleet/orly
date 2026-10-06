@@ -1,0 +1,29 @@
+{
+  "surface": "Local installer, hook migration, owned command supervision, spec/index selectors",
+  "authority": "Parent read-only discovery and required revalidation; existing tests authorized by owner",
+  "isolation": "Test helpers own disposable repositories and bounded child process groups. No live consumer, publication, native build, model call or outside reviewer.",
+  "smoke": "One successful command and real failed receipt write cleanup through supervisor and runner tests; five minutes, twelve probes maximum",
+  "required": [
+    "bun test src/command_process.test.ts src/command_runner.test.ts",
+    "bun test src/installation_preservation.test.ts",
+    "bun test src/installation/migration.test.ts",
+    "bun test src/surfaces.test.ts src/spec_template_io.test.ts"
+  ],
+  "source_hashes": {
+    "src/command_process.ts": "4c439eaae347b46b46e43a69790bb1e9c30c5fa17bff85b251e8c3747a89aafd",
+    "src/command_runner.ts": "dc93f42b2fcef33428208888179f57e58ce5f94a3a9900a67e9b25483d075371",
+    "src/command_process.test.ts": "2c84c6a63febbb3d40378a364a1c36ff0ad11b6ac040666362bd8fc2bb4482c7",
+    "src/command_runner.test.ts": "501b24d1b63137b5cce15aefc6668c17f9c2e367ef32acf1fdc7ed1a9c3ce71b",
+    "src/install.ts": "2cdea58456864ec08e028e0c42a119919501c240257365095b6661f556b35e65",
+    "src/installation_preservation.test.ts": "d13025ffeac5a52f4d0ea6f9549bcad9b1c62b6c1980bedd91b3d531f48e6908",
+    "src/installation/hooks.ts": "3e8e3ab44914de03d2521fc9b971d31f4d318de661f7a40cda3dfb0cc8f5b5fb",
+    "src/installation/transaction.ts": "8ee6a9642c261fdb9a3b4702c79a1bbac8476a76c0bc4695af0aeec9c6ce6b9d",
+    "src/installation/migration.test.ts": "ef50578a3c6285826a7322a0645c48de1cb7deceb6330f98836e48c5d0ab85cc",
+    "src/surfaces.ts": "c85d1ccc5c90901389956a6670e3313c6496699cba9c96001952ae870d9ab253",
+    "src/surfaces.test.ts": "476a2afa88e6b9d75b93e62057aec835d1f3671ef2f02e01dd2336287aa4c9c3",
+    "audits/spec-template.sh": "ea2aa79fd39c632e88be4d5b9f755beabfdd844c2c3fa882a0d13f9822daae29",
+    "src/spec_template_io.test.ts": "936713abacfd62a9771740f864f3c964ba3e1c1cb653981d661290dc09f616d9"
+  },
+  "runtime": "Bun 1.4.2, Git, repository-owned test fixtures",
+  "readiness": "All commands and inputs present; synthetic public output; no new bootstrap or secrets"
+}

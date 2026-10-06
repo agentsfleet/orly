@@ -51,26 +51,27 @@ documentation questions.
 - **Installation** — `bunx` runs the source package through Bun, continuing the `0.10.x` setup on macOS and Linux.
 
 Use `orly judge --help` and the [judgment reference](docs/JUDGMENTS.md) for the
-manifest, atomic criteria and explicit source upload. The local 0.11.0 package
-is unpublished; install the current published package for ordinary use.
+manifest, atomic criteria and explicit source upload. This page describes the
+0.11.0 source package, which is not yet published. The commands below fetch the
+published package; use them for this behavior after 0.11.0 is published.
 
 ---
 
-## Prerequisites for the current release
+## Prerequisites for 0.11.0
 
 | You need | Why | Version |
 |---|---|---|
 | [bun](https://bun.sh) | runs orly; `bunx` fetches it | ≥ 1.4.0 |
 | git | orly writes the hooks; `orly gate` reads the branch | any |
 | a coding agent | something has to read the rules | Claude Code, Codex, OpenCode, or Amp |
-| your own check commands | `orly gate` runs whatever `.oracle/orly.json` names | whatever your repository already runs |
+| your own check commands | `orly gate` runs whatever `.orly/orly.json` names | whatever your repository already runs |
 
 > [!IMPORTANT]
 > git never clones hooks. Every teammate runs `orly init` once in their own checkout, even after the rules are committed.
 
 ---
 
-## Install the current release
+## Install 0.11.0 after publication
 
 Run this inside the repository you want governed.
 
@@ -85,11 +86,11 @@ orly scans your source, detects your languages, and installs only the rules that
 
 Complete any setup items printed by `init`, then run `bunx --bun @agentsfleet/orly doctor` and commit the generated files.
 Use `bunx --bun @agentsfleet/orly <COMMAND>` for the commands below; `<COMMAND>` names the command and its options.
-Existing Git hooks require `orly` on `PATH`, as in `0.10.x`; the judgment experiment does not replace those hooks.
+Generated Git hooks invoke the pinned package through `bunx`; Bun must be on the hook search path. No global orly installation or project dependency is required.
 
 Teammates get the rules on clone and run `orly init` to install their hooks.
 
-Declare `conform` and at least one `verify.*` command in `.oracle/orly.json`.
+Declare `conform` and at least one `verify.*` command in `.orly/orly.json`.
 Orly runs your repository's commands; the verification name does not require a particular language or test runner.
 For a documentation repository whose Makefile provides `test` and `lint`:
 
@@ -104,6 +105,19 @@ Here `test` checks documentation during work, and `lint` validates the site and 
 Markdown and Markdown JSX (MDX) repositories do not need application unit or integration suites.
 `orly doctor` checks configuration and installed files; run the gates to verify the commands themselves.
 
+Each invocation has a 30-minute deadline and a 64-mebibyte combined output budget.
+Exceeding either limit fails the check, stops its child processes and prints a private output receipt path.
+Set per-command overrides in `.orly/orly.json`, for example:
+
+```json
+"limits": {
+  "verify.unit": { "timeout_ms": 1800000, "output_bytes": 67108864 }
+}
+```
+
+The receipt retains all captured output until you remove its printed directory.
+Unknown settings and malformed values are refused; `schemas/profile.schema.json` describes the repository configuration.
+
 ---
 
 ## What lands in your repository
@@ -112,24 +126,25 @@ Markdown and Markdown JSX (MDX) repositories do not need application unit or int
 your-repo/
 │
 ├── AGENTS.md ─────────────── yours. untouched, except one delimited pointer block
-├── AGENTS.orly.md ────────── the generated rules: safety, dispatch router, lifecycle
+├── .orly/AGENTS.md ────────── the generated rules: safety, dispatch router, lifecycle
 │
 ├── CLAUDE.md ─────────────── one import line; the only file Claude Code loads itself
 ├── opencode.json ─────────── names both rule files; opencode loads nothing by default
 │
-├── dispatch/*.md ─────────── one rule page per kind of work
-├── audits/*.sh ───────────── the deterministic gates
-├── docs/*.md ─────────────── the standards those rules cite
+├── .orly/dispatch/*.md ───── one rule page per kind of work
+├── .orly/audits/ ─────────── the deterministic gates
+├── .orly/docs/*.md ───────── the standards those rules cite
+├── .orly/skills/ ─────────── full skill instructions
 │
-├── .claude/skills/ ───────── the same skills, materialised per agent host
+├── .claude/skills/ ───────── thin discovery entries per agent host
 ├── .agents/skills/
 ├── .opencode/skills/
 │
-├── .githooks/ ────────────── pre-commit and pre-push, wired to `orly gate`
-└── .oracle/orly.json ─────── which packs, which commands, what orly installed
+├── .orly/hooks/ ──────────── pinned bunx pre-commit and pre-push calls
+└── .orly/orly.json ─────── which packs, which commands, what orly installed
 ```
 
-`orly init` also seeds `.oracle/orly.json` with any gate commands it finds in your `Makefile` or `package.json`. Fill in the rest, commit it, and every clone gates identically.
+`orly init` also seeds `.orly/orly.json` with any gate commands it finds in your `Makefile` or `package.json`. Fill in the rest, commit it, and every clone gates identically.
 
 ---
 
@@ -168,7 +183,7 @@ The spec is a file on disk, and **its directory is the status**. Only the stages
 flowchart TB
     you["🤠 you<br/>add webhook retries"]
     agent["🦉 agent<br/>writes the spec"]
-    pending["📄 docs/v1/pending/<br/><small>spec committed on main</small>"]
+    pending["📄 docs/v1/pending/<br/><small>spec committed on default branch</small>"]
 
     you --> agent
     agent --> pending
@@ -203,7 +218,7 @@ flowchart TB
 
 | Directory | Meaning |
 |---|---|
-| `docs/v1/pending/` | the spec is written and committed on `main` |
+| `docs/v1/pending/` | the spec is written and committed on the detected default branch |
 | `docs/v1/active/` | branch cut, comparison revision recorded, measurement pending; no code until it commits |
 | `docs/v1/done/` | gates green, Pull Request opens |
 
@@ -226,8 +241,8 @@ Each edit activates the rule page for that file kind. A gate proves whether the 
 | File | Owner | On `orly update` |
 |---|---|---|
 | `AGENTS.md` | **you** | untouched, except one delimited pointer block |
-| `AGENTS.orly.md` | orly | rewritten |
-| `CLAUDE.md` | **you** | written only when missing; never edited after |
+| `.orly/AGENTS.md` | orly | rewritten |
+| `CLAUDE.md` | **you** | creates a missing loader; refreshes owned imports; preserves unrelated content |
 | `opencode.json` | **you** | gains the two rule files in `instructions`; nothing else touched |
 
 `AGENTS.md` stays yours. orly writes its rules beside it and points at them from one delimited block.
@@ -236,11 +251,12 @@ The last two files deliver rules through each runtime's loader. Codex and Amp au
 
 Claude Code loads `CLAUDE.md` and nothing else. opencode loads only what its `instructions` name.
 
-orly writes the required import line when the loader is missing. Existing project-owned loaders stay unchanged, including symlinks to rules, other repository files, or missing targets.
-orly refuses loader links outside the repository because writing through them would change another checkout.
+orly writes the required import when the loader is missing and refreshes its own delimited block or recognized generated loader.
+Unrelated owner content stays unchanged. Resolved links inside the repository are preserved; unresolved or escaping links refuse the update.
 
 > [!WARNING]
-> orly refuses to replace a hook or rule page it did not write. `--force` and `--no-hooks` are the ways through. A refused run changes nothing.
+> orly refuses unowned conflicting content and executable owner hooks. Review explicit `--force` or `--no-hooks` choices before proceeding.
+> Preflight conflicts preserve owner bytes. An interruption during writes may leave completed steps and a journal; rerun to recover after resolving conflicts.
 
 ---
 
@@ -288,12 +304,12 @@ orly scans four directories deep. It skips `node_modules`, `target`, `.venv`, an
 | `workflow.specifications` | the spec template and the gate that checks its shape |
 | `workflow.skills` | four skills, written once for all four agents |
 
-### Opt-in, only when `.oracle/orly.json` names them
+### Opt-in, only when `.orly/orly.json` names them
 
 | Pack | What it adds | Why it is opt-in |
 |---|---|---|
 | 🦉 `workflow.governance` | the rules for editing rules, their questionnaire, and orly's architecture | only useful if you edit orly itself |
-| `product.agentsfleet` | three audit scripts, the verify dispatch page, four `agentsfleet` docs | a product surface that means nothing in another checkout |
+| `product.agentsfleet` | two audit scripts, the verify dispatch page, three `agentsfleet` docs | a product surface that means nothing in another checkout |
 | 🤠 `persona.indy` | no files; it rewrites the address handles and tone in the generated rules | one maintainer's name and voice |
 
 ---
@@ -390,7 +406,7 @@ It prints the rules it would install, already rendered for the languages it foun
 Then hand your agent the prompt orly was built for:
 
 ```text
-Read AGENTS.orly.md. Tell me which of my last ten commits would have tripped a
+Read .orly/AGENTS.md. Tell me which of my last ten commits would have tripped a
 gate, and name the rule that caught each one.
 ```
 

@@ -14,7 +14,7 @@ page carries only what is specific to this repository.
 | version | `make check-version` | Boundary. `VERSION` against `build.zig.zon`, `cli/package.json` and both `rustd/Cargo.toml` sites. |
 | integration | `make test-integration-rustd` | Boundary. Live Postgres and Dragonfly via docker compose, schemas reset per run. `orly gate pr` skips it on a branch carrying no code. |
 
-These are the commands `.oracle/orly.json` declares. The commit hook runs
+These are the commands `.orly/orly.json` declares. The commit hook runs
 conformance; `orly gate pr` runs every verification row.
 
 The authoritative timing and gate ownership live in

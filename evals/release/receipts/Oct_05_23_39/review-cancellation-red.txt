@@ -1,0 +1,22 @@
+bun test v1.4.2 (744846f84)
+
+src/command_process.test.ts:
+(pass) a successful deadline stop is not repeated during supervisor cleanup [125.31ms]
+51 |     let alive = true;
+52 |     for (let attempt = 0; attempt < 100 && alive; attempt++) {
+53 |       await Bun.sleep(10);
+54 |       try { process.kill(pid, 0); } catch { alive = false; }
+55 |     }
+56 |     expect(alive).toBeFalse();
+                       ^
+error: expect(received).toBeFalse()
+
+Received: true
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/command_process.test.ts:56:19)
+(fail) killing the gate owner stops its detached workload [1153.31ms]
+
+ 1 pass
+ 1 fail
+ 6 expect() calls
+Ran 2 tests across 1 file. [1309.00ms]

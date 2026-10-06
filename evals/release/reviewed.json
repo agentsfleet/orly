@@ -1,0 +1,2188 @@
+{
+  "SOUL_LOG.md": {
+    "status": "reviewed",
+    "evidence": "Removed by explicit owner request after byte-identical private backup.",
+    "findings": [
+      "A18"
+    ],
+    "reviewedDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "SOUL.md": {
+    "status": "reviewed",
+    "evidence": "Read all working-note rules and traced removal of the private-log dependency. Approved personal-log deletion remains separate from release repair approval.",
+    "findings": [
+      "A18"
+    ],
+    "reviewedDigest": "sha256:4e9964d454c2c47226399cc2a64a153422968eda6eedbeec7f7888ad53982473"
+  },
+  "src/config.ts": {
+    "status": "reviewed",
+    "evidence": "Read all 237 lines: synchronous/asynchronous parsing, extension-field preservation, digest handling, drift, safe-write call, seeding and selection. A08 extraction remains an unapproved draft; A14 old schema mismatch remains recorded. The write caller reproduces the shared dangling-chain escape in A30.",
+    "findings": [
+      "A08",
+      "A14",
+      "A30",
+      "A39"
+    ],
+    "reviewedDigest": "sha256:96db6db06ba9f4e6fe05a12e5508b02f2a2635a8fce941b33bce3ace62e0d75f"
+  },
+  "src/install.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A01",
+      "A13",
+      "A33"
+    ],
+    "reviewedDigest": "sha256:2cdea58456864ec08e028e0c42a119919501c240257365095b6661f556b35e65"
+  },
+  "src/loaders.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A12",
+      "A22"
+    ],
+    "reviewedDigest": "sha256:431336e622ed280ac7563e874bb2cd303cabac3fb9096990c1c514dac11ab110"
+  },
+  "src/cli.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A49"
+    ],
+    "reviewedDigest": "sha256:15b54bc6fcd72877d2c08fdc5afedec2887b61682ab4dbea0ab934b0011cd810"
+  },
+  "src/criteria.ts": {
+    "status": "reviewed",
+    "evidence": "Read every criterion and lane selection. Probes prove substring completion and unrelated approval acceptance; documentation language checking is reporting only.",
+    "findings": [
+      "A10",
+      "A16",
+      "A26"
+    ],
+    "reviewedDigest": "sha256:10baa881513e6cd140efa6b5a6fa28bb02b222885c3bd30bbcf945371c723ba4"
+  },
+  "src/criteria_spec.ts": {
+    "status": "reviewed",
+    "evidence": "Read every criterion and lane selection. Probes prove substring completion and unrelated approval acceptance; documentation language checking is reporting only.",
+    "findings": [
+      "A10",
+      "A16",
+      "A26"
+    ],
+    "reviewedDigest": "sha256:670f3a0ba7ca83cc3d628a5a37f733d317d22b94672db0af97e617c616b5282d"
+  },
+  "docs/TEMPLATE.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:788864c176da85380dd19df7f19f0bad50bb3d36dd31151f11a868139c3c9098"
+  },
+  "docs/RELEASE_TEMPLATE.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A25"
+    ],
+    "reviewedDigest": "sha256:a85d6b2caff66df5038c553976f98d05dc59eafca36b3162e488ced31cbf017a"
+  },
+  "evals/install/run.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A06"
+    ],
+    "reviewedDigest": "sha256:909281a9f5ca2a5ca83701a4ea8989f9f7344ef444451a37252a7cae30da1e81"
+  },
+  "evals/install/cases.sh": {
+    "status": "reviewed",
+    "evidence": "Reviewed every installer case and assertion. Authorship, atomic refusal and opt-in probes have bounded expectations; hook configuration string assertions do not establish real pinned launcher invocation.",
+    "findings": [
+      "A03",
+      "A11"
+    ],
+    "reviewedDigest": "sha256:9c4a3de7fc39394d2c3d22cfc5838ffa2654239390b6c8e4082e8dccbbd3331f"
+  },
+  "evals/install/release_cases.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A06",
+      "A24",
+      "A25"
+    ],
+    "reviewedDigest": "sha256:d52763845e2dfd3b861baf55a09f153e555f09f9d54787dc2fe1c4071ab1453f"
+  },
+  ".github/workflows/release.yml": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A07",
+      "A24"
+    ],
+    "reviewedDigest": "sha256:b6e9a174a58bcd56e9a29cdd6d8991f529d385bdb5a296c5f2c3f5dea9498310"
+  },
+  "registry.json": {
+    "status": "reviewed",
+    "evidence": "Read all 432 lines in two complete slices. Checked core string entries, pack extensions/opt-ins, all materialization mappings, skill stubs, product-only pack and three declared rule rows against source consumers. Removed-verb repair remains a draft; empty-extension domain packs are intentionally always on.",
+    "findings": [
+      "A04",
+      "A11",
+      "A15",
+      "A48"
+    ],
+    "reviewedDigest": "sha256:dc351ecc55b252452561673f6ecd4723a629622e55dcc422365f7f81ae604673"
+  },
+  "schemas/profile.schema.json": {
+    "status": "reviewed",
+    "evidence": "Read complete schema and compared repository config shape. Obsolete central-profile name and closed property list reject current configuration.",
+    "findings": [
+      "A14",
+      "A39"
+    ],
+    "reviewedDigest": "sha256:dabb9b76878f5fe6544d1a178a90f19f3f7e7b96a0c91392571055497b9b4c2c"
+  },
+  "Makefile": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:c17237f8744b1dc4d7564bcc2112c4cf22cc8ae30cd98875aa40fe1c2c1faad4"
+  },
+  ".githooks/pre-commit": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:5701230764664f1bab132b304c68f3b57d785fafaa33cdaccac05e5aa3c6bc1c"
+  },
+  ".githooks/pre-push": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A19"
+    ],
+    "reviewedDigest": "sha256:563ea82a8d8d33cf3d600cd884ee97dcdc6bda6582c14cce0537993d9807f25f"
+  },
+  ".github/workflows/harness.yml": {
+    "status": "reviewed",
+    "evidence": "Read dependencies, triggers, timeouts and all run steps. Compared audit, installation and coverage ownership; hosted execution remains unverified.",
+    "findings": [],
+    "reviewedDigest": "sha256:a6e81f53f2144cfae962f38e05fa4572d4864e3f59335d9cdfda66c664bb2142"
+  },
+  ".github/workflows/test.yml": {
+    "status": "reviewed",
+    "evidence": "Read dependencies, triggers, timeouts and all run steps. Compared audit, installation and coverage ownership; hosted execution remains unverified.",
+    "findings": [],
+    "reviewedDigest": "sha256:e9ccd7568f229fb40021b4ba869b997a58e4ee45e1ff982dd87947448ce25467"
+  },
+  ".github/workflows/gitleaks.yml": {
+    "status": "reviewed",
+    "evidence": "Read history checkout and scanner setup. Moving latest scanner version differs from pinned scanner tests; organization license remains an external dependency.",
+    "findings": [],
+    "reviewedDigest": "sha256:a943f7b5c0397baf777795deceee5f4ec58ec7f046bb240198b3f3e25cc30d64"
+  },
+  "docs/CHANGELOG_VOICE.md": {
+    "status": "reviewed",
+    "evidence": "Read complete release structure and requirements. Product-specific version, sibling documentation and billing paths need separation from reusable rules.",
+    "findings": [
+      "A25"
+    ],
+    "reviewedDigest": "sha256:96664296e40e49b30215625922dc958b067aab14434fc1e5812b24259bc12307"
+  },
+  "docs/DOCUMENTATION_RULES.md": {
+    "status": "reviewed",
+    "evidence": "Read complete pages and compared claimed enforcement with criteria and Make targets. Product-specific examples and reporting-only limitations remain; no rule change applied.",
+    "findings": [
+      "A16",
+      "A25"
+    ],
+    "reviewedDigest": "sha256:8dc4a473abd544728e2d43a0be599b8d4bfe4cc323e6f851aac38c302b2885ec"
+  },
+  "dispatch/write_documentation.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:3f4d481e3a19396fae0ba133c7c7e13d8a80ee0aa6ef04ac8ff9070a6b988587"
+  },
+  "dispatch/verify.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:f518a697067d0a4fcd8052536192f4806c30a0b2780a6599fc7cc00af8d88b4e"
+  },
+  "schemas/registry.schema.json": {
+    "status": "reviewed",
+    "evidence": "Read complete schema. Only outer collection shapes are described; entry/path validation belongs to src/validation.ts. No new schema validation claim.",
+    "findings": [],
+    "reviewedDigest": "sha256:31ed3a3a1e3d8adfc0047f53eb75c769a1ba2397eb426a1365de7246715eb91d"
+  },
+  "src/gates.ts": {
+    "status": "reviewed",
+    "evidence": "Read gate ordering, override parsing, active/closed spec selection and Git calls. Override permission is an operating rule rather than authenticated by the parser.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:94a104d3600f661ed2fcdf8ceaceb636bd551ff2126b4e7313e208a4e218b5ef"
+  },
+  "src/execution/config.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A10"
+    ],
+    "reviewedDigest": "sha256:b0463067a9474c610186b4eec55cc8148bee2a84648bacc6f7d97ee0dc0da408"
+  },
+  "src/execution/plan.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A10"
+    ],
+    "reviewedDigest": "sha256:08ca8e22c52d35d3e1c85da5809ad54177665d6f494b8222b3daecfd22698ce7"
+  },
+  "src/installation/plan.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A04"
+    ],
+    "reviewedDigest": "sha256:a52a65069658cbb791428b20c4ee779740dae559df6e1524e0b15d244019f8cc"
+  },
+  "src/installation/transaction.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A02",
+      "A29"
+    ],
+    "reviewedDigest": "sha256:8ee6a9642c261fdb9a3b4702c79a1bbac8476a76c0bc4695af0aeec9c6ce6b9d"
+  },
+  "src/installation/lock.ts": {
+    "status": "reviewed",
+    "evidence": "Read every journal, lock, recovery and cleanup path. Checkpoint tests passed; mid-write interruption, competing stale-lock recovery and old/new config coexistence remain concerns, not proven safe.",
+    "findings": [
+      "A01",
+      "A02",
+      "A04"
+    ],
+    "reviewedDigest": "sha256:8205b2f76361a9275bee4a81ab44746391ac75f04b1efcef619c6a7cbfdd2e51"
+  },
+  "src/installation/migration.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A04",
+      "A23",
+      "A27"
+    ],
+    "reviewedDigest": "sha256:91470f68b8a404a5dff362fe9cd18553f5049180279d1c6f4ca9ed3721252097"
+  },
+  "src/judgments/runner.ts": {
+    "status": "reviewed",
+    "evidence": "Read preparation, scanning, requests, timeouts, cleanup and failure reporting. Deterministic suite uses mocked/local transport; no live provider or agent result claimed.",
+    "findings": [
+      "A17"
+    ],
+    "reviewedDigest": "sha256:a1e5a5f4f81aeab4dfcdc646f3011347afc390fe596bf7f1858cbf53cee68040"
+  },
+  "src/judgments/transport.ts": {
+    "status": "reviewed",
+    "evidence": "Read preparation, scanning, requests, timeouts, cleanup and failure reporting. Deterministic suite uses mocked/local transport; no live provider or agent result claimed.",
+    "findings": [
+      "A17"
+    ],
+    "reviewedDigest": "sha256:cd2223bfbbe7789702f61ef8f466785294d4dc4fc3f205befd370cf9a65fad3c"
+  },
+  "src/judgments/scan.ts": {
+    "status": "reviewed",
+    "evidence": "Read preparation, scanning, requests, timeouts, cleanup and failure reporting. Deterministic suite uses mocked/local transport; no live provider or agent result claimed.",
+    "findings": [
+      "A17"
+    ],
+    "reviewedDigest": "sha256:95d2eb39b333906db7ebf35dc33753b91b83ce34a4f046d509dc39b636519f2b"
+  },
+  "src/judgments/files.ts": {
+    "status": "reviewed",
+    "evidence": "Read bounded file/stream access, containment, unit selection and parser-worker lifecycle. Identity covers selected bytes, not omitted callees; syntax alone cannot prove production wiring.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:761bbcd7639986b365489bc61aebdb42452f1907e365cb5e0df638acc6bed255"
+  },
+  "src/judgments/evidence.ts": {
+    "status": "reviewed",
+    "evidence": "Read bounded file/stream access, containment, unit selection and parser-worker lifecycle. Identity covers selected bytes, not omitted callees; syntax alone cannot prove production wiring.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:7fad628732d75150853665599ee90bb32c30fa90a2ed40bdbc12d19159e64d93"
+  },
+  "src/judgments/syntax.ts": {
+    "status": "reviewed",
+    "evidence": "Read bounded file/stream access, containment, unit selection and parser-worker lifecycle. Identity covers selected bytes, not omitted callees; syntax alone cannot prove production wiring.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:6fe278beab59461970fe362b95b02859db49402f895569927c6b7e4170cd11d6"
+  },
+  "src/judgments/syntax_worker.ts": {
+    "status": "reviewed",
+    "evidence": "Read bounded file/stream access, containment, unit selection and parser-worker lifecycle. Identity covers selected bytes, not omitted callees; syntax alone cannot prove production wiring.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:e670e78570a754cbac28812412a632a4eaf5c6483eebeb0b56f0f7d5d1952a1a"
+  },
+  "src/judgments/constants.ts": {
+    "status": "reviewed",
+    "evidence": "Read all bounds, six questions, input/answer checks and fixed actions. The 0.8 threshold remains uncalibrated; uncertain advice grants no permission.",
+    "findings": [
+      "A16",
+      "A17"
+    ],
+    "reviewedDigest": "sha256:3a9ad4b61f18dbbb333611e7b2c85a5a34c42913e90b6e4e78b198c61c1d089c"
+  },
+  "src/judgments/questions.ts": {
+    "status": "reviewed",
+    "evidence": "Read all bounds, six questions, input/answer checks and fixed actions. The 0.8 threshold remains uncalibrated; uncertain advice grants no permission.",
+    "findings": [
+      "A16",
+      "A17"
+    ],
+    "reviewedDigest": "sha256:17120ffcfa1d7c6b301423cdf295237d134275f26db9537221be5cfd752243ff"
+  },
+  "src/judgments/types.ts": {
+    "status": "reviewed",
+    "evidence": "Read all bounds, six questions, input/answer checks and fixed actions. The 0.8 threshold remains uncalibrated; uncertain advice grants no permission.",
+    "findings": [
+      "A16",
+      "A17"
+    ],
+    "reviewedDigest": "sha256:28f6a900f7e7e56490cda1565680f4749a85fbb503779ffb4faec2b36962e99e"
+  },
+  "src/judgments/wire.ts": {
+    "status": "reviewed",
+    "evidence": "Read all bounds, six questions, input/answer checks and fixed actions. The 0.8 threshold remains uncalibrated; uncertain advice grants no permission.",
+    "findings": [
+      "A16",
+      "A17"
+    ],
+    "reviewedDigest": "sha256:b60b0dd12902f627033086d6fba7544a4549c96432fccce1d8774a1cc6453b7c"
+  },
+  "src/judgments/advice.ts": {
+    "status": "reviewed",
+    "evidence": "Read all bounds, six questions, input/answer checks and fixed actions. The 0.8 threshold remains uncalibrated; uncertain advice grants no permission.",
+    "findings": [
+      "A16",
+      "A17"
+    ],
+    "reviewedDigest": "sha256:29933616353696147afcfa6855f6b197197a55c9fdef62ed82bf78336316b909"
+  },
+  "src/judgments/replay.ts": {
+    "status": "reviewed",
+    "evidence": "Read cache paths, schema, identity/checksum and atomic replacement. Exact selected-input replay is local advice, not a receipt proving task completion.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:0064345395fb5a0205bdda1cb72b481053a821d2405a2962b635239d5d973f94"
+  },
+  "src/judgments/command.ts": {
+    "status": "reviewed",
+    "evidence": "Read option validation, offline default, output/redaction and fixture ownership. Tests use injected replies; live calls remain excluded.",
+    "findings": [
+      "A17"
+    ],
+    "reviewedDigest": "sha256:0ee0d36911919d1a1806c497d253f0b4c194f4b7d9fcc1302ecabb9a26cbf2e4"
+  },
+  "src/judgments/test_support.ts": {
+    "status": "reviewed",
+    "evidence": "Read option validation, offline default, output/redaction and fixture ownership. Tests use injected replies; live calls remain excluded.",
+    "findings": [
+      "A17"
+    ],
+    "reviewedDigest": "sha256:a31f8a53f5f2255bc18f1f9b06b3dcb929c14a78e406b5c77dcfa2a7d87c2b44"
+  },
+  ".gitignore": {
+    "status": "reviewed",
+    "evidence": "Read every exclusion. Duplicate ignore patterns are harmless; temporary-state exclusions do not establish cleanup. Previous unrecorded state remains preserved.",
+    "findings": [],
+    "reviewedDigest": "sha256:9ed6f42314c3313486f146858ddd6388ddd15466dd86f7e2e04e1042a757b673"
+  },
+  ".gitleaks.toml": {
+    "status": "reviewed",
+    "evidence": "Read default extension and historical digest allowance. Historical allowance requires path and line match. No new suppressions added.",
+    "findings": [],
+    "reviewedDigest": "sha256:f15ac763d7859e760a7af887d2c968631a36e9d0e2134d98e028feb81fad88a2"
+  },
+  "bin/orly": {
+    "status": "reviewed",
+    "evidence": "Read complete symlink resolution, missing-Bun diagnostic and direct TypeScript launch. This entrypoint builds no compiled native executable.",
+    "findings": [],
+    "reviewedDigest": "sha256:d36d1da30ba5d4a19a74f1c09e2f198a5c562478395175288197b1c9106e9bb5"
+  },
+  "src/config_discovery.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A08",
+      "A49"
+    ],
+    "reviewedDigest": "sha256:6b94ccd3bff83387bdd1f6c5f7d93d8103c50bdb02b2fab69c2bf5337a4dd8c3"
+  },
+  "src/installation/hooks.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A03",
+      "A11"
+    ],
+    "reviewedDigest": "sha256:3e8e3ab44914de03d2521fc9b971d31f4d318de661f7a40cda3dfb0cc8f5b5fb"
+  },
+  "src/model.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A30"
+    ],
+    "reviewedDigest": "sha256:9acbcc43d510d938cbb0cbe6546d69e50c268ca17f348caacd72722f5204b449"
+  },
+  "src/verify.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A15",
+      "A28"
+    ],
+    "reviewedDigest": "sha256:18cb52fba1d47fb4817746fd429108806f0992cda7edc792efddde3daa906f34"
+  },
+  "src/criteria_support.ts": {
+    "status": "reviewed",
+    "evidence": "Read all 54 lines: named criterion stamping, declared-command execution and Git output. Command execution has no timeout/output limit; keep full receipts, but establish bounded process ownership before claiming unattended completion.",
+    "findings": [
+      "A39"
+    ],
+    "reviewedDigest": "sha256:29fa99b3612d4b825b9d94e8e1613d63e13a6f96a6c023451284509ae461461e"
+  },
+  "src/doc_rules.ts": {
+    "status": "reviewed",
+    "evidence": "Read all 390 lines without truncation: scope enumeration, front matter/fence/comment handling, vocabulary, headings, sentence/paragraph limits and explicit reporting scope. The file exceeds the 350-line stated source cap. Existing docs claim excludes front-matter/semantic checks; no model call added.",
+    "findings": [],
+    "reviewedDigest": "sha256:22bc661cd7dbd94585fcce8ac06024e86192f0613b76aabc19568a55d71b1738"
+  },
+  "src/pack_hygiene.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A31",
+      "A48"
+    ],
+    "reviewedDigest": "sha256:fac7253fa5c538b0d3afb2a4a23c0d2d98a63ea611f7418ea425a84010d58823"
+  },
+  "src/surfaces.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A32"
+    ],
+    "reviewedDigest": "sha256:c85d1ccc5c90901389956a6670e3313c6496699cba9c96001952ae870d9ab253"
+  },
+  "audits/doc-read.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:df26211a388cea3781bc09c241c9d6619a9d04c89e4111941d2331a8102d5f95"
+  },
+  "src/render.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A49"
+    ],
+    "reviewedDigest": "sha256:4655e52c6bba14c768fbe0921048fc47a555421b45b876644d6d4c48a7e81f56"
+  },
+  "src/references.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A11"
+    ],
+    "reviewedDigest": "sha256:759056dff163b5900123eec65350b58026031328da4708fedc84db1c84c22124"
+  },
+  "src/cli_help.ts": {
+    "status": "reviewed",
+    "evidence": "Read all 66 lines against the actual router, configured lanes, disabled lifecycle inspection, installer and telemetry consent. Existing global-install/layout migration proof remains pending under A03/A11; help is not proof of fresh hooks.",
+    "findings": [
+      "A03",
+      "A11",
+      "A39",
+      "A40"
+    ],
+    "reviewedDigest": "sha256:676e32fa4af0c9da3508e96c49326b8265b4830fbc805de0ed812e4ad95136b1"
+  },
+  "src/telemetry.ts": {
+    "status": "reviewed",
+    "evidence": "Read all 350 lines in two complete slices: consent precedence, off/noninteractive behavior, typed event keys, bounded spool/retention, exclusive locks, atomic writes and detached sync ownership. No live collection performed. Compare dynamic criterion fields with declared-command validation before asserting privacy behavior.",
+    "findings": [
+      "A40"
+    ],
+    "reviewedDigest": "sha256:9cc7a6c0ebc21606a72433e2cfc81c10972c4564795820ea25d830be745c21eb"
+  },
+  "src/telemetry_sync.ts": {
+    "status": "reviewed",
+    "evidence": "Read all 134 lines: consent, locked batches, attempt interval, bounded abortable request, full acknowledgment and concurrent suffix retention. Existing capture-only public-key suppression was preserved; no suppression or network request was added.",
+    "findings": [
+      "A40"
+    ],
+    "reviewedDigest": "sha256:7f9ef14deb2f9bd52e785ef6ae03137ebbcc988cf486351ef418e46a408c520a"
+  },
+  "src/git_env.ts": {
+    "status": "reviewed",
+    "evidence": "Read all 20 lines: scrubbed copied environment removes seven hook Git-scoping variables for spawned Git callers. Does not dump environment values; compare the exceptional evidence/project-root callers separately.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:b8eb87206609ed29cb9cef96d6b855ca7e45b41b95bbd7834e15e3dea934093f"
+  },
+  "package.json": {
+    "status": "reviewed",
+    "evidence": "Read all 69 lines: public manifest/version, Bun requirement, scripts without lifecycle hooks, CLI bin, packed allowlist and pinned runtime dependencies. Architecture subdirectory is absent from docs/*.md; source tests currently ship because src/ is broadly included. No native compilation is proposed.",
+    "findings": [
+      "A11"
+    ],
+    "reviewedDigest": "sha256:6cf983921cf61f7afc69c1d90e1e9ddbd5b8dd63b51c4879a9a2d221ddcb5ba8"
+  },
+  "audits/error-codes.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A37"
+    ],
+    "reviewedDigest": "sha256:a5fab89d8c7d4b38b310568bab8eece7308ae4f820a8551a04bb1df7c9e9e7dc"
+  },
+  "audits/rust-error.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A38"
+    ],
+    "reviewedDigest": "sha256:9cd8509c27f590115c30d746a3f3b03e604109072c4d1deea748be8d2fa8be9f"
+  },
+  "audits/deinit-pairs.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A47"
+    ],
+    "reviewedDigest": "sha256:6444510b8980a867db1fede73066039002bb8cf96c54b2122b048fbd73e9f6f8"
+  },
+  "audits/design-tokens.sh": {
+    "status": "reviewed",
+    "evidence": "Reviewed all mode handling, patterns, font ownership, gradient scan and explicit override recognition. Product-specific ui/ paths and working-byte reads constrain the generic installed check; no pattern or exception weakened.",
+    "findings": [
+      "A35"
+    ],
+    "reviewedDigest": "sha256:725808d70448eb4fef5f4587ff52540e7638829552e6b7603eb25df20b554b20"
+  },
+  "audits/msid-ui.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A45"
+    ],
+    "reviewedDigest": "sha256:752ff4c839b5d19a41a696ed050ab51623ab1742423075cdb9bd9add0a5f67bc"
+  },
+  "audits/lifecycle-anchors.sh": {
+    "status": "reviewed",
+    "evidence": "Read the entire sourced comparison: both generated model and lifecycle prose must contain each registered anchor; return status preserves failures. This is string presence, not semantic equivalence.",
+    "findings": [],
+    "reviewedDigest": "sha256:2941066965ac7bd4e919e3b284afc31ff70f9a738db540e43ba475026c1b27d1"
+  },
+  "audits/parity-dispatch.sh": {
+    "status": "reviewed",
+    "evidence": "Read disk/table/required-set census, expected-entry presence and retired-card detection. Historical switchover comments do not describe current ownership; caller review separates string parity from enforcement.",
+    "findings": [],
+    "reviewedDigest": "sha256:013c3d18f224dae7175d4c94a9db8f4a115b885f56c1a101b7bcba29a42c861a"
+  },
+  "audits/rule-paths.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:2d2878168efbc4b11be2ec7ced8254cbb68c9638a44974b5c3efa07bddece9ff"
+  },
+  "audits/rule-ledger-lib.sh": {
+    "status": "reviewed",
+    "evidence": "Reviewed census grammar, block tags, exclusions, scope extraction, quoting and source-versus-target roots. The relocation-aware root is used by some helpers while rule-ledger.sh still reads the target root for registered docs.",
+    "findings": [
+      "A11"
+    ],
+    "reviewedDigest": "sha256:168182658aa0d53bf08bbd571f81e04d538fc5b9b0c6d0006e57c6974c083164"
+  },
+  "audits/rule-ledger.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:80710a96bbff0fcd83b0bb1d2e4d18d17bff188736575b309b823f32557d7e09"
+  },
+  "dispatch/lib.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A36",
+      "A43"
+    ],
+    "reviewedDigest": "sha256:203c8016e3043e132e9e96432a56adf195597e385eea0fcd10ebbaac800bbb78"
+  },
+  "dispatch/write_any.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:92ad9b8ea25a5f0e5e12be0a13cf3dab4a628e6fbf23bfd34f79dc3bf527a4f4"
+  },
+  "dispatch/write_zig.sh": {
+    "status": "reviewed",
+    "evidence": "Read every emitted rule, length cap, staged resource/SQL helpers, delegations and judgment-only decisions; explicit files do not become explicit leaf scope.",
+    "findings": [
+      "A36",
+      "A47"
+    ],
+    "reviewedDigest": "sha256:3dd999cb85fe7410cf1a0d15ba4a11b90b0c86cabd41c5ec4ab24533dfd93055"
+  },
+  "dispatch/write_sql.sh": {
+    "status": "reviewed",
+    "evidence": "Read schema glob, length check and explicitly unwired SQL hygiene/teardown floor. Judgment rows are not deterministic proof or owner approval.",
+    "findings": [],
+    "reviewedDigest": "sha256:e86b4f3ba8ee3d4522277cbc327df5f667d00405e0f11ff3c09958ed7170d272"
+  },
+  "dispatch/write_rust.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:f6f3b5d136453f2f3247db268aa59b0f4467f7cf844d71619a2436aac8df0374"
+  },
+  "dispatch/write_ts_adhere_bun.sh": {
+    "status": "reviewed",
+    "evidence": "Read language glob set, length cap and every product-delegated/judgment-only check; no deterministic lint or design claim inferred from exit status.",
+    "findings": [],
+    "reviewedDigest": "sha256:3244892292500a18f5a053c9f1e954ef0ff51cb79b7ae83883aa3350289d1fa2"
+  },
+  "dispatch/edit_rules.sh": {
+    "status": "reviewed",
+    "evidence": "Read governance scope and source-scan dependency; marked scope data and forced staged marker invocation against latent trigger requirements.",
+    "findings": [
+      "A36"
+    ],
+    "reviewedDigest": "sha256:dadec1636ad189f913a9af75c7eb7027900fee81bc0f45a919919ee88e0004ab"
+  },
+  "evals/dispatch/run.sh": {
+    "status": "reviewed",
+    "evidence": "Reviewed each fixture mapping, sandbox setup, special post-image cases and expected exit comparison. Cases assert whole-dispatch exits without proving the named failing leaf; shared logs and interruption cleanup remain limited.",
+    "findings": [
+      "A16",
+      "A34",
+      "A35",
+      "A36",
+      "A37",
+      "A38",
+      "A43",
+      "A45",
+      "A46",
+      "A47",
+      "A50"
+    ],
+    "reviewedDigest": "sha256:4eb675b102d8d9004072c067d3b924ba7f3b03ca7b78b6668bb785d3a3e4a205"
+  },
+  "evals/dispatch/parity.sh": {
+    "status": "reviewed",
+    "evidence": "Read each Rust/Zig/string parity case and exact output-substring assertion; isolated subprocess output does not establish live provider comprehension.",
+    "findings": [],
+    "reviewedDigest": "sha256:df2bc539100bc29ccf08e2b074eb0ce3ea8a59f9c9df6fe21668b73b64fb09c7"
+  },
+  "evals/dispatch/coverage.sh": {
+    "status": "reviewed",
+    "evidence": "Read every tag/check/fixture/probe/gloss/scope comparison, explicit held-out languages and empty-set safeguards. Structural coherence is separate from meaning; optional live fixtures are never treated as observed success.",
+    "findings": [
+      "A50"
+    ],
+    "reviewedDigest": "sha256:740ad6dce89218cb03cd439ca02999cc20ffdefb6eed1dcd1548556ccca8a095"
+  },
+  "evals/ledger/lib.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A05"
+    ],
+    "reviewedDigest": "sha256:9e5831e36ffd51ae736916738b61e638793320cb3bf131372abb23656ebf8c12"
+  },
+  "evals/ledger/run.sh": {
+    "status": "reviewed",
+    "evidence": "Read census, structural red, scoreboard currentness, locale and read-only cases; fixture discovery uses command substitution and leaves cleanup ownership incomplete.",
+    "findings": [
+      "A05"
+    ],
+    "reviewedDigest": "sha256:1429472fca1235accc42334cbb770be9544e7c716049a77b9aab368431aa2d33"
+  },
+  "evals/ledger/doc_read_cases.sh": {
+    "status": "reviewed",
+    "evidence": "Read all append, unavailable-runtime, scope, content identity, usage, cited-section and bulk cases. Quote escaping is tested while multiline/control-character JSON encoding is not; fixture cleanup inherits the subshell flaw.",
+    "findings": [
+      "A05",
+      "A42"
+    ],
+    "reviewedDigest": "sha256:c0224674b4c71e072581ea1845d8261cf6366c5de1ac4ef5a8573d0fbce9f084"
+  },
+  "src/validation.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A15"
+    ],
+    "reviewedDigest": "sha256:c615b62709ad820eb9854ccf5e4b5cb179d20db55e204695140cc74b3de8d43e"
+  },
+  "src/cli.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A33"
+    ],
+    "reviewedDigest": "sha256:7a208a596ab841b43e6c99306708ec21f9b413a391ca968df0f6a3be090ed547"
+  },
+  "src/config.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A08"
+    ],
+    "reviewedDigest": "sha256:9ebe39710dc061be209b32ac026b40bc9381cfd9f1ecca398b76cbbc24f0567f"
+  },
+  "src/model.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A30"
+    ],
+    "reviewedDigest": "sha256:c8999b37db65600fb1651bd3b429ff03e0e2b606eb3ed018ada501278a3d5749"
+  },
+  "src/validation.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read traversal negative test and exact error comparison; it proves the lexical ../ case, not runtime link-chain containment.",
+    "findings": [
+      "A30"
+    ],
+    "reviewedDigest": "sha256:e11eb9b2ac1e3dd71e3d20a8b017f88918301ba10301d51243df2fb40a30f960"
+  },
+  "src/surfaces.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A32"
+    ],
+    "reviewedDigest": "sha256:476a2afa88e6b9d75b93e62057aec835d1f3671ef2f02e01dd2336287aa4c9c3"
+  },
+  "src/criteria.test.ts": {
+    "status": "reviewed",
+    "evidence": "Reviewed full group composition, tier execution, polluted Git scope, command output preservation and final dirty-tree tests. Complete output preservation must remain in any approved resource-limit change.",
+    "findings": [
+      "A39"
+    ],
+    "reviewedDigest": "sha256:da19733abf49553041b5f7dca74850eb185a7eb80e87da62e0359a0211ad1bbe"
+  },
+  "src/verify.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A28"
+    ],
+    "reviewedDigest": "sha256:24ba7082c3ebbe2b986f2d2019b51813725385ef20d283df24b2a007e90d98fb"
+  },
+  "src/doc_rules.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read every language-scanner positive/negative assertion and documentation surface enumeration; semantic claims and report truth remain outside its string heuristics.",
+    "findings": [],
+    "reviewedDigest": "sha256:9a8f19f747c7a698654a2664490d483625125caafb55ad0baa46b101b44e0dbd"
+  },
+  "src/pack_hygiene.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read all generic/product allowlists and registry enumeration tests. Synthetic core entries use object form while the real core registry uses strings; owned probe demonstrates missed core files.",
+    "findings": [
+      "A31",
+      "A48"
+    ],
+    "reviewedDigest": "sha256:ee63480b7860ca453122c027b223ecb5fc5d2ab830bb2fd8285072d1beeb90f2"
+  },
+  "src/references.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read selected/unknown marker and missing fa\u00e7ade closure assertions; tests name the actual missing reference. Full installed document/link closure remains the package boundary check.",
+    "findings": [
+      "A11"
+    ],
+    "reviewedDigest": "sha256:5c980ee76485d41d891e0e572169556f2031f42e551a938b445131f9e8369e2a"
+  },
+  "src/install.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A09"
+    ],
+    "reviewedDigest": "sha256:5f0662ea34cfc570778a451ff91f4ed0311e960161391ca5d1798ae19e53b151"
+  },
+  "src/install_nested.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read the complete nested-package installation case with exact bytes and actual destination assertions; source-package location is distinct from target ownership.",
+    "findings": [],
+    "reviewedDigest": "sha256:9a60d6edb22e83e480419aec1ea13f3fa3fa19b8f1b44408963f357ae902baf4"
+  },
+  "src/install_packs.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A48"
+    ],
+    "reviewedDigest": "sha256:c1dd2e9ee22cd648a02db091f30a4dcf360013be135ff9eec4ee114904dfc46b"
+  },
+  "src/install_loaders.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A09",
+      "A12"
+    ],
+    "reviewedDigest": "sha256:bde744fabbd0628bd769365f70b9e4af04e25528ac40fc7ea78b88debf718894"
+  },
+  "src/installation/migration.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A02",
+      "A23",
+      "A27",
+      "A29"
+    ],
+    "reviewedDigest": "sha256:ef50578a3c6285826a7322a0645c48de1cb7deceb6330f98836e48c5d0ab85cc"
+  },
+  "src/installation_preservation.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A01",
+      "A09"
+    ],
+    "reviewedDigest": "sha256:d13025ffeac5a52f4d0ea6f9549bcad9b1c62b6c1980bedd91b3d531f48e6908"
+  },
+  "src/execution/plan.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read all actual lane selection, disabled launcher sentinel and malformed/active remote refusal cases. Local failure stays failed and no remote inference or activity is claimed.",
+    "findings": [],
+    "reviewedDigest": "sha256:cb44de7420798ca79e9a888449e210afe4eac7dbabec4fe74695c7b4c261a27c"
+  },
+  "src/loaders.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A22"
+    ],
+    "reviewedDigest": "sha256:a0516dabffc8904a308337329d881b991aa0be061ae3c3082131f263c0d4b8ce"
+  },
+  "src/render.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read complete deterministic/filter/reference-currentness and machine/prose alignment cases. Hardcoded local selection is a fixture; exact-byte currentness is distinct from semantic compliance.",
+    "findings": [],
+    "reviewedDigest": "sha256:421cdffd481e17d7dbf031e02378de6c880cb55433ee0164dec860e5871557e9"
+  },
+  "src/setup.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read all missing command role, documentation repo, hermetic hook launcher and missing-bunx assertions. Local fake launcher proof is explicitly separate from real packed hook execution.",
+    "findings": [
+      "A03"
+    ],
+    "reviewedDigest": "sha256:ffec141700bec1e57407649cfb5f23072713dfcd774e0b0d0a561e62e0626447"
+  },
+  "src/gates_test_support.ts": {
+    "status": "reviewed",
+    "evidence": "Read all fixture builders, declared command/spec shape, baseline references, cleanup ownership and explicit scrubbed Git environment. Placeholder fixture counts cannot substantiate production baseline contents.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:bd41f458551b04df438348ca4235173135404258cebeb99ef4970fbfdacd8c69"
+  },
+  "src/gates.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read all group composition, early-stop, worktree root, overrides, docs/tier, and end-to-end command cases. Status equality underlies the named byte-identical claim and is weaker than byte snapshots of pre-existing dirty files.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:b5d3edce5a5657d098b9be1eb8d6b7d85d9dfb250598582116ed5d87c561a410"
+  },
+  "src/gates_spec.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read all dotted-version discovery, folded-owner conflict, exact branch ownership, closed spec, baseline/order and deferral acknowledgment cases. Deferral quote presence does not bind a quote to its obligation.",
+    "findings": [
+      "A16",
+      "A32"
+    ],
+    "reviewedDigest": "sha256:971f24008c553a04b9987ad29c29242dfd14c157c0d4ae30371789c253d54d35"
+  },
+  "src/spec_baseline.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read count/revision/reference/absence/malformed and no-code lane cases. Tests explicitly state report contents require review; URL presence is not a fetched or measured baseline.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:eec7416822206a418c06d53cb2d488ddfcdee2e8ea29a7a6c557d1bdf63822a4"
+  },
+  "src/spec_template.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read all content/tier/rubric/reference/residue/fence/duplicate/line-cap cases. Input-shape enforcement does not prove executable production behavior or exact completed states.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:0132ed958535e7636d7620178d0aa60431b914ea3d021f5d6e727775d6f89428"
+  },
+  "src/spec_template_io.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A32"
+    ],
+    "reviewedDigest": "sha256:936713abacfd62a9771740f864f3c964ba3e1c1cb653981d661290dc09f616d9"
+  },
+  "src/telemetry.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read consent, identity, schema, contention, bounded spool, retry and captured-fetch cases. Injected private command arguments are excluded, but private text embedded in permitted dynamic field values is not tested.",
+    "findings": [
+      "A40"
+    ],
+    "reviewedDigest": "sha256:b14e669e7ca3ae6358f28bf33c959715766615424576a8d4cc4c335860811a7d"
+  },
+  "evals/release/inventory.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A41"
+    ],
+    "reviewedDigest": "sha256:ccb8db3ed0101b72f7e4800a66913d3603c40e0876caf426e8291bd668964d4d"
+  },
+  ".orly/orly.json": {
+    "status": "reviewed",
+    "evidence": "Read every selected pack, command lane, user/doc surface, managed path and digest. It records the current generated root and version 0.11.0; it is not a release-completion receipt.",
+    "findings": [],
+    "reviewedDigest": "sha256:05219b0cac314f344e1de80f042f8d76462cdda67a5f039429543a06c19e63bd"
+  },
+  "CLAUDE.md": {
+    "status": "reviewed",
+    "evidence": "Read complete root loader and bare AGENTS import; its missing-only promise differs from banner-authorized loader refresh.",
+    "findings": [
+      "A22"
+    ],
+    "reviewedDigest": "sha256:4b76a7f22aff00cb6537a7376b5943e415a8dc1a047c1b3634ed0fc0dad751c5"
+  },
+  "opencode.json": {
+    "status": "reviewed",
+    "evidence": "Read JSON shape and the single root instruction; owner configuration is retained and no provider invocation performed.",
+    "findings": [],
+    "reviewedDigest": "sha256:441fa773803d0b4dc26ddad0a1c7214ce9a4feb321245455fc9000accef34f5d"
+  },
+  "tsconfig.json": {
+    "status": "reviewed",
+    "evidence": "Read strict TypeScript compiler options and src-only inclusion. The audits/spec-template.ts dependency enters typechecking through source test imports; this is not an emitted build configuration.",
+    "findings": [],
+    "reviewedDigest": "sha256:4661ad5881bff7a8489e8d39967790d2e09b6d570b17fb26a36e771e47714f71"
+  },
+  "LICENSE": {
+    "status": "reviewed",
+    "evidence": "Read the complete MIT license and retained attribution; distribution allowlist includes it. No legal or license rewrite proposed.",
+    "findings": [],
+    "reviewedDigest": "sha256:23fc62d96015a5b460241594ba67c4465a6a8e0130a0ce366c8a169e1df3e6d5"
+  },
+  "fixtures/registry-valid.json": {
+    "status": "reviewed",
+    "evidence": "Read minimal valid rule/pack fixture and matched its registered loader purpose; fixture defaults are isolated from real registry completeness.",
+    "findings": [],
+    "reviewedDigest": "sha256:e5be5b20d4066440153e10d3f2f0f983bf196df7e27271fd6c3ec79188cae32d"
+  },
+  "fixtures/registry-invalid.json": {
+    "status": "reviewed",
+    "evidence": "Read intentional invalid schema fixture and matched the rejecting model test; preserve its invalidity.",
+    "findings": [],
+    "reviewedDigest": "sha256:ae3b50f1cb7dff16c73f0d7d2c0716e91ae92344db8f7d900f81dbac581b6eb7"
+  },
+  "fixtures/unclosed-pack-block.md": {
+    "status": "reviewed",
+    "evidence": "Read deliberate unclosed pack marker and its exact rejecting renderer test; preserve the negative fixture.",
+    "findings": [],
+    "reviewedDigest": "sha256:d57b0483bb504cddde8d46c3886b40e372219daf6ba9af4f428f5b0f2228dd0e"
+  },
+  "fixtures/doc-slop.md": {
+    "status": "reviewed",
+    "evidence": "Read all deliberate documentation language violations and quoted/fenced/table controls; caller asserts each scanner category.",
+    "findings": [],
+    "reviewedDigest": "sha256:7bc81ab5d50e159a4b7703f2a5f6f1c0ee7c096f7efc876a4b6c392baa8246c7"
+  },
+  "audits/fixtures/clean.diff": {
+    "status": "reviewed",
+    "evidence": "Read both source and user-interface post-images; named constants and primitive import form the positive scanner control.",
+    "findings": [],
+    "reviewedDigest": "sha256:b6ce98042591a0419f5a78d66e8ca21b7cc98fe36fd1ed32ce1e9b672ed2bd81"
+  },
+  "audits/fixtures/dirty.diff": {
+    "status": "reviewed",
+    "evidence": "Read intentionally added milestone identifier and raw button; negative diff belongs to audit selftests, not product code.",
+    "findings": [],
+    "reviewedDigest": "sha256:7fb094dfe76a42b80276c2cd54fcbdd8ed8ff9b9b87e954dc39c4bec0d82bd71"
+  },
+  "src/judgments/advice.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read weak/uncertain/Noul advice tests; outputs remain fixed advisory actions with owner control.",
+    "findings": [],
+    "reviewedDigest": "sha256:931b06a5068f7b1475e2c1daa6e63d0bfda27c02c48d9f7f0882793c3108b56c"
+  },
+  "src/judgments/evidence.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read complete selected-byte identity, instruction-as-data and source/state budget refusal assertions.",
+    "findings": [],
+    "reviewedDigest": "sha256:b9c5e4ce60b889ae5dcb2bcea425e8b6fcbd1aa84c8595d785e1e00126b7a8dc"
+  },
+  "src/judgments/files.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read lexical/real containment, link refusal, regular-file/UTF-8 budgets and canceled-stream reader ownership cases.",
+    "findings": [],
+    "reviewedDigest": "sha256:1f6b77c494b3a21daeac7aa048098b4f7b859d8b908a40a5a64144bef31b0f16"
+  },
+  "src/judgments/questions.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read atomic fixed catalog and missing supporting-role failures.",
+    "findings": [],
+    "reviewedDigest": "sha256:62b7e87866ce5d641c2fce97e6be59e7d934b7ee3519b5306a252be9020a8846"
+  },
+  "src/judgments/scan.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read real scanner acceptance/refusal and deadline kill; fake credential is synthesized and error output must not echo it.",
+    "findings": [],
+    "reviewedDigest": "sha256:25ebf6e391eda7b427a17ad23de87d53ccb139e46974ef16d7033858e78168f6"
+  },
+  "src/judgments/types.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read strict question/stage/role/duplicate/byte/control-character schema failures.",
+    "findings": [],
+    "reviewedDigest": "sha256:1ae0c0b53694228c00782fe06319bdf98804e91c95e6795debe436bb09b11d01"
+  },
+  "src/judgments/wire.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read pinned model, exact answer, probability completeness/sum/max/finite-boundary assertions.",
+    "findings": [],
+    "reviewedDigest": "sha256:ef9d1131dd4c2252b3366d623262885ebd53aaa3c6beb9d29830af46da0d385c"
+  },
+  "src/judgments/replay.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read byte-identity replay, changed inputs, corrupted records and redirected cache directory refusals.",
+    "findings": [],
+    "reviewedDigest": "sha256:f8c04ffdae8c992d366974b276d624ba95cb3a24a1684ffd81931f925b2324fc"
+  },
+  "src/judgments/syntax.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read all whole executable unit, skipped/dynamic call, Markdown fence/heading and worker deadline/startup refusal tests.",
+    "findings": [],
+    "reviewedDigest": "sha256:efb3b78fc2d19c00c7f73e0e88f25a9ccd49caf70812a3b5df2df972f6fefec0"
+  },
+  "src/judgments/command.integration.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read shipped help/offline/malformed command paths with bounded owned child execution; no live provider is called.",
+    "findings": [],
+    "reviewedDigest": "sha256:4412c988cf46c3e6d0ad3011513fd3d70d5862e6eef641debf54ae9c2fa8785a"
+  },
+  "src/judgments/transport.integration.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read owned loopback HTTP, nonretry refusal, malformed/oversize/stalled response and credential-redacted transport cases.",
+    "findings": [],
+    "reviewedDigest": "sha256:716e3cc40cba0fa465e33914719d1183729dab6ed02ac4ec57c4d2815b8d7701"
+  },
+  ".gitleaksignore": {
+    "status": "reviewed",
+    "evidence": "Read all sixteen lines; comment-only historical explanation, no active fingerprints. No new scanner suppression was introduced.",
+    "findings": [
+      "A07"
+    ],
+    "reviewedDigest": "sha256:69d857e58cfffcd8b75d6066e4dfa5b34a54c2fef2719263ecfdeb281cf568c7"
+  },
+  ".oracle/orly.json": {
+    "status": "reviewed",
+    "evidence": "Read the full committed predecessor with git show HEAD:.oracle/orly.json; tracked removal is the pre-hold configuration migration, not proof that unrelated old configurations are owned.",
+    "findings": [
+      "A27"
+    ],
+    "reviewedDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "bun.lock": {
+    "status": "reviewed",
+    "evidence": "Read the complete lockfile; direct dependency versions match package.json; integrity entries and platform-specific TypeScript dependencies remain lock-managed. No native build was executed.",
+    "findings": [],
+    "reviewedDigest": "sha256:b20e8d5225eea85b8ea99941db432a4e20a2639d156cf3dfe792fd15b82b458e"
+  },
+  "core/operating-model.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A53"
+    ],
+    "reviewedDigest": "sha256:03dd16da552eb2bc934a2083291b004e95ccdf91e85fcf70a666496f7dab97ad"
+  },
+  "audits/agents-md.sh": {
+    "status": "reviewed",
+    "evidence": "Read all 356 lines, recovering output gaps explicitly; structural fingerprints, rule source inclusion, fixtures and scope checks reviewed. Hardcoded source-root paths limit consumer-installed use.",
+    "findings": [
+      "A11",
+      "A16",
+      "A36"
+    ],
+    "reviewedDigest": "sha256:e80cc3958386dc1199466e30900874f82477119952f88b65f111be7360f18f40"
+  },
+  "audits/data.sh": {
+    "status": "reviewed",
+    "evidence": "Read all 189 lines; required dispatch/doc sets and combined awk smoke compared with actual leaf routing. Smoke fingerprint presence does not prove each full rule.",
+    "findings": [
+      "A11",
+      "A16",
+      "A45"
+    ],
+    "reviewedDigest": "sha256:220cc928283315320f52e5c9ce0b516b2341b63da0e3852d216b375de7c07ce0"
+  },
+  "audits/logging.sh": {
+    "status": "reviewed",
+    "evidence": "Read all 454 lines; language routing, test exclusions, event/field checks and exit aggregation compared with positive/negative fixtures. Working-file scanning of staged paths is recorded separately.",
+    "findings": [
+      "A35",
+      "A36",
+      "A50"
+    ],
+    "reviewedDigest": "sha256:42ba99ad475b48ab063af2c206f0063c9ec6093270dd00eeec298d9a7d2c5bbc"
+  },
+  "audits/ufs.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A26",
+      "A46"
+    ],
+    "reviewedDigest": "sha256:230a488464f1c89ee8ab78999bed1effa6c23b00afefd6c7227c592603fb4776"
+  },
+  "audits/spec-template.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A32"
+    ],
+    "reviewedDigest": "sha256:ea2aa79fd39c632e88be4d5b9f755beabfdd844c2c3fa882a0d13f9822daae29"
+  },
+  "audits/spec-template.ts": {
+    "status": "reviewed",
+    "evidence": "Read all 193 lines; parsing, planning/language/file-impact blocks and error dispositions compared with both TypeScript test files.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:678b6226ceff78431aefefdc352b234cec7515a04991f92a1c472d59dfecc251"
+  },
+  "audits/sql-mod.sh": {
+    "status": "reviewed",
+    "evidence": "Read all 105 lines; staged/all scope, source-root restrictions and textual SQL checks reviewed against fixtures. Staged paths scan working bytes.",
+    "findings": [
+      "A35",
+      "A36"
+    ],
+    "reviewedDigest": "sha256:77582f02e1e82372f4116f9eb0d965a2bdaead715442273b5181664b9f51fcf5"
+  },
+  "evals/test-agents-md.sh": {
+    "status": "reviewed",
+    "evidence": "Read all 232 lines; deterministic clean/dirty fixture fingerprinting and isolated mutation cases reviewed. Normal-path cleanup is not an exit trap.",
+    "findings": [
+      "A05",
+      "A16",
+      "A44"
+    ],
+    "reviewedDigest": "sha256:d203202f3c39847056196c8a600bdddce0d5be5dab83de5247f5950848e9145b"
+  },
+  "evals/test-dispatch-parity.sh": {
+    "status": "reviewed",
+    "evidence": "Read all 67 lines; five owned temporary roots lack lifecycle cleanup and expected helper-level controls remain limited.",
+    "findings": [
+      "A05",
+      "A16"
+    ],
+    "reviewedDigest": "sha256:7437abc72a23a42c8f32f11cc4eee105c09c1d5b88c1e93d77f2fb160be9e20c"
+  },
+  "src/judgments/runner.integration.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read all 165 lines including recovered output gap; replay/artifact/manifest and failure controls checked against the current runner. This is mock/replay evidence, not live provider verification.",
+    "findings": [
+      "A17"
+    ],
+    "reviewedDigest": "sha256:25f87935ab884c005b0f17b9cbb341736355d9024d343f4d1cde7e1371ee1fcd"
+  },
+  "schemas/evidence.schema.json": {
+    "status": "reviewed",
+    "evidence": "Read complete evidence shape against writer; pass/fail only and untyped check items cannot authenticate execution or classify every excluded/unavailable check.",
+    "findings": [
+      "A16",
+      "A17"
+    ],
+    "reviewedDigest": "sha256:a8907d557c94f4736d5d2fcbe6c5d568e5451dfd3e3fd20827ab8bc5a513e7c6"
+  },
+  "dispatch/write_go.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:ed110290e7119770aed6e278a5c55cd17ea2cd49a120a772ef220975c6a94fe0"
+  },
+  "dispatch/write_python.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:2b6fd567a12ccb92f19f29669cc9b1a2254127b49501a057b155991adde54988"
+  },
+  "dispatch/write_mdx.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:70ce22667e2ca60e1bf623d5ba0ca1a9bcc0586faf018d44328ddfeaa2cd4306"
+  },
+  "dispatch/write_shell.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:0748aa03a8b985a720c5d2586a931a9a98fe865bb4a44dd54a898bb8eb59f2a7"
+  },
+  "dispatch/write_auth.md": {
+    "status": "reviewed",
+    "evidence": "Read all auth triggers, no-override credential boundaries and external product-owned AUTH.md delegation; no credentials read or resolved.",
+    "findings": [],
+    "reviewedDigest": "sha256:49e60ef4e89d1020a6062fe5aa9ba939d7cdf6589c3d93a58f2fb1a87095cc2f"
+  },
+  "dispatch/write_http.md": {
+    "status": "reviewed",
+    "evidence": "Read complete route/delegate distinction, local materialisation and pre-release checklist. Installed relative-path reader issue remains open.",
+    "findings": [
+      "A11",
+      "A48"
+    ],
+    "reviewedDigest": "sha256:e6f164a7948350ec849e2a067105bd5eec9bb7549afea97de1dc348d00245f62"
+  },
+  "dispatch/write_changelog.md": {
+    "status": "reviewed",
+    "evidence": "Read complete voice rules, append-only history and repository-specific billing/docs requirements; consumer reuse must not require unavailable sibling files.",
+    "findings": [
+      "A11",
+      "A25",
+      "A48"
+    ],
+    "reviewedDigest": "sha256:9cbf92676c884061eb2206d361fb4639175fa381ba99d42f3c395c7109845832"
+  },
+  "docs/architecture/installation.md": {
+    "status": "reviewed",
+    "evidence": "Read all target-versus-verified qualifiers and byte ownership/recovery requirements. Actual independent-config deletion, recovery hooks and symlink escapes violate those intended safeguards.",
+    "findings": [
+      "A27",
+      "A28",
+      "A29",
+      "A30"
+    ],
+    "reviewedDigest": "sha256:2e1d60438193a88c0abd41f0ddbcb664bf4f1136177dcf01b94aa5ed4885cf5f"
+  },
+  "docs/architecture/remote-execution.md": {
+    "status": "reviewed",
+    "evidence": "Read all disabled-only settings, shared local selection, explicit non-execution and future evidence/resource requirements. No remote command or native build was run.",
+    "findings": [
+      "A39"
+    ],
+    "reviewedDigest": "sha256:8a6d84771968a312ae1a65c7bf0adaaa6e994dccab5e8591a71dc13a7e08e1fe"
+  },
+  "docs/RULE_ENFORCEMENT.md": {
+    "status": "reviewed",
+    "evidence": "Read full generated census and heuristic limitations: thirty of 278 clauses classified is transparent coverage, not proof of complete semantic enforcement.",
+    "findings": [
+      "A11",
+      "A16"
+    ],
+    "reviewedDigest": "sha256:0e293bd5ddd7ab8d58d43582d47c3f1b63c6216f6d53f814c48d16fe81ec18c0"
+  },
+  "docs/DISPATCH_REVIEW_DISPOSITION.md": {
+    "status": "reviewed",
+    "evidence": "Read historical thirty-eight dispositions and present partial-backlog qualifier. Historical resolved labels require fresh source evidence before current release claims.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:d476dad9398a293ae089277bec376a97745320112750a6532665f8f2afb350e6"
+  },
+  "docs/EXECUTE_DOC_READS.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:b245f3fab08d8aae525d121b58cbfe822963ad411060464aaf11e9550560f0c9"
+  },
+  "docs/HARNESS_VERIFY_OUTPUT.md": {
+    "status": "reviewed",
+    "evidence": "Read full product output specification and combined scanner interpretation. Product-selected guidance does not create absent generic make targets.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:019c16aea9826e85859b28374b15b01b9eed51b5675d8c84f0312ad282ff6910"
+  },
+  "docs/VERIFY_TIERS.md": {
+    "status": "reviewed",
+    "evidence": "Read complete product verification/baseline/coverage requirements; commands are product-owned, not substitutes for this checkout's Makefile.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:c9ccef8372f18e48edbf2ad00fb6c98757801e5150cde6ebc183d9ddc1369f5c"
+  },
+  "evals/release/evaluation-plan.md": {
+    "status": "reviewed",
+    "evidence": "Reviewed all release evaluation design sections, including remaining lines 171-250; proposals remain unimplemented, six-question controls uncalibrated, live/remote trials explicitly unavailable.",
+    "findings": [
+      "A16",
+      "A17"
+    ],
+    "reviewedDigest": "sha256:66094f0aeeaae6c72db3f5a366b9311ab76df4d143ad5e0c1f9009616206cb43"
+  },
+  "README.md": {
+    "status": "reviewed",
+    "evidence": "Parent directly read the repaired source and assertions; real failed receipt write, owner exits, signals and limits pass in final-review captures. Consumer and integration guidance traced against installation, loader containment and canonical cleanup. Fresh native finished-candidate binding remains due in Pull Request Review.",
+    "findings": [
+      "A11"
+    ],
+    "reviewedDigest": "sha256:6fef95bec4f897b28e2d6f499088dd0ef600ae98221e85f8d67ee0a0fa4ca74f"
+  },
+  "llms.txt": {
+    "status": "reviewed",
+    "evidence": "Read all 228 lines; machine setup contradicts pinned bunx hooks and relocated installation; old generated-rule filename appears in read order and self-check.",
+    "findings": [
+      "A03",
+      "A11",
+      "A16",
+      "A48"
+    ],
+    "reviewedDigest": "sha256:ec37dbc83232d9eb50f89159872da9276a5882245ad81ddf595c3051d36af22b"
+  },
+  "AGENTS.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A53"
+    ],
+    "reviewedDigest": "sha256:def9e6505e56420ed8407fd37cb83b4023e25fcf5102afb90243b1112c0b68e8"
+  },
+  "dispatch/lifecycle.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:4732b398132c07749945792b6877a96d8951d9ad4bf963581f3c874b7ab34aab"
+  },
+  "dispatch/name_architecture.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:4e6f5c54a8e4cc6c19633c53aca91614ca02989e1d600414f9edaf68f8b63f5a"
+  },
+  "dispatch/write_spec.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:6b15ab069c143f4274586c85fbdd573969725301db7332cbd5e424f3995417b7"
+  },
+  "dispatch/write_sql.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A48",
+      "A52"
+    ],
+    "reviewedDigest": "sha256:52daf24d08316aa1a91de855d56115d746efc26335614656aeb7b3116c3b511b"
+  },
+  "dispatch/write_ts_adhere_bun.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:4cddb38640fbfb23926ce9158199ac23421b6d74aa1851a0ad1916892d55db4b"
+  },
+  "dispatch/write_rust.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:61ef692d3fae844cf639363b5be53beb276416043e0487086d8e935550f35134"
+  },
+  "dispatch/write_pr_description.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:2e1a91b09e98faa0971968092b53be8d087c617fc1b9afb267b2deeccc5372e0"
+  },
+  "docs/JUDGMENTS.md": {
+    "status": "reviewed",
+    "evidence": "Read all 153 lines; question catalog, selector limits, exact replay, explicit upload and error outcomes compared with current bounded implementation. Advisory thresholds remain uncalibrated.",
+    "findings": [
+      "A16",
+      "A17"
+    ],
+    "reviewedDigest": "sha256:5fb4fa4fed060134d0b8b533bad70f323531cd4be3eec90b6575dc2449e51069"
+  },
+  "docs/SCHEMA_CONVENTIONS.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A52"
+    ],
+    "reviewedDigest": "sha256:73319ce7d0cda386a3832fc6399eff8dc9ffd4438a7d83689d7f0f13b6bfc9f8"
+  },
+  "docs/ORLY_ARCHITECTURE.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:297b86c0ea4f09ec5fb6ff4dd4b3abd71c6286aefa58f38d6d6b74bc66d74954"
+  },
+  "docs/v1/active/M08_001_P1_CLI_DOCS_SKILL_JEV_JUDGMENTS_IN_TYPESCRIPT_011.md": {
+    "status": "reviewed",
+    "evidence": "Read complete Milestone 08 spec, called/tested Dimensions and explicit unfinished final review/live comprehension. Historical receipts remain historical; current owner excludes further live calls.",
+    "findings": [
+      "A16",
+      "A17"
+    ],
+    "reviewedDigest": "sha256:78a6c50a4576260e7b2b9998797dbc630fb6aa144fb78ef470bfaeadae58040a"
+  },
+  "docs/v1/active/M09_001_P1_CLI_DOCS_INFRA_SKILL_VERIFIED_COMMANDER_RELEASE.md": {
+    "status": "reviewed",
+    "evidence": "Read complete Milestone 09 scope, all Dimensions/proofs, ownership/resource invariants and excluded native/remote scope. Audit completion does not finish the release; repairs and final proof require approval.",
+    "findings": [
+      "A11",
+      "A16",
+      "A17",
+      "A27",
+      "A29",
+      "A30",
+      "A39",
+      "A48"
+    ],
+    "reviewedDigest": "sha256:b81cfb347b50f67afba7d7bd979bc1f2180f9798e1b3485ccbc934202f443e68"
+  },
+  "evals/llms/agents.sh": {
+    "status": "reviewed",
+    "evidence": "Read all 296 lines; scoped prompt construction, adapter invocation, availability/exit grading and fake validation checked. Only copied runner with local stub was executed; no live model service was used.",
+    "findings": [
+      "A05",
+      "A11",
+      "A44"
+    ],
+    "reviewedDigest": "sha256:8ef87355e88f5f1d0001278bdeaa20e89f78c660ff079010582b7beab44f2e67"
+  },
+  "evals/llms/fixtures.sh": {
+    "status": "reviewed",
+    "evidence": "Read all sixty-nine lines; required fields, duplicates, answerability and referenced context checks reviewed. Validation alone cannot authenticate saved live comprehension.",
+    "findings": [
+      "A11",
+      "A44"
+    ],
+    "reviewedDigest": "sha256:da319a6fe6eec6ba54fa614e3609bc638c3a126dccf42f6d74cb0c478771acc9"
+  },
+  "evals/llms/fixtures.jsonl": {
+    "status": "reviewed",
+    "evidence": "Read all fifty-seven fixture questions, expected answers, contexts and provenance; preserve intentional negative questions. Last fixture retains old configuration name and scope-sensitive questions need their actual applicable context.",
+    "findings": [
+      "A11",
+      "A16",
+      "A44",
+      "A51",
+      "A52",
+      "A53"
+    ],
+    "reviewedDigest": "sha256:e3e9b89d9031f847b0c9d2cd5a88618c5faa4d1644fdc23080639246931e459a"
+  },
+  "evals/llms/run.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A05"
+    ],
+    "reviewedDigest": "sha256:8c408dc246b5950fe99e16b8814162195bce7956d6d1583a81d76e1e411de495"
+  },
+  "branding/agent-amp.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:40c79d8c7baa04c2fee214cc1c66a9797eb6aa96bec6c5b20c7d12cd66490696"
+  },
+  "branding/agent-claude-code.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:5119ef950a0d648b3fd62865791e73f07f32e18ddab84e4f21160f8c641c0f5f"
+  },
+  "branding/agent-codex.png": {
+    "status": "reviewed",
+    "evidence": "Visually inspected the local raster asset; static mark/icon, no executable role. Asset package exclusion and documentation references reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:b6e664beb863df606ad0901f79160953ddbfe90734fee63dfa68c35d94421f37"
+  },
+  "branding/agent-opencode.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:368faaaea7d124f0fb65e93e0f3acd7aa8231dfaa7e87e15ed2372f0f4678953"
+  },
+  "branding/agentsfleet-mark-glow.png": {
+    "status": "reviewed",
+    "evidence": "Visually inspected the local raster asset; static mark/icon, no executable role. Asset package exclusion and documentation references reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:945b7e359390f4f09d2ae2e2342fc5c4d2ea937fe7f954bc4f9fba54dcfe26c3"
+  },
+  "branding/lang-go.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:33e31a3d049683755ceb07b4a6abe830b2ee02e6ffeee408fe705ef078d3849e"
+  },
+  "branding/lang-javascript.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:673a6f54d0788fccd0f0b024cc4372c98a9f1c1f43859ec6227a599630f236c7"
+  },
+  "branding/lang-mdx.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:f35e961e6e6c147c9a611d3c3a1d8493529e1a0129ab6b2d7a306b083ff6d33d"
+  },
+  "branding/lang-python.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:a762008752dc999ad54e7e477194f12a1b2ce07c735be1f21b3b3af8f26eb7af"
+  },
+  "branding/lang-rust.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:421291e67c5232970710aeffc64cfe09f79012cc427d0df403cedc51410c4da7"
+  },
+  "branding/lang-shell.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:d5bdfe3c67a2baf479b60e2e9a588b7882bad378d707545c0b8f2321f01faaff"
+  },
+  "branding/lang-sql.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:bc45b1c56d0b1501dea387dbec4fda450d2ebc35244a620791815509d8c41dba"
+  },
+  "branding/lang-typescript.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:662b9b049a06df067089cacc32c8a40e14b08e13b5874f397ccf3e70ef15872c"
+  },
+  "branding/lang-zig.svg": {
+    "status": "reviewed",
+    "evidence": "Parsed the complete Scalable Vector Graphics asset; static path/style/gradient content with no script, event handler or external link. Dimensions, title and documentation role reviewed.",
+    "findings": [],
+    "reviewedDigest": "sha256:8279d9314bab82abf89c786ef937cfe1b8e5d3ee41c1c46b1945ebe2831c9893"
+  },
+  "evals/dispatch/fixtures/deinit_missing.zig": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:ee5b0a9ab381618f33ed15f5233273afa05f6488bc2fde77b3849189b938fb6f"
+  },
+  "evals/dispatch/fixtures/deinit_ok.zig": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:97de4e34bae1c38187790b5210fe6f06acc3af8c1ab650dc0af0e3f988d5263b"
+  },
+  "evals/dispatch/fixtures/err_rs_map_err_to_string.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:eb5d3e0bd30f74cdf472b44938032611655bc8a74482450c07308b868bfcf2ac"
+  },
+  "evals/dispatch/fixtures/err_rs_no_result_alias.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:c4af97b4ecb39a6884533cd879b49faf1d21a2be5edfaf58f41a1467c64a9eff"
+  },
+  "evals/dispatch/fixtures/err_rs_ok.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:8fd7b20a101b834a69ebceea686b8e3e9d160501b294ec0d32c4b6ebac2bbd6d"
+  },
+  "evals/dispatch/fixtures/err_rs_test_ok.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:8e572d3ee594eb66b32153dc656f685399e123b3813842118a921508d1760e05"
+  },
+  "evals/dispatch/fixtures/length_350_pass.zig": {
+    "status": "reviewed",
+    "evidence": "Validated every numbered comment and exact line count against the deliberately passing/failing file-cap boundary; fixture content must remain intentionally sized.",
+    "findings": [],
+    "reviewedDigest": "sha256:7d559fd2b798d0cf84bd7e23b61724759ec95480fadd2496625615247c841f3d"
+  },
+  "evals/dispatch/fixtures/length_351_fail.zig": {
+    "status": "reviewed",
+    "evidence": "Validated every numbered comment and exact line count against the deliberately passing/failing file-cap boundary; fixture content must remain intentionally sized.",
+    "findings": [],
+    "reviewedDigest": "sha256:f97d0c3a39d93be3ea67ca60579343f5be9998661782ec9e65bf48a6cd9e52f4"
+  },
+  "evals/dispatch/fixtures/log_dbg_violation.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:0c9fc4d50594ef6fbdcd3ab23b359a0a0638e6e59e51ba3113bc30d08d971db0"
+  },
+  "evals/dispatch/fixtures/log_eprintln_violation.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:879f7226776fd72325eb313509c3b5b1146bd8ca14b48ec431fef315704a7dc8"
+  },
+  "evals/dispatch/fixtures/log_missing_event.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:7a9492fef27915b401d74d6b30516f508b39d94afa7e393862cd23dc71e0162a"
+  },
+  "evals/dispatch/fixtures/log_ok.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:dd677378bb182f553d062cee40c7b184d3760d31fa0d2fd0535da7eb88c7bccc"
+  },
+  "evals/dispatch/fixtures/log_ok.zig": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:eec64cb008a25f7fa293ea5fe72d709ee14c388951ba184689a781354baebdc5"
+  },
+  "evals/dispatch/fixtures/log_path_test_ok.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:8f4876953101d49b38ab2a96e927bfcdf60fb1227a343f8bdc23d36806fb3b8e"
+  },
+  "evals/dispatch/fixtures/log_positional_violation.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:fe2d425ffaed2111fc1687861e4bb8bb5b5413f3177273d6910920a265e16e44"
+  },
+  "evals/dispatch/fixtures/log_println_violation.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:d8c6b1c4656f1b66409a78a05142a3b6fc6796f86bb5a85d2a5975d3fd07fc83"
+  },
+  "evals/dispatch/fixtures/log_tail_missing_event.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:630e1cd3367848c8bdb5a239265c40e30c19ebf0bff2713cecdded8bee747096"
+  },
+  "evals/dispatch/fixtures/log_test_ok.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:fe763ba369fd762d2755befb73b87b6d537e5e55afedc40506d8ca92b0f858f6"
+  },
+  "evals/dispatch/fixtures/log_violation.zig": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:ed820dedce1ac915ee492340c76d6f1e4af8d3f95c25fb1dbdb6d3f74b8a0730"
+  },
+  "evals/dispatch/fixtures/msid_ok.zig": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:a83c3c576d9f9c4b6d4a8a83a6f84550c3fe990f8974669a6a2a17103c7bb9d8"
+  },
+  "evals/dispatch/fixtures/msid_ui_section_bare.tsx": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:8baf857944d4a9e4a0aec9714eae726f5827d4e7ee915585264c9a43d2974bf6"
+  },
+  "evals/dispatch/fixtures/msid_ui_section_override.tsx": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:ca6210e997e8cfdb175eed12cf74f1ca50e5adbde9fe5ba3bf01b4a2a955488c"
+  },
+  "evals/dispatch/fixtures/msid_ui_section_wrapped.tsx": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:f56f7267f01bf24edff5fbb730069ba65829ab7196e92afefdd0d5a3c9fb8227"
+  },
+  "evals/dispatch/fixtures/msid_violation.zig": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:0fba98b1e5c458f8317ab5261faffedfeea33ea1f681b3479d249ffefd484c93"
+  },
+  "evals/dispatch/fixtures/sqlmod_ok.zig": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:9f3f8072b4c1243e1560146e5c6be8c7327668566546dd2d3018d3cd76bbb702"
+  },
+  "evals/dispatch/fixtures/sqlmod_violation.zig": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:ebc233ee1bc99cfaee84de290c081f48efbcf837f965b4291b1338f1bc1d80fe"
+  },
+  "evals/dispatch/fixtures/ufs_dup_string.go": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:c44a6f93d3bc5af9f1f45a56b582a94b4a11e008106968793500156209026578"
+  },
+  "evals/dispatch/fixtures/ufs_dup_string.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:364ea652798f518aebf47da898afaade5b1eb10ca21b68181d0adaf4d39dc442"
+  },
+  "evals/dispatch/fixtures/ufs_dup_string.zig": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:d1c6fd018839648a9eb0ef6a6ac79ff9d19b144800089df488f76dbec0ba89b6"
+  },
+  "evals/dispatch/fixtures/ufs_feature_gate.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:364c7c583f9a5070be708961e68d1717dcefb6f6a0fb0603329837cf18cfa96f"
+  },
+  "evals/dispatch/fixtures/ufs_ok.go": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:888c53311a3276c8453e5ba915fbcdd5b4a6365906c8942b6efeeab531211341"
+  },
+  "evals/dispatch/fixtures/ufs_ok.rs": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:50493ca123ace51afcad020b07ced3217b9c3000e37a8b3e1474b588ed7df446"
+  },
+  "evals/dispatch/fixtures/ufs_ok.zig": {
+    "status": "reviewed",
+    "evidence": "Read the complete fixture and matched its intended pass/fail/exclusion to the actual leaf and runner; invalid source is intentional test input, never a repair target.",
+    "findings": [],
+    "reviewedDigest": "sha256:902e3522288f034ee5870631672384b12fd0d6ca3c305444f009dcb78ba5252c"
+  },
+  "docs/v1/done/M01_001_P2_CLI_DOCS_PROCESS_AS_CODE.md": {
+    "status": "reviewed",
+    "evidence": "Sectioned semantic review of historical goal, interfaces, failures, invariants, recorded outcome, removal, exclusions and decisions. Historic commands/wording are archival; receipts were not reexecuted or promoted to current proof.",
+    "findings": [],
+    "reviewedDigest": "sha256:d80dff6b28166bb9fa7039b3e5b56dcad1c905276c94bf731a6f2c76997ce3f9"
+  },
+  "docs/v1/done/M02_001_P2_CLI_DOCS_RULE_ENFORCEMENT_LEDGER.md": {
+    "status": "reviewed",
+    "evidence": "Sectioned semantic review of historical goal, interfaces, failures, invariants, recorded outcome, removal, exclusions and decisions. Historic commands/wording are archival; receipts were not reexecuted or promoted to current proof.",
+    "findings": [],
+    "reviewedDigest": "sha256:0c6d7d1ffba76666a26efaa93a628c5d6a63a70909f7cf7735cde18a4375449c"
+  },
+  "docs/v1/done/M03_001_P1_CLI_DOCS_INFRA_ORLY_INIT_DISTRIBUTION.md": {
+    "status": "reviewed",
+    "evidence": "Sectioned semantic review of historical goal, interfaces, failures, invariants, recorded outcome, removal, exclusions and decisions. Historic commands/wording are archival; receipts were not reexecuted or promoted to current proof.",
+    "findings": [],
+    "reviewedDigest": "sha256:5603c2458e83f27b6b98530ade22351a8db59004850dcb5a355681fe5c86610b"
+  },
+  "docs/v1/done/M04_001_P1_SKILL_PARTIAL_COMPLETION_PROOFS.md": {
+    "status": "reviewed",
+    "evidence": "Sectioned semantic review of historical goal, interfaces, failures, invariants, recorded outcome, removal, exclusions and decisions. Historic commands/wording are archival; receipts were not reexecuted or promoted to current proof.",
+    "findings": [],
+    "reviewedDigest": "sha256:0694464dbfa3fc7e07d9fee0649714428f61557f165f51331cfde6afdd9f64d1"
+  },
+  "docs/v1/done/M05_001_P1_CLI_OBS_OPT_IN_USAGE_TELEMETRY.md": {
+    "status": "reviewed",
+    "evidence": "Sectioned semantic review of historical goal, interfaces, failures, invariants, recorded outcome, removal, exclusions and decisions. Historic commands/wording are archival; receipts were not reexecuted or promoted to current proof.",
+    "findings": [],
+    "reviewedDigest": "sha256:c8b1d5cfa7aec8e61e2e1af77b5b8785bc79ebdeccceb4d9af3e28138446aded"
+  },
+  "docs/v1/done/M06_001_P1_GOV_CLI_HARNESS_ROBUSTNESS.md": {
+    "status": "reviewed",
+    "evidence": "Sectioned semantic review of historical goal, interfaces, failures, invariants, recorded outcome, removal, exclusions and decisions. Historic commands/wording are archival; receipts were not reexecuted or promoted to current proof.",
+    "findings": [],
+    "reviewedDigest": "sha256:1e9f172e5e8c7b3a1b99dd920de25eb5e59488b7a45987a22a51b459390c17b1"
+  },
+  "packs/language/go/rules.md": {
+    "status": "reviewed",
+    "evidence": "Compared complete bytes with the reviewed dispatch/write_go.md mirror; source and mirror are identical. Canonical authoring source remains the pack file.",
+    "findings": [],
+    "reviewedDigest": "sha256:ed110290e7119770aed6e278a5c55cd17ea2cd49a120a772ef220975c6a94fe0"
+  },
+  "packs/language/mdx/rules.md": {
+    "status": "reviewed",
+    "evidence": "Compared complete bytes with the reviewed dispatch/write_mdx.md mirror; source and mirror are identical. Canonical authoring source remains the pack file.",
+    "findings": [],
+    "reviewedDigest": "sha256:70ce22667e2ca60e1bf623d5ba0ca1a9bcc0586faf018d44328ddfeaa2cd4306"
+  },
+  "packs/language/python/rules.md": {
+    "status": "reviewed",
+    "evidence": "Compared complete bytes with the reviewed dispatch/write_python.md mirror; source and mirror are identical. Canonical authoring source remains the pack file.",
+    "findings": [],
+    "reviewedDigest": "sha256:2b6fd567a12ccb92f19f29669cc9b1a2254127b49501a057b155991adde54988"
+  },
+  "packs/language/rust/rules.md": {
+    "status": "reviewed",
+    "evidence": "Compared complete bytes with the reviewed dispatch/write_rust.md mirror; source and mirror are identical. Canonical authoring source remains the pack file.",
+    "findings": [
+      "A35",
+      "A36",
+      "A38"
+    ],
+    "reviewedDigest": "sha256:61ef692d3fae844cf639363b5be53beb276416043e0487086d8e935550f35134"
+  },
+  "packs/language/shell/rules.md": {
+    "status": "reviewed",
+    "evidence": "Compared complete bytes with the reviewed dispatch/write_shell.md mirror; source and mirror are identical. Canonical authoring source remains the pack file.",
+    "findings": [],
+    "reviewedDigest": "sha256:0748aa03a8b985a720c5d2586a931a9a98fe865bb4a44dd54a898bb8eb59f2a7"
+  },
+  "audits/agents-md.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A52"
+    ],
+    "reviewedDigest": "sha256:0f9fe5163ea042f828c0b7fc62f1123a8bdbc2f5a997f4b26a6cc8941ae074a4"
+  },
+  "dispatch/edit_rules.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [],
+    "reviewedDigest": "sha256:4bb26f05f43e088abf37185d14105779a9dcb00baa84d8b8c9aa028c2becac2c"
+  },
+  "dispatch/write_any.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A50"
+    ],
+    "reviewedDigest": "sha256:1034618f9737fef8b409568e4248d2249361c4b42393cb5f2b2912e12da318e3"
+  },
+  "dispatch/write_zig.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A50",
+      "A52"
+    ],
+    "reviewedDigest": "sha256:eacea0d652537299baa086b9b32d991487af94379a28d4637524352288842dc8"
+  },
+  "docs/DISPATCH_ARCHITECTURE.md": {
+    "status": "reviewed",
+    "evidence": "Sectioned review of prose, mapping tables, enforcement scope, historical migration, invariants, failure modes and recorded decisions. The introduction labels its old dotfiles implementation narrative as historical; preserve those receipts and owner quotes. Symbol presence and comprehension remain bounded, not runtime adherence proof.",
+    "findings": [],
+    "reviewedDigest": "sha256:8a5bd894e233cf0a7a7199e112f543b79fd71edf59f20336d17ca428cf40d5d7"
+  },
+  "docs/LIFECYCLE_PATTERNS.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A52"
+    ],
+    "reviewedDigest": "sha256:1064ba4b7c9b900bcf178a76e202c37a468c51a94b14304622199bff730a4bcd"
+  },
+  "docs/LOGGING_STANDARD.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A50",
+      "A52"
+    ],
+    "reviewedDigest": "sha256:bfff09bdfbad608d15679cfb76ac31a13f3e819906ad568eb3c8f8c98496491c"
+  },
+  "docs/REST_API_DESIGN_GUIDELINES.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A52"
+    ],
+    "reviewedDigest": "sha256:26113e63cef3176af7695e42a39e45a5a2ecb5733e6c8af5074a7bcb70bd8668"
+  },
+  "docs/greptile-learnings/README.md": {
+    "status": "reviewed",
+    "evidence": "Read all 51 lines. This is a review navigation page and retained rule-growth history; examples are historical context, not fresh audit proof. Referenced rule corpus and source facade authority inspected.",
+    "findings": [],
+    "reviewedDigest": "sha256:4283e92bfe9afdcdaadb1dee606ec9a52f5799d57438761b3f18624c80e8b8a0"
+  },
+  "docs/greptile-learnings/RULES.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A52"
+    ],
+    "reviewedDigest": "sha256:47ed256fac4f6425d44cf08554a5c3f3adacd767323a012d4c5a413c7d9ad4a2"
+  },
+  "evals/judgments/questionnaire.md": {
+    "status": "reviewed",
+    "evidence": "Read the historical 0.11 answer table and limits. It reports source-reading answers, names failed live comprehension, and makes no cross-tool live pass claim. Existing citations belong to that recorded version, not this unfinished 0.12 release; historical outcomes preserved.",
+    "findings": [],
+    "reviewedDigest": "sha256:703f54f1da4e83efd016a20305d40656275351d45b6ff4513450cbe2f4c6fe27"
+  },
+  "evals/judgments/report.md": {
+    "status": "reviewed",
+    "evidence": "Read historical consumer controls, synthetic catalog trials, package runtime observations, receipt locations and bounded accuracy/cost/platform limits. Inspected corresponding production/test surfaces separately. Preserved measured 0.11 outcomes; no old control replay or live provider request claimed.",
+    "findings": [],
+    "reviewedDigest": "sha256:1206ee69ecc29a39e27ca4d5944b02be3f1deb09d2ab5abbc386c432f193dde9"
+  },
+  "evals/judgments/verification.md": {
+    "status": "reviewed",
+    "evidence": "Read historical required-test ledger, ordered residual-state proofs, regression receipts, tier boundaries and coverage/reviewer limits. It explicitly records remaining fresh adversarial review and failed live comprehension. Private receipts are machine-local; no 0.12 release readiness inferred.",
+    "findings": [],
+    "reviewedDigest": "sha256:ce768a79da3bd614ee53b872402bd28d603939f9ca9dc29e1445d51bf38df7cb"
+  },
+  "skills/orly-babysit-prs/SKILL.md": {
+    "status": "reviewed",
+    "evidence": "Read complete polling guide and current review/line/summary selectors; unsupported completion-only override removed, with fixed Greptile selection throughout. Existing real jq collector fixtures cover current revision completion and all fetched surfaces. Final candidate review binding belongs in Pull Request Review.",
+    "findings": [
+      "A51"
+    ],
+    "reviewedDigest": "sha256:3921f6b0464c2624a437922641d86bee4fe071afda2b1984727e097aa436f973"
+  },
+  "skills/orly-spec-new/SKILL.md": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A53"
+    ],
+    "reviewedDigest": "sha256:ed55bf0ca1e927272f7e6f29a9abe50fa558dc50b2801f2bf66020378026f868"
+  },
+  "skills/orly-write-integration-test/SKILL.md": {
+    "status": "reviewed",
+    "evidence": "Parent directly read the repaired source and assertions; real failed receipt write, owner exits, signals and limits pass in final-review captures. Consumer and integration guidance traced against installation, loader containment and canonical cleanup. Fresh native finished-candidate binding remains due in Pull Request Review.",
+    "findings": [
+      "A48"
+    ],
+    "reviewedDigest": "sha256:a54ed42624995f2cb5fb80fbea6ab2004b079c5bca995eff76e4dc48a2f53a1b"
+  },
+  "skills/orly-write-unit-test/SKILL.md": {
+    "status": "reviewed",
+    "evidence": "Read quality/required-test ledger, execution modes, all test categories, mutation/red-green, safety/performance proofs, output and limits. Dimension labels instructed as source test names conflict with the naming rule (A53); fixed service-scale checks require applicability in reusable consumers (A48). No tests added during the hold.",
+    "findings": [
+      "A48",
+      "A53"
+    ],
+    "reviewedDigest": "sha256:27eefda79a2b8c5407e372f4f2895dbccd8187c65a5c6b60172264e0fc28a9eb"
+  },
+  "evals/release/audit.md": {
+    "status": "reviewed",
+    "evidence": "Checked all 53 distinct rows, severity totals, proposed path existence, owner quotes, unchanged historical receipts, draft versus pending states, source citations and final verification limits. Report is bound by this digest and the external final snapshot; audit completion grants no repair approval.",
+    "findings": [
+      "A17",
+      "A41"
+    ],
+    "reviewedDigest": "sha256:5a5bb8100b99b85deca1cee3cdbaebd302e5c19cc16dfbbea0457c5c680825e4"
+  },
+  "evals/release/inventory.json": {
+    "status": "reviewed",
+    "evidence": "Final independent validator checks unique Git/package scope, 269 reviewed paths, 174 package members, present/removed entries and every non-self reviewed byte digest. Its exact final bytes are bound externally; a self hash cannot bind its own stored bytes.",
+    "findings": [
+      "A41"
+    ],
+    "reviewedDigest": "external:final-snapshot.json"
+  },
+  "evals/release/reviewed.json": {
+    "status": "reviewed",
+    "evidence": "Checked review records for exact inventory scope, unique path keys, meaningful per-file inspection notes and known finding identifiers; source digests match reviewed bytes. This ledger's exact final bytes are bound by the external final snapshot.",
+    "findings": [
+      "A41"
+    ],
+    "reviewedDigest": "external:final-snapshot.json"
+  },
+  "audits/doc-reads.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A42"
+    ],
+    "reviewedDigest": "sha256:b69fb77d71dd14ad7659e39ab36756ccafed03fc2c3fe52e56cdad6c835d8bbe"
+  },
+  "audits/scope.sh": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A34",
+      "A35",
+      "A37"
+    ],
+    "reviewedDigest": "sha256:768342e45da5a1dd6871ac49c68fab79f274879dc0c76881e5fd21ee31a198bf"
+  },
+  "evals/llms/cache.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A44"
+    ],
+    "reviewedDigest": "sha256:67f568e43fb8bf6a32068cdca5011c70cd1051ed0aa0d3458302c73da526a830"
+  },
+  "evals/release/receipts/Oct_05_21_14/cleanup-controls.json": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A05"
+    ],
+    "reviewedDigest": "sha256:100bcfd7857ab8c9d6be95cab6fd72b3d63ebb841f955f217cc4920047c3fdfb"
+  },
+  "evals/release/receipts/Oct_05_21_14/inventory-stale-control.json": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A41"
+    ],
+    "reviewedDigest": "sha256:841d611e3f324d454467313f9a94ea6394bf01fccba2f2b74e1cdce21059713b"
+  },
+  "evals/release/receipts/Oct_05_21_14/package-cache.json": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A06"
+    ],
+    "reviewedDigest": "sha256:9dfa15745c32c48be31224a264531ad8e8021048b23d3d00c8835d173669484f"
+  },
+  "evals/release/receipts/Oct_05_21_14/packed-checkers-final.json": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A15"
+    ],
+    "reviewedDigest": "sha256:ea113516132e0475d041a4cb885acbc83e97dbb3df06524eaf2a9599f7ff6707"
+  },
+  "evals/release/receipts/Oct_05_21_14/release-layout-final.json": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A24"
+    ],
+    "reviewedDigest": "sha256:48317c7ec766bc7f892d7a31b1cb72a2fef152d81af5fcdc3f4348d85b8fedf8"
+  },
+  "src/command_process.test.ts": {
+    "status": "reviewed",
+    "evidence": "Parent directly read the repaired source and assertions; real failed receipt write, owner exits, signals and limits pass in final-review captures. Consumer and integration guidance traced against installation, loader containment and canonical cleanup. Fresh native finished-candidate binding remains due in Pull Request Review.",
+    "findings": [
+      "A39"
+    ],
+    "reviewedDigest": "sha256:2c84c6a63febbb3d40378a364a1c36ff0ad11b6ac040666362bd8fc2bb4482c7"
+  },
+  "src/command_process.ts": {
+    "status": "reviewed",
+    "evidence": "Parent directly read the repaired source and assertions; real failed receipt write, owner exits, signals and limits pass in final-review captures. Consumer and integration guidance traced against installation, loader containment and canonical cleanup. Fresh native finished-candidate binding remains due in Pull Request Review.",
+    "findings": [
+      "A26",
+      "A39"
+    ],
+    "reviewedDigest": "sha256:4c439eaae347b46b46e43a69790bb1e9c30c5fa17bff85b251e8c3747a89aafd"
+  },
+  "src/command_runner.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A39"
+    ],
+    "reviewedDigest": "sha256:dc93f42b2fcef33428208888179f57e58ce5f94a3a9900a67e9b25483d075371"
+  },
+  "src/comprehension_cache.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A44"
+    ],
+    "reviewedDigest": "sha256:ff59f28a60876891325128bb00e1bbac7c7b8e4550fbf926c00f169ace4520e7"
+  },
+  "src/config_validation.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A14"
+    ],
+    "reviewedDigest": "sha256:df7340809fd3ee13dbb68e540787e6812f02a13fc01248f5d3b3c6090eb5dd29"
+  },
+  "src/config_validation.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A14"
+    ],
+    "reviewedDigest": "sha256:bea2a436fd71938de4e9595d1eb146cba48bf9949c8498df951b9f2ed25a1382"
+  },
+  "src/doc_reads.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A42"
+    ],
+    "reviewedDigest": "sha256:c4a686371e76164a3aa910549d998919645486519d9e4ec9b99914ea28e1c711"
+  },
+  "src/release_inventory.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A41"
+    ],
+    "reviewedDigest": "sha256:680b948d754d499416ccaefbd471bd5c169adad5175ac7efa363abede874d9fd"
+  },
+  "src/required_scanner.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A07",
+      "A19"
+    ],
+    "reviewedDigest": "sha256:b75b4ba3e5a65584ba61aee8803f441602f0af56e6e5811a14122219dc750a9b"
+  },
+  "src/review_poll.test.ts": {
+    "status": "reviewed",
+    "evidence": "Read all actual extracted GitHub/GitLab shell collector fixtures; full current selection19/0/64. A new alternate-bot override regression fails the old guide and passes current matching Greptile selectors. Existing failed/missing/malformed/current-revision/page checks remain intact.",
+    "findings": [
+      "A51"
+    ],
+    "reviewedDigest": "sha256:160a9b2b29c218abadbdbb6a3c196a0b95acb4412f5898997fab743e5101ef34"
+  },
+  "src/scanner_scope.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A26",
+      "A34",
+      "A35",
+      "A36",
+      "A37",
+      "A38",
+      "A43",
+      "A45",
+      "A46",
+      "A47"
+    ],
+    "reviewedDigest": "sha256:ef1fc34d5fa225ba126ccdc45cdd304effccf31a28bd902a6ec0ea45966b12b3"
+  },
+  "src/spec_completion.test.ts": {
+    "status": "reviewed",
+    "evidence": "Current native fixture summary inspection; raw payload review is not claimed. Individual finding evidence and explicit limits: evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:2549b52ed5d8373d06d3db1db1673fc607c0bb70746c7a45cdc7bbff66e0e992"
+  },
+  "src/spec_obligations.ts": {
+    "status": "reviewed",
+    "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+    "findings": [
+      "A16"
+    ],
+    "reviewedDigest": "sha256:fc2e08eae63eabe76c7628ba4f2a8dbc866c407b84f6c9b0e59b7627a20c38a1"
+  }
+}

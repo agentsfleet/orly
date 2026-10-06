@@ -1,0 +1,115 @@
+{
+  "scope": "six selected consumer logic guards; not exhaustive mutation of every changed line",
+  "candidate_copy": "/private/tmp/orly-assertion-controls-Oct_05-5nygx8ve/candidate",
+  "results": [
+    {
+      "control": "owner-byte-refusal",
+      "source": "src/install.ts",
+      "test": "src/installation_preservation.test.ts",
+      "test_pattern": "strong_assertion_exposes_real_defect",
+      "correct_exit": 0,
+      "incorrect_exit": 1,
+      "incorrect_assertion_failed": true,
+      "correct_output": "evals/release/receipts/Oct_05_21_14/owner-byte-refusal-correct.txt",
+      "incorrect_output": "evals/release/receipts/Oct_05_21_14/owner-byte-refusal-incorrect.txt",
+      "source_sha256": "4a900f41929669e51b858cc4e3e5f475fca5b483fb163c5381e400ac0f9ee5c0",
+      "test_sha256": "77a4b6365686c7a7886247082ffbde7d3863adf343abfd271b53b23c2a08e3db",
+      "mutation": "Bypass the recorded digest guard when replacing owner-edited files.",
+      "receipt_sha256": {
+        "correct_output": "9264727f5505491e26f612b5dc1402f73d6f1163da47c131d49c5b1188c39883",
+        "incorrect_output": "a4a163ecdfadd4f28418b445baa2155d04ade47675857e9dc7d45d996b653924"
+      }
+    },
+    {
+      "control": "journal-integrity",
+      "source": "src/installation/transaction.ts",
+      "test": "src/installation/migration.test.ts",
+      "test_pattern": "changed journal cannot authorize recovery",
+      "correct_exit": 0,
+      "incorrect_exit": 1,
+      "incorrect_assertion_failed": true,
+      "correct_output": "evals/release/receipts/Oct_05_21_14/journal-integrity-correct.txt",
+      "incorrect_output": "evals/release/receipts/Oct_05_21_14/journal-integrity-incorrect.txt",
+      "source_sha256": "1f966be4646b2c40a5f0498fd7bd541b83bf01896ffe34344b00b337a80c1c6a",
+      "test_sha256": "ef2156c828323dc4bb720545cdc9b072066fc3db4b959f5b0ea008907e7c8002",
+      "mutation": "Ignore the journal integrity digest.",
+      "receipt_sha256": {
+        "correct_output": "1b7db1b201f180665e4505f1d27b0b6907fcea18f71c4c9dcf360b3dea280609",
+        "incorrect_output": "014b3300f4d716ef4ea6fd607646be3a43b32606c856993c194b527193ee40d7"
+      }
+    },
+    {
+      "control": "write-checkpoint-order",
+      "source": "src/installation/transaction.ts",
+      "test": "src/installation/migration.test.ts",
+      "test_pattern": "interrupted_install_recovers at write 0",
+      "correct_exit": 0,
+      "incorrect_exit": 1,
+      "incorrect_assertion_failed": true,
+      "correct_output": "evals/release/receipts/Oct_05_21_14/write-checkpoint-order-correct.txt",
+      "incorrect_output": "evals/release/receipts/Oct_05_21_14/write-checkpoint-order-incorrect.txt",
+      "source_sha256": "1f966be4646b2c40a5f0498fd7bd541b83bf01896ffe34344b00b337a80c1c6a",
+      "test_sha256": "ef2156c828323dc4bb720545cdc9b072066fc3db4b959f5b0ea008907e7c8002",
+      "mutation": "Report a destination-write checkpoint before the destination bytes are committed.",
+      "receipt_sha256": {
+        "correct_output": "b5a7abb4c80a57ab4316b71b8b46c6f6dbb1a73445203a672b31ef30830f9684",
+        "incorrect_output": "b27965c8be0b476855d268da7d7ee334a898179a9bbdfda885ec6f753c770c8a"
+      }
+    },
+    {
+      "control": "hook-owner-conflict",
+      "source": "src/installation/transaction.ts",
+      "test": "src/installation/migration.test.ts",
+      "test_pattern": "recovery preserves an owner-changed hooks setting",
+      "correct_exit": 0,
+      "incorrect_exit": 1,
+      "incorrect_assertion_failed": true,
+      "correct_output": "evals/release/receipts/Oct_05_21_14/hook-owner-conflict-correct.txt",
+      "incorrect_output": "evals/release/receipts/Oct_05_21_14/hook-owner-conflict-incorrect.txt",
+      "source_sha256": "1f966be4646b2c40a5f0498fd7bd541b83bf01896ffe34344b00b337a80c1c6a",
+      "test_sha256": "ef2156c828323dc4bb720545cdc9b072066fc3db4b959f5b0ea008907e7c8002",
+      "mutation": "Ignore owner hook-setting conflicts before resuming recovery.",
+      "receipt_sha256": {
+        "correct_output": "fb72e360715e7e58db08082007d3d85b793acd0d8e82e9362a9debdb00c2e2b2",
+        "incorrect_output": "43a6b7da8c80b2e26835e2d256fdd496cbc69c9721d26a618255b4b7cfffe053"
+      }
+    },
+    {
+      "control": "unknown-configuration",
+      "source": "src/config_validation.ts",
+      "test": "src/config_validation.test.ts",
+      "test_pattern": "unknown_setting",
+      "correct_exit": 0,
+      "incorrect_exit": 1,
+      "incorrect_assertion_failed": true,
+      "correct_output": "evals/release/receipts/Oct_05_21_14/unknown-configuration-correct.txt",
+      "incorrect_output": "evals/release/receipts/Oct_05_21_14/unknown-configuration-incorrect.txt",
+      "source_sha256": "bea2a436fd71938de4e9595d1eb146cba48bf9949c8498df951b9f2ed25a1382",
+      "test_sha256": "df7340809fd3ee13dbb68e540787e6812f02a13fc01248f5d3b3c6090eb5dd29",
+      "mutation": "Accept extra top-level configuration keys.",
+      "receipt_sha256": {
+        "correct_output": "9781157428b0c8b03a1f70edf72f79f7db0be531d245a5bfb31ff68dd3e1b76c",
+        "incorrect_output": "46a571375513a686ee1da555ab0649497abf56f7a8c390dfd5d115c9480e2e59"
+      }
+    },
+    {
+      "control": "exact-done-marker",
+      "source": "src/spec_obligations.ts",
+      "test": "src/spec_completion.test.ts",
+      "test_pattern": "NOT_DONE",
+      "correct_exit": 0,
+      "incorrect_exit": 1,
+      "incorrect_assertion_failed": true,
+      "correct_output": "evals/release/receipts/Oct_05_21_14/exact-done-marker-correct.txt",
+      "incorrect_output": "evals/release/receipts/Oct_05_21_14/exact-done-marker-incorrect.txt",
+      "source_sha256": "fc2e08eae63eabe76c7628ba4f2a8dbc866c407b84f6c9b0e59b7627a20c38a1",
+      "test_sha256": "2549b52ed5d8373d06d3db1db1673fc607c0bb70746c7a45cdc7bbff66e0e992",
+      "mutation": "Accept DONE inside another status string.",
+      "receipt_sha256": {
+        "correct_output": "9c74d7d344c42da3c97f18aae50f002e505819dabc6aeb5606d1d94203a4f983",
+        "incorrect_output": "7f85d7be23ad736e40bdcd7eca8495e7ca839684b480b985b8ecd40b46c8657a"
+      }
+    }
+  ],
+  "limit": "These receipts bind the candidate copies at execution time. Subsequent hook-metadata strengthening has separate red/green receipts; no exhaustive mutation percentage is claimed."
+}

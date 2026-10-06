@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "id": "005",
+  "cwd": "/Users/kishore/Projects/orly",
+  "argv": [
+    "bun",
+    "test",
+    "src/review_poll.test.ts"
+  ],
+  "deadline": "/Users/kishore/.gstack/projects/agentsfleet-orly/qa-reports/Oct_06_01_00-final-review/bot-selection-revalidation/.qa-evidence/005/deadline.json",
+  "timing": [
+    {
+      "guard": "qa-deadline",
+      "event": "started",
+      "version": 1,
+      "startedAt": "2026-10-05T19:37:56.467Z",
+      "deadlineAt": "2026-10-05T19:38:26.467Z",
+      "budgetMs": 30000,
+      "observedAt": "2026-10-05T19:37:56.469Z",
+      "remainingMs": 29998,
+      "expired": false
+    },
+    {
+      "guard": "qa-deadline",
+      "event": "finished",
+      "observedAt": "2026-10-05T19:38:05.784Z",
+      "deadlineAt": "2026-10-05T19:38:26.467Z",
+      "timedOut": false,
+      "exitCode": 0
+    }
+  ],
+  "startedAt": "2026-10-05T19:37:56.468Z",
+  "completedAt": "2026-10-05T19:38:05.789Z",
+  "exitCode": 0,
+  "signal": null,
+  "status": "complete",
+  "observation": {
+    "sha256": "8d48979deed41d2d9d17389f716d0691c35c370e3ac2a4192bbe44160a2945a8",
+    "bytes": 32
+  },
+  "publicOutput": true,
+  "stdout": {
+    "sha256": "6043908c8d26d62698476b88f737f39d5d3e91008d4155a81730902f5a37479c",
+    "bytes": 28
+  },
+  "stderr": {
+    "sha256": "1a13a789ee9c5008f046b53d460b009c9fa2aee2d9dc0c873c3d396123265211",
+    "bytes": 1634
+  }
+}

@@ -5,12 +5,6 @@
 > carries the judgment — how Indy decides, what he accepts, what he rejects.
 > In force every session; standing orders, not suggestions. Re-read when
 > padding or burying the answer.
-> Evidence lives in `SOUL_LOG.md` in the orly repository: 24 rows of what I
-> did, what Indy said, and the rule it produced. It does not ship — the
-> package allowlist keeps personal files out of a public release — so these
-> rules carry no back-cites and stand on their own words. Each row names its
-> rule, which is the direction that resolves. Append one the moment he
-> corrects you.
 
 ## Reply shape
 
@@ -70,8 +64,8 @@ Optimise for one thing: he never has to ask twice.
   clause "does this fire, or merely justify?" `make audit` caps the
   rendered `AGENTS.md` (this file inlined); adding a rule means making room.
 - **Corrections route by shape** (`AGENTS.md` §Memory Discipline): rule →
-  dispatch façade; behaviour → a row in `SOUL_LOG.md` at the moment it
-  happens; architecture → repo docs; state → HANDOFF.
+  dispatch façade; working style → the applicable rule here;
+  architecture → repo docs; in-flight state → the active spec.
 
 ## Code is the design
 
@@ -97,10 +91,10 @@ Optimise for one thing: he never has to ask twice.
 5. Every behaviour claim read from source on the target branch?
 6. Slop scan — contrasts, kickers, banned words?
 7. Acronym + banned-vocab scans (`AGENTS.md`)?
-8. Corrected this session? Row in `SOUL_LOG.md` — now, not later.
+8. Corrected this session? Update the rule where the correction applies.
 
 ---
 
-*Keep every line actionable — a fact that fires nowhere moves to
-`SOUL_LOG.md` or dies. Edit here, then `orly update`.*
+*Keep every line actionable. A fact that fires nowhere has no place here.
+Edit here, then `orly update`.*
 <!-- oracle-packs:end -->

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "make",
+    "audit"
+  ],
+  "cwd": "/Users/kishore/Projects/orly",
+  "started": "2026-10-05T11:43:05.959308+00:00",
+  "finished": "2026-10-05T11:44:19.396305+00:00",
+  "exit_code": 2,
+  "log": "evals/release/receipts/Oct_05_17_40/audit.log",
+  "sha256": "33b5b5b63dcdb7cde931b7c7c62c881ac5ccbaca86dec7a2abae9bcef1723e5b"
+}

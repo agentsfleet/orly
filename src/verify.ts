@@ -2,8 +2,8 @@ import { existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { localSelection } from "./config";
-import { managedContent } from "./install";
-import { hashContent, isString, objectArray, objectValue, RulesModel } from "./model";
+import { managedContent } from "./installation/plan";
+import { assertWritableInside, hashContent, isString, objectArray, objectValue, RulesModel } from "./model";
 import { Renderer } from "./render";
 
 const PASS_RESULT = "pass";
@@ -11,6 +11,7 @@ const FAIL_RESULT = "fail";
 const REGISTRY_PACKS_LABEL = "registry packs";
 const AGENTS_FILENAME = "AGENTS.md";
 const DETAIL_SEPARATOR = "; ";
+const EVIDENCE_LABEL = "verification evidence";
 
 export type VerificationCheck = {
   name: string;
@@ -83,7 +84,9 @@ export async function writeEvidence(
   checks: VerificationCheck[],
   languageModelResult: "pass" | "not-required",
 ): Promise<string> {
-  const path = join(model.root, ".oracle/evidence.json");
+  const relativePath = ".orly/evidence.json";
+  assertWritableInside(model.root, relativePath, EVIDENCE_LABEL);
+  const path = join(model.root, relativePath);
   mkdirSync(dirname(path), { recursive: true });
   const commit = Bun.spawnSync(["git", "rev-parse", "HEAD"], { cwd: model.root, stdout: "pipe", stderr: "ignore" });
   const evidence = {
@@ -95,6 +98,7 @@ export async function writeEvidence(
     llm_result: languageModelResult,
     created_at: new Date().toISOString().replace(/\.\d{3}Z$/, "+00:00"),
   };
+  assertWritableInside(model.root, relativePath, EVIDENCE_LABEL);
   await Bun.write(path, `${JSON.stringify(evidence, null, 2)}\n`);
   return path;
 }

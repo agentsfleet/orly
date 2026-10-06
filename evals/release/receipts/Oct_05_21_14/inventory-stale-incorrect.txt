@@ -1,0 +1,50 @@
+bun test v1.4.2 (744846f84)
+
+src/release_inventory.test.ts:
+53 |   review(repo, digest);
+54 |   const initial = rows(repo);
+55 |   expect(initial.find((row) => row.path === SOURCE)).toMatchObject({ present: true, package: true, digest, review: { status: REVIEWED } });
+56 |   writeFileSync(join(repo, SOURCE), "export const value = false;\n");
+57 |   const changed = rows(repo).find((row) => row.path === SOURCE)!;
+58 |   expect(changed.review.status).toBe(PENDING);
+                                     ^
+error: expect(received).toBe(expected)
+
+Expected: "pending"
+Received: "reviewed"
+
+      at <anonymous> (/private/tmp/orly-assertion-controls-Oct_05-5nygx8ve/inventory-stale-control/src/release_inventory.test.ts:58:33)
+(fail) inventory_covers_repository_and_package without inheriting a changed-byte review [578.26ms]
+62 | }, TEST_TIMEOUT_MS);
+63 | 
+64 | test("a review missing a digest cannot authorize current bytes", () => {
+65 |   const repo = fixture();
+66 |   review(repo);
+67 |   expect(rows(repo).find((row) => row.path === SOURCE)?.review.status).toBe(PENDING);
+                                                                            ^
+error: expect(received).toBe(expected)
+
+Expected: "pending"
+Received: "reviewed"
+
+      at <anonymous> (/private/tmp/orly-assertion-controls-Oct_05-5nygx8ve/inventory-stale-control/src/release_inventory.test.ts:67:72)
+(fail) a review missing a digest cannot authorize current bytes [336.20ms]
+71 |   const repo = fixture();
+72 |   review(repo, EMPTY_DIGEST);
+73 |   const current = rows(repo);
+74 |   for (const path of [INVENTORY, REVIEWED_RECORD]) {
+75 |     const row = current.find((candidate) => candidate.path === path)!;
+76 |     expect(row.review.status).toBe(PENDING);
+                                   ^
+error: expect(received).toBe(expected)
+
+Expected: "pending"
+Received: "reviewed"
+
+      at <anonymous> (/private/tmp/orly-assertion-controls-Oct_05-5nygx8ve/inventory-stale-control/src/release_inventory.test.ts:76:31)
+(fail) inventory and review records require an external snapshot binding [324.71ms]
+
+ 0 pass
+ 3 fail
+ 12 expect() calls
+Ran 3 tests across 1 file. [1257.00ms]

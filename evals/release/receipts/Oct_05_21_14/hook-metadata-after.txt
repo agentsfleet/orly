@@ -1,0 +1,42 @@
+bun test v1.4.2 (744846f84)
+
+src/installation/migration.test.ts:
+(pass) interrupted_install_recovers at journal 0 [218.45ms]
+(pass) interrupted_install_recovers at write 0 [234.52ms]
+(pass) interrupted_install_recovers at write 1 [205.79ms]
+(pass) interrupted_install_recovers at write 2 [183.45ms]
+(pass) interrupted_install_recovers at write 3 [205.51ms]
+(pass) interrupted_install_recovers at write 4 [164.62ms]
+(pass) interrupted_install_recovers at write 5 [155.39ms]
+(pass) interrupted_install_recovers at metadata 0 [153.98ms]
+(pass) interrupted_install_recovers at delete 0 [177.69ms]
+(pass) interrupted_install_recovers at delete 1 [158.41ms]
+(pass) interrupted_install_recovers at delete 2 [151.09ms]
+(pass) hook installation recovers interruption at journal 0 [239.81ms]
+(pass) hook installation recovers interruption at write 0 [248.46ms]
+(pass) hook installation recovers interruption at write 1 [258.47ms]
+(pass) hook installation recovers interruption at write 2 [233.70ms]
+(pass) hook installation recovers interruption at write 3 [234.04ms]
+(pass) hook installation recovers interruption at write 4 [236.27ms]
+(pass) hook installation recovers interruption at write 5 [242.00ms]
+(pass) hook installation recovers interruption at write 6 [239.39ms]
+(pass) hook installation recovers interruption at write 7 [238.33ms]
+(pass) hook installation recovers interruption at metadata 0 [252.41ms]
+(pass) hook installation recovers interruption at delete 0 [276.81ms]
+(pass) hook installation recovers interruption at delete 1 [249.36ms]
+(pass) hook installation recovers interruption at delete 2 [252.41ms]
+(pass) migration_preserves_owned_content refuses edited or unowned dispatch/check.md [81.62ms]
+(pass) migration_preserves_owned_content refuses edited or unowned AGENTS.orly.md [80.95ms]
+(pass) migration_preserves_owned_content refuses edited or unowned .orly/dispatch/check.md [80.30ms]
+(pass) recovery refuses an edited destination before deleting any old source [99.97ms]
+(pass) changed journal cannot authorize recovery [98.98ms]
+(pass) a current installation preserves an independent previous configuration [93.71ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [148.13ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [140.94ms]
+(pass) owner hook changes during destination writes are refused before metadata or cleanup [147.06ms]
+(pass) migration removes only proven obsolete instruction references [93.32ms]
+
+ 34 pass
+ 0 fail
+ 797 expect() calls
+Ran 34 tests across 1 file. [6.30s]

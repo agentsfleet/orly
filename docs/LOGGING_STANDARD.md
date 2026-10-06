@@ -9,7 +9,7 @@ Pre-design rules, decisive defaults, and the anti-patterns each rule exists to p
 Triggers on every `Edit`/`Write` that adds, removes, or changes a log emit:
 
 - `*.zig` outside `vendor/`/`third_party/`/`.zig-cache/` — `std.log.*`, `std.debug.print`, `std.io.getStdErr().writer().print`, any helper in `src/lib/logging/`.
-- `*.rs` under `rustd/` outside test and benchmark scopes — `tracing::{error,warn,info,debug,trace}!`, `println!`, `eprintln!`, and `dbg!`.
+- Runtime `*.rs` outside test and benchmark scopes — `tracing::{error,warn,info,debug,trace}!`, `println!`, `eprintln!`, and `dbg!`.
 - `*.ts`/`*.tsx`/`*.js`/`*.jsx` outside `vendor/`/`node_modules/` — `console.*`, custom logger calls.
 - `*.sh` outside generated directories — `echo`, `printf` to `&2`.
 
@@ -19,8 +19,10 @@ Out of scope (explicitly):
 - Build/release scripts — the harness's own `audits/*`, `audits/release-*`, and any governance-repo tooling — toolchain output, not application logs.
 - Generated framework noise (Next.js startup banners, Bun runtime warnings) — out of our control.
 
-The **LOGGING GATE** (`dispatch/write_any.md`, Logging Gate) sits on top of this file — it fires in addition to the language-level rules in `dispatch/write_zig.md` and `dispatch/write_ts_adhere_bun.md`, not instead of them.
+The LOGGING GATE in `dispatch/write_any.md` applies alongside the repository's
+selected language rules.
 
+<!-- oracle-packs:start product.agentsfleet -->
 ## §2 · Today's de-facto standard (survey-derived)
 
 Documented honestly, not aspirationally. Pre-M62 baseline (the fix-pass converges every existing emit toward §3 onward):
@@ -39,6 +41,7 @@ Documented honestly, not aspirationally. Pre-M62 baseline (the fix-pass converge
 - No collector-friendly format. Logs are a mix of free-form English and ad-hoc `key={value}` fragments.
 
 The proposed standard below is what every new emit must conform to and what the fix-pass converges existing emits toward.
+<!-- oracle-packs:end -->
 
 ## §3 · Wire format — logfmt
 
@@ -168,12 +171,16 @@ Log the source (`source=env:OPENAI_API_KEY`), never the value, at every level.
 
 > [DETERMINISTIC → LOG]
 
-Every `err` and `warn` record that maps to a domain error MUST carry `error_code=UZ-XXX-NNN` where `UZ-XXX-NNN` is declared in `rustd/crates/afd_core/src/error_code.rs`.
+Every `err` or `warn` record for a domain error carries its code from the
+repository's declared error registry. Validate new references through its
+configured checker; installing this pack does not select a code prefix.
 
+<!-- oracle-packs:start product.agentsfleet -->
 - **Used-but-undeclared** (`UZ-FAKE-999` appearing in code, no entry in registry): **blocking** in `make lint`.
 - **Declared-but-unreferenced** (registry has `UZ-LEGACY-007`, no code references it): **informational**. Deletion may be deferred to a sweep milestone.
 
 Embed the code as a struct field on the logger call: `log.err("event_name", .{ .error_code = error_codes.ERR_X, .err = @errorName(err) })`. The encoding helpers in `src/lib/logging/mod.zig` serialize it as `error_code=UZ-XXX-NNN` per §3. CLI (`agentsfleet`) renders the code in human format and as `code: "UZ-XXX-NNN"` in `--json` output (see §8).
+<!-- oracle-packs:end -->
 
 System-level failures with no domain meaning (e.g. raw `EACCES` from a syscall before we attribute it to a tenant operation) emit without `error_code`. The follow-up rule: if a syscall failure surfaces to a user, it gets attributed to a registry code at the boundary.
 
@@ -181,20 +188,30 @@ System-level failures with no domain meaning (e.g. raw `EACCES` from a syscall b
 
 > [UNENFORCED → broad principle; no scan covers every log call site in the codebase for credential-shaped values]
 
-Inherits the redaction list from M42_002 (`src/runner/engine/runner_progress.zig`). Same secret values must not appear anywhere in log records.
+Secrets must not appear in log records at any level. Read the repository's
+redactor and verify coverage of every stream used by the changed operation.
 
 > [JUDGMENT → REDACT]
 
 - **Allocator outputs** (Postgres connection strings, Redis URLs, OAuth tokens, OpenAI keys) — never log. If a record needs to identify a config source, log the *source* (`source=env:OPENAI_API_KEY`), not the *value*.
-- **Tenant-supplied secrets** (workspace API keys, BYOK credentials) — redaction harness covers stdout/stderr from executor children. Log emit sites in this codebase MUST NOT bypass the harness.
-- **Stderr coverage gap** — today's redactor covers child stdout only. Closing this gap (extending to stderr) is part of M62_001's fix-pass, not a separate milestone.
+- **Tenant-supplied secrets** — log emit sites must preserve the repository's
+  redaction boundary. Check both stdout and stderr; never assume a stream is
+  covered merely because another product's harness covers it.
 
 > [JUDGMENT → MSG-REVIEW]
 
-- **`msg=` fields** — values copy-pasted into `msg=` are the most common leak source. Audit script flags long `msg=` values; reviewer must verify they don't carry credentials.
+- **`msg=` fields** — reviewers inspect copied values for credentials and test
+  renderer bounds. The source leaf does not detect long messages.
 
 When in doubt, omit. A missing field is recoverable; a leaked secret is not.
 
+## Repository logger binding
+
+Use the consuming repository's structured logger and error registry.
+Read its exports and test actual rendered records for the fields, bounds and
+escaping above; installing a pack does not create a logging module.
+
+<!-- oracle-packs:start product.agentsfleet -->
 ## §7 · Per-language binding — Zig
 
 The wire format above is produced by helpers in `src/lib/logging/mod.zig`, exposed as the named module `log` so any layer-isolated tree (auth/, executor/) can import it without violating layer rules. Call sites use:
@@ -279,11 +296,11 @@ Schema mirrors Bun's `SystemError` extern struct (`bun:src/bun.js/bindings/Syste
 
 > [DETERMINISTIC → LOG]
 
-**Logging emit sites** in `cli/src/**` use a thin Bun-runtime logger that produces logfmt records to `stderr`. `console.log` / `console.error` are forbidden in source per `dispatch/write_ts_adhere_bun.md` §10 — `logging.sh` enforces this for TS/JS.
+**Logging emit sites** in `cli/src/**` use a thin Bun-runtime logger that produces logfmt records to `stderr`. `console.log` / `console.error` are forbidden in source per `dispatch/write_ts_adhere_bun.md` §10 — `logging.sh` enforces this for TS/JS. <!-- oracle-packs:language.typescript,language.javascript -->
 
 > [JUDGMENT → TS-STYLE]
 
-**Module-level error style** is governed by `dispatch/write_ts_adhere_bun.md` §9 (one style per module — throw OR Result, never both). The error type itself is the same:
+**Module-level error style** is governed by the selected language's error discipline. The error type itself is the same:
 
 ```ts
 class AgentError extends Error {
@@ -295,6 +312,7 @@ class AgentError extends Error {
 
 Throw-style modules `throw new AgentError({...})`. Result-style modules return `{ ok: false, error: new AgentError({...}) }`. Render path picks human or JSON based on the runtime mode.
 
+<!-- oracle-packs:end -->
 ## §8A · Per-language binding — Rust
 
 > [DETERMINISTIC → LOG]
@@ -390,16 +408,18 @@ Failure modes the audit script and reviewer must close. These are **not aspirati
 | # | Rationalization | Closure |
 |---|---|---|
 | L1 | "Temporary debug print, I'll remove later" | `logging.sh` rejects `std.debug.print`, Rust `println!` / `eprintln!` / `dbg!`, and `console.log` / `console.debug` / `console.info` in runtime source. Direct Zig or Rust stream output needs `// logging: <reason>` on or immediately above the emit. The reason must be non-empty and explain why the stream is the program interface. |
-| L2 | "`std.log.scoped` is fine, `obs.scoped` is just a wrapper" | `std.log.scoped` is **forbidden** in `src/**/*.zig` outside `src/lib/logging/`. Only `obs.scoped` is callable. Audit flags every `std.log.` call site. |
+| L2 | "The standard logger already has a scope" | Use the repository's structured logger and prove the §3 record shape. For `agentsfleet`, this is the named `log` module's `logging.scoped`, as §7 specifies. The leaf does not enforce logger imports or reject every `std.log` call; the reviewer checks this binding. |
 | L3 | "I added `error_code=UZ-NEW-001` — registry entry coming next commit" | The registry entry **must land in the same commit** as the first reference. `error-codes.sh` runs against the staged diff; missing entry = blocking. |
 | L4 | "This per-iteration event matters for debugging — `info`-level" | Per-iteration and per-row paths are `debug`, including mandatory boundary pairs on hot polls. `debug` is the level with a volume switch. This closes the ONLY `info` prohibition — there is no allow-list of event names and none may be reintroduced (§4). The inverse rationalization is closed too: "this operation is obviously fine, no need to log it" does not survive §4 rule 1, which requires a `_started`/`_completed`\|`_failed` pair on every boundary-crossing operation. Reviewer checks the pair and the loop, never the spelling. |
-| L5 | "Operator needs the full stack trace in `msg=`" | `msg=` capped at 300 chars; total fields per record capped at 15. Stack traces emit as a separate `event=stack_trace` record at `debug` level, correlated by `correlation_id`, not stuffed into `msg`. |
-| L6 | "Embedded newlines because I copy-pasted output" | Audit greps for raw newline byte inside quoted logfmt values. Must be `\n` literal (two chars). |
+| L5 | "Operator needs the full stack trace in `msg=`" | `msg=` stays capped at 300 characters and each record at 15 fields. Emit correlated stack traces separately at `debug`. These are renderer and reviewer checks; the leaf emits no message-size or field-count verdict. |
+| L6 | "Embedded newlines because I copy-pasted output" | Encode newline characters as `\n` within values. Verify the actual rendered record in tests and review; the leaf cannot inspect runtime output. |
 | L7 | "Auto-mode is on, the gate block is ceremony" | **Auto-mode does NOT cover gate skips.** Skip without an explicit user-given override = automatic violation. No size threshold lets an edit bypass the gate. |
 | L8 | "I read this doc at session start; subsequent edits don't need re-print" | Gate fires **per-edit**. The printed `🔴 LOGGING GATE` block is required before every triggered Edit/Write, not once per session. |
 | L9 | "Fix-pass touches every line; printing per-line is noise" | Fix-pass produces **one combined gate block per file**, not per-line. The block lists all violations addressed in that file. Still required, just consolidated. |
 
-These are enforced by `logging.sh` (mechanical) and the dispatch façade (`dispatch/write_any.md`, Logging Gate — output discipline). When in conflict, the façade wins — it is the enforcement layer.
+The leaf checks source emit forms; reviewers and renderer tests check the
+record shape, logger binding, bounds and escaping named above.
+The dispatch façade requires both kinds of evidence.
 
 ## §11 · Anti-patterns (named, banned)
 
@@ -410,7 +430,7 @@ These are enforced by `logging.sh` (mechanical) and the dispatch façade (`dispa
 | Rust `println!`, `eprintln!`, or `dbg!` outside tests | No level, event, or structured fields — dev diagnostics that escaped to main. |
 | Rust `tracing` emit without `event` | Drops the stable event key required by §3. |
 | Positional formatting in a Rust `tracing` emit | Values become opaque message text instead of queryable fields. |
-| `console.log` in `agentsfleet` source | Bypasses logger, breaks `--json` mode, violates `dispatch/write_ts_adhere_bun.md` §10. |
+| `console.log` in `agentsfleet` source | Bypasses logger, breaks `--json` mode, violates the selected language's error discipline. |
 | Logging on hot per-iteration paths at `info` | Floods collectors. Use `debug` (gated off by default). |
 | `error_code=` missing on `err`/`warn` mapping to registry codes | Breaks traceability; future operator can't link log to docs. |
 | Logging credentials, tokens, or BYOK keys | Severe leak surface. Redaction harness mandatory. |
@@ -430,10 +450,10 @@ immediately preceding the edit. Generic "scope creep" is not a valid reason — 
 
 ## §13 · Family
 
-- `dispatch/write_ts_adhere_bun.md` §10 — banned `console.log` in TS/JS source. Cross-referenced by `logging.sh`.
-- `dispatch/write_ts_adhere_bun.md` §9 — module-level error style (throw vs Result) for `agentsfleet`.
-- `dispatch/write_zig.md` — Zig discipline umbrella; this doc's §7 is the logging-specific layer.
-- `dispatch/write_rust.md` — Rust discipline umbrella; this doc's §8A is the logging-specific layer.
+- `dispatch/write_ts_adhere_bun.md` §10 — banned `console.log` in runtime source. <!-- oracle-packs:language.typescript,language.javascript -->
+- `dispatch/write_ts_adhere_bun.md` §9 — module-level error style. <!-- oracle-packs:language.typescript,language.javascript -->
+- `dispatch/write_zig.md` — Zig authoring discipline. <!-- oracle-packs:language.zig -->
+- `dispatch/write_rust.md` — Rust authoring discipline. <!-- oracle-packs:language.rust -->
 - `LIFECYCLE_PATTERNS.md` — orthogonal: ownership/cleanup of structs, including allocator wiring for the thread-local log buffer.
 - M42_002 redaction harness (`src/runner/engine/runner_progress.zig`) — secret-redaction precondition; this doc's §6 inherits.
 - Universal rules (RULE UFS, RULE TGU, RULE PRI, RULE FLL, RULE ORP, RULE TST-NAM) live in `docs/greptile-learnings/RULES.md`.
@@ -455,7 +475,7 @@ its line covers the clauses under it until the next heading.
 | `[JUDGMENT → BOUNDARY]` | is this operation boundary-crossing, and is its `_started`/`_completed`\|`_failed` pair complete | the agent at write time; the reviewer at `/review` |
 | `[JUDGMENT → REDACT]` | is this value a secret, or the label of one | the agent at write time; the M42_002 harness covers only executor-child output |
 | `[JUDGMENT → MSG-REVIEW]` | does this `msg=` carry a credential | the reviewer; no length or content check runs today |
-| `[JUDGMENT → TS-STYLE]` | throw-style or Result-style for this module | `dispatch/write_ts_adhere_bun.md` §9, agent-decided |
+| `[JUDGMENT → TS-STYLE]` | throw-style or Result-style for this module | the selected language façade, reviewer-decided |
 | `[JUDGMENT → RUST-STYLE]` | does a Rust failure map to a registry code, and are field expressions safely hoisted | the agent at write time; the reviewer at `/review` |
 | `[JUDGMENT → EVENT-COMPAT]` | does a language port preserve the event bytes consumed by existing dashboards | the agent compares old and new event constants; the reviewer confirms intentional renames |
 | `[JUDGMENT → SECTION-SCAN]` | which sections of this file the current sub-task needs | the agent; `audits/doc-read.sh` records façade reads, not delegated-doc reads |

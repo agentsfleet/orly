@@ -1,0 +1,41 @@
+
+[1m--- bin/orly verify[0m
+🟢 render.local.idempotent
+🟢 render.all.idempotent
+🟢 generated.root.current
+🟢 packs.sources.current
+
+[1m--- bash audits/ufs.sh --all[0m
+OK:   audit-ufs: cross-runtime parity skipped — no Rust registry and no Zig ERR_* declared, so this repository has no source of truth to compare against
+OK:   audit-ufs: no violations across 101 file(s)
+
+[1m--- bash audits/agents-md.sh[0m
+🔆 Auditing /Users/kishore/Projects/orly/AGENTS.md
+🟢 PASS: dispatch inventory (19 entries present in table)
+🟢 PASS: trigger surface (10 extensions named)
+🟢 PASS: override syntax (12 mentions)
+🟢 PASS: always-forbidden list (6 bans present)
+🟢 PASS: skill-chain ordering (anchored to CHORE(close))
+🟢 PASS: unified review route + both test skills
+🟢 PASS: CONFORM coverage (10 rows present)
+🟢 PASS: cross-references (dotfiles-resident docs exist)
+🟢 PASS: audit fixture: dirty diff flagged exactly 4 hits
+🟢 PASS: audit fixture: clean diff produced 0 hits
+🟢 PASS: dispatch parity (disk=19 ↔ table=19 ↔ REQUIRED=19; docs/gates/ empty)
+🟢 PASS: audits/agents-md.md present (29 scenarios)
+🟢 PASS: lifecycle stages (9 headers present)
+🟢 PASS: lifecycle anchors (7 strings in essence + runbook)
+🟢 PASS: named scenarios (29 keywords ↔ 29 scenarios, parity holds)
+🟢 PASS: hook triggers (.githooks/pre-commit + pre-push both gate rules, package, toolchain, and fixtures)
+🟢 PASS: rule extension protocol section present (all 4 wiring steps enumerated)
+🟢 PASS: identity handles (Kishore/Indy ↔ Oracle/Orly present)
+🟢 PASS: memory discipline (disable flag + never-write + dispatch routing present)
+🟢 PASS: rule-path residence (doctrine + anchors + zero relative hrefs)
+🟢 PASS: size 37391 bytes (limit 37888)
+🟢 PASS: self-fingerprint (20 expected checks ran)
+
+✅ ALL CHECKS PASSED
+
+[1m--- bash audits/rule-ledger.sh --check[0m
+RULE ENFORCEMENT LEDGER — scoreboard currency
+  🟢 docs/RULE_ENFORCEMENT.md matches the tree

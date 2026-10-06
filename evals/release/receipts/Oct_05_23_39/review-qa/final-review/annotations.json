@@ -1,0 +1,37 @@
+{
+  "evidence": [
+    {
+      "capture": "001",
+      "command": "bun test src/command_process.test.ts src/command_runner.test.ts",
+      "contract": "Successful spawn owns cleanup, including failed receipt writes, owner exit, signals, deadlines and output limits",
+      "expected": "9 passed, 0 failed, 50 assertions",
+      "classification": "pass"
+    },
+    {
+      "capture": "002",
+      "command": "bun test src/installation_preservation.test.ts",
+      "contract": "Concurrent owner saves retain exact bytes and refuse without a journal",
+      "expected": "4 passed, 0 failed, 23 assertions",
+      "classification": "pass"
+    },
+    {
+      "capture": "003",
+      "command": "bun test src/installation/migration.test.ts",
+      "contract": "Owner hooks remain connected and ordered interrupted migration recovers",
+      "expected": "36 passed, 0 failed, 812 assertions",
+      "classification": "pass"
+    },
+    {
+      "capture": "004",
+      "command": "bun test src/surfaces.test.ts src/spec_template_io.test.ts",
+      "contract": "Dotted specifications and real indexed bytes remain authoritative",
+      "expected": "19 passed, 0 failed, 52 assertions",
+      "classification": "pass"
+    }
+  ],
+  "limits": [
+    "Separate finished-candidate review invocation; the earlier three-cycle attempt remains nonconverged.",
+    "One smoke success and real changed failure path; required plan checks use finite command limits, no clock reset.",
+    "Owned disposable local files, Git repositories and bounded child processes. No live consumer, publication, native build, browser or model call."
+  ]
+}

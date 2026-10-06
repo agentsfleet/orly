@@ -1,0 +1,37 @@
+{
+  "evidence": [
+    {
+      "capture": "001",
+      "command": "bun test src/installation/migration.test.ts -t 'a current installation preserves an independent previous configuration'",
+      "contract": "Independent previous configuration survives a current installation.",
+      "expected": "Exit 0; exact previous configuration and old rule bytes preserved.",
+      "classification": "pass"
+    },
+    {
+      "capture": "002",
+      "command": "bun test src/installation/migration.test.ts -t 'owner hook changes during destination writes'",
+      "contract": "Owner hook changes during writes refuse before metadata and cleanup.",
+      "expected": "Exit 0; refusal result, owner hooks, journal and old sources asserted.",
+      "classification": "pass"
+    },
+    {
+      "capture": "003",
+      "command": "bun test src/command_process.test.ts",
+      "contract": "Successful deadline stop occurs once.",
+      "expected": "Exit 0; deadline result and captured output asserted; repeated-stop refusal remains active.",
+      "classification": "pass"
+    },
+    {
+      "capture": "004",
+      "command": "bun test src/release_inventory.test.ts",
+      "contract": "Inventory review is bound to current source bytes.",
+      "expected": "Exit 0; exact matching bytes reviewed, changed or missing digests pending, self-reference pending.",
+      "classification": "pass"
+    }
+  ],
+  "limits": [
+    "Four bounded smoke commands using existing test-owned fixtures. No live repository or remote/model call.",
+    "Required native subagent and specialists unavailable under owner work-alone instruction. No independent review completion claimed.",
+    "Full canonical and randomized selections have separate receipts. Generated pinned hooks on both operating systems and final publication remain unobserved."
+  ]
+}

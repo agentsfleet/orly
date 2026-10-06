@@ -159,7 +159,7 @@ describe("repo.config", () => {
   test("a repository with no config names the install command", async () => {
     const project = newSpecRepository();
     const context = { root: project, model: await modelFor(project), acceptDirty: false };
-    rmSync(join(project, ".oracle/orly.json"));
+    rmSync(join(project, ".orly/orly.json"));
     const criterion = criteriaFor(WORK, context).find((entry) => entry.name === REPO_CONFIG);
     const verdict = criterion?.evaluate(context);
     expect(verdict?.ok).toBeFalse();

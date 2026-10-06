@@ -23,6 +23,10 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scope.sh"
+audit_scope_init --all "$@"
+audit_index_snapshot "$@"
+
 MODE="${1:-${SCOPE:---all}}"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
@@ -44,20 +48,13 @@ added_hit() {
     | grep -nE "$DEF_RE|$BODY_RE" | head -1 || true
 }
 
-case "$MODE" in
-  --staged|staged)
-    # while read, not mapfile — bash-3.2 portability (see scripts/run-playbook-tests.sh).
-    FILES=()
-    while IFS= read -r f; do FILES+=("$f"); done < <(git diff --cached --name-only --diff-filter=ACMRT -- '*.zig' || true)
-    STAGED=1 ;;
-  --all|all)
-    FILES=()
-    while IFS= read -r f; do FILES+=("$f"); done < <(find src -type f -name '*.zig' 2>/dev/null || true)
-    STAGED=0 ;;
-  *)
-    printf "usage: %s [--staged|--all]\n" "$0" >&2
-    exit 64 ;;
-esac
+MODE="$AUDIT_MODE"
+FILES=()
+while IFS= read -r -d '' f; do
+  [ ! -f "$f" ] || FILES+=("$f")
+done < <(audit_scope_paths '*.zig')
+STAGED=0
+[ "$MODE" != --staged ] || STAGED=1
 
 if [[ ${#FILES[@]} -eq 0 ]]; then
   ok "no zig source files in scope ($MODE)"

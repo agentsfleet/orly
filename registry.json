@@ -25,6 +25,10 @@
           "target": "dispatch/lib.sh"
         },
         {
+          "source": "audits/scope.sh",
+          "target": "audits/scope.sh"
+        },
+        {
           "source": "dispatch/lifecycle.md",
           "target": "dispatch/lifecycle.md"
         },
@@ -59,6 +63,22 @@
         {
           "source": "docs/greptile-learnings/RULES.md",
           "target": "docs/greptile-learnings/RULES.md"
+        },
+        {
+          "source": "docs/LOGGING_STANDARD.md",
+          "target": "docs/LOGGING_STANDARD.md"
+        },
+        {
+          "source": "audits/ufs-strings.awk",
+          "target": "audits/ufs-strings.awk"
+        },
+        {
+          "source": "audits/logging-rust.awk",
+          "target": "audits/logging-rust.awk"
+        },
+        {
+          "source": "audits/doc-reads.ts",
+          "target": "audits/doc-reads.ts"
         }
       ]
     },
@@ -317,10 +337,6 @@
           "target": "docs/HARNESS_VERIFY_OUTPUT.md"
         },
         {
-          "source": "docs/LOGGING_STANDARD.md",
-          "target": "docs/LOGGING_STANDARD.md"
-        },
-        {
           "source": "dispatch/verify.md",
           "target": "dispatch/verify.md"
         },
@@ -392,7 +408,7 @@
       "pack": "workflow.governance",
       "checker": [
         "bin/orly",
-        "validate"
+        "verify"
       ],
       "fixtures": {
         "pass": [
@@ -410,8 +426,7 @@
       "pack": "workflow.governance",
       "checker": [
         "bin/orly",
-        "verify",
-        "--all"
+        "verify"
       ],
       "fixtures": {
         "pass": [

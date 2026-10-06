@@ -16,9 +16,16 @@ gstack/
 .agents-invariance-signoff
 .agents-llmevals-signoff
 .agents-comprehension-signoff
-.oracle/evidence.json
+.orly/evidence.json
 .llmevals-journal/
 .claude/scheduled_tasks.lock
 /coverage/
 .npmrc
+.orly/judgments/
+
+# Previous unrecorded local state is preserved during migration.
+.oracle/evidence.json
 .oracle/judgments/
+.orly/install-journal.json
+.orly/install.lock
+.orly/install-stage-*/

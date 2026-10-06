@@ -7,4 +7,4 @@ context managers. Validate data at parse boundaries and preserve specific
 exception classes until the caller can decide how to respond.
 
 The repository owns formatting, linting, type checking, and tests — it declares
-them in `.oracle/orly.json`.
+them in `.orly/orly.json`.

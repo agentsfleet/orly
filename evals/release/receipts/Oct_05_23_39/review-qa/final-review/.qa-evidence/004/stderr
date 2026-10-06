@@ -1,0 +1,28 @@
+
+src/spec_template_io.test.ts:
+(pass) spec audit through real Git and file boundaries > an invalid v1 index fails even when its working copy was repaired [712.68ms]
+(pass) spec audit through real Git and file boundaries > an invalid v0.9.2 index fails even when its working copy was repaired [753.41ms]
+(pass) spec audit through real Git and file boundaries > a repaired v1 index passes despite invalid unstaged content and config [675.38ms]
+(pass) spec audit through real Git and file boundaries > a repaired v0.9.2 index passes despite invalid unstaged content and config [656.58ms]
+(pass) spec audit through real Git and file boundaries > read-first references are resolved from the index [395.23ms]
+(pass) spec audit through real Git and file boundaries > file mode checks working content and configuration [322.53ms]
+(pass) spec audit through real Git and file boundaries > refuses invalid JSON without skipping parity [618.62ms]
+(pass) spec audit through real Git and file boundaries > refuses missing commands without skipping parity [510.74ms]
+(pass) spec audit through real Git and file boundaries > refuses empty commands without skipping parity [535.88ms]
+(pass) spec audit through real Git and file boundaries > refuses empty group without skipping parity [500.54ms]
+(pass) spec audit through real Git and file boundaries > refuses invalid invocation without skipping parity [575.56ms]
+(pass) spec audit through real Git and file boundaries > refuses nonstring argument without skipping parity [534.77ms]
+(pass) spec audit through real Git and file boundaries > refuses nonarray group without skipping parity [494.83ms]
+(pass) spec audit through real Git and file boundaries > missing config, staged config, and arguments fail explicitly [274.20ms]
+(pass) spec audit through real Git and file boundaries > bulk scans retain their prohibited-pattern scope [711.07ms]
+
+src/surfaces.test.ts:
+(pass) user surface > handlers, openapi, cli, and app TypeScript count [0.34ms]
+(pass) user surface > tests, markdown, and other packages do not count [0.06ms]
+(pass) docs surface > docs pages and README count; the spec tree never does [0.11ms]
+(pass) code classification > source and test files are code; prose is not [0.05ms]
+
+ 19 pass
+ 0 fail
+ 52 expect() calls
+Ran 19 tests across 2 files. [8.35s]

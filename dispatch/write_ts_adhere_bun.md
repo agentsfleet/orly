@@ -280,6 +280,16 @@ immediately preceding the edit. **User-invokable only.** Generic "scope creep" /
 - Length caps live in `dispatch/write_any.md` (LENGTH GATE — file ≤ 350, fn ≤ 50, method ≤ 70 — same as every other source language).
 - This file is the **TypeScript / Bun-specific** layer that those universal rules cannot express. Scan its section headers at the first TS/JS touch (`grep -nE "^##+ "` — two-plus hashes, so nested cards surface) and read the sections the diff shape touches; on sub-task shape change, re-scan and read only newly-touched sections — never the full file.
 
+## Repository design system
+
+> [JUDGMENT → ARCH]
+
+Use the consuming repository's declared component library and design tokens.
+Locate its exports and styles before substituting primitives; do not import
+another product's package or invent its directory layout.
+Run the repository's declared checks and review substitutions against that source.
+
+<!-- oracle-packs:start product.agentsfleet -->
 ## Merged from dissolved gate cards
 
 > [container]
@@ -491,3 +501,4 @@ If the arbitrary you want is a legitimate design value that simply has no token 
 4. Add the utility to the table above in this gate body (same dotfiles commit — Invariance Suite Gate applies)
 
 This is the path to a system that grows without dilution.
+<!-- oracle-packs:end -->

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "/private/tmp/orly-consumer-Oct_05-99d9wmg9/command-upgrade-structured/published-upgrade.py"
+  ],
+  "cwd": "/Users/kishore/Projects/orly",
+  "started": "2026-10-05T12:16:18.621594+00:00",
+  "finished": "2026-10-05T12:16:25.030988+00:00",
+  "exit_code": 0,
+  "log": "evals/release/receipts/Oct_05_17_40/command-upgrade.log",
+  "sha256": "fdc51d69f12fa2c66f59eba2afbea5e06ac8789710a320d8e00e2ff198e42f98"
+}

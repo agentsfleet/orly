@@ -1,0 +1,16 @@
+{
+  "scope": "Broad captured inputs rechecked after guide edits. Named implementation/test bytes equal the prior smoke inputs; inventory generator matches its separately bound assertion-control source. Changed packaged guidance is revalidated by fresh canonical audit and installation receipts.",
+  "captured_inputs": 170,
+  "changed_since_capture": [
+    "audits/agents-md.md"
+  ],
+  "selected_capture_sources": [
+    "src/installation/migration.test.ts",
+    "src/installation/transaction.ts",
+    "src/command_process.test.ts",
+    "src/command_process.ts",
+    "src/release_inventory.test.ts"
+  ],
+  "selected_capture_sources_unchanged": true,
+  "inventory_generator_control_unchanged": true
+}

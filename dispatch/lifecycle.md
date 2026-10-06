@@ -13,7 +13,7 @@ are entering, not the whole file.
 ## What runs at each stage
 
 This is the authoritative sequence. Commands come from the repository's
-`.oracle/orly.json`; the engine contains no product-specific build recipes.
+`.orly/orly.json`; the engine contains no product-specific build recipes.
 
 | Stage | Runs | Owner |
 |---|---|---|
@@ -145,7 +145,7 @@ into a separate tree.
 
 ## Bootstrap & milestone gates
 
-- **Complete `.oracle/orly.json` on first sight.** `orly init` seeds it
+- **Complete `.orly/orly.json` on first sight.** `orly init` seeds it
   mechanically — it reads the Makefile (following `include` one level) and
   `package.json` scripts, matches a fixed list of target names, and writes what
   it matched. It finds the obvious ones and misses the rest, and it never
@@ -166,6 +166,7 @@ into a separate tree.
   A documentation repository can declare `verify.docs` for its site and link
   checks without application unit or integration suites. `init` reports
   missing commands; `doctor` and the gates reject incomplete setup.
+<!-- oracle-packs:start product.agentsfleet -->
 - **Priming:** (1) Human runs `playbooks/founding/01_bootstrap/001_playbook.md`.
   (2) Agent runs `./playbooks/founding/02_preflight/00_gate.sh` (green before
   next). (3) Agent runs `playbooks/founding/03_priming_infra/001_playbook.md`.
@@ -176,6 +177,7 @@ into a separate tree.
 - **Agent-first sequencing** — minimize human steps; post-handoff steps
   retryable + idempotent. Vault is the inter-step interface; never pass creds
   by argument/env.
+<!-- oracle-packs:end -->
 
 ## PLAN — expansions
 
@@ -186,8 +188,8 @@ surface option + cost, the user picks. Read docs when behavior is unclear.
 
 **Surface-area checklist** — yes/no + reason each: OpenAPI changes (list paths)
 · the product's CLI · user-facing docs · release notes
-/ version bump · schema changes (≤100 lines/file, single-concern, update
-`schema/embed.zig` + migration array) · Schema Removal Guard output ·
+/ version bump · schema changes (the repository's migration registration,
+file limits and live-data policy) · Schema Removal Guard output where selected ·
 spec-vs-rules conflict (amend spec).
 
 ## EXECUTE — spec discipline expansions
@@ -204,8 +206,10 @@ spec-vs-rules conflict (amend spec).
   update spec first); every Acceptance Criterion → verifiable command ("works
   correctly" is not a criterion; "`make test` passes" is); no code commits
   without tests (`/orly-write-unit-test`); every Error Table row → negative test.
+<!-- oracle-packs:start persona.indy -->
 - **Recovery notes:** local Docker `ENOSPC` → `~/bin/mac-cleanup.sh`, verify
   `docker system df`, retry.
+<!-- oracle-packs:end -->
 
 ## CHORE (close) — required outputs
 
@@ -255,7 +259,10 @@ version-sync check passes where defined; branch contains `origin/main` HEAD
 **`orly gate pr` follows the spec through the close.** A spec moved to `done/`
 on this branch is still discovered — its `Branch:` header names the branch —
 and every spec criterion runs against it; skip-pass is only for genuinely
-spec-less branches. A deliberately folded spec retains the exact branch header
+spec-less branches. Branch and fold headers accept a plain token or an inline-code
+token. Active specs explicitly naming another branch do not displace the current
+branch's owner; an active spec without a branch declaration remains in scope.
+A deliberately folded spec retains the exact branch header
 and adds `**Folded-into:** \`M178_001\`` naming the owning spec. Discovery
 validates that relation and gates the sole non-folded owner; two non-folded
 specs on one branch remain a hard error. **The same relation holds in

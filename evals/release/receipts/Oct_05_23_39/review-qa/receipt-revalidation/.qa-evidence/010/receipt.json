@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "id": "010",
+  "cwd": "/Users/kishore/Projects/orly",
+  "argv": [
+    "bun",
+    "test",
+    "src/command_process.test.ts",
+    "src/command_runner.test.ts"
+  ],
+  "deadline": "/Users/kishore/.gstack/projects/agentsfleet-orly/qa-reports/Oct_06_00_05/receipt-revalidation/.qa-evidence/010/deadline.json",
+  "timing": [
+    {
+      "guard": "qa-deadline",
+      "event": "started",
+      "version": 1,
+      "startedAt": "2026-10-05T19:23:35.285Z",
+      "deadlineAt": "2026-10-05T19:24:05.285Z",
+      "budgetMs": 30000,
+      "observedAt": "2026-10-05T19:23:35.297Z",
+      "remainingMs": 29988,
+      "expired": false
+    },
+    {
+      "guard": "qa-deadline",
+      "event": "finished",
+      "observedAt": "2026-10-05T19:23:37.697Z",
+      "deadlineAt": "2026-10-05T19:24:05.285Z",
+      "timedOut": false,
+      "exitCode": 0
+    }
+  ],
+  "startedAt": "2026-10-05T19:23:35.293Z",
+  "completedAt": "2026-10-05T19:23:37.725Z",
+  "exitCode": 0,
+  "signal": null,
+  "status": "complete",
+  "observation": {
+    "sha256": "8d48979deed41d2d9d17389f716d0691c35c370e3ac2a4192bbe44160a2945a8",
+    "bytes": 32
+  },
+  "publicOutput": true,
+  "stdout": {
+    "sha256": "6043908c8d26d62698476b88f737f39d5d3e91008d4155a81730902f5a37479c",
+    "bytes": 28
+  },
+  "stderr": {
+    "sha256": "f73a323d7ce788e66e21093282f9f03f51c928ce61762d1e8806d671bb801e2a",
+    "bytes": 806
+  }
+}

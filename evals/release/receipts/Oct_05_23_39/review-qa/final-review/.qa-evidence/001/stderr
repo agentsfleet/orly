@@ -1,0 +1,18 @@
+
+src/command_process.test.ts:
+(pass) a failed pid receipt write stops the already started workload [43.98ms]
+(pass) a successful deadline stop is not repeated during supervisor cleanup [141.12ms]
+(pass) killing the gate owner stops its detached workload [242.09ms]
+(pass) supervisor SIGTERM stops its owned workload [52.32ms]
+(pass) supervisor SIGINT stops its owned workload [52.72ms]
+(pass) supervisor SIGHUP stops its owned workload [58.19ms]
+
+src/command_runner.test.ts:
+(pass) a deadline stops the owned child group and keeps captured output [341.80ms]
+(pass) the output budget covers both streams and stops the owned child group [55.93ms]
+(pass) an explicit lane override applies through the public gate criteria [488.33ms]
+
+ 9 pass
+ 0 fail
+ 50 expect() calls
+Ran 9 tests across 2 files. [1.53s]

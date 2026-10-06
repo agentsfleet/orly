@@ -1,0 +1,2 @@
+  PASS  update moves a repository from an older pinned version to the current one
+PASS immutable cached package survives mutable upgrade case

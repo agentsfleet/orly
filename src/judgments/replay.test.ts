@@ -38,6 +38,6 @@ test("rejects corrupted replay checksum and invalid JSON", async () => {
 test("rejects a cache directory that redirects outside the project", () => {
   using project = new TestProject();
   using outside = new TestProject();
-  symlinkSync(outside.root, join(project.root, ".oracle"));
+  symlinkSync(outside.root, join(project.root, ".orly"));
   expect(() => replayDirectory(project.root, true)).toThrow("Replay directory must be a real directory inside the project.");
 });

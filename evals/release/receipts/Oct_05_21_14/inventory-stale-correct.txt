@@ -1,0 +1,11 @@
+bun test v1.4.2 (744846f84)
+
+src/release_inventory.test.ts:
+(pass) inventory_covers_repository_and_package without inheriting a changed-byte review [531.19ms]
+(pass) a review missing a digest cannot authorize current bytes [315.24ms]
+(pass) inventory and review records require an external snapshot binding [320.11ms]
+
+ 3 pass
+ 0 fail
+ 20 expect() calls
+Ran 3 tests across 1 file. [1183.00ms]

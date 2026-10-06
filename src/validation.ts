@@ -3,6 +3,8 @@ import { isAbsolute, join, relative } from "node:path";
 
 import type { JsonObject } from "./model";
 
+const NULL_BYTE = "\0";
+
 export function validateRelativePath(value: unknown, label: string, errors: string[]): void {
   if (!isString(value) || value.length === 0) {
     errors.push(`${label} must be a string`);
@@ -22,7 +24,7 @@ export function validateSurfaces(label: string, value: unknown, errors: string[]
   }
   for (const [field, prefixes] of Object.entries(value)) {
     if (field !== "user" && field !== "docs") errors.push(`${label} surfaces.${field} is not a known surface`);
-    else if (!Array.isArray(prefixes) || !prefixes.every((prefix) => isString(prefix) && prefix.length > 0)) {
+    else if (!Array.isArray(prefixes) || !prefixes.every((prefix) => isString(prefix) && prefix.length > 0 && !prefix.includes(NULL_BYTE))) {
       errors.push(`${label} surfaces.${field} must be an array of path prefixes`);
     }
   }
@@ -34,19 +36,20 @@ export function validateCommands(label: string, value: unknown, errors: string[]
     return;
   }
   for (const [name, invocations] of Object.entries(value)) {
+    if (!name || name.includes(NULL_BYTE)) errors.push(`${label} command name must be nonempty and contain no null byte`);
     if (!Array.isArray(invocations) || invocations.length === 0) {
       errors.push(`${label} command ${name} must be non-empty`);
       continue;
     }
-    for (const invocation of invocations) if (!Array.isArray(invocation) || invocation.length === 0 || !invocation.every((argument) => isString(argument) && argument.length > 0)) errors.push(`${label} command ${name} arguments must be strings`);
+    for (const invocation of invocations) if (!Array.isArray(invocation) || invocation.length === 0 || !invocation.every((argument) => isString(argument) && argument.length > 0 && !argument.includes(NULL_BYTE))) errors.push(`${label} command ${name} arguments must be nonempty strings without null bytes`);
   }
 }
 
 export function commandSetupErrors(commands: Record<string, string[][]>): string[] {
   const errors: string[] = [];
-  if (!commands.conform?.length) errors.push("declare conform in .oracle/orly.json for work checks");
+  if (!commands.conform?.length) errors.push("declare conform in .orly/orly.json for work checks");
   if (!Object.keys(commands).some((name) => /^verify\..+/.test(name) && commands[name]?.length)) {
-    errors.push("declare at least one verify.* command in .oracle/orly.json (for example, verify.unit or verify.docs)");
+    errors.push("declare at least one verify.* command in .orly/orly.json (for example, verify.unit or verify.docs)");
   }
   return errors;
 }

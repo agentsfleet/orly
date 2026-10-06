@@ -353,14 +353,14 @@ table. -->
 |---|--------------------------------|---------------------|----------|----------|-----------------|
 | R1 | {{fill:outcome the user can observe}} (§1) | `{{fill:command}}` | {{fill:exit 0 / substring / 0 matches}} | P0 | |
 | R2 | Diff stays inside Files Changed | `git diff --name-only origin/main...HEAD` | 0 paths missing from the Files Changed table | P0 | |
-| S1 | Conform gates green | `{{fill:conform command from .oracle/orly.json, verbatim}}` | exit 0 | P0 | |
-| S2 | Unit tests pass | `{{fill:verify.unit command from .oracle/orly.json, verbatim}}` | exit 0 | P0 | |
+| S1 | Conform gates green | `{{fill:conform command from .orly/orly.json, verbatim}}` | exit 0 | P0 | |
+| S2 | Unit tests pass | `{{fill:verify.unit command from .orly/orly.json, verbatim}}` | exit 0 | P0 | |
 | S3 | Slow tier green (code-carrying branch) | `{{fill:one row per remaining declared verify.* command, verbatim}}` | exit 0 | P0 | |
 | S4 | No secrets | `gitleaks detect` | exit 0 | P0 | |
 | S5 | No oversize source file | `git diff --name-only origin/main...HEAD \| grep -v '\.md$' \| xargs wc -l 2>/dev/null \| awk '$1>350 && $2!="total"'` | no output | P0 | |
 | S6 | Orphan sweep | Dead Code Sweep greps | 0 matches | P0 | |
 
-**Command source rule:** copy every declared `conform` and `verify.*` invocation from `.oracle/orly.json` into a Verify cell, verbatim, with an Expected value. Include conditional suites; the final gate decides applicability from the actual branch diff. Additional spec-specific commands, secret scans, and named manual checks are allowed. Missing configuration must be completed before authoring. See `dispatch/lifecycle.md` for command timing; baseline metadata is pending at opening and measured before the Pull Request.
+**Command source rule:** copy every declared `conform` and `verify.*` invocation from `.orly/orly.json` into a Verify cell, verbatim, with an Expected value. Include conditional suites; the final gate decides applicability from the actual branch diff. Additional spec-specific commands, secret scans, and named manual checks are allowed. Missing configuration must be completed before authoring. See `dispatch/lifecycle.md` for command timing; baseline metadata is pending at opening and measured before the Pull Request.
 
 **Grading protocol (VERIFY):** run each spec-specific Verify command verbatim; Graded = ✅/❌ + one decisive output line. Repository-command rows point to the final `orly gate pr` results in Pull Request Session Notes, so recording those results does not require another code commit and suite run. **Ship gate:** every required check must pass before the Pull Request is ready; missing evidence or any ❌ returns to EXECUTE. A P1 ❌ requires an Indy-acked deferral quote in Discovery. A P0 may also be **MOVED** — see below.
 
@@ -378,7 +378,7 @@ A MOVED row is never rendered ✅. The criterion has not been met; it has change
 
 <!-- tpl: The single scoring surface — no other scoreboard. 5–12 rows after
 pruning: one per Section outcome, failure class, or hygiene gate — never one
-per Dimension (that ledger is the Test Specification). Repository suite commands come verbatim from `.oracle/orly.json`; expand S3
+per Dimension (that ledger is the Test Specification). Repository suite commands come verbatim from `.orly/orly.json`; expand S3
 for every remaining declared lane. Additional spec-specific checks stay explicit. Expected litmus: every Expected is
 mechanically checkable — an exit code, a literal substring, or a match count;
 can't write it that way → the criterion is fuzzy — fix the criterion, not the

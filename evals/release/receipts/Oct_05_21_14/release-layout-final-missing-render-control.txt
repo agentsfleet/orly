@@ -1,0 +1,5 @@
+🟢 53 written, 0 already current (8 packs)
+🟠 setup incomplete: declare conform in .orly/orly.json for work checks
+🟠 setup incomplete: declare at least one verify.* command in .orly/orly.json (for example, verify.unit or verify.docs)
+Then run orly doctor to check the completed setup.
+✗ orly's rules did not land

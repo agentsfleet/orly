@@ -1,0 +1,97 @@
+{
+  "revision": "4be34f70a14ffdffa6b26bbdaac4111379771817",
+  "runtime": "bun 1.4.2",
+  "cwd": "/Users/kishore/Projects/orly",
+  "limits": [
+    "Four bounded smoke commands using existing test-owned fixtures. No live repository or remote/model call.",
+    "Required native subagent and specialists unavailable under owner work-alone instruction. No independent review completion claimed.",
+    "Full canonical and randomized selections have separate receipts. Generated pinned hooks on both operating systems and final publication remain unobserved."
+  ],
+  "evidence": [
+    {
+      "command": "bun test src/installation/migration.test.ts -t 'a current installation preserves an independent previous configuration'",
+      "contract": "Independent previous configuration survives a current installation.",
+      "expected": "Exit 0; exact previous configuration and old rule bytes preserved.",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/installation/migration.test.ts -t 'owner hook changes during destination writes'",
+      "contract": "Owner hook changes during writes refuse before metadata and cleanup.",
+      "expected": "Exit 0; refusal result, owner hooks, journal and old sources asserted.",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/command_process.test.ts",
+      "contract": "Successful deadline stop occurs once.",
+      "expected": "Exit 0; deadline result and captured output asserted; repeated-stop refusal remains active.",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/release_inventory.test.ts",
+      "contract": "Inventory review is bound to current source bytes.",
+      "expected": "Exit 0; exact matching bytes reviewed, changed or missing digests pending, self-reference pending.",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    }
+  ],
+  "learning": [
+    {
+      "observationCapture": "001",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/installation/migration.test.ts",
+        "-t",
+        "a current installation preserves an independent previous configuration"
+      ],
+      "hypothesis": "The previous configuration survives; next verify that an owner hook change during writes refuses before metadata and cleanup.",
+      "nextCapture": "002",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/installation/migration.test.ts",
+        "-t",
+        "owner hook changes during destination writes"
+      ]
+    },
+    {
+      "observationCapture": "002",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/installation/migration.test.ts",
+        "-t",
+        "owner hook changes during destination writes"
+      ],
+      "hypothesis": "Owner metadata conflicts refuse safely; next verify the supervisor retains its deadline result without repeating a successful stop.",
+      "nextCapture": "003",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/command_process.test.ts"
+      ]
+    },
+    {
+      "observationCapture": "003",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/command_process.test.ts"
+      ],
+      "hypothesis": "The supervisor retains the expected failure result; next verify changed and missing review digests and record self-reference cannot preserve reviewed status.",
+      "nextCapture": "004",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/release_inventory.test.ts"
+      ]
+    }
+  ],
+  "verdict": {
+    "status": "pass",
+    "open": []
+  }
+}

@@ -46,6 +46,10 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scope.sh"
+audit_scope_init --all "$@"
+audit_index_snapshot "$@"
+
 MODE="${1:-${SCOPE:-all}}"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
@@ -58,22 +62,13 @@ note() { printf "NOTE: %s\n" "$*"; }
 # ---------------------------------------------------------------------------
 # 1. Gather Zig files in scope. Tests INCLUDED — same lifecycle rules apply.
 # ---------------------------------------------------------------------------
-case "$MODE" in
-  --staged|staged)
-    # while read, not mapfile — bash-3.2 portability (see scripts/run-playbook-tests.sh).
-    FILES=()
-    while IFS= read -r f; do FILES+=("$f"); done < <(git diff --cached --name-only --diff-filter=ACMRT \
-      | grep -E '^src/.*\.zig$' || true)
-    ;;
-  --all|all)
-    FILES=()
-    while IFS= read -r f; do FILES+=("$f"); done < <(find src -type f -name '*.zig' 2>/dev/null || true)
-    ;;
-  *)
-    printf "usage: %s [--staged|--all]\n" "$0" >&2
-    exit 64
-    ;;
-esac
+MODE="$AUDIT_MODE"
+FILES=()
+while IFS= read -r -d '' f; do
+  [ ! -f "$f" ] || FILES+=("$f")
+done < <(audit_scope_paths '*.zig')
+STAGED=0
+[ "$MODE" != --staged ] || STAGED=1
 
 if [[ ${#FILES[@]} -eq 0 ]]; then
   ok "no zig source files in scope ($MODE)"
@@ -140,8 +135,8 @@ if [[ -n "$inits_list" ]]; then
 
     # Body window: from sig line to next pub-fn / fn / EOF, capped at +50.
     body=$(awk -v start="$ln" '
-      NR <= start { next }
-      /^[[:space:]]*(pub )?fn [a-zA-Z_]/ { exit }
+      NR < start { next }
+      NR > start && /^[[:space:]]*(pub )?fn [a-zA-Z_]/ { exit }
       NR > start + 50 { exit }
       { print }
     ' "$f")

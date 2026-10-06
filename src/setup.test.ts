@@ -78,11 +78,14 @@ describe("documentation repositories", () => {
 
       // Use a fresh executable directory, as a global package installation would.
       const binaries = temporaryDirectory();
-      symlinkSync(join(ROOT, "bin/orly"), join(binaries, "orly"));
+      // Hermetic hook routing; the packed evaluation separately runs real bunx.
+      const launcher = join(binaries, "bunx");
+      await Bun.write(launcher, '#!/bin/sh\nset -eu\ntest "$1" = "--bun"\ncase "$2" in @agentsfleet/orly@*) ;; *) exit 9 ;; esac\nshift 2\nexec "$ORLY_TEST_ENTRY" "$@"\n');
+      chmodSync(launcher, 0o755);
       symlinkSync(process.execPath, join(binaries, "bun"));
       git(root, "add", ".");
       const commit = Bun.spawnSync(["/usr/bin/git", "commit", "-qm", "docs: initialize checks"], {
-        cwd: root, env: { ...UNSCOPED_ENVIRONMENT, PATH: `${binaries}:/usr/bin:/bin`, ORLY_TELEMETRY_OFF: "1" }, stdout: "pipe", stderr: "pipe",
+        cwd: root, env: { ...UNSCOPED_ENVIRONMENT, PATH: `${binaries}:/usr/bin:/bin`, ORLY_TELEMETRY_OFF: "1", ORLY_TEST_ENTRY: join(ROOT, "bin/orly") }, stdout: "pipe", stderr: "pipe",
       });
       expect({ code: commit.exitCode, output: commit.stderr.toString() }).toEqual({ code: 0, output: expect.any(String) });
 
@@ -96,7 +99,7 @@ describe("documentation repositories", () => {
   }
 });
 
-test("a missing executable prints installation guidance without running an installer", async () => {
+test("missing bunx fails the hook without running a different installer", async () => {
   const root = newRepository();
   expect(orly(root, ROOT, "init").code).toBe(0);
   const binaries = temporaryDirectory();
@@ -106,11 +109,11 @@ test("a missing executable prints installation guidance without running an insta
   chmodSync(installer, 0o755);
 
   for (const hook of ["pre-commit", "pre-push"]) {
-    const result = Bun.spawnSync(["/bin/bash", `.githooks/${hook}`], {
+    const result = Bun.spawnSync(["/bin/bash", `.orly/hooks/${hook}`], {
       cwd: root, env: { ...process.env, PATH: binaries, ORLY_TEST_MARKER: marker }, stdout: "pipe", stderr: "pipe",
     });
-    expect(result.exitCode).toBe(1);
-    expect(result.stderr.toString()).toContain("`bun add -g @agentsfleet/orly`");
+    expect(result.exitCode).toBe(127);
+    expect(result.stderr.toString()).toContain("bunx");
     expect(existsSync(marker)).toBe(false);
   }
 });

@@ -346,7 +346,7 @@ ERROR REGISTRY GATE: <file>
 **Family:** Constant discipline. **Source:** `AGENTS.md` conformance enforcement
 + the selected language façade's Uniform Free Strings (UFS) clauses.
 
-**Triggers** — every `Edit`/`Write` to a source file under the repository's own source surfaces — the `surfaces.user` prefixes it declares in `.oracle/orly.json`, or its source roots where it declares none — matching `*.zig`, `*.ts`, `*.tsx`, `*.js`, `*.jsx`, `*.rs`, `*.go`. Excluded: `vendor/`, `third_party/`, `.zig-cache/`, `node_modules/`, `*.tsbuildinfo`. `*.py` and `*.sh` fire this façade but are held out of the UFS leaf — see Scope. Each repository binds its own prefixes; naming one repository's layout here is what sends every other repository a trigger list it cannot match.
+**Triggers** — every `Edit`/`Write` to a source file under the repository's own source surfaces — the `surfaces.user` prefixes it declares in `.orly/orly.json`, or its source roots where it declares none — matching `*.zig`, `*.ts`, `*.tsx`, `*.js`, `*.jsx`, `*.rs`, `*.go`. Excluded: `vendor/`, `third_party/`, `.zig-cache/`, `node_modules/`, `*.tsbuildinfo`. `*.py` and `*.sh` fire this façade but are held out of the UFS leaf — see Scope. Each repository binds its own prefixes; naming one repository's layout here is what sends every other repository a trigger list it cannot match.
 
 <!-- oracle-packs:start product.agentsfleet -->
 In this repository those surfaces are `src/` (Zig), `rustd/crates/*/src/` (Rust), `cli/src/` and `ui/packages/*/{src,app,lib,components,pages,tests}/` (TypeScript).
@@ -446,18 +446,25 @@ The test-seam match is deliberately narrow — `test` as a whole word or a `-`/`
 `audits/ufs.sh` is invoked at CONFORM by the agent. Convention follows the sibling audit scripts (`logging.sh`, `error-codes.sh`, `deinit-pairs.sh`, `spec-template.sh`) — none of them wire into `make lint`; the agent runs each as part of the gate ceremony, with the result feeding the CONFORM table. The script is generic — no manifest of known literals — so it scales as the codebase grows:
 
 ```bash
-bash audits/ufs.sh          # full-codebase scan (default and only mode)
+bash audits/ufs.sh          # full-codebase scan (default)
 bash audits/ufs.sh --all    # alias for default
+bash audits/ufs.sh --staged # indexed bytes of staged source files
+bash audits/ufs.sh -- src/example.ts # explicit working-tree source files
 ```
 
 The script emits a violations table. Empty table = pass. Each row is one of:
 
 - `string-dup-file <file> "<literal>" <count>` — same string ≥2× in one file
-- `string-dup-module <module> "<literal>" <count>` — same string ≥2× across a module/package
 - `numeric-suspect <file>:<line> <literal>` — power-of-ten or known unit-factor numeric not bound to a const (excludes anything on a `// pin test: literal is the contract` line)
 - `cross-runtime-orphan <const_name> <runtime>` — SCREAMING_SNAKE constant defined in one runtime, missing from a sibling runtime that the same diff touches
 
 Violations resolve by either (1) extracting to a named const + replacing all sites, (2) adding the constant in the missing sibling runtime same-commit, or (3) adding the `// pin test: literal is the contract` comment.
+
+Cross-file repeated strings are a reviewer check: the leaf does not emit
+`string-dup-module`. Review the changed module's callers and shared vocabulary;
+a clean per-file scan does not establish that each value has one definition.
+In staged mode, both source and configuration come from an owned index snapshot;
+unstaged edits cannot clear an indexed violation.
 
 #### CONFORM row
 

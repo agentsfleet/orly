@@ -1,0 +1,17 @@
+bun test v1.4.2 (744846f84)
+
+src/release_inventory.test.ts:
+(pass) inventory_covers_repository_and_package without inheriting a changed-byte review [909.37ms]
+(pass) a review missing a digest cannot authorize current bytes [309.71ms]
+(pass) inventory and review records require an external snapshot binding [324.44ms]
+
+src/evaluation_resources.test.ts:
+(pass) evaluation cleanup preserves caller state after evals/ledger/run.sh [8303.73ms]
+(pass) evaluation cleanup preserves caller state after evals/dispatch/parity.sh [1296.78ms]
+(pass) ledger command-substitution fixtures are removed after a failing caller [17.49ms]
+(pass) ledger command-substitution fixtures are removed after termination [17.62ms]
+
+ 7 pass
+ 0 fail
+ 37 expect() calls
+Ran 7 tests across 2 files. [11.21s]

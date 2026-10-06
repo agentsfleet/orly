@@ -1,12 +1,30 @@
 # Schema Conventions
 
-Canonical reference for agentsfleet database schema patterns. All new tables **must** follow these conventions. Existing tables are brought into compliance when rebuilt.
+## Repository policy
+
+Read the repository's schema sources, migration registration and deployment
+policy before changing its database. Preserve shipped migrations and live data;
+destructive changes need the owner's approval for the specific change.
+Never infer a disposable database from a version threshold in another product.
+
+Use the repository's naming, identity and timestamp conventions consistently.
+Qualify table names, grant only the operations each runtime role needs, and test
+with the real schema through shared fixture helpers.
+Keep migration registration and position assertions synchronized with each edit.
+
+<!-- oracle-packs:start product.agentsfleet -->
+Canonical reference for `agentsfleet` database schema patterns. All new tables **must** follow these conventions. Existing tables are brought into compliance when rebuilt.
 
 ## Migration Model
 
 **Teardown-rebuild is in force for the M154 rebuild (owner decision, Indy, Jul 31, 2026).** The development database is being dropped and re-created from empty while production is undeployed, so slots `001`–`046` are **retired wholesale** and the schema is re-authored by dependency layer. During this rebuild the frozen-slot rule below does not apply, and `ALTER`/`DROP` statements are forbidden rather than required — a change belongs in the base statement it would have patched. This is the posture RULE SCH already specifies for `VERSION < 0.30.0`; the Jul 22 additive model was the deviation.
 
-**Additive migrations resume once the rebuild lands.** Every subsequent schema change is a **new numbered migration file** — `ALTER TABLE … ADD COLUMN`, new tables, new indexes. **Shipped slot files are then frozen history: never edit an existing `schema/NNN_*.sql`.** Migrations are version-tracked and applied incrementally (expected-vs-applied state is inspectable via `agentsfleetd doctor --schema-gate`). Use `IF NOT EXISTS` guards so a migration is idempotent against both a fresh bootstrap (all slots in order) and an already-provisioned database (new slots only).
+**Additive migrations resume at `VERSION >= 0.30.0`, as RULE SCH specifies.**
+Completing the rebuild alone does not change the version boundary.
+Every subsequent schema change is a new numbered migration file; shipped slots
+are frozen history. Migrations are tracked incrementally through
+`agentsfleetd doctor --schema-gate`; use `IF NOT EXISTS` where appropriate for
+fresh bootstrap and an already provisioned database.
 
 Destructive changes (`DROP TABLE`, `DROP COLUMN`, type rewrites) require an explicit owner decision per change — additive is the default an agent may author alone.
 
@@ -17,7 +35,9 @@ Destructive changes (`DROP TABLE`, `DROP COLUMN`, type rewrites) require an expl
 - Each SQL file must be **≤100 lines** and **single-concern** (one table, one logical group, or one additive change).
 - Files are numbered sequentially: `001_core_foundation.sql`, `002_core_workflow.sql`, etc. New migrations append the next number; shipped numbers are never reused or slid.
 - Every SQL file must be registered in `schema/embed.zig` (compile-time embed) and `rustd/crates/afd_db/src/migration.rs` (migration version array).
-- No-op stub files (e.g., columns folded into earlier files) are kept for version history but excluded from the migrations array.
+- Below `0.30.0`, remove obsolete slots and their registrations completely;
+  no-op markers are forbidden. At and above `0.30.0`, preserve shipped slots and
+  apply changes through new migrations.
 
 ## SQL Qualification
 
@@ -91,3 +111,4 @@ Every table must have:
 
 - **Always** use `std.crypto.random` (via `allocUuidV7` in `id_format.zig`).
 - **Never** use custom RNG implementations or `std.rand`.
+<!-- oracle-packs:end -->

@@ -1,0 +1,18 @@
+{
+  "observationCapture": "002",
+  "observationArgv": [
+    "bun",
+    "test",
+    "src/installation/migration.test.ts",
+    "-t",
+    "owner hook changes during destination writes"
+  ],
+  "observed": "bun test v1.4.2 (744846f84)\n",
+  "hypothesis": "Owner metadata conflicts refuse safely; next verify the supervisor retains its deadline result without repeating a successful stop.",
+  "nextCapture": "003",
+  "nextArgv": [
+    "bun",
+    "test",
+    "src/command_process.test.ts"
+  ]
+}

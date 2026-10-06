@@ -1,0 +1,224 @@
+ M .githooks/pre-push
+ M .github/workflows/release.yml
+ M .gitignore
+ D .oracle/orly.json
+ M AGENTS.md
+ M CLAUDE.md
+ M README.md
+ M SOUL.md
+D  SOUL_LOG.md
+ M audits/agents-md.md
+ M audits/deinit-pairs.sh
+ M audits/design-tokens.sh
+ M audits/doc-read.sh
+ M audits/error-codes.sh
+ M audits/logging.sh
+ M audits/msid-ui.sh
+ M audits/rule-ledger-lib.sh
+ M audits/rust-error.sh
+ M audits/spec-template.sh
+ M audits/spec-template.ts
+ M audits/sql-mod.sh
+ M audits/ufs.sh
+ M core/operating-model.md
+ M dispatch/edit_rules.md
+ M dispatch/lib.sh
+ M dispatch/lifecycle.md
+ M dispatch/name_architecture.md
+ M dispatch/verify.md
+ M dispatch/write_any.md
+ M dispatch/write_changelog.md
+ M dispatch/write_go.md
+ M dispatch/write_http.md
+ M dispatch/write_python.md
+ M dispatch/write_rust.md
+ M dispatch/write_shell.md
+ M dispatch/write_sql.md
+ M dispatch/write_ts_adhere_bun.md
+ M dispatch/write_zig.md
+ M docs/CHANGELOG_VOICE.md
+ M docs/EXECUTE_DOC_READS.md
+ M docs/JUDGMENTS.md
+ M docs/LIFECYCLE_PATTERNS.md
+ M docs/LOGGING_STANDARD.md
+ M docs/ORLY_ARCHITECTURE.md
+ M docs/RELEASE_TEMPLATE.md
+ M docs/REST_API_DESIGN_GUIDELINES.md
+ M docs/RULE_ENFORCEMENT.md
+ M docs/SCHEMA_CONVENTIONS.md
+ M docs/TEMPLATE.md
+ M docs/VERIFY_TIERS.md
+ M docs/greptile-learnings/RULES.md
+ M docs/v1/active/M09_001_P1_CLI_DOCS_INFRA_SKILL_VERIFIED_COMMANDER_RELEASE.md
+ M evals/dispatch/parity.sh
+ M evals/install/cases.sh
+ M evals/install/release_cases.sh
+ M evals/install/run.sh
+ M evals/ledger/lib.sh
+ M evals/llms/fixtures.jsonl
+ M evals/llms/fixtures.sh
+ M evals/llms/run.sh
+ M llms.txt
+ M packs/language/go/rules.md
+ M packs/language/python/rules.md
+ M packs/language/rust/rules.md
+ M packs/language/shell/rules.md
+ M registry.json
+ M schemas/profile.schema.json
+ M skills/orly-babysit-prs/SKILL.md
+ M skills/orly-spec-new/SKILL.md
+ M skills/orly-write-integration-test/SKILL.md
+ M skills/orly-write-unit-test/SKILL.md
+ M src/cli.test.ts
+ M src/cli.ts
+ M src/cli_help.ts
+ M src/config.test.ts
+ M src/config.ts
+ M src/criteria.test.ts
+ M src/criteria.ts
+ M src/criteria_spec.ts
+ M src/criteria_support.ts
+ M src/doc_rules.ts
+ M src/gates_spec.test.ts
+ M src/gates_test_support.ts
+ M src/install.test.ts
+ M src/install.ts
+ M src/install_nested.test.ts
+ M src/install_packs.test.ts
+ M src/judgments/constants.ts
+ M src/judgments/replay.test.ts
+ M src/loaders.test.ts
+ M src/loaders.ts
+ M src/model.test.ts
+ M src/model.ts
+ M src/pack_hygiene.test.ts
+ M src/pack_hygiene.ts
+ M src/references.ts
+ M src/render.test.ts
+ M src/render.ts
+ M src/setup.test.ts
+ M src/spec_baseline.test.ts
+ M src/spec_template_io.test.ts
+ M src/validation.ts
+ M src/verify.test.ts
+ M src/verify.ts
+?? .agents/skills/typesafe-ai/LICENSE
+?? .agents/skills/typesafe-ai/SKILL.md
+?? .orly/orly.json
+?? audits/doc-reads.ts
+?? audits/logging-rust.awk
+?? audits/scope.sh
+?? audits/ufs-strings.awk
+?? docs/architecture/installation.md
+?? docs/architecture/remote-execution.md
+?? evals/llms/cache.ts
+?? evals/release/audit.md
+?? evals/release/evaluation-plan.md
+?? evals/release/inventory.json
+?? evals/release/inventory.ts
+?? evals/release/receipts/Oct_05_17_40/audit-local-server-receipt.json
+?? evals/release/receipts/Oct_05_17_40/audit-receipt.json
+?? evals/release/receipts/Oct_05_17_40/command-upgrade-probe-failure-receipt.json
+?? evals/release/receipts/Oct_05_17_40/command-upgrade-proof.json
+?? evals/release/receipts/Oct_05_17_40/command-upgrade-receipt.json
+?? evals/release/receipts/Oct_05_17_40/installation-network-receipt.json
+?? evals/release/receipts/Oct_05_17_40/installation-receipt.json
+?? evals/release/receipts/Oct_05_17_40/published-upgrade-proof.json
+?? evals/release/receipts/Oct_05_17_40/published-upgrade-receipt.json
+?? evals/release/receipts/Oct_05_17_40/secrets-receipt.json
+?? evals/release/receipts/Oct_05_17_40/source-digests.json
+?? evals/release/receipts/Oct_05_21_14/assertion-controls.json
+?? evals/release/receipts/Oct_05_21_14/audit-final.txt
+?? evals/release/receipts/Oct_05_21_14/audit-repaired.txt
+?? evals/release/receipts/Oct_05_21_14/audit.txt
+?? evals/release/receipts/Oct_05_21_14/baseline-unit.json
+?? evals/release/receipts/Oct_05_21_14/baseline-unit.txt
+?? evals/release/receipts/Oct_05_21_14/cleanup-controls.json
+?? evals/release/receipts/Oct_05_21_14/command-repeat-before.txt
+?? evals/release/receipts/Oct_05_21_14/comprehension-check.txt
+?? evals/release/receipts/Oct_05_21_14/conform-final.txt
+?? evals/release/receipts/Oct_05_21_14/conform.txt
+?? evals/release/receipts/Oct_05_21_14/exact-done-marker-correct.txt
+?? evals/release/receipts/Oct_05_21_14/exact-done-marker-incorrect.txt
+?? evals/release/receipts/Oct_05_21_14/git-status.txt
+?? evals/release/receipts/Oct_05_21_14/group-cleanup-before.json
+?? evals/release/receipts/Oct_05_21_14/group-cleanup-before.txt
+?? evals/release/receipts/Oct_05_21_14/group-test-before.txt
+?? evals/release/receipts/Oct_05_21_14/group-tests-after.txt
+?? evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt
+?? evals/release/receipts/Oct_05_21_14/hook-metadata-before.txt
+?? evals/release/receipts/Oct_05_21_14/hook-owner-conflict-correct.txt
+?? evals/release/receipts/Oct_05_21_14/hook-owner-conflict-incorrect.txt
+?? evals/release/receipts/Oct_05_21_14/installation.txt
+?? evals/release/receipts/Oct_05_21_14/inventory-stale-control.json
+?? evals/release/receipts/Oct_05_21_14/inventory-stale-correct.txt
+?? evals/release/receipts/Oct_05_21_14/inventory-stale-incorrect.txt
+?? evals/release/receipts/Oct_05_21_14/journal-integrity-correct.txt
+?? evals/release/receipts/Oct_05_21_14/journal-integrity-incorrect.txt
+?? evals/release/receipts/Oct_05_21_14/owner-byte-refusal-correct.txt
+?? evals/release/receipts/Oct_05_21_14/owner-byte-refusal-incorrect.txt
+?? evals/release/receipts/Oct_05_21_14/package-cache.json
+?? evals/release/receipts/Oct_05_21_14/package-cache.txt
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/001/observation.json
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/001/receipt.json
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/001/stderr
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/001/stdout
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/002/observation.json
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/002/receipt.json
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/002/stderr
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/002/stdout
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/003/observation.json
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/003/receipt.json
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/003/stderr
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/003/stdout
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/004/observation.json
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/004/receipt.json
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/004/stderr
+?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/004/stdout
+?? evals/release/receipts/Oct_05_21_14/review-qa/charter.md
+?? evals/release/receipts/Oct_05_21_14/review-qa/deadline.json
+?? evals/release/receipts/Oct_05_21_14/review-qa/exploration-002.json
+?? evals/release/receipts/Oct_05_21_14/review-qa/exploration-003.json
+?? evals/release/receipts/Oct_05_21_14/review-qa/exploration-004.json
+?? evals/release/receipts/Oct_05_21_14/supporting-tests.txt
+?? evals/release/receipts/Oct_05_21_14/test-case-ledger.json
+?? evals/release/receipts/Oct_05_21_14/unit-randomized-repaired.txt
+?? evals/release/receipts/Oct_05_21_14/unit-randomized.txt
+?? evals/release/receipts/Oct_05_21_14/unknown-configuration-correct.txt
+?? evals/release/receipts/Oct_05_21_14/unknown-configuration-incorrect.txt
+?? evals/release/receipts/Oct_05_21_14/write-checkpoint-order-correct.txt
+?? evals/release/receipts/Oct_05_21_14/write-checkpoint-order-incorrect.txt
+?? evals/release/repairs.json
+?? evals/release/reviewed.json
+?? evals/release/test-quality-Oct_05_21_14.md
+?? skills-lock.json
+?? src/command_limits.ts
+?? src/command_process.test.ts
+?? src/command_process.ts
+?? src/command_runner.test.ts
+?? src/command_runner.ts
+?? src/comprehension_cache.test.ts
+?? src/config_discovery.ts
+?? src/config_validation.test.ts
+?? src/config_validation.ts
+?? src/doc_reads.test.ts
+?? src/evaluation_resources.test.ts
+?? src/execution/config.ts
+?? src/execution/plan.test.ts
+?? src/execution/plan.ts
+?? src/install_loaders.test.ts
+?? src/installation/hooks.ts
+?? src/installation/lock.test.ts
+?? src/installation/lock.ts
+?? src/installation/migration.test.ts
+?? src/installation/migration.ts
+?? src/installation/plan.ts
+?? src/installation/transaction.ts
+?? src/installation_preservation.test.ts
+?? src/release_inventory.test.ts
+?? src/required_scanner.test.ts
+?? src/review_poll.test.ts
+?? src/scanner_scope.test.ts
+?? src/spec_completion.test.ts
+?? src/spec_obligations.ts
+?? src/spec_rehearsal.test.ts

@@ -1,0 +1,94 @@
+{
+  "previous_version": "0.10.14",
+  "current_version": "0.11.0",
+  "previous_archive_sha256": "b1b32558fcfeab46cce19bdba2b34a67778f5a52579c8ae15189499816a5a90f",
+  "current_archive_sha256": "99855c587a1184d6b64433810a339a62e06ff1303218cad6b989e97ec4930b07",
+  "commands": [
+    {
+      "command": [
+        "git",
+        "init",
+        "-q",
+        "-b",
+        "main"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "config",
+        "user.name",
+        "consumer upgrade fixture"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "config",
+        "user.email",
+        "consumer-upgrade@example.invalid"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "add",
+        "-A"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "git",
+        "commit",
+        "-qm",
+        "fixture baseline"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "npm",
+        "install",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--no-save",
+        "--package-lock=false",
+        "/private/tmp/orly-consumer-Oct_05-99d9wmg9/previous-package/agentsfleet-orly-0.10.14.tgz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "/private/tmp/orly-consumer-Oct_05-99d9wmg9/published-consumer/node_modules/.bin/orly",
+        "init"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "npm",
+        "install",
+        "--ignore-scripts",
+        "--no-audit",
+        "--no-fund",
+        "--no-save",
+        "--package-lock=false",
+        "/private/tmp/orly-consumer-Oct_05-99d9wmg9/current-package/agentsfleet-orly-0.11.0.tgz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "command": [
+        "/private/tmp/orly-consumer-Oct_05-99d9wmg9/published-consumer/node_modules/.bin/orly",
+        "update"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "result": "pass"
+}

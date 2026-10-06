@@ -1,0 +1,22 @@
+bun test v1.4.2 (744846f84)
+
+../../../../private/tmp/orly-review-poll-before-selection.test.ts:
+60 |   expect(result.output).toContain(`ci=green revision=${result.head}`);
+61 | });
+62 | 
+63 | test("an unsupported bot override cannot certify feedback excluded from triage", () => {
+64 |   const result = poll(OTHER_BOT, "green", OTHER_BOT);
+65 |   expect(result.code).not.toBe(0);
+                               ^
+error: expect(received).not.toBe(expected)
+
+Expected: not 0
+
+      at <anonymous> (/private/tmp/orly-review-poll-before-selection.test.ts:65:27)
+(fail) an unsupported bot override cannot certify feedback excluded from triage [571.40ms]
+
+ 0 pass
+ 18 filtered out
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [597.00ms]

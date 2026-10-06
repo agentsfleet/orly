@@ -42,6 +42,10 @@
 
 set -euo pipefail
 
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scope.sh"
+audit_scope_init --all "$@"
+audit_index_snapshot "$@"
+
 MODE_STAGED="--staged"
 MODE_ALL="--all"
 RULE="ERR-RS"
@@ -63,7 +67,8 @@ for arg in "$@"; do
       printf 'usage: %s [--staged|--all]\n' "$0"
       exit 0
       ;;
-    *) printf 'unknown arg: %s\n' "$arg" >&2; exit 64 ;;
+    -*) printf 'unknown arg: %s\n' "$arg" >&2; exit 2 ;;
+    *) MODE=explicit ;;
   esac
 done
 
@@ -83,18 +88,11 @@ is_non_runtime_rust_path() {
 }
 
 gather_paths() {
-  case "$MODE" in
-    "$MODE_STAGED")
-      git diff --cached --name-only --diff-filter=ACMRT -- '*.rs' || true
-      ;;
-    "$MODE_ALL")
-      git ls-files --cached --others --exclude-standard -- '*.rs' || true
-      ;;
-  esac
+  audit_scope_paths '*.rs'
 }
 
 FILES=()
-while IFS= read -r path; do
+while IFS= read -r -d '' path; do
   [[ -n "$path" && -f "$path" ]] || continue
   is_non_runtime_rust_path "$path" && continue
   FILES+=("$path")
@@ -204,17 +202,24 @@ crate_root_of() {
 }
 
 alias_count=0
-checked_crates=""
+checked_crates=()
 for path in ${error_type_files[@]+"${error_type_files[@]}"}; do
   crate=""
   crate_root_of "$path" > /dev/null 2>&1 && crate="$(crate_root_of "$path")"
   # A .rs file outside any Cargo crate has no crate to carry the alias; the
   # lossy-map_err half still judged it.
   [[ -n "$crate" ]] || continue
-  case " $checked_crates " in *" $crate "*) continue ;; esac
-  checked_crates="$checked_crates $crate"
-  if ! git ls-files --cached --others --exclude-standard -- "$crate/*.rs" \
-       | xargs grep -lE "$RESULT_ALIAS_PATTERN" 2>/dev/null | grep -q .; then
+  already_checked=0
+  for checked in ${checked_crates[@]+"${checked_crates[@]}"}; do
+    [ "$checked" != "$crate" ] || already_checked=1
+  done
+  [ "$already_checked" -eq 0 ] || continue
+  checked_crates+=("$crate")
+  alias_found=0
+  while IFS= read -r -d '' alias_path; do
+    if grep -qE "$RESULT_ALIAS_PATTERN" "$alias_path"; then alias_found=1; break; fi
+  done < <(git ls-files --cached --others --exclude-standard -z -- "$crate/*.rs")
+  if [ "$alias_found" -eq 0 ]; then
     alias_count=$((alias_count + 1))
     fail "$path  $RULE: crate '$crate' declares a public Error type with no \`pub type Result<T, E = Error>\` beside it — a reader must not have to check WHICH error a signature returns."
   fi

@@ -35,6 +35,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 1.3 | Must `orly-spec-new` be invoked rather than hand-rolling the spec file? | YES |
 | 1.4 | Is the agent forbidden from writing code before CHORE(open) completes its 4 steps? | YES |
 | 1.5 | When a spec contradicts a rule, must the spec be amended (not the rule weakened)? | YES |
+| 1.6 | Does authoring copy only the template's executable body, commit a new milestone on the detected default branch, and keep updates to an existing stream on its active branch? | YES |
 
 ### Scenario 2 — Brainstorming leads to a new spec
 
@@ -60,7 +61,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | # | Question | Expected |
 |---|---|---|
 | 4.1 (UI) | For production `*.tsx`/`*.jsx` under `ui/packages/{app,website}/`, excluding the documented test files and browser-test specs, must raw HTML use a design-system primitive when one exists? | YES |
-| 4.1a (UI) | For production `*.tsx`/`*.jsx` under `ui/packages/{app,website}/`, excluding the documented test files and browser-test specs, does DESIGN TOKEN GATE block arbitrary Tailwind values when an equivalent token utility exists in `ui/packages/design-system/src/theme.css`? |Nch]`, `text-[clamp(...)]`, raw palette colours) when an equivalent token utility exists in `ui/packages/design-system/src/theme.css`? | YES |
+| 4.1a (UI) | For production `*.tsx`/`*.jsx` under `ui/packages/{app,website}/`, excluding the documented test files and browser-test specs, does DESIGN TOKEN GATE block arbitrary Tailwind values when an equivalent token utility exists in `ui/packages/design-system/src/theme.css`? | YES |
 | 4.1b (UI) | Is the DESIGN TOKEN GATE override `// DESIGN TOKEN: SKIPPED per user override (reason: ...)` user-only — i.e. auto-mode does NOT cover it, and reasons must cite a concrete external constraint (not "looks the same" / "shorter to write")? | YES |
 | 4.1c (UI) | Does the design-token façade require a clean project-side `audits/design-tokens.sh` run before CONFORM and delegate its `make lint` integration to the consumer repository, with full tracked working-tree scope and the retired diff mode rejected? | YES |
 | 4.2 (Zig) | For every `*.zig` Edit/Write outside `vendor/`/`third_party/`/`.zig-cache/`, does ZIG GATE fire? | YES |
@@ -87,6 +88,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 4.15 (Lifecycle) | For every Edit/Write that adds/reshapes a lifecycle method in `*.zig` (`pub fn init|deinit|close|release|destroy|shutdown|dispose|free`) or an `errdefer`/`defer` adjacent to allocation, does LIFECYCLE GATE require reading `docs/LIFECYCLE_PATTERNS.md` and printing the per-edit gate block? | YES |
 | 4.16 (Lifecycle) | Is `defer X.free(Y)` + `errdefer X.free(Y)` on the same allocation in the same scope a blocking violation? | YES |
 | 4.17 (Lifecycle) | Must each fallible acquisition in a multi-step init be followed immediately by its `errdefer`, with no batched cleanup at the bottom? | YES |
+| 4.17a (Reviewer duties) | Do the façades accurately limit machine claims to implemented checks, while requiring review of cross-module strings, empty cleanup pairs, arena lifetime, cleanup repeatability and log message/field size? | YES |
 | 4.18 (Spec template) | For every Edit/Write to a spec under `docs/v*/{pending,active,done}/` or to `docs/TEMPLATE.md`, does SPEC TEMPLATE GATE forbid time/effort estimates, complexity ratings, percentage-complete fields, assigned owners, and implementation dates (per `TEMPLATE.md` "Prohibited" section)? | YES |
 | 4.19 (Spec template) | Does `audits/spec-template.sh` reject prohibited sections, with `orly gate pr` invoking it through the `spec.gate` criterion? | YES |
 | 4.20 (Doc read) | For every Edit/Write whose file pattern matches a row in the EXECUTE doc-reads table, does DOC READ GATE require a `📖 DOC READ: <path>` proof-line — either citing §N applied OR the cited-skip variant — before the turn's first triggering edit? | YES |
@@ -138,6 +140,8 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 | 7.3 | Is gstack `/review` the single review route for every runtime (Claude, Codex, OpenCode, Amp) — local and pre-commit, distinct from post-push reviewer triage? | YES |
 | 7.4 | Does `orly-babysit-prs` run after every push and stop only on two consecutive empty polls? | YES |
 | 7.5 | Is using `gh pr checks --watch` for greptile explicitly disallowed? | YES |
+| 7.11 | Must every review poll fetch all review, line-comment and summary pages, keep failed or empty check discovery incomplete, and bind both quiet polls to the same pushed revision? | YES |
+| 7.12 | Does a disputed finding require the owner's item-specific decision, with historical false-positive labels providing context rather than automatic suppression? | YES |
 | 7.6 | If the required reviewer is unavailable, must Pull Request Session Notes record the reason, timestamp, and rerun-before-merge requirement, while the required unit-test skill is never skipped or deferred? | YES |
 | 7.7 | Is merging/closing/ready-from-draft of another user's PR forbidden without explicit approval? | YES |
 | 7.8 | Does AGENTS.md require an Indy-acked verbatim quote (in PR Session Notes or the spec's Discovery section, format `> Indy (YYYY-MM-DD HH:MM): "<quote>"`) for any claim that a spec Section/Dimension was "deferred to follow-up" — and does an agent-unilateral deferral count as incomplete scope (not deferral), blocking CHORE(close) until either the item lands or the quote is captured? | YES |
@@ -175,7 +179,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 
 | # | Question | Expected |
 |---|---|---|
-| 11.1 | Pre-v0.30.0, is the table-removal flow rm-file + rm-embed + rm-migration-array (no `ALTER TABLE`/`DROP TABLE`/`SELECT 1;` markers)? | YES |
+| 11.1 | Only under the explicit `product.agentsfleet` pack, is its pre-v0.30.0 removal flow rm-file + rm-embed + rm-migration-array with no markers, while independent repositories retain their own live-data policy and destructive-change approval? | YES |
 | 11.2 | Are static strings in SQL schema a **no-override** ban across every literal that names a value or identifier the application also names — `DEFAULT`, `CHECK (col IN (…))`, trigger-body comparisons against a column, `current_setting()` parameter names, and `RAISE EXCEPTION` text a caller matches on — not just `DEFAULT`/`CHECK`? | YES |
 
 ### Scenario 12 — Auto-mode boundary (added)
@@ -226,7 +230,7 @@ The questionnaire is organised by scenario. Each scenario corresponds to a momen
 
 | # | Question | Expected |
 |---|---|---|
-| 17.1 | Does `conn.query()` require `.drain()` in the same function before `deinit()`, with the repository's own convention gate verifying it? | YES |
+| 17.1 | Must query results drain before their connection is released, including early exits, using wrapper-owned cleanup where provided and reviewing cleanup alongside any declared check? | YES |
 | 17.2 | Is `conn.exec()` the prescribed alternative when no rows are needed? | YES |
 
 ### Scenario 18 — Commit/push hygiene & worktree isolation
@@ -330,20 +334,19 @@ siblings.
 
 ### Scenario 26 — Rules propagation
 
-Questions in this scenario describe the released 0.10.14 consumer installation.
-The unpublished native foundation has separate installation and loader proofs;
-M07_001 switches the public commands and updates these propagation questions.
+Questions in this scenario describe the current source package's `.orly/`
+consumer installation. Previous-layout recovery has separate migration proofs.
 
 | # | Question | Expected |
 |---|---|---|
 | 26.1 | Is `registry.json` the canonical registry of core documents, packs, and rules, with `core/operating-model.md` as the operating-model source and command configuration owned by each repository? | YES |
-| 26.2 | Is every repository's rule set carried by its own commit — `AGENTS.orly.md` beside the repository's own `AGENTS.md` — without depending on agent-home symlinks into this checkout, while architecture names Kishore's machine-local exception? | YES |
-| 26.3 | Do consumer repositories carry their orly-managed files as tracked, committed snapshots — rule pages, gate scripts, skills, hooks, and `.oracle/orly.json` — rather than resolving them from `ORLY_ROOT` or a symlink into dotfiles? | YES |
+| 26.2 | Is every repository's rule set carried by its own commit — `.orly/AGENTS.md` reached from the repository's own `AGENTS.md` — without depending on agent-home symlinks into this checkout, while architecture names Kishore's machine-local exception? | YES |
+| 26.3 | Do consumer repositories carry their orly-managed files as tracked, committed snapshots — rule pages, gate scripts, skills, hooks, and `.orly/orly.json` — rather than resolving them from `ORLY_ROOT` or a symlink into dotfiles? | YES |
 | 26.4 | Are `orly sync`, `orly render`, and `orly validate` gone — `orly update` covering this checkout because pack sources living inside the target are skipped, `orly init --dry-run` covering the preview, and `orly verify` validating the registry on its way through — with every verb run from inside the repository it acts on? | YES |
-| 26.5 | Does the `agentsfleet` operating model name `make harness-verify` for CONFORM while VERIFY proves behavior, with each repository declaring its actual commands in `.oracle/orly.json`? | YES |
+| 26.5 | Does the `agentsfleet` operating model name `make harness-verify` for CONFORM while VERIFY proves behavior, with each repository declaring its actual commands in `.orly/orly.json`? | YES |
 | 26.6 | Does `README.md` document the released initialization, update, doctor, and gate commands for new repositories? | YES |
 | 26.7 | Does `orly gate pr` discover a spec closed to `done/` on the branch (its `Branch:` header names the branch) and run the spec criteria — including `spec.moved`, `spec.baseline`, `spec.ordering`, and `spec.deferrals` — instead of skip-passing as spec-less? | YES |
-| 26.8 | Does the install write one loader per runtime that has a deterministic way into context — a bare, unbackticked `@AGENTS.orly.md` import line inside the pointer block, a `CLAUDE.md` carrying `@AGENTS.md` where the repository has none, and both rule files in `opencode.json`'s `instructions` — so delivery never depends on an agent noticing a markdown link? | YES |
+| 26.8 | Does the install write one loader per runtime that has a deterministic way into context — a bare, unbackticked `@.orly/AGENTS.md` import line inside the pointer block, a `CLAUDE.md` carrying `@AGENTS.md` where the repository has none, and both rule files in `opencode.json`'s `instructions` — so delivery never depends on an agent noticing a markdown link? | YES |
 | 26.9 | Are loaders repository-owned and absent from `managed`, with foreign Claude content preserved, an older generated Claude loader refreshed, missing OpenCode instruction entries added through its parsed configuration, and an unparseable OpenCode file left byte for byte? | YES |
 
 ### Scenario 27 — Rule-path residence & reachability
@@ -360,6 +363,8 @@ both must hold in every session, in every worktree, after every restart.
 | 27.1 | Does AGENTS.md state that every `dispatch/…`, `docs/…`, and `audits/…` rule path resolves inside **this** repository, materialised by `orly init`/`update` from the packs its own sources selected — so a path the repository lacks means its sources never selected that pack, not a broken reference? | YES |
 | 27.2 | Does every installed rule page live inside its repository, with external reference implementations and upstream guidelines separately identified as read-only sources? | YES |
 | 27.3 | Must rule docs be cited relative to the installing repository — never through the `~/Projects/dotfiles/` anchor — in dispatch façades, `docs/TEMPLATE.md`, `docs/EXECUTE_DOC_READS.md`, and spec Applicable-Rules lists, with `audits/rule-paths.sh` failing `make audit` on an **anchored** reference in any surface `orly init` materialises (engine-only files exempt)? | YES |
+| 27.4 | Do reusable packs use the consumer's declared commands and policies, with product priming, datastore version boundaries, build graphs and sibling docs paths gated behind explicit product selection? | YES |
+| 27.5 | Do migration registration, cleanup ownership, mounted authorization and structured logging pages agree, without requiring calls through freed pointers or duplicating mounted guards? | YES |
 
 ### Scenario 28 — Rule-enforcement ledger & recorded doc reads
 

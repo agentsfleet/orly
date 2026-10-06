@@ -1,6 +1,20 @@
-# Release doc template — `changelog.mdx` `<Update>` block
+# Release documentation template
 
-Source of truth: `~/Projects/docs/changelog.mdx`. New `<Update>` blocks go at the top, after the leading `<Tip>`/`<Note>`. Labels are date-only — never a semver prefix. `VERSION` is the single source of truth for binary version (binaries via `make sync-version` propagate to `build.zig.zon`, `agentsfleet/package.json`, `agentsfleet/src/cli.js`); changelog stays chronological. Decoupled by design — avoids parallel-branch collisions.
+Use the consuming repository's declared changelog and version source.
+Preserve its selected format; a Markdown changelog does not acquire a Mintlify
+site, sibling checkout or `VERSION` file by installing this pack.
+Use its declared synchronization command when it maintains generated versions.
+
+<!-- oracle-packs:start product.agentsfleet -->
+For `agentsfleet`, the changelog is `~/Projects/docs/changelog.mdx` and `VERSION`
+is the binary version source. `make sync-version` updates `build.zig.zon`,
+`agentsfleet/package.json` and `agentsfleet/src/cli.js`.
+New `<Update>` blocks go after the leading `<Tip>` or `<Note>`.
+<!-- oracle-packs:end -->
+
+For a repository already using Mintlify, use the block and label rules below.
+Other formats carry the same applicable upgrading, behavior and API information
+in their existing entry structure.
 
 ## Block template
 
@@ -23,7 +37,7 @@ Source of truth: `~/Projects/docs/changelog.mdx`. New `<Update>` blocks go at th
   {User-visible bugs fixed — observed behavior before/after. Omit if none.}
 
   ## CLI
-  {`agentsfleet` additions or shape changes. Omit if none.}
+  {Command additions or shape changes. Omit if none.}
 </Update>
 ```
 
@@ -36,11 +50,13 @@ Source of truth: `~/Projects/docs/changelog.mdx`. New `<Update>` blocks go at th
 - Every breaking change appears under `Upgrading` with a migration step, even if also mentioned elsewhere.
 - Body copy may reference a past entry by date (`"…that shipped on Apr 22, 2026"`); do not reference past releases by semver (`"shipped in v0.27.0"`) — that drags the two timelines back together.
 
-## Version bumps (`VERSION`, not the changelog label)
+## Version bumps (the repository's version source)
 
 - Feature milestone → minor (`0.7.0` → `0.8.0`).
 - Bug fix → patch.
 - Pre-v1.0 breaking → minor (semver 0.x carve-out); call out under Upgrading.
 - Post-v1.0 breaking → major.
 - Internal-only refactor: terse `<Update>` with `tags={["Internal", ...]}`, one-paragraph summary, skip section structure. Prefer folding into the next user-visible release.
-- Parallel branches bumping `VERSION` do not coordinate through the changelog — whichever lands second rebases `VERSION` and re-runs `make sync-version`.
+- Parallel branches reconcile their version source against the current default
+  branch and run the repository's declared synchronization check. This never
+  authorizes rebasing or force-pushing a published branch.

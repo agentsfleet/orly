@@ -1,0 +1,149 @@
+{
+  "owned_root": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-cleanup-controls-Oct_05-vqp00_3n",
+  "results": [
+    {
+      "source": "evals/ledger/lib.sh",
+      "source_sha256": "9e5831e36ffd51ae736916738b61e638793320cb3bf131372abb23656ebf8c12",
+      "mode": "normal",
+      "exit": 0,
+      "expected_exit": 0,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    },
+    {
+      "source": "evals/ledger/lib.sh",
+      "source_sha256": "9e5831e36ffd51ae736916738b61e638793320cb3bf131372abb23656ebf8c12",
+      "mode": "failure",
+      "exit": 7,
+      "expected_exit": 7,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    },
+    {
+      "source": "evals/ledger/lib.sh",
+      "source_sha256": "9e5831e36ffd51ae736916738b61e638793320cb3bf131372abb23656ebf8c12",
+      "mode": "termination",
+      "exit": 143,
+      "expected_exit": 143,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    },
+    {
+      "source": "evals/dispatch/parity.sh",
+      "source_sha256": "d4ae5f42ebd521e07c0eded6c3ab4c5080d053285ccb24074d2e6848948cf666",
+      "mode": "normal",
+      "exit": 0,
+      "expected_exit": 0,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    },
+    {
+      "source": "evals/dispatch/parity.sh",
+      "source_sha256": "d4ae5f42ebd521e07c0eded6c3ab4c5080d053285ccb24074d2e6848948cf666",
+      "mode": "failure",
+      "exit": 7,
+      "expected_exit": 7,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    },
+    {
+      "source": "evals/dispatch/parity.sh",
+      "source_sha256": "d4ae5f42ebd521e07c0eded6c3ab4c5080d053285ccb24074d2e6848948cf666",
+      "mode": "termination",
+      "exit": 143,
+      "expected_exit": 143,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    },
+    {
+      "source": "evals/install/run.sh",
+      "source_sha256": "909281a9f5ca2a5ca83701a4ea8989f9f7344ef444451a37252a7cae30da1e81",
+      "mode": "normal",
+      "exit": 0,
+      "expected_exit": 0,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    },
+    {
+      "source": "evals/install/run.sh",
+      "source_sha256": "909281a9f5ca2a5ca83701a4ea8989f9f7344ef444451a37252a7cae30da1e81",
+      "mode": "failure",
+      "exit": 7,
+      "expected_exit": 7,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    },
+    {
+      "source": "evals/install/run.sh",
+      "source_sha256": "909281a9f5ca2a5ca83701a4ea8989f9f7344ef444451a37252a7cae30da1e81",
+      "mode": "termination",
+      "exit": 143,
+      "expected_exit": 143,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    },
+    {
+      "source": "evals/llms/run.sh",
+      "source_sha256": "8c408dc246b5950fe99e16b8814162195bce7956d6d1583a81d76e1e411de495",
+      "mode": "normal",
+      "exit": 0,
+      "expected_exit": 0,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    },
+    {
+      "source": "evals/llms/run.sh",
+      "source_sha256": "8c408dc246b5950fe99e16b8814162195bce7956d6d1583a81d76e1e411de495",
+      "mode": "failure",
+      "exit": 7,
+      "expected_exit": 7,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    },
+    {
+      "source": "evals/llms/run.sh",
+      "source_sha256": "8c408dc246b5950fe99e16b8814162195bce7956d6d1583a81d76e1e411de495",
+      "mode": "termination",
+      "exit": 143,
+      "expected_exit": 143,
+      "leftover_entries": [
+        "owner.txt"
+      ],
+      "owner_preserved": true,
+      "scope": "Production startup, temporary-root ownership and traps; suite bodies not executed in failure/termination probes."
+    }
+  ]
+}

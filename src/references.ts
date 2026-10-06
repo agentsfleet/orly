@@ -8,7 +8,7 @@ const PACK_START = /^[ \t]*<!--[ \t]*oracle-packs:start ([^>]+)[ \t]*-->[ \t]*$/
 const PACK_END = /^[ \t]*<!--[ \t]*oracle-packs:end[ \t]*-->[ \t]*$/;
 const CODE_FENCE = /^[ \t]*(?:```|~~~)/;
 const MARKDOWN_LINK = /\[[^\]]*\]\(([^)]+)\)/g;
-const DISPATCH_REFERENCE = /dispatch\/[A-Za-z0-9_.-]+\.md/g;
+const DISPATCH_REFERENCE = /(?:\.orly\/)?dispatch\/[A-Za-z0-9_.-]+\.md/g;
 const COMMENT_OPEN = "<!--";
 const COMMENT_CLOSE = "-->";
 const NEWLINE = "\n";
@@ -19,16 +19,22 @@ export function renderProfileText(
   knownPacks: Set<string>,
   source: string,
 ): string {
-  return walkPackMarkers(content, selectedPacks, knownPacks, source).join(NEWLINE).trim();
+  return renderProfileSourceLines(content, selectedPacks, knownPacks, source)
+    .map(({ text }) => text).join(NEWLINE).trim();
 }
 
-function walkPackMarkers(
+export interface ProfileSourceLine {
+  readonly text: string;
+  readonly lineNumber: number;
+}
+
+export function renderProfileSourceLines(
   content: string,
   selectedPacks: Set<string>,
   knownPacks: Set<string>,
   source: string,
-): string[] {
-  const rendered: string[] = [];
+): ProfileSourceLine[] {
+  const rendered: ProfileSourceLine[] = [];
   let activeBlock: string[] | undefined;
   let includeBlock = true;
   const lines = content.split(/\r?\n/);
@@ -51,10 +57,12 @@ function walkPackMarkers(
     const match = line.match(PACK_LINE);
     if (match) {
       const names = packNames(match[2] ?? "", knownPacks, source, lineNumber);
-      if (names.some((name) => selectedPacks.has(name))) rendered.push((match[1] ?? "").trimEnd());
+      if (names.some((name) => selectedPacks.has(name))) {
+        rendered.push({ text: (match[1] ?? "").trimEnd(), lineNumber });
+      }
       continue;
     }
-    rendered.push(line);
+    rendered.push({ text: line, lineNumber });
   }
   if (activeBlock) throw new OrlyError(`${source}: unclosed orly pack block`);
   return rendered;

@@ -1,0 +1,57 @@
+bun test v1.4.2 (744846f84)
+
+src/installation/migration.test.ts:
+(pass) interrupted_install_recovers at journal 0 [100.03ms]
+(pass) interrupted_install_recovers at write 0 [93.68ms]
+(pass) interrupted_install_recovers at write 1 [98.36ms]
+(pass) interrupted_install_recovers at write 2 [99.86ms]
+(pass) interrupted_install_recovers at write 3 [93.74ms]
+(pass) interrupted_install_recovers at write 4 [92.59ms]
+(pass) interrupted_install_recovers at write 5 [93.82ms]
+(pass) interrupted_install_recovers at metadata 0 [93.03ms]
+(pass) interrupted_install_recovers at delete 0 [93.81ms]
+(pass) interrupted_install_recovers at delete 1 [94.19ms]
+(pass) interrupted_install_recovers at delete 2 [93.33ms]
+(pass) hook installation recovers interruption at journal 0 [157.39ms]
+(pass) hook installation recovers interruption at write 0 [162.55ms]
+(pass) hook installation recovers interruption at write 1 [164.57ms]
+(pass) hook installation recovers interruption at write 2 [166.79ms]
+(pass) hook installation recovers interruption at write 3 [159.93ms]
+(pass) hook installation recovers interruption at write 4 [160.78ms]
+(pass) hook installation recovers interruption at write 5 [160.71ms]
+(pass) hook installation recovers interruption at write 6 [165.74ms]
+(pass) hook installation recovers interruption at write 7 [167.65ms]
+(pass) hook installation recovers interruption at metadata 0 [164.31ms]
+(pass) hook installation recovers interruption at delete 0 [164.49ms]
+(pass) hook installation recovers interruption at delete 1 [163.98ms]
+(pass) hook installation recovers interruption at delete 2 [166.76ms]
+(pass) migration_preserves_owned_content refuses edited or unowned dispatch/check.md [57.16ms]
+(pass) migration_preserves_owned_content refuses edited or unowned AGENTS.orly.md [57.56ms]
+(pass) migration_preserves_owned_content refuses edited or unowned .orly/dispatch/check.md [57.09ms]
+(pass) recovery refuses an edited destination before deleting any old source [70.25ms]
+(pass) changed journal cannot authorize recovery [71.88ms]
+(pass) a current installation preserves an independent previous configuration [65.62ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [101.64ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [97.79ms]
+170 |     if (stage === WRITE_STAGE && index === HOOK_WRITE_COUNT - 1) {
+171 |       const changed = Bun.spawnSync(["git", "config", "core.hooksPath", OWNER_HOOKS], { cwd: repo, env: UNSCOPED_ENVIRONMENT });
+172 |       expect(changed.exitCode).toBe(0);
+173 |     }
+174 |   } });
+175 |   expect(result.ok).toBeFalse();
+                          ^
+error: expect(received).toBeFalse()
+
+Received: true
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/installation/migration.test.ts:175:21)
+(fail) owner hook changes during destination writes are refused before metadata or cleanup [96.99ms]
+(pass) migration removes only proven obsolete instruction references [63.13ms]
+
+1 tests failed:
+(fail) owner hook changes during destination writes are refused before metadata or cleanup [96.99ms]
+
+ 33 pass
+ 1 fail
+ 792 expect() calls
+Ran 34 tests across 1 file. [3.94s]

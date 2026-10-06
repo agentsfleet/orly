@@ -3,7 +3,8 @@ import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-import { CONFIG_PATH, contentDigest, managedDrift, readConfig, readConfigSync, seedConfig, selectPacks, staleVersion, writeConfig } from "./config";
+import { selectPacks } from "./config_discovery";
+import { CONFIG_PATH, contentDigest, managedDrift, readConfig, readConfigSync, seedConfig, staleVersion, writeConfig } from "./config";
 import { RulesModel } from "./model";
 
 const ROOT = resolve(import.meta.dir, "..");
@@ -20,7 +21,7 @@ function scratch(): string {
 const temporary: string[] = [];
 
 function writeConfigText(root: string, body: unknown): void {
-  mkdirSync(join(root, ".oracle"), { recursive: true });
+  mkdirSync(join(root, ".orly"), { recursive: true });
   writeFileSync(join(root, CONFIG_PATH), JSON.stringify(body));
 }
 
@@ -236,7 +237,7 @@ describe("managedDrift", () => {
   });
 
   // The failure this pair exists for: agentsfleet ignored .claude/skills/ while
-  // .oracle/orly.json declared four files under it managed. Every local
+  // .orly/orly.json declared four files under it managed. Every local
   // checkout passed `orly doctor` because the files sat on disk, and CI failed
   // against a clone that never received them.
   test("a managed file git refuses to track is drift, even though it is present", async () => {
@@ -294,7 +295,7 @@ describe("writeConfig", () => {
     expect((await readConfig(root))?.managed).toEqual(["aaa.md", "zzz.md"]);
   });
 
-  test("writeConfig creates the .oracle/ parent directory", async () => {
+  test("writeConfig creates the .orly/ parent directory", async () => {
     const root = scratch();
     await writeConfig(root, await seedConfig(root));
     expect(existsSync(join(root, CONFIG_PATH))).toBeTrue();

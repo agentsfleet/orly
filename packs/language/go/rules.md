@@ -31,4 +31,4 @@ Both are carve-outs for what the *language* makes unfixable, not permission —
 a flag name or a label spelled inline twice is still the rule.
 
 The repository owns formatting, vet, lint, build, and test commands — it
-declares them in `.oracle/orly.json`.
+declares them in `.orly/orly.json`.

@@ -1,0 +1,52 @@
+{
+  "version": 1,
+  "id": "001",
+  "cwd": "/Users/kishore/Projects/orly",
+  "argv": [
+    "bun",
+    "test",
+    "src/installation/migration.test.ts",
+    "-t",
+    "a current installation preserves an independent previous configuration"
+  ],
+  "deadline": "/Users/kishore/Projects/orly/evals/release/receipts/Oct_05_21_14/review-qa/deadline.json",
+  "timing": [
+    {
+      "guard": "qa-deadline",
+      "event": "started",
+      "version": 1,
+      "startedAt": "2026-10-05T16:35:45.768Z",
+      "deadlineAt": "2026-10-05T16:40:45.768Z",
+      "budgetMs": 300000,
+      "observedAt": "2026-10-05T16:35:45.871Z",
+      "remainingMs": 299897,
+      "expired": false
+    },
+    {
+      "guard": "qa-deadline",
+      "event": "finished",
+      "observedAt": "2026-10-05T16:35:46.052Z",
+      "deadlineAt": "2026-10-05T16:40:45.768Z",
+      "timedOut": false,
+      "exitCode": 0
+    }
+  ],
+  "startedAt": "2026-10-05T16:35:45.870Z",
+  "completedAt": "2026-10-05T16:35:46.054Z",
+  "exitCode": 0,
+  "signal": null,
+  "status": "complete",
+  "observation": {
+    "sha256": "8d48979deed41d2d9d17389f716d0691c35c370e3ac2a4192bbe44160a2945a8",
+    "bytes": 32
+  },
+  "publicOutput": true,
+  "stdout": {
+    "sha256": "6043908c8d26d62698476b88f737f39d5d3e91008d4155a81730902f5a37479c",
+    "bytes": 28
+  },
+  "stderr": {
+    "sha256": "460e10ce28ea731c80de5ec759826485c3557e3077d77cf9b51dc5dee9f4edc4",
+    "bytes": 215
+  }
+}

@@ -4,7 +4,8 @@
 > Prerequisite: read [`DOCUMENTATION_RULES.md`](./DOCUMENTATION_RULES.md) first.
 > Changelog history keeps its archive exception; this file adds the narrower voice.
 
-Editing `~/Projects/docs/changelog.mdx` or any other Mintlify `<Update>` block.
+Use these voice rules in the repository's declared changelog.
+Apply Mintlify block rules only where that format is already selected.
 
 - **One headline per entry, no marketing words.** Apply Documentation rule 07
   (`DOC-07`) from `DOCUMENTATION_RULES.md`. Also ban "magical", "we are pleased
@@ -14,5 +15,13 @@ Editing `~/Projects/docs/changelog.mdx` or any other Mintlify `<Update>` block.
 - **Internal cleanup / refactor entries get the most aggressive trimming.** One lead paragraph + one bullet list. Skip "Test coverage" sections unless the test count is the headline. Indy's exact direction: *"Keep internal code cleanup, refactor to a minimal."*
 - **Never drop load-bearing facts.** Error codes (`UZ-AUTH-003`), endpoint paths + method + body shape + status code, env var names + defaults, schema column / table names, CLI subcommand + flag names, migration steps, money amounts. Tighten prose, not meaning.
 - **Historical entries are archives.** Brevity-pass them; never rewrite the past. A typo correction (e.g. `$0.001` → `$0.01` when it was never true) is allowed and must be called out in the commit message.
-- **Rate constants are declared once, so a money claim has one thing to match.** `rustd/crates/afd_billing/src/nanos.rs` holds the rates and `afd_core::money` holds the nanos denominator; the daemon charges from them and every client renders the figure it was served. A changelog rate or money claim is checked against those constants, never against a client. Public docs are the surface nothing reaches: when a rate changes, update `~/Projects/docs/snippets/rates.mdx` in a paired Pull Request (PR). In `*.mdx`, import its named values rather than hand-typing money amounts.
+- **Rate constants are declared once, so a money claim has one thing to match.**
+  Check claims against the repository's canonical billing constants and update
+  its published rate tables in the same change.
+<!-- oracle-packs:start product.agentsfleet -->
+- For `agentsfleet`, the rate sources are `rustd/crates/afd_billing/src/nanos.rs`
+  and the denominator in `afd_core::money`. Update
+  `~/Projects/docs/snippets/rates.mdx` through its authorized branch flow;
+  import its named values in Markdown JSX (MDX) instead of copying amounts.
+<!-- oracle-packs:end -->
 - **The Mintlify reference Indy pasted (May 1 / May 8 entries) is canonical voice.** Mirror its rhythm, not its product nouns.

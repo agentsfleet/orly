@@ -12,16 +12,16 @@ import { documentationSurfaces, scanSurfaces } from "./doc_rules";
 import { isObject, JsonObject, objectValue, OrlyError, RulesModel } from "./model";
 import { readConfigSync, RepoConfig } from "./config";
 import { classifyBranch, SurfaceReport } from "./surfaces";
+import { selectedCommands, CONDITIONAL_LANES, CONFORM_TIER, FAST_TIER, ALL_TIER, type CommandTier } from "./execution/plan";
 import { commandSetupErrors } from "./validation";
+import { limitsFor, type CommandLimits } from "./command_limits";
 
 export type { Criterion, CriterionContext, CriterionResult, Verdict };
 export { runCommand };
 
 const DEFAULT_BRANCHES = ["master", "main"];
-const CONFORM_COMMAND = "conform";
-const VERIFY_PREFIX = "verify.";
 const REPOSITORIES_LABEL = "repositories";
-const UNINSTALLED = "no .oracle/orly.json here — run `orly init` first";
+const UNINSTALLED = "no .orly/orly.json here — run `orly init` first";
 const REV_PARSE = "rev-parse";
 const HEAD = "HEAD";
 const UPSTREAM = "@{upstream}";
@@ -45,15 +45,6 @@ const NAMED_FINDINGS = 3;
 // rule audit could only run beside the lint and unit suites, so a repository
 // paid minutes to learn something its seconds-long conform command already
 // knew, and `orly gate` ran it twice on the way to `pr`.
-const CONFORM_TIER = "conform";
-const FAST_TIER = "fast";
-const SLOW_TIER = "slow";
-// The slow tier is a fixed name set, not a prefix rule: lint and version
-// checks are verify.* too, and demoting them to skip-on-prose would be wrong.
-const SLOW_COMMANDS = ["verify.integration", "verify.memory"];
-const UNIT_COMMAND = "verify.unit";
-const ALL_TIER = "all";
-
 // Commit checks read the index. Push checks permit in-flight Sections and omit
 // the boundary test suites. The final gate runs all declared verification
 // itself, including checks a custom repository hook may not have invoked.
@@ -115,30 +106,23 @@ function repositoryConfig(): Criterion {
 
 // Commands and source paths are repository-owned. Only integration and memory
 // checks are conditional on code; every other declared lane always runs.
-function commandCriteria(context: CriterionContext, tier: string): Criterion[] {
+function commandCriteria(context: CriterionContext, tier: CommandTier): Criterion[] {
   const config = resolvedConfig(context);
   if (!config) return [];
   const commands = config.commands;
-  const selected = Object.keys(commands).filter((key) => tier === ALL_TIER ? key.startsWith(VERIFY_PREFIX) : tierOf(key) === tier).sort();
+  const selected = selectedCommands(commands, tier);
   return selected.map((key) => criterion(`cmd.${key}`, (inner) => {
-    if (SLOW_COMMANDS.includes(key) && report(inner, config.surfaces).code.length === 0) {
+    if (CONDITIONAL_LANES.includes(key) && report(inner, config.surfaces).code.length === 0) {
       return { ok: true, detail: "skipped — no code files on this branch" };
     }
-    return runInvocations(inner.root, commands[key]);
+    return runInvocations(inner.root, commands[key], limitsFor(config.limits, key));
   }));
-}
-
-function tierOf(key: string): string {
-  if (key === CONFORM_COMMAND) return CONFORM_TIER;
-  if (key === UNIT_COMMAND || SLOW_COMMANDS.includes(key)) return SLOW_TIER;
-  if (key.startsWith(VERIFY_PREFIX)) return FAST_TIER;
-  return "";
 }
 
 function docsUpdated(): Criterion {
   return criterion(DOCS_UPDATED, (context) => {
     const config = resolvedConfig(context);
-    if (!config?.surfaces) return { ok: true, detail: "no user surface declared in .oracle/orly.json" };
+    if (!config?.surfaces) return { ok: true, detail: "no user surface declared in .orly/orly.json" };
     const surfaces = report(context, config.surfaces);
     if (surfaces.userSurface.length === 0) return { ok: true, detail: "no user-surface files on this branch" };
     if (surfaces.docs.length > 0) return { ok: true, detail: `${surfaces.userSurface.length} user-surface file(s), ${surfaces.docs.length} docs file(s) updated` };
@@ -191,13 +175,13 @@ function resolvedConfig(context: CriterionContext): RepoConfig | undefined {
   }
 }
 
-function runInvocations(root: string, invocations: unknown): Verdict {
+function runInvocations(root: string, invocations: unknown, limits: CommandLimits): Verdict {
   if (!Array.isArray(invocations) || invocations.length === 0) return { ok: false, detail: "command group is empty" };
   const evidence: string[] = [];
   for (const invocation of invocations) {
     if (!Array.isArray(invocation) || invocation.length === 0) return { ok: false, detail: "command invocation is empty" };
     const argv = invocation.map((argument) => String(argument));
-    const result = runCommand(root, argv);
+    const result = runCommand(root, argv, limits);
     evidence.push(`${argv.join(" ")} -> ${result.detail}`);
     if (!result.ok) return { ok: false, detail: evidence.join(NEWLINE) };
   }

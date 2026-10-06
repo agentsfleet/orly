@@ -7,7 +7,7 @@ const ORIGIN_PREFIX = "origin/";
 const SURFACES_FIELD = "surfaces";
 const USER_FIELD = "user";
 const DOCS_FIELD = "docs";
-const SPEC_TREE = /^docs\/v[0-9]+\//;
+const SPEC_TREE = /^docs\/v\d+(?:\.\d+)*\//;
 const TEST_PATH = /(^|\/)tests?\/|\.test\.|_test\.|\.spec\./;
 const MARKDOWN = /\.(md|mdx)$/;
 // One fixed source-extension set across every repo: handlers (.zig), CLI and

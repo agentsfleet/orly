@@ -21,10 +21,13 @@ FILTER="${1:-}"
 if [[ -t 1 ]]; then G=$'\033[32m'; R=$'\033[31m'; BO=$'\033[1m'; X=$'\033[0m'
 else G=''; R=''; BO=''; X=''; fi
 PASS=0; FAIL=0
-NPM_CACHE="$(mktemp -d)" || exit 1
-SANDBOXES=("$NPM_CACHE")
-cleanup() { local d; for d in "${SANDBOXES[@]+"${SANDBOXES[@]}"}"; do rm -rf "$d"; done; }
+RUN_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/orly-install-evals.XXXXXX")" || exit 1
+NPM_CACHE="$RUN_ROOT/npm-cache"
+mkdir -p "$NPM_CACHE"
+cleanup() { rm -rf "$RUN_ROOT"; }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 ok()  { printf '  %sPASS%s  %s\n' "$G" "$X" "$1"; PASS=$((PASS + 1)); }
 bad() { printf '  %sFAIL%s  %s — %s\n' "$R" "$X" "$1" "$2" >&2; FAIL=$((FAIL + 1)); }
@@ -32,21 +35,21 @@ bad() { printf '  %sFAIL%s  %s — %s\n' "$R" "$X" "$1" "$2" >&2; FAIL=$((FAIL +
 # A scratch directory that is not inside the checkout and carries its own HOME,
 # so nothing under ~/Projects/dotfiles can satisfy a lookup by accident.
 mk_sandbox() {
-  local sb; sb="$(mktemp -d)"; SANDBOXES+=("$sb")
+  local sb; sb="$(mktemp -d "$RUN_ROOT/case.XXXXXX")" || return 1
   mkdir -p "$sb/home"
   printf '%s' "$sb"
 }
 
 # The published payload, extracted. Built once and reused: `npm pack` is the
 # slowest thing in the suite and its output is identical for every case.
-TARBALL_ROOT=""
+TARBALL_ROOT="$RUN_ROOT/packed"
 packed_root() {
-  if [[ -n "$TARBALL_ROOT" ]]; then printf '%s' "$TARBALL_ROOT"; return 0; fi
-  local sb; sb="$(mk_sandbox)"
+  if [[ -d "$TARBALL_ROOT/package" ]]; then printf '%s' "$TARBALL_ROOT/package"; return 0; fi
+  local sb="$TARBALL_ROOT"
+  mkdir -p "$sb"
   ( cd "$ROOT" && npm_config_cache="$NPM_CACHE" npm pack --pack-destination "$sb" ) >/dev/null 2>&1 || return 1
   ( cd "$sb" && tar xzf ./*.tgz ) >/dev/null 2>&1 || return 1
-  TARBALL_ROOT="$sb/package"
-  printf '%s' "$TARBALL_ROOT"
+  printf '%s' "$sb/package"
 }
 
 # The manifest's file list, one path per line, without unpacking anything.
@@ -64,9 +67,9 @@ packed_paths() {
 # language pack.
 cited_dispatch_paths() {
   local root="$1"
-  find "$root/AGENTS.md" "$root/dispatch" "$root/docs" -type f -name '*.md' 2>/dev/null \
+  find "$root/.orly/AGENTS.md" "$root/.orly/dispatch" "$root/.orly/docs" -type f -name '*.md' 2>/dev/null \
     | while read -r file; do perl -0777 -pe 's/<!--.*?-->//gs' "$file"; done \
-    | grep -oE 'dispatch/[A-Za-z0-9_.-]+\.md' | sort -u
+    | grep -oE '\.orly/dispatch/[A-Za-z0-9_.-]+\.md' | sort -u
 }
 
 mk_repo() {

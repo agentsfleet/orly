@@ -14,7 +14,7 @@
 #      half that makes a spec "built for the agent".
 #   2b. DECLARED-COMMAND PARITY — a pending/active spec's Acceptance Rubric
 #      must quote the repository's declared conform + applicable verify.* commands
-#      (.oracle/orly.json) verbatim: the rubric and `orly gate` grade one
+#      (.orly/orly.json) verbatim: the rubric and `orly gate` grade one
 #      boundary. Staged/file scope only; done/ specs stay historical.
 #
 # Dispatch façade: dispatch/write_spec.md (SPEC TEMPLATE GATE)
@@ -51,7 +51,7 @@ case "$MODE" in
   --staged|staged)
     # while read, not mapfile — bash-3.2 portability (see scripts/run-playbook-tests.sh).
     SPECS=()
-    while IFS= read -r s; do SPECS+=("$s"); done < <(git diff --cached --name-only --diff-filter=ACMRT | grep -E '^docs/v[0-9]+/(pending|active|done)/.*\.md$' || true)
+    while IFS= read -r s; do SPECS+=("$s"); done < <(git diff --cached --name-only --diff-filter=ACMRT | grep -E '^docs/v[0-9]+(\.[0-9]+)*/(pending|active|done)/.*\.md$' || true)
     ;;
   --all|all)
     SPECS=()

@@ -1,0 +1,11 @@
+
+src/installation_preservation.test.ts:
+(pass) strong_assertion_exposes_real_defect [773.60ms]
+(pass) an owner edit to .orly/orly.json during staging refuses without overwriting it [798.60ms]
+(pass) an owner edit to .orly/AGENTS.md during staging refuses without overwriting it [743.13ms]
+(pass) an owner edit to AGENTS.md during staging refuses without overwriting it [543.54ms]
+
+ 4 pass
+ 0 fail
+ 23 expect() calls
+Ran 4 tests across 1 file. [2.99s]

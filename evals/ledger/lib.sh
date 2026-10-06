@@ -14,9 +14,12 @@ REGISTERED=(
 
 if [[ -t 1 ]]; then G=$'\033[32m'; R=$'\033[31m'; BO=$'\033[1m'; X=$'\033[0m'
 else G=''; R=''; BO=''; X=''; fi
-PASS=0; FAIL=0; SANDBOXES=()
-cleanup() { local d; for d in "${SANDBOXES[@]+"${SANDBOXES[@]}"}"; do rm -rf "$d"; done; }
+PASS=0; FAIL=0
+RUN_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/orly-ledger-evals.XXXXXX")" || exit 1
+cleanup() { rm -rf "$RUN_ROOT"; }
 trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 ok()   { printf '  %sPASS%s  %s\n' "$G" "$X" "$1"; PASS=$((PASS + 1)); }
 bad()  { printf '  %sFAIL%s  %s — %s\n' "$R" "$X" "$1" "$2" >&2; FAIL=$((FAIL + 1)); }
@@ -24,7 +27,7 @@ bad()  { printf '  %sFAIL%s  %s — %s\n' "$R" "$X" "$1" "$2" >&2; FAIL=$((FAIL 
 # A fixture root carrying every registered doc, so a case under test is the
 # only thing that can turn the census red.
 mk_root() {
-  local sb; sb="$(mktemp -d)"; SANDBOXES+=("$sb")
+  local sb; sb="$(mktemp -d "$RUN_ROOT/case.XXXXXX")" || return 1
   mkdir -p "$sb/dispatch" "$sb/docs/greptile-learnings"
   local doc
   for doc in "${REGISTERED[@]}"; do

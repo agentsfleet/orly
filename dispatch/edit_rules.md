@@ -52,7 +52,7 @@ Any failure returns to the edit. Do not patch the checker to silence its result.
 
 Pre-commit checks existing doc-read records when governance files are staged
 and defers `make audit` to pre-push. Pre-push runs the deterministic chain and
-regenerates `.oracle/evidence.json` for checkout HEAD; it does not pass pushed
+regenerates `.orly/evidence.json` for checkout HEAD; it does not pass pushed
 revisions to the verifier. Live comprehension runs manually for semantic changes.
 
 Repository synchronization remains explicit. Governance verification never

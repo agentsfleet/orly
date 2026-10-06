@@ -49,7 +49,11 @@
 
 set -euo pipefail
 
-MODE="${1:-${SCOPE:-all}}"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scope.sh"
+audit_scope_init --all "$@"
+audit_index_snapshot "$@"
+
+MODE="$AUDIT_MODE"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
@@ -62,8 +66,8 @@ CODE_RE="${PREFIX}-[A-Z][A-Z0-9]*-[0-9]{3,}"
 REGISTRY_PATHS=()
 RUNTIME=""
 if [[ -n "${ORLY_ERROR_REGISTRY:-}" ]]; then
-  while IFS= read -r f; do [[ -n "$f" ]] && REGISTRY_PATHS+=("$f"); done < <(
-    git ls-files -- $ORLY_ERROR_REGISTRY 2>/dev/null || true)
+  while IFS= read -r -d '' f; do [[ -n "$f" ]] && REGISTRY_PATHS+=("$f"); done < <(
+    git ls-files -z -- "$ORLY_ERROR_REGISTRY")
   [[ ${#REGISTRY_PATHS[@]} -gt 0 ]] || {
     printf "FAIL: ORLY_ERROR_REGISTRY matched no tracked file: %s\n" "$ORLY_ERROR_REGISTRY" >&2
     exit 1
@@ -127,27 +131,14 @@ declared_count=$(printf '%s\n' "$declared_codes" | wc -l | tr -d ' ')
 #    Source set: src/**/*.zig minus *_test.zig minus the registry itself,
 #    plus agentsfleet/src/**.
 # ---------------------------------------------------------------------------
-gather_used_paths() {
-  case "$MODE" in
-    --staged|staged)
-      git diff --cached --name-only --diff-filter=ACMRT -- $SOURCE_GLOB 2>/dev/null \
-        | grep -vE "^(${REGISTRY_RE})$" || true
-      ;;
-    --all|all)
-      git ls-files -- $SOURCE_GLOB 2>/dev/null \
-        | grep -vE "^(${REGISTRY_RE})$" || true
-      ;;
-    *)
-      printf "usage: %s [--staged|--all]\n" "$0" >&2
-      exit 64
-      ;;
-  esac
-}
-
-# `while read` rather than mapfile: mapfile is bash 4+ and macOS ships 3.2 —
-# the portability rule scripts/run-playbook-tests.sh already records.
 USED_PATHS=()
-while IFS= read -r p; do USED_PATHS+=("$p"); done < <(gather_used_paths)
+RAW_PATHS=()
+while IFS= read -r -d '' p; do
+  [ -f "$p" ] || continue
+  if printf '%s\n' "$p" | grep -qE "^(${REGISTRY_RE})$"; then continue; fi
+  USED_PATHS+=("$p")
+  if ! printf '%s\n' "$p" | grep -qE "$ALLOWLIST_RE"; then RAW_PATHS+=("$p"); fi
+done < <(audit_scope_paths "$SOURCE_GLOB")
 if [[ ${#USED_PATHS[@]} -eq 0 ]]; then
   ok "no source files in scope ($MODE)"
   exit 0
@@ -246,6 +237,8 @@ fi
 #       2-segment pattern. We don't want a "UZ-X-Y-NNN" code reintroduced
 #      via a local const that the orphan pass silently ignores.
 # ---------------------------------------------------------------------------
+raw_leaks=""
+if [ "${#RAW_PATHS[@]}" -gt 0 ]; then
 raw_leaks=$(awk -v prefix="$PREFIX" '
   FNR == 1 { skip_next = 0; in_rs_test = 0; rs_open = 0; rs_depth = 0 }
   # Rust keeps its unit tests INSIDE the file they cover, under
@@ -275,8 +268,8 @@ raw_leaks=$(awk -v prefix="$PREFIX" '
   $0 ~ "\"" prefix "-[A-Z][A-Z0-9-]*-[0-9]+\"" {
     print FILENAME ":" FNR ":" $0;
   }
-' $(printf '%s\n' "${USED_PATHS[@]}" | grep -vE \
-    "$ALLOWLIST_RE" || true) 2>/dev/null || true)
+' "${RAW_PATHS[@]}" 2>/dev/null || true)
+fi
 
 if [[ -n "$raw_leaks" ]]; then
   fail "raw UZ-* literals found outside the registry allowlist (must reference a registry symbol):"

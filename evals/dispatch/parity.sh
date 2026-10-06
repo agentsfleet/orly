@@ -20,11 +20,15 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 UFS="$ROOT/audits/ufs.sh"
 
 pass=0; fail=0
+RUN_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/orly-parity-evals.XXXXXX")" || exit 1
+trap 'rm -rf "$RUN_ROOT"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 # case <name> <expect-substring> -- then a heredoc-fed layout on stdin as
 # "path<TAB>content" rows. Asserts the substring appears in the audit output.
 run_case() {
   local name="$1" expect="$2" layout="$3" sb out
-  sb="$(mktemp -d)"
+  sb="$(mktemp -d "$RUN_ROOT/case.XXXXXX")" || return 1
   git -C "$sb" init -q
   git -C "$sb" config user.email evals@local
   git -C "$sb" config user.name evals

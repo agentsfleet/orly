@@ -1,0 +1,11 @@
+--- a/.github/workflows/release.yml
++++ b/.github/workflows/release.yml
+@@ -98,7 +98,7 @@
+           git init -q . && git config user.email ci@example.com && git config user.name ci
+           printf 'package main\n' > main.go
+           bash /tmp/release-probe/package/bin/orly init
+-          test -f AGENTS.orly.md || { echo "✗ orly's rules did not land"; exit 1; }
++          test -f .orly/AGENTS.md || { echo "✗ orly's rules did not land"; exit 1; }
+           test -f AGENTS.md      || { echo "✗ the repository's own file did not land"; exit 1; }
+           # `init` seeds commands by reading a Makefile and package.json scripts,
+           # and this probe repository is one Go file — so it seeds none, and

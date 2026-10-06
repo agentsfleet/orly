@@ -1,0 +1,93 @@
+{
+  "command": "Enumerate every active mechanical registry checker through the final packed entrypoint",
+  "declared_checkers": 2,
+  "distinct_commands": 1,
+  "package_sha256": "d5f9be251d4657681939db90ec02bedba70b7a33d9d48aa7ff02e6165e137334",
+  "registry_sha256": "021a01a494b4e9daedab3350e054c9781d10a3332c5ea333de5eae09b3ebe3f7",
+  "authoring_fixture_additions": [
+    "Exact current evals/install/run.sh source as authoring marker",
+    "Exact current .orly/orly.json pack/command declaration"
+  ],
+  "owned_probe_root": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-final-pack-Oct_05-n4libmtj",
+  "results": [
+    {
+      "rule": "governance.registry.valid",
+      "context": "authoring",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-final-pack-Oct_05-n4libmtj/authoring/bin/orly",
+        "verify"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-final-governance.registry.valid-authoring.txt",
+      "receipt_sha256": "f715515fb8ffc62bae3a964bdc1a3d6681e8f6daa352ec6827d71f8d6d044dd5"
+    },
+    {
+      "rule": "governance.registry.valid",
+      "context": "installed-package",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-final-pack-Oct_05-n4libmtj/applied/package/bin/orly",
+        "verify"
+      ],
+      "exit": 1,
+      "expected_exit": 1,
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-final-governance.registry.valid-installed-package.txt",
+      "receipt_sha256": "66e61b143d850ea499b20be5ff92879a4ffb6c2eb37809f345f498bcacff3b64"
+    },
+    {
+      "rule": "governance.render.stable",
+      "context": "authoring",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-final-pack-Oct_05-n4libmtj/authoring/bin/orly",
+        "verify"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-final-governance.render.stable-authoring.txt",
+      "receipt_sha256": "f715515fb8ffc62bae3a964bdc1a3d6681e8f6daa352ec6827d71f8d6d044dd5"
+    },
+    {
+      "rule": "governance.render.stable",
+      "context": "installed-package",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-final-pack-Oct_05-n4libmtj/applied/package/bin/orly",
+        "verify"
+      ],
+      "exit": 1,
+      "expected_exit": 1,
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-final-governance.render.stable-installed-package.txt",
+      "receipt_sha256": "66e61b143d850ea499b20be5ff92879a4ffb6c2eb37809f345f498bcacff3b64"
+    },
+    {
+      "rule": "governance.registry.valid",
+      "context": "missing-fixture",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-final-pack-Oct_05-n4libmtj/missing-fixture/bin/orly",
+        "verify"
+      ],
+      "exit": 1,
+      "expected": "nonzero",
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-final-governance.registry.valid-missing-fixture.txt",
+      "receipt_sha256": "07e56363527fea766e9221a0877d7007b6f4c83ef95b2215ad1404ae4b38fd19"
+    },
+    {
+      "rule": "governance.render.stable",
+      "context": "stale-render",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-final-pack-Oct_05-n4libmtj/stale-render/bin/orly",
+        "verify"
+      ],
+      "exit": 1,
+      "expected": "nonzero",
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-final-governance.render.stable-stale-render.txt",
+      "receipt_sha256": "3ccabc313e88fc0bcd1e9a999541786c6b2c8c07df3effe1d8b104b453226750"
+    }
+  ],
+  "scope": "Both entries are authoring checks. Their installed-package refusal is required behavior; this enumeration does not certify every installed scanner or hosted execution."
+}

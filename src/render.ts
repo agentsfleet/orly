@@ -1,5 +1,5 @@
-import { lstatSync, mkdirSync } from "node:fs";
-import { dirname, join, relative } from "node:path";
+import { lstatSync } from "node:fs";
+import { join, relative } from "node:path";
 
 import {
   isString,
@@ -79,14 +79,9 @@ export class Renderer {
       const rendered = invocations.map((invocation) => Array.isArray(invocation) ? `\`${invocation.map((argument) => quoteArgument(String(argument))).join(" ")}\`` : "").join("<br>");
       rows.push(`| \`${name}\` | ${rendered} |`);
     }
-    if (Object.keys(commands).length === 0) rows.push("| None | Declare them in `.oracle/orly.json` |");
+    if (Object.keys(commands).length === 0) rows.push("| None | Declare them in `.orly/orly.json` |");
     return rows.join(NEWLINE);
   }
-}
-
-async function writeText(path: string, content: string): Promise<void> {
-  mkdirSync(dirname(path), { recursive: true });
-  await Bun.write(path, content);
 }
 
 function quoteArgument(value: string): string {

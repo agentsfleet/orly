@@ -1,0 +1,63 @@
+
+install evals (root: /Users/kishore/Projects/orly)
+
+  PASS  ORLY_ARCHITECTURE.md names the config, materialisation, and the superseded model
+  FAIL  verify refuses from a published payload and names the install verbs — verify did not name the install verbs: mise ERROR bun is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.
+mise ERROR Version: 2026.9.15 macos-arm64 (2026-09-27)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+  PASS  the CI workflow's audit step fails on a seeded governance violation
+evals/install/cases.sh: line 241: /var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T//orly-install-evals.vNJhFc/case.K4y5dM/.orly/dispatch/write_rust.md: No such file or directory
+  FAIL  a hand edit is preserved by a refused update; repository instructions survive — doctor missed the edited content: mise ERROR bun is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.
+mise ERROR Version: 2026.9.15 macos-arm64 (2026-09-27)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+  FAIL  a deleted managed file is reported, not silently ignored — doctor did not report the deletion: mise ERROR bun is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.
+mise ERROR Version: 2026.9.15 macos-arm64 (2026-09-27)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+  FAIL  every language selection installs with zero dangling references — broken selections: src/lib.rs src/main.zig src/app.ts src/app.tsx src/app.js src/app.jsx src/app.py tool.sh docs/page.mdx schema/init.sql 
+  FAIL  init sets core.hooksPath and the hooks scrub inherited git scope — core.hooksPath is ''
+  FAIL  a second init writes nothing and leaves the tree byte-identical — second run reported writes: mise ERROR bun is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.
+mise ERROR Version: 2026.9.15 macos-arm64 (2026-09-27)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+  FAIL  --json emits the documented object and the human path emits none — json output lacks: "ok" "packs" "written" "skipped" "errors" 
+  FAIL  init materialises rules, gates, hooks, and a lock into a fresh repository — init did not report success: mise ERROR bun is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.
+mise ERROR Version: 2026.9.15 macos-arm64 (2026-09-27)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+  FAIL  a Rust repository receives no Zig façade and no foreign gate — the Rust façade was not installed
+  PASS  missing bun fails with a message naming the runtime and a fix
+  PASS  package allowlist ships the engine and no personal file
+  FAIL  installed npm bin shim runs init from the packed tarball — npm did not create node_modules/.bin/orly
+  FAIL  packed tarball installs and renders with no dotfiles checkout — init failed from the tarball: mise ERROR bun is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.
+mise ERROR Version: 2026.9.15 macos-arm64 (2026-09-27)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+  PASS  README uses bunx for setup and generated hooks
+  FAIL  init outside a git work tree refuses and names the fix — error does not name the fix: mise ERROR bun is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.
+mise ERROR Version: 2026.9.15 macos-arm64 (2026-09-27)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+  FAIL  sync and render are gone, and no tracked file still calls them — sync did not report as unknown: mise ERROR bun is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.
+mise ERROR Version: 2026.9.15 macos-arm64 (2026-09-27)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+  FAIL  init with no arguments selects packs from the repository's own sources — init did not report a materialisation: mise ERROR bun is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.
+mise ERROR Version: 2026.9.15 macos-arm64 (2026-09-27)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import json;print(json.load(open('/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T//orly-install-evals.vNJhFc/case.5pehsF/.orly/orly.json'))['orly_version'])
+                                ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T//orly-install-evals.vNJhFc/case.5pehsF/.orly/orly.json'
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import json;print(json.load(open('/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T//orly-install-evals.vNJhFc/case.5pehsF/.orly/orly.json'))['orly_version'])
+                                ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T//orly-install-evals.vNJhFc/case.5pehsF/.orly/orly.json'
+  FAIL  update moves a repository from an older pinned version to the current one — lock still pinned to  after update
+  FAIL  update refuses in a repository that was never installed into — update did not name init as the fix: mise ERROR bun is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.
+mise ERROR Version: 2026.9.15 macos-arm64 (2026-09-27)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+  FAIL  --version reports the packaged manifest version — reported 'miseERRORbunisnotavalidshim.Thislikelymeansyouuninstalledatoolandtheshimdoesnotpointtoanything.Run`miseuse<TOOL>`toreinstallthetool.miseERRORVersion:2026.9.15macos-arm64(2026-09-27)miseERRORRunwith--verboseorMISE_VERBOSE=1formoreinformation', manifest says '0.11.0'
+  FAIL  init works from a payload carrying no repositories.json — init did not materialise: mise ERROR bun is not a valid shim. This likely means you uninstalled a tool and the shim does not point to anything. Run `mise use <TOOL>` to reinstall the tool.
+mise ERROR Version: 2026.9.15 macos-arm64 (2026-09-27)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information
+
+  5 passed / 18 failed
+
+make: *** [install-evals] Error 1

@@ -7,19 +7,17 @@ self-contained product-surface design guide, so this façade *routes* to it rath
 than duplicating it. **Residence vs enforcement:** `orly init` materialises the
 guide into this repository under the `domain.http` pack — it is a real local
 file, not something read through another checkout. Its checks are *enforced*
-in the product repo (`make lint` / `/review` against the guide) — hence
+in the consuming repository (its declared checks and `/review` against the guide) — hence
 **🟣 delegated**.
 
 **Signal legend:**
 
-- 🟣 delegated — the REST checklist is enforced in the product repo (agentsfleet),
-  by `make lint` + adversarial `/review` against the guide. Dotfiles carries the
-  doc itself, the routing, and the discipline that the guide is a *checklist, not
-  background reading*.
+- 🟣 delegated — the consuming repository enforces the checklist through its
+  declared checks and adversarial review. The installed guide is a checklist.
 
 ## Trigger — read `docs/REST_API_DESIGN_GUIDELINES.md` before
 
-- Editing `src/http/handlers/**`, `public/openapi/**`, or any `route_*` file.
+- Editing the repository's HTTP handlers, route registration or OpenAPI sources.
 - Adding, modifying, or removing an HTTP endpoint or its OpenAPI shape.
 
 **Override:** none from dotfiles — the REST guide's own `MUST`/`SHOULD`
@@ -38,7 +36,7 @@ checklist run at `CHORE(close)` before `gh pr create`.
 ## Why route, not merge
 
 REST design rules bind the *product repo's* HTTP surface, but the doc has one
-canonical source in dotfiles — `orly init`/`orly update` materialise it here,
+canonical source in the selected pack — `orly init`/`orly update` materialise it here,
 so this repository's copy tracks that source. Merging its full text into
 this façade would create a second source of truth. The guide stays canonical;
 this façade is the dispatch entry that points the agent at it when the trigger
