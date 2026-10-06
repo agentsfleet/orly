@@ -16,12 +16,12 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** M10
 **Workstream:** 001
 **Date:** Oct 06, 2026
-**Status:** PENDING
+**Status:** IN_PROGRESS
 **Priority:** P1 — prove useful judgments and honest completion evidence
 **Categories:** CLI DOCS (command-line interface, documentation)
 **Batch:** B1 — one implementation stream
-**Branch:** pending — set at CHORE(open)
-**Baseline revision:** pending — record the full comparison commit at CHORE(open)
+**Branch:** feat/m10-judgment-evaluation
+**Baseline revision:** 153a3816b0713f1b0e5a7e363bad7d5b1bd5052d
 **Test Baseline:** pending — measure the declared unit lane before the Pull Request
 **Baseline evidence:** pending — record revision, environment, command and complete counts
 **Depends on:** M09_001 merged implementation; M08 historical observations only, not its unfinished checks
