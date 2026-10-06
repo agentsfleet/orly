@@ -75,7 +75,10 @@ async function run(request: Request): Promise<CommandResult> {
       clearInterval(owner);
       for (const { signal, handler } of signals) process.off(signal, handler);
     }
-  } finally { if (!stopped) stopOwnedGroup(child.pid); }
+  } finally {
+    if (!stopped) stopOwnedGroup(child.pid);
+    await child.exited;
+  }
 }
 
 if (import.meta.main) {
