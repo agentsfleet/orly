@@ -23,7 +23,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Branch:** feat/m09-verified-012
 **Baseline revision:** 41850ee0d2893857c301ce3d07380415c5aa5861
 **Test Baseline:** unit=339 integration=n/a — no separate lane is declared; real boundary cases run in the unit command
-**Baseline evidence:** evals/release/receipts/Oct_05_21_14/baseline-unit.json — exact comparison revision, isolated environment, full output and passed/failed/skipped counts
+**Baseline evidence:** evals/release/receipts/Oct_05_21_14/baseline-unit.json
 **Depends on:** M08_001 implementation; its missing live comprehension is owner-excluded and reported without a passing result
 **Provenance:** agent-generated from Indy's release and commander instructions, Oct 04, 2026
 **Canonical architecture:** `docs/ORLY_ARCHITECTURE.md`; installation and remote execution decisions land with their implementation
