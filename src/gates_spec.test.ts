@@ -2,13 +2,18 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { activeSpecPath, closedSpecPath, runGate } from "./gates";
+import { activeSpecPath, closedSpecPath, runGate, specPathFor } from "./gates";
 import {
   cleanupTemporaryDirectories, closedSpecRepository, fixtureRegistry, git, modelFor,
   newRepository, newSpecRepository, orly, SPEC_RELATIVE, specFixture,
 } from "./gates_test_support";
 
 const BASELINE_FIXTURE = "**Test Baseline:** unit=0 integration=0";
+const OTHER_ACTIVE_SPEC = "docs/v1/active/M100_001_P2_CLI_OTHER.md";
+const CLOSED_SPEC = "docs/v1/done/M99_001_P2_CLI_FIXTURE.md";
+const CLOSED_BRANCH = "feat/closed-owner";
+const OTHER_BRANCH = "feat/other";
+const ACTIVE_SPECS_DIRECTORY = "docs/v1/active";
 
 afterEach(cleanupTemporaryDirectories);
 
@@ -31,6 +36,47 @@ describe("spec discovery", () => {
     expect(activeSpecPath(project)).toContain("docs/v0.9.2/active");
   });
 
+  test.each([false, true])("active ownership follows the branch with quoted header %s", async (quoted) => {
+    const project = newSpecRepository();
+    const branch = "feat/owned";
+    git(project, "checkout", "-q", "-b", branch);
+    const header = quoted ? `**Branch:** \`${branch}\`` : `**Branch:** ${branch}`;
+    await Bun.write(join(project, SPEC_RELATIVE), specFixture(undefined, undefined, [header]));
+    await Bun.write(join(project, OTHER_ACTIVE_SPEC), specFixture(undefined, OTHER_BRANCH));
+
+    expect(activeSpecPath(project)).toBe(join(project, SPEC_RELATIVE));
+  });
+
+  test.each([false, true])("an unrelated active spec cannot hide a closed owner with quoted header %s", async (quoted) => {
+    const branch = CLOSED_BRANCH;
+    const project = closedSpecRepository(branch);
+    const path = join(project, CLOSED_SPEC);
+    const header = quoted ? `**Branch:** \`${branch}\`` : `**Branch:** ${branch}`;
+    await Bun.write(path, specFixture("DONE", undefined, [header]));
+    mkdirSync(join(project, ACTIVE_SPECS_DIRECTORY), { recursive: true });
+    await Bun.write(join(project, OTHER_ACTIVE_SPEC), specFixture(undefined, OTHER_BRANCH));
+
+    expect(specPathFor(project)).toEqual({ path, closed: true });
+  });
+
+  test("an active spec without branch ownership still gates", async () => {
+    const project = closedSpecRepository(CLOSED_BRANCH);
+    mkdirSync(join(project, ACTIVE_SPECS_DIRECTORY), { recursive: true });
+    await Bun.write(join(project, SPEC_RELATIVE), specFixture());
+
+    expect(specPathFor(project)).toEqual({ path: join(project, SPEC_RELATIVE), closed: false });
+  });
+
+  test("two active owners on the current branch remain an error", async () => {
+    const project = newSpecRepository();
+    const branch = "feat/shared-owners";
+    git(project, "checkout", "-q", "-b", branch);
+    await Bun.write(join(project, SPEC_RELATIVE), specFixture(undefined, branch));
+    await Bun.write(join(project, OTHER_ACTIVE_SPEC), specFixture(undefined, branch));
+
+    expect(() => activeSpecPath(project)).toThrow("one stream per worktree");
+  });
+
   test("two active specs are a hard error — one stream per worktree", () => {
     const project = newSpecRepository();
     mkdirSync(join(project, "docs/v2/active"), { recursive: true });
@@ -39,12 +85,12 @@ describe("spec discovery", () => {
     expect(() => activeSpecPath(project)).toThrow("one stream per worktree");
   });
 
-  test("a folded active spec yields ownership to the spec it names", async () => {
+  test.each([false, true])("a folded active spec yields ownership with quoted header %s", async (quoted) => {
     const project = newSpecRepository();
     mkdirSync(join(project, "docs/v2/active"), { recursive: true });
     await Bun.write(
       join(project, "docs/v2/active/M100_001_P2_CLI_FOLDED.md"),
-      specFixture(undefined, undefined, ["**Folded-into:** `M99_001`"]),
+      specFixture(undefined, undefined, [quoted ? "**Folded-into:** `M99_001`" : "**Folded-into:** M99_001"]),
     );
 
     expect(activeSpecPath(project)).toEndWith("M99_001_P2_CLI_FIXTURE.md");
@@ -109,12 +155,12 @@ describe("closed-spec follow-through", () => {
     expect(() => closedSpecPath(project)).toThrow("one stream per worktree");
   });
 
-  test("a folded spec yields ownership to the spec it names", async () => {
+  test.each([false, true])("a folded closed spec yields ownership with quoted header %s", async (quoted) => {
     const project = closedSpecRepository("feat/shared");
     mkdirSync(join(project, "docs/v2/done"), { recursive: true });
     await Bun.write(
       join(project, "docs/v2/done/M100_001_P2_CLI_FOLDED.md"),
-      specFixture("DONE", "feat/shared", ["**Folded-into:** `M99_001`"]),
+      specFixture("DONE", "feat/shared", [quoted ? "**Folded-into:** `M99_001`" : "**Folded-into:** M99_001"]),
     );
 
     expect(closedSpecPath(project)).toEndWith("M99_001_P2_CLI_FIXTURE.md");

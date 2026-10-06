@@ -12,6 +12,10 @@ Package: `@agentsfleet/orly` (npm)
 Source: https://github.com/agentsfleet/orly
 License: Massachusetts Institute of Technology (MIT)
 
+This guide describes the unpublished 0.11.0 source package. The `bunx` commands
+below fetch the published package, not this source checkout. Use this install
+sequence for the described behavior after 0.11.0 is published.
+
 ---
 
 ## 1. Preconditions

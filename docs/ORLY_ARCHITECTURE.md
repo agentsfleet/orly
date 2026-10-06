@@ -90,8 +90,11 @@ Four behaviours worth knowing:
   with a printed reason, so an ad-hoc bug fix meets the quality gates without
   being told to write a spec. A spec moved to `done/` on the branch is still
   discovered through its `Branch:` header and gates the PR — CHORE(close)
-  never skip-passes the criteria it exists to satisfy. Two active specs is an
-  error — one stream per worktree.
+  never skip-passes the criteria it exists to satisfy. Headers accept a plain
+  token or an inline-code token. Active specs explicitly owned by other branches
+  do not displace this branch's spec; active specs without a branch remain gated.
+  Multiple specs may fold into one owner through `Folded-into`; two independent
+  owners on the current branch remain an error.
 - **A worktree is its repository.** `repositories.json` registers primary
   checkouts only; a linked worktree resolves through the set of checkouts git
   reports for the shared object store. Streams stay ephemeral and unregistered,

@@ -259,7 +259,10 @@ version-sync check passes where defined; branch contains `origin/main` HEAD
 **`orly gate pr` follows the spec through the close.** A spec moved to `done/`
 on this branch is still discovered — its `Branch:` header names the branch —
 and every spec criterion runs against it; skip-pass is only for genuinely
-spec-less branches. A deliberately folded spec retains the exact branch header
+spec-less branches. Branch and fold headers accept a plain token or an inline-code
+token. Active specs explicitly naming another branch do not displace the current
+branch's owner; an active spec without a branch declaration remains in scope.
+A deliberately folded spec retains the exact branch header
 and adds `**Folded-into:** \`M178_001\`` naming the owning spec. Discovery
 validates that relation and gates the sole non-folded owner; two non-folded
 specs on one branch remain a hard error. **The same relation holds in

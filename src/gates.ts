@@ -11,6 +11,7 @@ export type GateName = (typeof GATE_ORDER)[number];
 
 const PIPE_OUTPUT = "pipe";
 const GIT = "git";
+const CURRENT_BRANCH_ARGUMENTS = ["rev-parse", "--abbrev-ref", "HEAD"];
 const DOCS_DIRECTORY = "docs";
 const ACTIVE_DIRECTORY = "active";
 const DONE_DIRECTORY = "done";
@@ -23,7 +24,7 @@ const UTF8 = "utf8";
 const PROTOTYPE_PATTERN = /^v\d+(\.\d+)*$/;
 const MARKDOWN_EXTENSION = ".md";
 const NEWLINE = "\n";
-const MARKDOWN_HEADER_TOKEN_PATTERN = /^\s*\*\*([^*]+):\*\*\s*`([^`]+)`/;
+const MARKDOWN_HEADER_TOKEN_PATTERN = /^\s*\*\*([^*]+):\*\*\s*(?:`([^`]+)`|([^\s`]+))\s*$/;
 const SPEC_IDENTIFIER_PATTERN = /^(M\d+_\d+)(?:_|\.md$)/;
 // Strict trailer shape: "Orly-Override: <criterion> (<reason>)". A trailer
 // that does not parse is not an override — the gate stays red rather than
@@ -110,10 +111,12 @@ export function branchOverrides(root: string): Override[] {
 // Folded-into — the same relation closedSpecPath enforces in done/. Without
 // this, folding a workstream into an open stream was impossible during the
 // work and legal only after the close, which is the wrong way round: the fold
-// is decided when the scope is, not when the spec moves.
+// is decided when the scope is, not when the spec moves. Specs explicitly
+// owned by another branch are excluded; undeclared ownership stays visible.
 export function activeSpecPath(root: string): string | undefined {
+  const branch = gitOutput(root, CURRENT_BRANCH_ARGUMENTS);
   const specs = specPathsUnder(root, ACTIVE_DIRECTORY).map(specMetadata)
-    .filter((spec): spec is SpecMetadata => spec !== undefined);
+    .filter((spec): spec is SpecMetadata => spec !== undefined && (spec.branch === undefined || spec.branch === branch));
   if (specs.length === 0) return undefined;
   return owningSpec(specs, "active spec", "active specs").path;
 }
@@ -140,7 +143,7 @@ function owningSpec(specs: SpecMetadata[], one: string, many: string): SpecMetad
 // be end-state theater. Discovery matches done/ specs whose Branch: header
 // names the current branch; default branches never match a stream's spec.
 export function closedSpecPath(root: string): string | undefined {
-  const branch = gitOutput(root, ["rev-parse", "--abbrev-ref", "HEAD"]);
+  const branch = gitOutput(root, CURRENT_BRANCH_ARGUMENTS);
   if (!branch || DEFAULT_BRANCHES.includes(branch)) return undefined;
   const specs = specPathsUnder(root, DONE_DIRECTORY)
     .map(specMetadata)
@@ -168,8 +171,8 @@ function specMetadata(path: string): SpecMetadata | undefined {
     for (const line of readFileSync(path, UTF8).split(/\r?\n/)) {
       if (line.startsWith("## ")) break;
       const match = line.match(MARKDOWN_HEADER_TOKEN_PATTERN);
-      if (match?.[1] === BRANCH_HEADER) metadata.branch = match[2];
-      if (match?.[1] === FOLDED_INTO_HEADER) metadata.foldedInto = match[2];
+      if (match?.[1] === BRANCH_HEADER) metadata.branch = match[2] ?? match[3];
+      if (match?.[1] === FOLDED_INTO_HEADER) metadata.foldedInto = match[2] ?? match[3];
     }
     return metadata;
   } catch {

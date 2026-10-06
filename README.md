@@ -51,12 +51,13 @@ documentation questions.
 - **Installation** — `bunx` runs the source package through Bun, continuing the `0.10.x` setup on macOS and Linux.
 
 Use `orly judge --help` and the [judgment reference](docs/JUDGMENTS.md) for the
-manifest, atomic criteria and explicit source upload. The local 0.11.0 package
-is unpublished; install the current published package for ordinary use.
+manifest, atomic criteria and explicit source upload. This page describes the
+0.11.0 source package, which is not yet published. The commands below fetch the
+published package; use them for this behavior after 0.11.0 is published.
 
 ---
 
-## Prerequisites for the current release
+## Prerequisites for 0.11.0
 
 | You need | Why | Version |
 |---|---|---|
@@ -70,7 +71,7 @@ is unpublished; install the current published package for ordinary use.
 
 ---
 
-## Install the current release
+## Install 0.11.0 after publication
 
 Run this inside the repository you want governed.
 
@@ -308,7 +309,7 @@ orly scans four directories deep. It skips `node_modules`, `target`, `.venv`, an
 | Pack | What it adds | Why it is opt-in |
 |---|---|---|
 | 🦉 `workflow.governance` | the rules for editing rules, their questionnaire, and orly's architecture | only useful if you edit orly itself |
-| `product.agentsfleet` | three audit scripts, the verify dispatch page, four `agentsfleet` docs | a product surface that means nothing in another checkout |
+| `product.agentsfleet` | two audit scripts, the verify dispatch page, three `agentsfleet` docs | a product surface that means nothing in another checkout |
 | 🤠 `persona.indy` | no files; it rewrites the address handles and tone in the generated rules | one maintainer's name and voice |
 
 ---
