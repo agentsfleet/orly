@@ -23,9 +23,11 @@ const PIPE_OUTPUT = "pipe";
 const TRUE_COMMAND = "true";
 const ACCEPTANCE_RUBRIC_HEADING = "Acceptance Rubric";
 const FIXTURE = "fixture";
-const AUDITS_DIR = "audits";
+const AUDITS_DIR = ".orly/audits";
 const SPEC_GATE_SCRIPT = `${AUDITS_DIR}/spec-template.sh`;
 const SPEC_GATE_CONTENT = `${AUDITS_DIR}/spec-template.ts`;
+const SOURCE_SPEC_GATE = "audits/spec-template.sh";
+const SOURCE_SPEC_CONTENT = "audits/spec-template.ts";
 
 export const ROOT = resolve(import.meta.dir, "..");
 export const SPEC_RELATIVE = "docs/v1/active/M99_001_P2_CLI_FIXTURE.md";
@@ -66,13 +68,13 @@ export function fixtureRegistry(project: string): string {
   return root;
 }
 
-// The gate resolves commands from `.oracle/orly.json` in the repository under
+// The gate resolves commands from `.orly/orly.json` in the repository under
 // test, so every fixture repository carries one.
 export function writeFixtureConfig(project: string, surfaces?: { user: string[]; docs: string[] }, extraCommands?: Record<string, string[][]>): void {
   const config: Record<string, unknown> = structuredClone(FIXTURE_CONFIG);
   if (surfaces) config.surfaces = surfaces;
   if (extraCommands) config.commands = { ...(config.commands as Record<string, unknown>), ...extraCommands };
-  mkdirSync(join(project, ".oracle"), { recursive: true });
+  mkdirSync(join(project, ".orly"), { recursive: true });
   writeFileSync(join(project, CONFIG_PATH), JSON.stringify(config, undefined, 2));
   // Committed, exactly as a real repository carries it: a linked worktree gets
   // its rules config from the checkout, and an uncommitted one would also make
@@ -109,8 +111,8 @@ export function closedSpecRepository(branch: string, extraLines: string[] = []):
   git(project, "checkout", QUIET, "-b", branch);
   mkdirSync(join(project, "docs/v1/done"), { recursive: true });
   mkdirSync(join(project, AUDITS_DIR), { recursive: true });
-  copyFileSync(join(ROOT, SPEC_GATE_SCRIPT), join(project, SPEC_GATE_SCRIPT));
-  copyFileSync(join(ROOT, SPEC_GATE_CONTENT), join(project, SPEC_GATE_CONTENT));
+  copyFileSync(join(ROOT, SOURCE_SPEC_GATE), join(project, SPEC_GATE_SCRIPT));
+  copyFileSync(join(ROOT, SOURCE_SPEC_CONTENT), join(project, SPEC_GATE_CONTENT));
   Bun.write(join(project, "docs/v1/done/M99_001_P2_CLI_FIXTURE.md"), specFixture("DONE", branch, [
     `**Baseline revision:** ${gitOutput(project, REV_PARSE, HEAD)}`, BASELINE_EVIDENCE, ...extraLines,
   ]));
@@ -123,8 +125,8 @@ export function newSpecRepository(): string {
   const project = newRepository();
   mkdirSync(join(project, "docs/v1/active"), { recursive: true });
   mkdirSync(join(project, AUDITS_DIR), { recursive: true });
-  copyFileSync(join(ROOT, SPEC_GATE_SCRIPT), join(project, SPEC_GATE_SCRIPT));
-  copyFileSync(join(ROOT, SPEC_GATE_CONTENT), join(project, SPEC_GATE_CONTENT));
+  copyFileSync(join(ROOT, SOURCE_SPEC_GATE), join(project, SPEC_GATE_SCRIPT));
+  copyFileSync(join(ROOT, SOURCE_SPEC_CONTENT), join(project, SPEC_GATE_CONTENT));
   Bun.write(join(project, SPEC_RELATIVE), specFixture(IN_PROGRESS, undefined, [
     `**Baseline revision:** ${gitOutput(project, REV_PARSE, HEAD)}`, BASELINE_EVIDENCE,
   ]));

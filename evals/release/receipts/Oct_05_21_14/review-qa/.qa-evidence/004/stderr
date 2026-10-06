@@ -1,0 +1,10 @@
+
+src/release_inventory.test.ts:
+(pass) inventory_covers_repository_and_package without inheriting a changed-byte review [1019.88ms]
+(pass) a review missing a digest cannot authorize current bytes [582.86ms]
+(pass) inventory and review records require an external snapshot binding [695.16ms]
+
+ 3 pass
+ 0 fail
+ 20 expect() calls
+Ran 3 tests across 1 file. [2.32s]

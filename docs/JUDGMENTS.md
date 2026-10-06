@@ -122,7 +122,7 @@ Uncertainty requires inspection and cannot waive a rule or satisfy verification.
 
 ### Replay and request limits
 
-Default mode reads `.oracle/judgments/` without contacting the provider.
+Default mode reads `.orly/judgments/` without contacting the provider.
 Identity binds the project root, model, question definition, requirement, selectors and selected source bytes.
 Changed inputs require an explicit refresh.
 

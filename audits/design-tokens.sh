@@ -37,7 +37,11 @@
 
 set -euo pipefail
 
-MODE="${1:---all}"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scope.sh"
+audit_scope_init --all "$@"
+audit_index_snapshot "$@"
+
+MODE="$AUDIT_MODE"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
@@ -102,35 +106,17 @@ in_gradient_scope() {
   esac
 }
 
-case "$MODE" in
-  --staged|staged)
-    FILES=$(git diff --cached --name-only --diff-filter=ACMRT 2>/dev/null || true)
-    GRADIENT_CANDIDATES="$FILES"
-    ;;
-  --all|all)
-    # `git ls-files` reports the index, which includes staged content —
-    # so pre-commit-style invocations see staged-but-not-committed files
-    # without needing a `--staged` flag.
-    FILES=$(git ls-files -- 'ui/packages/app/*.tsx' 'ui/packages/app/*.jsx' 'ui/packages/website/*.tsx' 'ui/packages/website/*.jsx' 2>/dev/null || true)
-    GRADIENT_CANDIDATES=$(git ls-files -- ui/packages/app ui/packages/website ui/packages/design-system 2>/dev/null || true)
-    ;;
-  *)
-    echo "usage: $0 [--all|--staged]" >&2
-    echo "note: --diff was retired in M70 — see dispatch/write_ts_adhere_bun.md (Design Tokens → Scope)." >&2
-    exit 2 ;;
-esac
-
 FAIL=0
 SEEN_FILES_LIST=""
 
 # Pre-filter FILES list once (drop blanks, non-existent, out-of-scope).
 SCOPED_FILES=()
-while IFS= read -r f; do
+while IFS= read -r -d '' f; do
   [ -z "$f" ] && continue
   [ ! -f "$f" ] && continue
   in_scope "$f" || continue
   SCOPED_FILES+=("$f")
-done <<< "$FILES"
+done < <(audit_scope_paths '*.tsx' '*.jsx')
 
 if [ "${#SCOPED_FILES[@]}" -gt 0 ]; then
   for entry in "${PATTERNS[@]}"; do
@@ -156,7 +142,7 @@ if [ "${#SCOPED_FILES[@]}" -gt 0 ]; then
 fi
 
 GRADIENT_FILES=()
-while IFS= read -r f; do
+while IFS= read -r -d '' f; do
   [ -z "$f" ] && continue
   [ ! -f "$f" ] && continue
   in_gradient_scope "$f" || continue
@@ -167,7 +153,7 @@ while IFS= read -r f; do
     SEEN_FILES_LIST="${SEEN_FILES_LIST}${f}"$'\n'
     FAIL=1
   done < <(check_font_ownership "$f")
-done <<< "$GRADIENT_CANDIDATES"
+done < <(audit_scope_paths "ui/packages/app/*" "ui/packages/website/*" "ui/packages/design-system/*")
 
 if [ "${#GRADIENT_FILES[@]}" -gt 0 ]; then
   while IFS= read -r match; do

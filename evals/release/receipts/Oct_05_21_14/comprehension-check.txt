@@ -1,0 +1,7 @@
+🧲 AGENTS.md cross-agent Large Language Model (LLM) evaluation  (mode=check threshold=100%)
+
+✓ partial-completion skill rules valid
+fixtures: 73
+Agents available: claude codex amp opencode
+
+✓ check mode: fixtures valid, availability reported. No live calls made.

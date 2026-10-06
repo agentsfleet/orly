@@ -124,24 +124,24 @@ Guards fire pre-hoc regardless of lifecycle stage. Override: `<GATE>: SKIPPED pe
 
 **🚦 Gate-flag triage** — gate fires → never silence, never harness-patch. **Mechanical** (obvious deterministic fix: fmt, lint-autofix, literal → const, over-length → split, dead code): auto-apply + inform the user in one line. **Judgment** (design call / weakened guarantee / security boundary / possible false-positive): STOP, surface the ask — 📟 flagged (symbol·file·line) · 🔦 fix scope (files·lines·follow-on) · 📈 what we gain · 💥 if not fixed (debt·blockages) · ☠️ my call — the user decides fix-or-defer. Never unilaterally call a flag a false-positive.
 
-**Seeded `.oracle/orly.json`?** Complete it first — `verify.*`, `surfaces`, opt-in packs: `dispatch/lifecycle.md` §Bootstrap.
+**Seeded `.orly/orly.json`?** Complete it first — `verify.*`, `surfaces`, opt-in packs: `dispatch/lifecycle.md` §Bootstrap.
 
 **Rule paths resolve relative to this repository's root.** Every `dispatch/…`, `docs/…`, and `audits/…` path a rule cites is a real file here — `orly init`/`orly update` materialised it from the packs this repository selected. A path your repo lacks means its sources never selected that pack, not that the reference is broken.
 
 **Dispatch index — full rule prose in each `dispatch/<entry>.md` façade. Read the façade when its trigger fires — sectioned: scan headers, read the sections the diff touches.** Trigger-surface extensions: `*.zig`, `*.ts`, `*.tsx`, `*.js`, `*.jsx`, `*.py`, `*.rs`, `*.go`, `*.sh`, `*.sql`, `*.mdx`, and public OpenAPI prose. Latent `.md` per entry, deterministic `.sh` where mechanisable. Signals: 🟢 pass · 🟠 warn · 🔴 fail · 🛑 blocked · 🔥 critical · 🤔 judgment-only · 🟣 delegated. Output glyphs: 🧲 eval · 🛍️ evidence · 👮 security · ⛈️ rule · 💡 info · 📌 note. The router below **is** the gate set.
 
-**Legacy-workaround family** — four rules together: **RULE NDC** (no dead code at write time, `docs/greptile-learnings/RULES.md`), **RULE NLR** (touch-it-fix-it cleanup), **RULE NLG** (no new legacy framing pre-`0.30.0`), **Legacy-Design Consult Guard** (user A/B/C consult before patching/keeping/testing legacy). **No compatibility aliases** — old verbs, flag aliases, route wrappers, env aliases, fallback spellings — unless the user explicitly asks in-session.
+**Legacy-workaround family** — four rules together: **RULE NDC** (no dead code at write time, `docs/greptile-learnings/RULES.md`), **RULE NLR** (touch-it-fix-it cleanup), **RULE NLG** (no speculative compatibility framing; selected product version policy applies), **Legacy-Design Consult Guard** (user A/B/C consult before patching/keeping/testing legacy). **No compatibility aliases** — old verbs, flag aliases, route wrappers, env aliases, fallback spellings — unless the user explicitly asks in-session.
 
 | Trigger — when you… | Dispatch | Latent façade carries · override |
 |---|---|---|
-| write `*.zig` | `write_zig` | `dispatch/write_zig.md` — memory safety, init/deinit + `errdefer`, pub shape verdict (`FILE SHAPE DECISION` — auto-mode does NOT cover), tagged unions, length caps, cross-compile both linux targets · `ZIG GATE` / `PUB GATE` / `LIFECYCLE GATE: SKIPPED per user override (reason: ...)`. | <!-- oracle-packs:language.zig -->
+| write `*.zig` | `write_zig` | `dispatch/write_zig.md` — memory safety, init/deinit + `errdefer`, pub shape verdict (`FILE SHAPE DECISION` — auto-mode does NOT cover), tagged unions, length caps, declared cross-compile matrix · `ZIG GATE` / `PUB GATE` / `LIFECYCLE GATE: SKIPPED per user override (reason: ...)`. | <!-- oracle-packs:language.zig -->
 | write `*.ts`/`*.tsx`/`*.js`/`*.jsx` | `write_ts_adhere_bun` | `dispatch/write_ts_adhere_bun.md` — TS FILE SHAPE DECISION at PLAN, `const`/import/Bun-primitive discipline, raw-HTML → design-system primitive, `*-[...]` → token utility · `UI GATE` / `DESIGN TOKEN GATE: SKIPPED per user override (reason: ...)`; auto-mode does NOT cover; reason must cite a concrete external constraint. | <!-- oracle-packs:language.typescript,language.javascript -->
 | write `*.rs` | `write_rust` | `dispatch/write_rust.md` — ownership, justified `unsafe`, preserved error variants, feature combinations, deterministic concurrency tests · 🤔 judgment-only. | <!-- oracle-packs:language.rust -->
 | write `*.go` | `write_go` | `dispatch/write_go.md` — wrapped errors, goroutine exit paths, context first, defer at acquire, `-race` · 🤔 judgment-only. | <!-- oracle-packs:language.go -->
 | write `*.py` | `write_python` | `dispatch/write_python.md` — standard-library parsing, context-managed resources, boundary validation, specific exceptions · 🤔 judgment-only. | <!-- oracle-packs:language.python -->
 | write `*.sh` | `write_shell` | `dispatch/write_shell.md` — quoted expansions, array arguments, temp-file cleanup, no untrusted `eval`, shell compatibility · 🤔 judgment-only. | <!-- oracle-packs:language.shell -->
 | write `*.mdx` | `write_mdx` | `dispatch/write_mdx.md` — Markdown JSX structure, front matter, links, code fences, image descriptions, Mintlify isolation · 🤔 judgment-only. | <!-- oracle-packs:language.mdx -->
-| write `schema/*.sql` | `write_sql` | `dispatch/write_sql.md` — schema / migration rules + Schema Table Removal Guard (`DROP`/`ALTER` / `schema/embed.zig` / migration-array edits), STS/NSQ/SGR/ITF rules · `SCHEMA GUARD: SKIPPED per user override (reason: ...)`. | <!-- oracle-packs:domain.sql -->
+| write SQL or migration registration | `write_sql` | `dispatch/write_sql.md` — schema / migration rules, repository live-data policy and owner approval for destructive changes; product-specific Schema Table Removal Guard only when selected. | <!-- oracle-packs:domain.sql -->
 | write **any** source file | `write_any` | `dispatch/write_any.md` — File & Function Length, LOGGING, MILESTONE-ID, ERROR REGISTRY (repo-declared scheme, delegated), UFS named-constants, GREPTILE end-of-turn read, legacy family · `LENGTH` / `LOGGING` / `MILESTONE ID` / `UFS GATE: SKIPPED per user override (reason: ...)`; auto-mode does NOT cover. | <!-- oracle-packs:universal.authoring -->
 | write a spec under `docs/v*/…` | `write_spec` | `dispatch/write_spec.md` — required + prohibited spec sections (SPEC TEMPLATE GATE), `docs/TEMPLATE.md` shape · `SPEC TEMPLATE GATE: SKIPPED per user override (reason: ...)`; auto-mode does NOT cover; reason must cite a concrete external constraint. | <!-- oracle-packs:workflow.specifications -->
 | write `src/http/handlers/**` / OpenAPI | `write_http` | `dispatch/write_http.md` — REST API design rules; reads `docs/REST_API_DESIGN_GUIDELINES.md` before · 🟣 delegated. | <!-- oracle-packs:domain.http -->
@@ -169,7 +169,7 @@ Guards fire pre-hoc regardless of lifecycle stage. Override: `<GATE>: SKIPPED pe
 
 | Event | Action |
 |---|---|
-| New milestone, plan-{eng,ceo,design}-review, `TODO.md` attempt | Invoke `orly-spec-new`. Land in `docs/v{N}/pending/`, `Status: PENDING`, commit on main. |
+| New milestone, plan-{eng,ceo,design}-review, `TODO.md` attempt | Invoke `orly-spec-new`. Land in `docs/v{N}/pending/`, `Status: PENDING`, commit on the detected default branch. |
 | Begin implementation OR branch carries spec changes in `pending/` | CHORE(open): `pending/`→`active/`, `Status: IN_PROGRESS` + `Branch:`, create worktree, commit on feature branch. **No code until 4 steps committed.** |
 | Every commit during implementation | Mark completed Dimensions/Sections `DONE` same commit as the code. |
 | All work complete, before PR | CHORE(close). |
@@ -215,7 +215,7 @@ Edit only approved scope; no opportunistic refactors. Stay in active worktree. C
 
 ### CONFORM
 
-Runs after EXECUTE, before VERIFY. Invokes the `conform` commands the repository declares in `.oracle/orly.json` and aggregates every gate verdict. Any 🔴 returns to EXECUTE; the lifecycle does not advance. This is the `work` gate's tier and the pre-commit hook runs it at every commit: declare a `conform` costing seconds, not minutes.
+Runs after EXECUTE, before VERIFY. Invokes the `conform` commands the repository declares in `.orly/orly.json` and aggregates every gate verdict. Any 🔴 returns to EXECUTE; the lifecycle does not advance. This is the `work` gate's tier and the pre-commit hook runs it at every commit: declare a `conform` costing seconds, not minutes.
 <!-- oracle-packs:start product.agentsfleet -->
 In `agentsfleet` this stage is `make harness-verify`; its output block and end-of-turn audit detail live in `docs/HARNESS_VERIFY_OUTPUT.md`. Required rows: FILE SHAPE, PUB GATE, LENGTH GATE, MILESTONE-ID GATE, ZIG GATE, UI GATE, DESIGN TOKEN GATE, UFS GATE, SCHEMA GUARD, GREPTILE GATE, Architecture consult, Coverage, and `/orly-write-unit-test`.
 <!-- oracle-packs:end -->

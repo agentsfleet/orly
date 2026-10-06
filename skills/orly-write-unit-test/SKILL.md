@@ -284,7 +284,7 @@ When a spec exists with these tables, treat them as authoritative test sources:
 
 | Spec table | Generates |
 |---|---|
-| Test Specification | One test per row, name = `dim X.Y: <name>` |
+| Test Specification | One behavior-named test per row; the spec maps Dimension numbers to test names. Keep planning identifiers out of source test names and filenames. |
 | Error Contracts | One negative test per row asserting exact error |
 | Failure Modes | One integration test per row with deterministic injection |
 | Partial Completion | One row per ordered failure point with workflow-ordinal and boundary-call-ordinal injection plus residual-state assertions |

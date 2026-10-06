@@ -1,0 +1,36 @@
+bun test v1.4.2 (744846f84)
+
+src/spec_template_io.test.ts:
+(pass) spec audit through real Git and file boundaries > an invalid v1 index fails even when its working copy was repaired [536.94ms]
+(pass) spec audit through real Git and file boundaries > an invalid v0.9.2 index fails even when its working copy was repaired [550.80ms]
+(pass) spec audit through real Git and file boundaries > a repaired v1 index passes despite invalid unstaged content and config [493.37ms]
+(pass) spec audit through real Git and file boundaries > a repaired v0.9.2 index passes despite invalid unstaged content and config [539.32ms]
+(pass) spec audit through real Git and file boundaries > read-first references are resolved from the index [317.58ms]
+(pass) spec audit through real Git and file boundaries > file mode checks working content and configuration [271.53ms]
+(pass) spec audit through real Git and file boundaries > refuses invalid JSON without skipping parity [425.12ms]
+(pass) spec audit through real Git and file boundaries > refuses missing commands without skipping parity [392.10ms]
+(pass) spec audit through real Git and file boundaries > refuses empty commands without skipping parity [366.80ms]
+(pass) spec audit through real Git and file boundaries > refuses empty group without skipping parity [390.24ms]
+(pass) spec audit through real Git and file boundaries > refuses invalid invocation without skipping parity [405.47ms]
+(pass) spec audit through real Git and file boundaries > refuses nonstring argument without skipping parity [354.26ms]
+(pass) spec audit through real Git and file boundaries > refuses nonarray group without skipping parity [328.84ms]
+(pass) spec audit through real Git and file boundaries > missing config, staged config, and arguments fail explicitly [285.74ms]
+(pass) spec audit through real Git and file boundaries > bulk scans retain their prohibited-pattern scope [570.09ms]
+
+src/command_process.test.ts:
+(pass) a successful deadline stop is not repeated during supervisor cleanup [139.49ms]
+(pass) killing the gate owner stops its detached workload [199.43ms]
+(pass) supervisor SIGTERM stops its owned workload [53.31ms]
+(pass) supervisor SIGINT stops its owned workload [53.36ms]
+(pass) supervisor SIGHUP stops its owned workload [52.01ms]
+
+src/surfaces.test.ts:
+(pass) user surface > handlers, openapi, cli, and app TypeScript count [0.21ms]
+(pass) user surface > tests, markdown, and other packages do not count [0.04ms]
+(pass) docs surface > docs pages and README count; the spec tree never does [0.10ms]
+(pass) code classification > source and test files are code; prose is not [0.06ms]
+
+ 24 pass
+ 0 fail
+ 70 expect() calls
+Ran 24 tests across 3 files. [6.78s]

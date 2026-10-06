@@ -1,0 +1,20 @@
+{
+  "observationCapture": "001",
+  "observationArgv": [
+    "bun",
+    "test",
+    "src/installation/migration.test.ts",
+    "-t",
+    "a current installation preserves an independent previous configuration"
+  ],
+  "observed": "bun test v1.4.2 (744846f84)\n",
+  "hypothesis": "The previous configuration survives; next verify that an owner hook change during writes refuses before metadata and cleanup.",
+  "nextCapture": "002",
+  "nextArgv": [
+    "bun",
+    "test",
+    "src/installation/migration.test.ts",
+    "-t",
+    "owner hook changes during destination writes"
+  ]
+}

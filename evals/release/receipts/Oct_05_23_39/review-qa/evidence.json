@@ -1,0 +1,113 @@
+{
+  "revision": "4be34f70a14ffdffa6b26bbdaac4111379771817",
+  "runtime": "bun 1.4.2",
+  "cwd": "/Users/kishore/Projects/orly",
+  "limits": [
+    "Functional smoke only; no deployment, browser, native compilation or live model calls.",
+    "Original captures 001 and 002 superseded by identical commands 003 and 004 after runtime repairs.",
+    "Coverage is the scoped fixture assertions; arbitrary kernel races are not certified."
+  ],
+  "evidence": [
+    {
+      "command": "bun test src/installation_preservation.test.ts",
+      "contract": "Exact owner-byte preservation, no overwritten concurrent edit, active owner hook retention and owned workload cleanup",
+      "expected": "Exit 0; no failing assertions; fixture side effects asserted by native tests",
+      "classification": "superseded",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/command_process.test.ts",
+      "contract": "Exact owner-byte preservation, no overwritten concurrent edit, active owner hook retention and owned workload cleanup",
+      "expected": "Exit 0; no failing assertions; fixture side effects asserted by native tests",
+      "classification": "superseded",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/installation_preservation.test.ts",
+      "contract": "Exact owner-byte preservation, no overwritten concurrent edit, active owner hook retention and owned workload cleanup",
+      "expected": "Exit 0; no failing assertions; fixture side effects asserted by native tests",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/command_process.test.ts",
+      "contract": "Exact owner-byte preservation, no overwritten concurrent edit, active owner hook retention and owned workload cleanup",
+      "expected": "Exit 0; no failing assertions; fixture side effects asserted by native tests",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/installation/migration.test.ts",
+      "contract": "Exact owner-byte preservation, no overwritten concurrent edit, active owner hook retention and owned workload cleanup",
+      "expected": "Exit 0; no failing assertions; fixture side effects asserted by native tests",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    }
+  ],
+  "learning": [
+    {
+      "observationCapture": "001",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/installation_preservation.test.ts"
+      ],
+      "hypothesis": "Preserved owner bytes establish the healthy installation path; next check exact timeout output and cleanup.",
+      "nextCapture": "002",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/command_process.test.ts"
+      ]
+    },
+    {
+      "observationCapture": "002",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/command_process.test.ts"
+      ],
+      "hypothesis": "Installation now carries the original digest; rerun the same preservation command on current inputs.",
+      "nextCapture": "003",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/installation_preservation.test.ts"
+      ]
+    },
+    {
+      "observationCapture": "003",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/installation_preservation.test.ts"
+      ],
+      "hypothesis": "Owner preservation passed with staging races; rerun supervision to cover cancellation and termination on current inputs.",
+      "nextCapture": "004",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/command_process.test.ts"
+      ]
+    },
+    {
+      "observationCapture": "004",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/command_process.test.ts"
+      ],
+      "hypothesis": "Cancellation and signal cleanup passed; validate migration recovery and owner-hook refusal through real Git and filesystem boundaries.",
+      "nextCapture": "005",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/installation/migration.test.ts"
+      ]
+    }
+  ],
+  "verdict": {
+    "status": "pass",
+    "open": []
+  }
+}

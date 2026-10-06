@@ -52,9 +52,9 @@ install_selects_packs_from_repository_sources() {
 
   local out; out="$(run_packed "$pkg" "$repo" init)"
   if [[ "$out" != *"written"* ]]; then bad "$name" "init did not report a materialisation: $out"; return; fi
-  [[ -f "$repo/dispatch/write_rust.md" ]] || { bad "$name" "the Rust source did not select the Rust façade"; return; }
-  [[ -f "$repo/dispatch/write_zig.md" ]] && { bad "$name" "a Zig façade was installed into a repository with no Zig"; return; }
-  [[ -f "$repo/.oracle/orly.json" ]] || { bad "$name" "init did not seed .oracle/orly.json"; return; }
+  [[ -f "$repo/.orly/dispatch/write_rust.md" ]] || { bad "$name" "the Rust source did not select the Rust façade"; return; }
+  [[ -f "$repo/.orly/dispatch/write_zig.md" ]] && { bad "$name" "a Zig façade was installed into a repository with no Zig"; return; }
+  [[ -f "$repo/.orly/orly.json" ]] || { bad "$name" "init did not seed .orly/orly.json"; return; }
   ok "$name"
 }
 
@@ -93,7 +93,11 @@ install_update_repins_across_a_version_bump() {
   if [[ -z "$pkg" ]]; then bad "$name" "npm pack or extract failed"; return; fi
 
   run_packed "$pkg" "$repo" init >/dev/null
-  local before; before="$(python3 -c "import json;print(json.load(open('$repo/.oracle/orly.json'))['orly_version'])")"
+  local before; before="$(python3 -c "import json;print(json.load(open('$repo/.orly/orly.json'))['orly_version'])")"
+
+  local copy; copy="$(mk_sandbox)"
+  cp -R "$pkg" "$copy/package"
+  pkg="$copy/package"
 
   # Simulate a newer engine: bump the packed copy's own version and touch a
   # managed file, so update has a real, detectable change to propagate.
@@ -107,20 +111,20 @@ PY
   printf '\n<!-- eval: newer engine content -->\n' >> "$pkg/packs/language/rust/rules.md"
 
   local out; out="$(run_packed "$pkg" "$repo" update)"
-  local after; after="$(python3 -c "import json;print(json.load(open('$repo/.oracle/orly.json'))['orly_version'])")"
+  local after; after="$(python3 -c "import json;print(json.load(open('$repo/.orly/orly.json'))['orly_version'])")"
 
   if [[ "$before" == "$after" ]]; then bad "$name" "lock still pinned to $before after update"; return; fi
   if [[ "$after" != "0.4.1-test" ]]; then bad "$name" "lock repinned to '$after', not the newer engine"; return; fi
-  if ! grep -q "eval: newer engine content" "$repo/dispatch/write_rust.md"; then
+  if ! grep -q "eval: newer engine content" "$repo/.orly/dispatch/write_rust.md"; then
     bad "$name" "update did not propagate the changed file"; return
   fi
   if [[ "$out" != *"written"* ]]; then bad "$name" "update did not report what changed: $out"; return; fi
   ok "$name"
 }
 
-# bunx runs setup; existing hooks still need an executable on their search path.
-install_readme_uses_bunx_and_names_hook_prerequisite() {
-  local name="README uses bunx and names the hook executable prerequisite"
+# Setup and generated hooks both use bunx.
+install_readme_uses_bunx_for_setup_and_hooks() {
+  local name="README uses bunx for setup and generated hooks"
   local section
   section="$(awk '/^## Install/{flag=1; next} /^## /{flag=0} flag' "$ROOT/README.md")"
   if [[ -z "$section" ]]; then bad "$name" "no '## Install' section found"; return; fi
@@ -131,8 +135,8 @@ install_readme_uses_bunx_and_names_hook_prerequisite() {
   local commands
   commands="$(printf '%s\n' "$section" | awk '/^```bash$/{block=1; next} /^```$/{block=0} block')"
   if [[ "$commands" != 'bunx --bun @agentsfleet/orly init' ]]; then bad "$name" "expected the bunx initialization command: $commands"; return; fi
-  if [[ "$section" != *'Existing Git hooks require `orly` on `PATH`'* ]]; then
-    bad "$name" "missing the hook executable prerequisite"; return
+  if [[ "$section" != *'Generated Git hooks invoke the pinned package through `bunx`'* ]]; then
+    bad "$name" "missing the pinned bunx hook instruction"; return
   fi
   ok "$name"
 }

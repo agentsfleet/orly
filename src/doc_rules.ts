@@ -53,7 +53,7 @@ function isRulePage(file: string): boolean {
   return RULE_PAGE_FILES.includes(name);
 }
 const README = "README.md";
-const CONFIG_RELATIVE_PATH = ".oracle/orly.json";
+const CONFIG_RELATIVE_PATH = ".orly/orly.json";
 const REGISTRY_FILE = "registry.json";
 const CODE_PLACEHOLDER = "Code";
 const EMPTY = "";
@@ -130,7 +130,7 @@ const RULE_NAMES: Record<string, string> = {
 };
 
 // The pages orly renders into a repository, plus its readme. The materialised
-// set is authoritative and it is recorded, not guessed: `.oracle/orly.json`
+// set is authoritative and it is recorded, not guessed: `.orly/orly.json`
 // names every file orly wrote here. In the engine's own checkout the registry
 // names the sources those files are rendered from, which is the same set one
 // step earlier. README.md joins either list by the scope rule in

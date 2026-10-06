@@ -1,0 +1,122 @@
+bun test v1.4.2 (744846f84)
+
+src/installation_preservation.test.ts:
+(pass) strong_assertion_exposes_real_defect [934.29ms]
+39 |     }
+40 |     return write(destination, input, settings);
+41 |   });
+42 |   const result = await install(model, options);
+43 |   expect(injected).toBe(1);
+44 |   expect(result.ok).toBe(false);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/installation_preservation.test.ts:44:21)
+(fail) an owner edit to .orly/orly.json during staging refuses without overwriting it [814.06ms]
+39 |     }
+40 |     return write(destination, input, settings);
+41 |   });
+42 |   const result = await install(model, options);
+43 |   expect(injected).toBe(1);
+44 |   expect(result.ok).toBe(false);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/installation_preservation.test.ts:44:21)
+(fail) an owner edit to .orly/AGENTS.md during staging refuses without overwriting it [949.89ms]
+39 |     }
+40 |     return write(destination, input, settings);
+41 |   });
+42 |   const result = await install(model, options);
+43 |   expect(injected).toBe(1);
+44 |   expect(result.ok).toBe(false);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/installation_preservation.test.ts:44:21)
+(fail) an owner edit to AGENTS.md during staging refuses without overwriting it [930.89ms]
+
+src/installation/migration.test.ts:
+54 |     await Bun.write(join(repo, PREVIOUS_CONFIG), JSON.stringify(config));
+55 |     expect(Bun.spawnSync(["git", "-C", repo, "config", "core.hooksPath", directory]).exitCode).toBe(0);
+56 |   }
+57 |   const before = hooksPath(repo);
+58 |   const result = await install(model, { ...options, installHooks: true });
+59 |   expect(result.ok).toBe(false);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/installation/migration.test.ts:59:21)
+(fail) an active owner hook in .git/hooks remains connected [422.65ms]
+54 |     await Bun.write(join(repo, PREVIOUS_CONFIG), JSON.stringify(config));
+55 |     expect(Bun.spawnSync(["git", "-C", repo, "config", "core.hooksPath", directory]).exitCode).toBe(0);
+56 |   }
+57 |   const before = hooksPath(repo);
+58 |   const result = await install(model, { ...options, installHooks: true });
+59 |   expect(result.ok).toBe(false);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/installation/migration.test.ts:59:21)
+(fail) an active owner hook in .githooks remains connected [347.61ms]
+(pass) interrupted_install_recovers at journal 0 [318.60ms]
+(pass) interrupted_install_recovers at write 0 [372.80ms]
+(pass) interrupted_install_recovers at write 1 [384.14ms]
+(pass) interrupted_install_recovers at write 2 [308.24ms]
+(pass) interrupted_install_recovers at write 3 [318.11ms]
+(pass) interrupted_install_recovers at write 4 [320.98ms]
+(pass) interrupted_install_recovers at write 5 [332.17ms]
+(pass) interrupted_install_recovers at metadata 0 [341.02ms]
+(pass) interrupted_install_recovers at delete 0 [306.54ms]
+(pass) interrupted_install_recovers at delete 1 [336.44ms]
+(pass) interrupted_install_recovers at delete 2 [326.41ms]
+(pass) hook installation recovers interruption at journal 0 [573.74ms]
+(pass) hook installation recovers interruption at write 0 [504.63ms]
+(pass) hook installation recovers interruption at write 1 [499.00ms]
+(pass) hook installation recovers interruption at write 2 [611.19ms]
+(pass) hook installation recovers interruption at write 3 [554.35ms]
+(pass) hook installation recovers interruption at write 4 [468.44ms]
+(pass) hook installation recovers interruption at write 5 [642.99ms]
+(pass) hook installation recovers interruption at write 6 [676.46ms]
+(pass) hook installation recovers interruption at write 7 [485.35ms]
+(pass) hook installation recovers interruption at metadata 0 [578.18ms]
+(pass) hook installation recovers interruption at delete 0 [456.75ms]
+(pass) hook installation recovers interruption at delete 1 [603.38ms]
+(pass) hook installation recovers interruption at delete 2 [590.11ms]
+(pass) migration_preserves_owned_content refuses edited or unowned dispatch/check.md [143.03ms]
+(pass) migration_preserves_owned_content refuses edited or unowned AGENTS.orly.md [188.88ms]
+(pass) migration_preserves_owned_content refuses edited or unowned .orly/dispatch/check.md [134.64ms]
+(pass) recovery refuses an edited destination before deleting any old source [172.79ms]
+(pass) changed journal cannot authorize recovery [178.17ms]
+(pass) a current installation preserves an independent previous configuration [161.84ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [310.99ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [357.73ms]
+(pass) owner hook changes during destination writes are refused before metadata or cleanup [402.61ms]
+(pass) migration removes only proven obsolete instruction references [242.34ms]
+
+5 tests failed:
+(fail) an owner edit to .orly/orly.json during staging refuses without overwriting it [814.06ms]
+(fail) an owner edit to .orly/AGENTS.md during staging refuses without overwriting it [949.89ms]
+(fail) an owner edit to AGENTS.md during staging refuses without overwriting it [930.89ms]
+(fail) an active owner hook in .git/hooks remains connected [422.65ms]
+(fail) an active owner hook in .githooks remains connected [347.61ms]
+
+ 35 pass
+ 5 fail
+ 814 expect() calls
+Ran 40 tests across 2 files. [17.86s]

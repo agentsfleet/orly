@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { readConfigSync } from "./config";
 import { Criterion, CriterionContext, criterion, gitOutput, runCommand, Verdict } from "./criteria_support";
 import { branchDiff, classifyBranch, defaultMergeBase } from "./surfaces";
+import { specDimensionsOf, unacknowledgedObligations } from "./spec_obligations";
 
 const BASELINE_HEADER = "Test Baseline";
 const REVISION_HEADER = "Baseline revision";
@@ -14,8 +15,8 @@ const NOT_APPLICABLE = /^n\/a\s+[—-]\s+\S/i;
 
 const OPEN_QUESTION = "[?]";
 const PRODUCT_CLARITY_HEADING = "## Product Clarity";
-const DIMENSION_PREFIX = "- **Dimension ";
 const DONE_MARKER = "DONE";
+const ITEM_SEPARATOR = ", ";
 const SPEC_GATE_SCRIPT = "audits/spec-template.sh";
 const NO_SPEC_SKIP = "skipped — no active spec (quality gates still apply)";
 
@@ -27,10 +28,6 @@ const SPEC_MOVED = "spec.moved";
 const SPEC_BASELINE = "spec.baseline";
 const SPEC_ORDERING = "spec.ordering";
 const SPEC_DEFERRALS = "spec.deferrals";
-const STATUS_DONE = "Status: DONE";
-const INDY_ACK = "> Indy (";
-// deferred/deferral(s) only — never Zig's defer/errdefer keywords.
-const DEFERRAL_CLAIM = /\bdeferr(ed|al|als)\b/i;
 const SPEC_TREE_FILE = /^docs\/v[^/]+\/.+\.md$/;
 
 // Wrap a spec-reading criterion: no active spec → skip-pass with the reason
@@ -43,7 +40,7 @@ function specCriterion(name: string, evaluate: (context: CriterionContext) => Ve
 }
 
 export function specGate(): Criterion {
-  return specCriterion(SPEC_GATE, (context) => runCommand(context.root, ["bash", SPEC_GATE_SCRIPT, "--file", context.specPath ?? ""]));
+  return specCriterion(SPEC_GATE, (context) => runCommand(context.root, ["bash", context.root === context.model.root ? SPEC_GATE_SCRIPT : `.orly/${SPEC_GATE_SCRIPT}`, "--file", context.specPath ?? ""]));
 }
 
 export function openQuestions(): Criterion {
@@ -62,13 +59,14 @@ export function productClarity(): Criterion {
 
 export function specDimensions(): Criterion {
   return specCriterion(SPEC_DIMENSIONS, (context) => {
-    const dimensions = specLines(context).filter((line) => line.trimStart().startsWith(DIMENSION_PREFIX));
-    const open = dimensions.filter((line) => !line.includes(DONE_MARKER));
+    const dimensions = specDimensionsOf(context.specText ?? "");
+    if (!dimensions.length) return { ok: false, detail: "no Dimensions declared in Sections" };
+    const open = dimensions.filter((dimension) => !dimension.done);
     return {
       ok: open.length === 0,
       detail: open.length === 0
         ? `${dimensions.length} dimension(s) marked ${DONE_MARKER}`
-        : `${open.length} of ${dimensions.length} not ${DONE_MARKER}: ${dimensionLabels(open)}`,
+        : `${open.length} of ${dimensions.length} not ${DONE_MARKER}: ${open.map((dimension) => dimension.id).join(ITEM_SEPARATOR)}`,
     };
   });
 }
@@ -134,25 +132,19 @@ export function specOrdering(): Criterion {
 // the spec; agent-unilateral deferral is incomplete scope, not deferral.
 export function specDeferrals(): Criterion {
   return specCriterion(SPEC_DEFERRALS, (context) => {
-    const claims = specLines(context).filter((line) => DEFERRAL_CLAIM.test(line) && !line.includes(INDY_ACK));
-    if (claims.length === 0) return { ok: true, detail: "no deferral claims" };
-    const acked = specLines(context).some((line) => line.includes(INDY_ACK));
-    return acked
-      ? { ok: true, detail: `${claims.length} deferral line(s), Indy ack quote present` }
-      : { ok: false, detail: `${claims.length} deferral line(s) with no "${INDY_ACK}" ack quote — agent-unilateral deferral is incomplete scope` };
+    const missing = unacknowledgedObligations(context.specText ?? "");
+    return missing.length === 0
+      ? { ok: true, detail: "named deferrals and transfers have item-bound owner quotes in Discovery; quote provenance and scope require review" }
+      : { ok: false, detail: `${missing.join(ITEM_SEPARATOR)} has no item-bound Indy acknowledgement in Discovery — agent-unilateral deferral is incomplete scope` };
   });
 }
 
 function statusDone(context: CriterionContext): boolean {
-  return specLines(context).some((line) => line.replaceAll("*", "").replace(/\s+/g, " ").includes(STATUS_DONE));
+  return header(context.specText ?? "", "Status") === DONE_MARKER;
 }
 
 function specLines(context: CriterionContext): string[] {
   return (context.specText ?? "").split(/\r?\n/);
-}
-
-function dimensionLabels(lines: string[]): string {
-  return lines.map((line) => line.trim().slice(DIMENSION_PREFIX.length).split("*")[0]?.trim() ?? "?").join(", ");
 }
 
 function baselineEvidence(context: CriterionContext): Verdict {

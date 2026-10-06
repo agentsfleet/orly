@@ -1,0 +1,23 @@
+bun test v1.4.2 (744846f84)
+
+src/installation/migration.test.ts:
+116 |   const { repo, model, options } = await fixture();
+117 |   await install(model, { ...options, checkpoint: () => { throw new Error("interruption"); } });
+118 |   const journal = await Bun.file(join(repo, JOURNAL)).json();
+119 |   journal.data.deletes = [];
+120 |   await Bun.write(join(repo, JOURNAL), JSON.stringify(journal));
+121 |   await expect(install(model, options)).rejects.toThrow("integrity mismatch");
+                                                      ^
+error: expect(received).rejects.toThrow(expected)
+
+Expected promise that rejects
+Received promise that resolved: Promise { <resolved> }
+
+      at <anonymous> (/private/tmp/orly-assertion-controls-Oct_05-5nygx8ve/journal-integrity/src/installation/migration.test.ts:121:49)
+(fail) changed journal cannot authorize recovery [76.87ms]
+
+ 0 pass
+ 19 filtered out
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [97.00ms]

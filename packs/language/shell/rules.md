@@ -7,4 +7,4 @@ every exit path. Avoid `eval` for external input. Match the repository's require
 shell and macOS Bash compatibility level.
 
 The repository owns ShellCheck and executable tests — it declares them in
-`.oracle/orly.json`.
+`.orly/orly.json`.

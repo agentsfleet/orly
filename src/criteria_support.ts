@@ -2,8 +2,9 @@ import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { RulesModel } from "./model";
 import { SurfaceReport } from "./surfaces";
 
+export { runCommand } from "./command_runner";
+
 const PIPE_OUTPUT = "pipe";
-const NO_OUTPUT = "no output";
 
 export type Verdict = { ok: boolean; detail: string };
 export type CriterionResult = Verdict & { name: string };
@@ -28,24 +29,6 @@ export type Criterion = { name: string; evaluate: (context: CriterionContext) =>
 // never report under a name that disagrees with the one it was registered as.
 export function criterion(name: string, evaluate: (context: CriterionContext) => Verdict): Criterion {
   return { name, evaluate: (context) => ({ name, ...evaluate(context) }) };
-}
-
-export function runCommand(root: string, command: string[]): Verdict {
-  // Profile command surfaces are repository-declared, so a named binary may
-  // simply not be installed here. Bun.spawnSync THROWS in that case; a gate
-  // must report every criterion as a verdict, never abort the run, so the
-  // missing binary becomes a red line naming the command.
-  let result;
-  try {
-    result = Bun.spawnSync(command, { cwd: root, env: UNSCOPED_ENVIRONMENT, stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
-  } catch (error) {
-    return { ok: false, detail: `${command[0] ?? "command"} could not be run: ${error instanceof Error ? error.message : String(error)}` };
-  }
-  const output = [result.stdout.toString(), result.stderr.toString()].filter(Boolean).join("\n").trim();
-  if (output) return { ok: result.exitCode === 0, detail: `exit ${result.exitCode}:\n${output}` };
-  return result.exitCode === 0
-    ? { ok: true, detail: "exit 0" }
-    : { ok: false, detail: `exit ${result.exitCode}: ${NO_OUTPUT}` };
 }
 
 export function gitOutput(root: string, command: string[]): string {

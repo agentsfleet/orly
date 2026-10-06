@@ -1,0 +1,92 @@
+{
+  "revision": "4be34f70a14ffdffa6b26bbdaac4111379771817",
+  "runtime": "bun 1.4.2",
+  "cwd": "/Users/kishore/Projects/orly",
+  "limits": [
+    "Required plan revalidation after the original five-minute smoke expired; its deadline was not reset.",
+    "One current functional report combines original smoke history with these current-input checks.",
+    "Disposable local Git, filesystem and process effects; no browser, deployment, native build, live consumer or model call."
+  ],
+  "evidence": [
+    {
+      "command": "bun test src/installation_preservation.test.ts",
+      "contract": "Original input digests refuse owner saves during staging and preserve exact owner bytes",
+      "expected": "4 passed, 0 failed, 23 assertions; refused updates retain the owner's content and create no recovery journal",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/command_process.test.ts",
+      "contract": "Owner disappearance and supervisor stop signals stop owned workloads without repeated group kills",
+      "expected": "5 passed, 0 failed, 18 assertions; no workload survives cancellation or signal cleanup",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/installation/migration.test.ts",
+      "contract": "Migration preserves owner hooks, validates metadata and recovers each declared interruption point",
+      "expected": "36 passed, 0 failed, 812 assertions; owner setting and exact bytes retained, ordered recovery completes",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/surfaces.test.ts src/spec_template_io.test.ts",
+      "contract": "Dotted-version specifications are excluded from user documentation and staged content is validated independently of working-tree repairs",
+      "expected": "19 passed, 0 failed, 52 assertions; invalid index refuses, valid index accepts despite unstaged damage",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    }
+  ],
+  "learning": [
+    {
+      "observationCapture": "006",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/installation_preservation.test.ts"
+      ],
+      "hypothesis": "Owner bytes survive current staging refusal; verify owner cancellation and supervisor stop signals on the current shared filenames and named limits.",
+      "nextCapture": "007",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/command_process.test.ts"
+      ]
+    },
+    {
+      "observationCapture": "007",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/command_process.test.ts"
+      ],
+      "hypothesis": "Current supervisor assertions pass; verify recoverable migration, owner hook refusal and metadata ordering through real Git and filesystem effects.",
+      "nextCapture": "008",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/installation/migration.test.ts"
+      ]
+    },
+    {
+      "observationCapture": "008",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/installation/migration.test.ts"
+      ],
+      "hypothesis": "Migration preserves owner hooks and all declared recovery points; verify dotted-version spec filtering and staged-index validation on the corrected selectors.",
+      "nextCapture": "009",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/surfaces.test.ts",
+        "src/spec_template_io.test.ts"
+      ]
+    }
+  ],
+  "verdict": {
+    "status": "pass",
+    "open": []
+  }
+}

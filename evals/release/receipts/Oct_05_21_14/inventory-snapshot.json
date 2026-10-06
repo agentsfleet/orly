@@ -1,0 +1,38 @@
+{
+  "observed_at": "Oct 05, 2026: 10:18 PM",
+  "source_revision": "4be34f70a14ffdffa6b26bbdaac4111379771817",
+  "totals": {
+    "files": 373,
+    "packed": 196,
+    "reviewed": 187,
+    "pending": 186
+  },
+  "record_bindings": [
+    {
+      "path": "evals/release/inventory.json",
+      "sha256": "8576e4a8477aae036b1408ad38d4eb71d4a2152edf77454fd116cfb9e779fd88"
+    },
+    {
+      "path": "evals/release/reviewed.json",
+      "sha256": "532be8e0e114909b5757df437d07e64a9b4b1a231d467b6d1e2b0aaa7bca4b0f"
+    },
+    {
+      "path": "evals/release/inventory.ts",
+      "sha256": "ccb8db3ed0101b72f7e4800a66913d3603c40e0876caf426e8291bd668964d4d"
+    },
+    {
+      "path": "evals/release/repairs.json",
+      "sha256": "c7ac8b200ee5bd1bc95ba490127c2c8cacf6f6a8ff36bd5cd375b5824093413d"
+    },
+    {
+      "path": "evals/release/review-Oct_05_21_14.md",
+      "sha256": "2db038611501a8947ee67a4254d099a9b304d1a29e8cec3ed86e9cb60acb4ce4"
+    },
+    {
+      "path": "evals/release/test-quality-Oct_05_21_14.md",
+      "sha256": "e3283c4db6e8da9694ca05d3099bfe73c1f3386e3913b056bab862cea0edaf7b"
+    }
+  ],
+  "package_membership": "inventory generator independently enumerates npm pack --dry-run --json",
+  "limit": "External binding of exact record bytes; mechanical byte inspection does not complete semantic review. This snapshot does not bind itself."
+}

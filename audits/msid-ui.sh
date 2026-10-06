@@ -72,27 +72,31 @@ MODE="${1:---staged}"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
+EXPLICIT=()
 case "$MODE" in
   --staged|staged)
-    DIFF_CMD="git diff --cached -U0"
+    [ "$#" -le 1 ] || { printf 'choose a mode or explicit files\n' >&2; exit 2; }
+    DIFF_ARGS=(--cached)
     POST_REF=":"
     LABEL="staged"
     ;;
   --diff|diff)
+    [ "$#" -le 1 ] || { printf 'choose a mode or explicit files\n' >&2; exit 2; }
     BASE="${BASE:-origin/main}"
-    if ! git rev-parse --verify "$BASE" >/dev/null 2>&1; then BASE="HEAD"; fi
-    DIFF_CMD="git diff -U0 ${BASE}...HEAD"
+    if ! git rev-parse --verify "${BASE}^{commit}" >/dev/null 2>&1; then
+      printf 'FAIL: comparison revision is missing: %s\n' "$BASE" >&2; exit 2
+    fi
+    DIFF_ARGS=("${BASE}...HEAD")
     POST_REF="HEAD:"
     LABEL="vs $BASE"
     ;;
-  --all|all)
-    # No "all" mode — this audit is diff-shaped by construction (it
-    # asserts on *added* lines, not file state). Force callers to pick.
-    echo "usage: $0 [--staged|--diff]" >&2
-    exit 2
-    ;;
+  -h|--help) printf 'usage: %s [--staged|--diff|file ...]\n' "$0"; exit 0 ;;
+  -*) printf 'usage: %s [--staged|--diff|file ...]\n' "$0" >&2; exit 2 ;;
   *)
-    echo "usage: $0 [--staged|--diff]" >&2; exit 2 ;;
+    for path in "$@"; do
+      case "$path" in -*) printf 'unknown audit option: %s\n' "$path" >&2; exit 2 ;; esac
+    done
+    EXPLICIT=("$@"); POST_REF=""; LABEL="explicit files" ;;
 esac
 
 # Single awk pass; reads stdin (the unified diff).
@@ -111,10 +115,11 @@ esac
 # The hunk header carries the post-image line number, so `line_above` can fetch
 # the neighbouring line out of the post-image the mode named. Same shape as
 # audits/design-tokens.sh, which has always read its override out of the file.
-hits=$($DIFF_CMD | awk -v post_ref="$POST_REF" '
+scan_diff() {
+ORLY_AUDIT_PATH="$1" awk -v post_ref="$POST_REF" '
   # BWK awk (macOS) has no gensub and no --posix quoting help; APOSTROPHE is
   # built rather than written, because this program is inside single quotes.
-  BEGIN { APOSTROPHE = sprintf("%c", 39) }
+  BEGIN { APOSTROPHE = sprintf("%c", 39); f = ENVIRON["ORLY_AUDIT_PATH"] }
 
   # The source line above line `n` of `path`, from the post-image, or "" when
   # there is none. Cached: a hunk may ask about the same neighbour repeatedly,
@@ -124,16 +129,23 @@ hits=$($DIFF_CMD | awk -v post_ref="$POST_REF" '
     key = path SUBSEP n
     if (key in above) return above[key]
     above[key] = ""
-    # A path holding an apostrophe cannot go through the quoting below. No
-    # carve-out beats a mis-quoted shell command built from a filename.
-    if (index(path, APOSTROPHE) > 0) return ""
-    cmd = "git show " APOSTROPHE post_ref path APOSTROPHE " 2>/dev/null | sed -n " (n - 1) "p"
+    if (post_ref == "") cmd = "sed -n " (n - 1) "p " shell_quote(path)
+    else cmd = "git show " shell_quote(post_ref path) " 2>/dev/null | sed -n " (n - 1) "p"
     if ((cmd | getline out) > 0) above[key] = out
     close(cmd)
     return above[key]
   }
 
-  /^\+\+\+ b\// { f=$2; sub("^b/","",f); next }
+  function shell_quote(s,    i,c,out) {
+    out = APOSTROPHE
+    for (i = 1; i <= length(s); i++) {
+      c = substr(s, i, 1)
+      if (c == APOSTROPHE) out = out APOSTROPHE "\\" APOSTROPHE APOSTROPHE
+      else out = out c
+    }
+    return out APOSTROPHE
+  }
+  /^\+\+\+/ { next }
   # `@@ -a,b +c,d @@` — $3 is the post-image start line for this hunk.
   /^@@/ { start=$3; sub(/^\+/,"",start); split(start,parts,","); nl=parts[1]+0; next }
   /^[^+]/ { next }
@@ -173,7 +185,22 @@ hits=$($DIFF_CMD | awk -v post_ref="$POST_REF" '
       print "UI     " f ": " line
     }
   }
-')
+'
+}
+
+hits=$(
+  if [ "${#EXPLICIT[@]}" -gt 0 ]; then
+    for path in "${EXPLICIT[@]}"; do
+      [ -f "$path" ] || continue
+      # diff returns one for differences; that is expected input here.
+      { git diff --no-index --no-ext-diff -U0 -- /dev/null "$path" || [ "$?" -eq 1 ]; } | scan_diff "$path"
+    done
+  else
+    while IFS= read -r -d '' path; do
+      git diff --no-ext-diff -U0 "${DIFF_ARGS[@]}" -- "$path" | scan_diff "$path"
+    done < <(git diff --name-only -z --diff-filter=ACMRT "${DIFF_ARGS[@]}")
+  fi
+)
 
 if [ -n "$hits" ]; then
   echo "FAIL: audit-msid-ui ($LABEL) — MS-ID / UI hits below"

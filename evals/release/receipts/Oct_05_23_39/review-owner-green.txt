@@ -1,0 +1,80 @@
+bun test v1.4.2 (744846f84)
+
+src/installation_preservation.test.ts:
+(pass) strong_assertion_exposes_real_defect [1036.07ms]
+39 |     }
+40 |     return write(destination, input, settings);
+41 |   });
+42 |   const result = await install(model, options);
+43 |   expect(injected).toBe(1);
+44 |   expect(result.ok).toBe(false);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/installation_preservation.test.ts:44:21)
+(fail) an owner edit to .orly/orly.json during staging refuses without overwriting it [1003.01ms]
+39 |     }
+40 |     return write(destination, input, settings);
+41 |   });
+42 |   const result = await install(model, options);
+43 |   expect(injected).toBe(1);
+44 |   expect(result.ok).toBe(false);
+                         ^
+error: expect(received).toBe(expected)
+
+Expected: false
+Received: true
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/installation_preservation.test.ts:44:21)
+(fail) an owner edit to .orly/AGENTS.md during staging refuses without overwriting it [894.01ms]
+(pass) an owner edit to AGENTS.md during staging refuses without overwriting it [959.06ms]
+
+src/installation/migration.test.ts:
+(pass) an active owner hook in .git/hooks remains connected [430.25ms]
+(pass) an active owner hook in .githooks remains connected [324.17ms]
+(pass) interrupted_install_recovers at journal 0 [311.97ms]
+(pass) interrupted_install_recovers at write 0 [352.16ms]
+(pass) interrupted_install_recovers at write 1 [390.66ms]
+(pass) interrupted_install_recovers at write 2 [300.80ms]
+(pass) interrupted_install_recovers at write 3 [276.86ms]
+(pass) interrupted_install_recovers at write 4 [336.94ms]
+(pass) interrupted_install_recovers at write 5 [259.26ms]
+(pass) interrupted_install_recovers at metadata 0 [332.11ms]
+(pass) interrupted_install_recovers at delete 0 [329.02ms]
+(pass) interrupted_install_recovers at delete 1 [362.68ms]
+(pass) interrupted_install_recovers at delete 2 [336.96ms]
+(pass) hook installation recovers interruption at journal 0 [599.02ms]
+(pass) hook installation recovers interruption at write 0 [661.27ms]
+(pass) hook installation recovers interruption at write 1 [612.28ms]
+(pass) hook installation recovers interruption at write 2 [498.58ms]
+(pass) hook installation recovers interruption at write 3 [553.36ms]
+(pass) hook installation recovers interruption at write 4 [605.29ms]
+(pass) hook installation recovers interruption at write 5 [775.38ms]
+(pass) hook installation recovers interruption at write 6 [545.22ms]
+(pass) hook installation recovers interruption at write 7 [556.22ms]
+(pass) hook installation recovers interruption at metadata 0 [620.48ms]
+(pass) hook installation recovers interruption at delete 0 [513.52ms]
+(pass) hook installation recovers interruption at delete 1 [514.80ms]
+(pass) hook installation recovers interruption at delete 2 [575.14ms]
+(pass) migration_preserves_owned_content refuses edited or unowned dispatch/check.md [147.75ms]
+(pass) migration_preserves_owned_content refuses edited or unowned AGENTS.orly.md [134.75ms]
+(pass) migration_preserves_owned_content refuses edited or unowned .orly/dispatch/check.md [205.43ms]
+(pass) recovery refuses an edited destination before deleting any old source [180.09ms]
+(pass) changed journal cannot authorize recovery [181.83ms]
+(pass) a current installation preserves an independent previous configuration [248.39ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [327.77ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [365.62ms]
+(pass) owner hook changes during destination writes are refused before metadata or cleanup [313.64ms]
+(pass) migration removes only proven obsolete instruction references [159.36ms]
+
+2 tests failed:
+(fail) an owner edit to .orly/orly.json during staging refuses without overwriting it [1003.01ms]
+(fail) an owner edit to .orly/AGENTS.md during staging refuses without overwriting it [894.01ms]
+
+ 38 pass
+ 2 fail
+ 829 expect() calls
+Ran 40 tests across 2 files. [18.27s]

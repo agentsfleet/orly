@@ -1,4 +1,4 @@
-import { chmodSync, existsSync, lstatSync, readdirSync, readlinkSync, realpathSync } from "node:fs";
+import { chmodSync, existsSync, lstatSync, readdirSync, realpathSync } from "node:fs";
 import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
 
 import { validateActiveRule, validateRelativePath } from "./validation";
@@ -7,8 +7,8 @@ export type JsonObject = Record<string, unknown>;
 
 const HASH_ALGORITHM = "sha256";
 const HASH_ENCODING = "hex";
-const MODE_EXECUTABLE = "0755";
-const MODE_REGULAR = "0644";
+export const MODE_EXECUTABLE = "0755";
+export const MODE_REGULAR = "0644";
 const EXECUTABLE_BITS = 0o755;
 const OCTAL = 8;
 
@@ -41,6 +41,7 @@ export function isBelow(path: string, root: string): boolean {
 export function nearestExistingAncestor(path: string): string {
   let current = path;
   while (!existsSync(current)) {
+    if (isSymbolicLink(current)) safeRealpath(current);
     const parent = dirname(current);
     if (parent === current) return current;
     current = parent;
@@ -81,23 +82,12 @@ function isSymbolicLink(path: string): boolean {
   }
 }
 
-// A dangling link resolves nowhere; judge it by where it points, not where it
-// lands, so a link to a not-yet-created file outside the repository still fails.
-//
-// The directory holding it is resolved too, and has to be: the caller compares
-// this against a realpath'd root, and a lexical answer put a link pointing
-// squarely INSIDE the repository on the wrong side of that comparison wherever
-// the repository itself sits behind a symlink — which is every macOS temporary
-// directory, and plenty of real checkouts. The refusal even named the file it
-// was about to protect, one path component at a time.
-//
-// Resolving the parent cannot fail here: this runs only where the destination
-// itself lstat'd as a link, which a missing parent makes impossible.
-function safeRealpath(path: string): string | undefined {
+// Unresolved links cannot prove containment, including chains with missing parents.
+function safeRealpath(path: string): string {
   try {
     return realpathSync(path);
   } catch {
-    return resolve(realpathSync(dirname(path)), readlinkSync(path));
+    throw new OrlyError(`refusing unresolved symbolic link: ${path}`);
   }
 }
 
@@ -252,4 +242,3 @@ export function normalizedMode(path: string): number {
 export function setNormalizedMode(path: string, source: string): void {
   chmodSync(path, normalizedMode(source));
 }
-

@@ -17,7 +17,7 @@ cardinality*. It is a pure **🤔 judgment** dispatch grounded in `docs/architec
 - Naming a stream / pub-sub channel / Redis key namespace / consumer group /
   queue / RPC method / Postgres schema / table.
 - Asserting cardinality ("one row per X", "exactly one consumer per stream",
-  "fleet-wide vs per-tenant").
+  "repository-wide vs per-tenant").
 - Describing a flow ("on crash → X reclaims via Y", "trigger source A lands on
   stream B with actor C").
 - Answering a user question about how data flows between components.
@@ -81,13 +81,18 @@ branch settles both before the Pull Request (PR) opens:
   branch that touched flow-defining code produces a non-empty
   `git diff origin/main..HEAD -- docs/architecture/`. Else PR Session Notes
   documents why nothing architectural changed.
-- **Docs project `~/Projects/docs/`** (user-facing, `docs.agentsfleet.net`). When
+- **Published docs** (the repository's declared `surfaces.docs`). When
   the change alters documented user-facing behaviour (endpoints, Command-Line
   Interface (CLI) surface, flags, flows users see), the affected pages are
-  revised per the CHORE(close) required
+  revised in their owning repository per the CHORE(close) required
   outputs in `AGENTS.md` — a changelog `<Update>` alone is insufficient.
   Internal-only reshaping with no documented-behaviour change → no docs-project
   edit, and Session Notes say so.
+
+<!-- oracle-packs:start product.agentsfleet -->
+For `agentsfleet`, the published docs repository is `~/Projects/docs/` at
+`docs.agentsfleet.net`; edits use its own branch and explicit authorization.
+<!-- oracle-packs:end -->
 
 Updating one home and not the other is the failure mode this section names: the
 internal doc drifts from what users are told, or vice versa.

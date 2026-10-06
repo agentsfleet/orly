@@ -10,7 +10,7 @@ Test the feature combinations the repository actually builds. Concurrency work
 needs a deterministic contention test, not only a happy-path asynchronous test.
 
 The repository owns formatting, Clippy, build, test, security, and benchmark
-commands — it declares them in `.oracle/orly.json`.
+commands — it declares them in `.orly/orly.json`.
 
 ## Reference guideline (mandatory in review)
 

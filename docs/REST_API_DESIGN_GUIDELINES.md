@@ -1,4 +1,4 @@
-# REST API Design Guidelines — `agentsfleet/agentsfleetd`
+# REST API Design Guidelines
 
 **Status:** Canonical instruction set. Read this before adding, modifying, or removing any HTTP endpoint.
 **Trigger:** the global instruction `HTTP handler or OpenAPI changes → read docs/REST_API_DESIGN_GUIDELINES.md first` fires when the diff touches a handler, `public/openapi.json`, or any `route_*` file. If you're an agent reading this — you got here because that trigger fired. Follow this doc as a checklist, not as background reading.
@@ -9,10 +9,11 @@ This is a goal-oriented instruction set. Each rule states the goal it serves so 
 
 ## Audience — who this binds
 
-This doc binds **whoever ships the change** — Kishore directly, OR an agent acting on Kishore's behalf in auto mode under a start-instruction (per `~/.claude/CLAUDE.md` autonomy rules). Concretely:
+This guide binds the author and reviewer in the consuming repository.
+Publishing and merge authorization come from that repository's operating model.
 
 - **The agent** runs the Quick checklist below as part of `CHORE(close)` and the §10 pre-PR gate, opens the PR via `gh pr create`, and answers `orly-babysit-prs` review feedback. The agent is the primary enforcer.
-- **Kishore** opens the PR directly when working without an agent. Same checklist applies.
+- **The human author** follows the same checklist when working without an agent.
 - **A reviewer** (human or `/review`) checks the PR against this doc adversarially. A red box on the checklist that's not justified in the PR description is grounds to block merge.
 
 When this doc says "you" it means the agent or the human author — same rules either way. When it says "MUST" it means a missing or wrong implementation blocks merge; "SHOULD" means deviate only with a one-line rationale in the PR description.
@@ -21,14 +22,16 @@ When this doc says "you" it means the agent or the human author — same rules e
 
 ## Quick checklist — adding an endpoint
 
-Run this checklist as part of `CHORE(close)` (per `~/.claude/CLAUDE.md` lifecycle), before `gh pr create`. Every box must be checked, OR the PR description must call out the deviation with a reason. An unchecked box that the description ignores blocks merge.
+Run this checklist at the repository's review boundary before creating a Pull
+Request (PR). Every applicable item needs evidence or an owner-approved
+exception; an unchecked item cannot silently become a pass.
 
 - [ ] **URL design** — plural noun resource, hierarchical path, no verbs (§1); operation-style `:verb` declared as one of the three allowed categories (§1)
 - [ ] **Path params + trailing slash** — `{resource_id}` matches body field name; no trailing slash (§1)
 - [ ] **HTTP method** chosen by semantics; PATCH idempotency guarantee stated; `Idempotency-Key` honored if applicable (§2)
 - [ ] **Long-running ops** use the canonical `202 + /v1/operations/{id}` shape (§2)
 - [ ] **Request body shape** matches the path (no path-param IDs in body) (§3)
-- [ ] **Pagination** uses Stripe-style `?starting_after=&limit=` with `next_cursor` response field; default 50, max 100 (§3)
+- [ ] **Pagination** uses keyset cursors with shared, declared default and maximum bounds (§3)
 - [ ] **List envelope** is exactly `{items, total: int|null, next_cursor: string|null}` — no synonyms (§3)
 - [ ] **Bulk endpoints** use `207` with the canonical per-item shape (§3)
 - [ ] **Null vs omit** — absent optionals omitted, `null` reserved for "explicitly cleared" (§3)
@@ -37,10 +40,10 @@ Run this checklist as part of `CHORE(close)` (per `~/.claude/CLAUDE.md` lifecycl
 - [ ] **Status codes** — 409 includes `current_state`; 412 includes `etag`; 429 includes `Retry-After` + `X-RateLimit-*` (§4)
 - [ ] **ETag/`If-Match`** wired for any resource with realistic concurrent edits (§4)
 - [ ] **Error responses** use the registry; `detail` follows hygiene rules (no IDs, no SQL, no paths, ≤200 chars) (§5)
-- [ ] **OpenAPI document** regenerated from the build, not hand-edited; the coverage gate is green (§6)
-- [ ] **Route registered** in all six places (§7)
-- [ ] **Handler signature** takes only the extractors it reads and returns `Result<Response, Refusal>` (§8)
-- [ ] **Middleware policy** picked from the table; raw handlers carry first-10-lines comment (§7)
+- [ ] **OpenAPI document** matches the repository's canonical source and declared generation or validation checks (§6)
+- [ ] **Route registered** in the repository's actual router and discovery graph (§7)
+- [ ] **Handler signature** follows its framework and uses the inputs it reads (§8)
+- [ ] **Authentication and ownership** are proved on the served route before data access (§7–§8)
 - [ ] **Versioning** — added/renamed/removed surface listed in PR description; deprecation uses `Deprecation` + `Sunset` headers; new response fields declare `x-stability` (§9)
 - [ ] **Tests** — happy path + one error per refusal + idempotency double-PATCH + `Idempotency-Key` replay (where applicable) + ETag mismatch (§10)
 - [ ] **Logging** — sensitive ID values are DEBUG-only or carry `// log-id-allowed:` comment; secret-shaped fields are write-only or one-time-read (§11)
@@ -215,7 +218,15 @@ GET /products?status=active&sort=-created_at&starting_after=01HZQ...&limit=50
   - **Time ranges:** `?created_after=<ts_ms>&created_before=<ts_ms>`. Bracket grammar (`?created_at[gte]=...`) is forbidden.
   - **No boolean explosions.** Don't add `?include_x=true&include_y=true` — use `?include=x,y` with a documented enum of legal values, OR don't expose a knob.
 - **Sorting:** `sort=field` ascending; `sort=-field` descending. Single sort key per request — no multi-key.
-- **Pagination — Stripe-style keyset only.** Request: `?starting_after=<resource_id>&limit=<int>`. Response: `next_cursor: <resource_id> | null` (the field is named `next_cursor` even though the request param is `starting_after`). Cursor encode/decode goes through `afd_core::paging::cursor`, and both the parameter name and the bounds are constants there: `QUERY_STARTING_AFTER`, `DEFAULT_LIMIT` (50) and `MAX_LIMIT` (100). Read the limit through that module rather than parsing the query string in a handler: `Page::parse` takes the route's `Ceiling`, and a list that is not keyset-paged reads `?limit` through `afd_validate::Limit::parse(raw, CEILING)` with a `const CEILING: Ceiling` beside its handler. An empty `?limit=` means the route's default. To page forward, send the response's `next_cursor` value back as the next request's `starting_after`. **Forbidden:** page-based `?page=&page_size=`, and custom request-side `?cursor=` names. Both spellings predate this rule where they survive; do not copy either into a new endpoint.
+- **Pagination — keyset.** Request: `?starting_after=<resource_id>&limit=<int>`;
+  response: `next_cursor: <resource_id> | null`. Send `next_cursor` back as the
+  next request's `starting_after`; use shared repository parsing and constants
+  for the default and maximum, with bounds tested at the served endpoint.
+<!-- oracle-packs:start product.agentsfleet -->
+- For `agentsfleet`, use `afd_core::paging::cursor`, `Page::parse` and its route
+  `Ceiling`, or `afd_validate::Limit::parse`. `DEFAULT_LIMIT` is 50 and
+  `MAX_LIMIT` is 100; an empty limit uses the route default.
+<!-- oracle-packs:end -->
 - **Sparse fieldsets / `?include=` / `?fields=`:** not supported in v1. If you need to slim a payload, design a smaller endpoint. Don't invent.
 
 ### Bulk operations
@@ -242,7 +253,9 @@ This rule is binding on responses AND requests. SDK consumers branch on `field =
 
 ### IDs
 
-- Use **UUIDv7** for all externally-exposed IDs (sortable, time-encoded). See [uuid7.com](https://uuid7.com).
+- Preserve the repository's documented public identifier format and test its
+  parsing at the endpoint boundary. Do not substitute another product's format.
+- `agentsfleet` uses Universally Unique Identifier version 7 (UUIDv7) for public identifiers. <!-- oracle-packs:product.agentsfleet -->
 - Do not expose database serial integers.
 - Sensitive IDs (workspace_id, agent_id) live in the path, not the body. Never log their values at INFO level (§11).
 
@@ -252,6 +265,11 @@ This rule is binding on responses AND requests. SDK consumers branch on `field =
 
 ### Success — return the wire type
 
+Return the repository's typed response through its framework's response
+renderer. Share the public response shape with its schema source so field names,
+status and content type stay consistent.
+
+<!-- oracle-packs:start product.agentsfleet -->
 ```rust
 Ok(Json(FleetDetailResponse::from(&detail)).into_response())
 Ok((StatusCode::CREATED, Json(CreatedResponse { id, key })).into_response())
@@ -262,6 +280,7 @@ The wire type owns the field names and `IntoResponse` writes the status and
 content-type. A response shape belongs in `afd_wire`, not spelled inline in a
 handler, so the same struct is what the OpenAPI document is generated from.
 Build a response by hand only for a Server-Sent Events stream.
+<!-- oracle-packs:end -->
 
 ### Status codes
 
@@ -323,13 +342,20 @@ For any resource where concurrent edits are realistic (anything mutable that two
 
 ### Use the error registry
 
-The error-code registry (`rustd/crates/afd_core/src/error_code.rs` and the family modules beside it) owns the HTTP status, RFC 7807 `title`, and `docs_uri`. Your handler supplies only the code and a human-readable `detail`:
+Use the repository's error registry and renderer for status, title and public
+documentation links. Handlers supply the code and a safe human-readable detail;
+they do not duplicate the registry's response shape.
+
+<!-- oracle-packs:start product.agentsfleet -->
+The `agentsfleet` registry is `rustd/crates/afd_core/src/error_code.rs` and its
+family modules. Its handlers use these refusal constructors:
 
 ```rust
 Refusal::malformed(DETAIL_WORKSPACE_ID)          // the sentence is a constant
 Refusal::coded(FLEET_NOT_FOUND, DETAIL_NOT_FOUND)
 Refusal::preconditioned(error.code(), error.detail(), current)
 ```
+<!-- oracle-packs:end -->
 
 Never assemble a `Problem` by hand and never write a status and body directly:
 the status, title and documentation link come from the registry entry, and a
@@ -371,16 +397,20 @@ The title must be safe to render verbatim in a UI toast — think "what would I 
    - State: `"<noun> already exists"` / `"<noun> not found"` / `"<noun> expired"` — `Agent name already exists`, `token expired`.
    - Format help: `"<param>: use <format>"` — `invalid_since_format: use Go-style duration (15s, 30m, 2h, 7d) or RFC 3339 (YYYY-MM-DDTHH:MM:SSZ)`.
 
-When you write a new refusal, find the closest existing call site under `rustd/crates/afd_api_*/src/handler/**` and copy its shape. Don't freelance.
+When writing a refusal, read the closest existing handler and the repository's
+canonical renderer before choosing the shape.
 
 ### Internal 500s — direct calls
 
-A datastore or service failure is not a sentence a handler writes. Lift it with
-`Refusal::at`, naming the operation that failed:
+A datastore or service failure uses the repository's canonical refusal renderer.
+Name the failed operation in internal diagnostics without exposing its details
+to the caller.
 
+<!-- oracle-packs:start product.agentsfleet -->
 ```rust
 services.fleet_detail(&context, fleet_id).await.map_err(Refusal::at(FLEET_READ))?
 ```
+<!-- oracle-packs:end -->
 
 The operation constant is what identifies the failure in logs and telemetry;
 the caller gets the registry's 500 and no internal detail.
@@ -410,6 +440,11 @@ Don't invent other extensions without amending this doc.
 
 ## §6 — OpenAPI editing
 
+Locate the repository's canonical OpenAPI source. Update that source and run
+its declared generation or validation command; do not assume a Rust daemon,
+generated artifact or build target from another product.
+
+<!-- oracle-packs:start product.agentsfleet -->
 **The document is generated. There is nothing to hand-edit.**
 
 `public/openapi.json` is emitted from the daemon's own handlers — the route
@@ -449,7 +484,14 @@ generated document, so a description that breaks the wording rules fails
 for maintainers rather than for API consumers belongs in a `//` comment beside
 it, which the document does not carry.
 
+<!-- oracle-packs:end -->
 ## §7 — Registering a route
+
+Register the served method and path in the repository's router and discovery
+graph. Prove authentication and resource ownership are enforced before access;
+a helper that no served route mounts is not evidence of authorization.
+
+<!-- oracle-packs:start product.agentsfleet -->
 
 **The router is built FROM the route table, not beside it.** `Route::all()` is
 walked once at startup and every template it yields is mounted, so a path
@@ -582,7 +624,15 @@ When in doubt, mirror an existing handler:
 | Signature-proven ingress | `rustd/crates/afd_api_ingress/src/handler/webhook/receive_route.rs` |
 | A runner speaking for itself | `rustd/crates/afd_api_runner/src/handler/runner/lease.rs` |
 
+<!-- oracle-packs:end -->
 ## §8 — Handler signature rule
+
+Follow the repository's framework and read its canonical handler first.
+Use validated inputs and the shared response and error renderers.
+Enforce authentication and ownership through its canonical mechanism, with tests
+against the actual served route; do not duplicate mounted checks by habit.
+
+<!-- oracle-packs:start product.agentsfleet -->
 
 A handler is an axum handler. The router built it into a stack that has already
 admitted the request, proven the caller, checked the capability and confirmed
@@ -636,6 +686,7 @@ pub async fn my_endpoint<D: Services>(
 - ❌ A second unique spelling of a capability check inside the handler body.
 - ❌ Re-parsing a path parameter the extractor already typed.
 
+<!-- oracle-packs:end -->
 ## §9 — Versioning
 
 URI-based: `/v1/...`. All current endpoints sit under `/v1`. Bump to `/v2` only when a breaking change is unavoidable; default to additive evolution within `/v1`.
@@ -706,11 +757,10 @@ Every PR that changes the HTTP surface MUST open its description with a "Surface
 
 Before opening a PR touching any handler:
 
-- [ ] `zig build` clean
-- [ ] `zig build test` passes
+- [ ] Declared build and unit commands have observed successful results
 - [ ] the declared `verify.unit` command passes — the route-scope match and its tests cover the auth gate matrix
 - [ ] the repository's integration suite passes end to end against real datastores, where it declares one
-- [ ] Cross-compile: `zig build -Dtarget=x86_64-linux && zig build -Dtarget=aarch64-linux`
+- [ ] Applicable platform targets and test graphs match the repository's declared matrix
 - [ ] the declared `verify.lint` command passes — every language gate the repository declares
 - [ ] Handler file ≤ 350 lines; split if it grows
 - [ ] Integration test covers the happy path AND at least one error path per refusal the handler can return
@@ -738,12 +788,18 @@ Before opening a PR touching any handler:
 
 ## §12 — Performance
 
-Targets (measured in CI bench under `make bench`):
+Use the consuming repository's declared performance budgets and benchmark lane.
+Measure applicable latency percentiles, memory and query bounds under the load
+profile the endpoint is expected to serve.
+
+<!-- oracle-packs:start product.agentsfleet -->
+`agentsfleet` targets (measured by its declared benchmark lane):
 
 - p99 latency < 200 ms
 - p95 latency < 150 ms
 - Zero allocator leaks (`std.testing.allocator` integration tests pass)
 - No unbounded query loops. Pagination caps live in §3 (default `limit=50`, max `limit=100`).
+<!-- oracle-packs:end -->
 
 If your endpoint can't meet these in a normal load profile, the spec's "Performance Considerations" section MUST contain ALL of:
 

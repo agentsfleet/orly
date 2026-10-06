@@ -27,7 +27,7 @@ pass".
 
 ## Repository commands are canonical
 
-The commands in `.oracle/orly.json` define full verification. Use repository
+The commands in `.orly/orly.json` define full verification. Use repository
 Make targets where declared; a repository may also declare its native tools
 directly. A narrower package run never substitutes for a declared full check.
 Documentation repositories may use `verify.docs` for site and link checks;

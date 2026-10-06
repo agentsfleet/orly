@@ -28,6 +28,8 @@ describe("docs surface", () => {
     expect(isDocs("README.md", DOCS_PREFIXES)).toBeTrue();
     expect(isDocs("docs/v1/active/M01_001_P2_CLI_DOCS_PROCESS_AS_CODE.md", DOCS_PREFIXES)).toBeFalse();
     expect(isDocs("docs/v2/pending/M52_001_P2_API_X.md", DOCS_PREFIXES)).toBeFalse();
+    expect(isDocs("docs/v0.9.2/active/M05_001_P2_CLI_X.md", DOCS_PREFIXES)).toBeFalse();
+    expect(isDocs("docs/v1.2/done/M05_001_P2_CLI_X.md", DOCS_PREFIXES)).toBeFalse();
     expect(isDocs("src/agentsfleetd/main.zig", DOCS_PREFIXES)).toBeFalse();
   });
 });

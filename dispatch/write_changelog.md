@@ -2,7 +2,7 @@
 
 This is the prose the AGENT reads after `write_documentation.md` and
 `docs/DOCUMENTATION_RULES.md`, **before writing any `<Update>` entry in the
-changelog** (`~/Projects/docs/changelog.mdx`). Like `verify` and
+repository's declared changelog**. Like `verify` and
 `name_architecture`, it has **no deterministic `.sh` half** — voice is a judgment
 call no script can grade. It is a pure **🤔 judgment** dispatch: the agent reads
 this, drafts the entry, and self-audits against the rules below. The deep
@@ -12,9 +12,8 @@ reference is `docs/CHANGELOG_VOICE.md` (Mintlify-style) — read it before writi
 
 - 🤔 DECIDE — judgment-only; the agent writes to the voice below and self-audits.
   No script gates it — it blocks the *turn* (the changelog entry), not a commit.
-- 🟣 delegated — the changelog itself lives in `~/Projects/docs` (its own repo +
-  own-branch flow per AGENTS.md Operational defaults); dotfiles carries only the
-  voice discipline.
+- 🟣 delegated — edit the declared changelog in its owning repository with
+  that repository's branch rules and authorization.
 
 ## Trigger — read `docs/DOCUMENTATION_RULES.md`, then `docs/CHANGELOG_VOICE.md`
 
@@ -40,9 +39,13 @@ a gate skip.
   names, money amounts stay verbatim.
 - **Internal cleanup** gets aggressive trimming, not a paragraph.
 - **History is archived, not rewritten** — past entries are an immutable record.
+- **Rate claims** match the repository's canonical billing constants and
+  published rate tables, with both updated when the behavior changes.
+<!-- oracle-packs:start product.agentsfleet -->
 - **Rate constants** are declared once, in `afd_billing`'s `nanos.rs`, with the
   nanos denominator in `afd_core::money`. A changelog money or rate claim must
   match those — and `rates.mdx` in the docs repository, which no test reaches.
+<!-- oracle-packs:end -->
 
 ## Required output (self-audit line before committing the changelog)
 

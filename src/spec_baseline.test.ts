@@ -5,7 +5,7 @@ import type { CriterionContext } from "./criteria_support";
 import { specBaseline } from "./criteria_spec";
 import { cleanupTemporaryDirectories, git, gitOutput, modelFor, newRepository } from "./gates_test_support";
 
-const CONFIG_PATH = ".oracle/orly.json";
+const CONFIG_PATH = ".orly/orly.json";
 const UNIT = "**Test Baseline:** unit=12 integration=4";
 const EVIDENCE = "**Baseline evidence:** README.md";
 const NO_CODE = "**Test Baseline:** n/a — no code on this branch";

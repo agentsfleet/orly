@@ -1,0 +1,17 @@
+{
+  "observationCapture": "003",
+  "observationArgv": [
+    "bun",
+    "test",
+    "src/installation/migration.test.ts"
+  ],
+  "observed": "bun test v1.4.2 (744846f84)\n",
+  "hypothesis": "Owner hooks and migration retry checks pass; verify dotted specification filtering and authoritative indexed content on this final source.",
+  "nextCapture": "004",
+  "nextArgv": [
+    "bun",
+    "test",
+    "src/surfaces.test.ts",
+    "src/spec_template_io.test.ts"
+  ]
+}

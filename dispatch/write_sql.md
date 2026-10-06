@@ -26,7 +26,21 @@ deterministic façade in this snapshot.
 
 > [JUDGMENT → SCH]
 
-Triggers on every `Edit`/`Write` to `schema/*.sql`, `schema/embed.zig` (`@embedFile` constants), and the canonical migration array in `src/cmd/common.zig`. **Before authoring DDL, read `docs/SCHEMA_CONVENTIONS.md`** (naming, types, schema-qualification). SQL embedded in handlers (`*.zig`) and integration-test fixtures is also governed by the companion rules below — those surfaces additionally fire `write_zig.md` and the GREPTILE GATE.
+Triggers on SQL files, embedded SQL and the repository's migration registration.
+Before writing schema changes, read `docs/SCHEMA_CONVENTIONS.md` and locate the
+repository's current migrations, registration and deployment policy.
+Embedded SQL also fires its selected language façade and the GREPTILE GATE.
+
+## Repository schema policy
+
+> [JUDGMENT → SCH]
+
+Preserve shipped migrations and live data under the repository's own policy.
+Destructive changes require the owner's approval for the specific change.
+A version number, missing `VERSION` file or another product's rebuild policy
+never proves that this repository's data is disposable.
+
+<!-- oracle-packs:start product.agentsfleet -->
 
 ## Merged from dissolved gate cards
 
@@ -44,7 +58,7 @@ The **Schema Table Removal Guard** card dissolves into this façade; its prose i
 
 - Creating, editing, or deleting any file under `schema/*.sql`.
 - Editing `schema/embed.zig` (any `@embedFile` constant).
-- Editing the canonical migration array in `src/cmd/common.zig`.
+- Editing the canonical migration array in `rustd/crates/afd_db/src/migration.rs`.
 - Writing `DROP TABLE`, `ALTER TABLE`, or `SELECT 1;` into any SQL file.
 - Accepting a spec dimension prescribing a "DROP migration", "ALTER migration", or "version marker".
 
@@ -60,7 +74,7 @@ To remove a table:
 
 1. `rm schema/NNN_foo.sql`
 2. Remove `@embedFile` from `schema/embed.zig`
-3. Remove the entry from the migration array in `src/cmd/common.zig` and update length + index-based tests.
+3. Remove the entry from the migration array in `rustd/crates/afd_db/src/migration.rs` and update its registration tests.
 
 **Forbidden:** `ALTER TABLE`, `DROP TABLE`, `SELECT 1;` markers, comment-only files, "keep file for slot numbering". Slot gaps are fine — the DB is wiped on rebuild.
 
@@ -82,6 +96,7 @@ SCHEMA GUARD: VERSION=<v> (<0.30.0 ? teardown : migrate)
 ```
 
 Below `0.30.0`, all three rm- lines appear. From `0.30.0`, replace them with `migration:schema/<NNN>_<change>.sql`.
+<!-- oracle-packs:end -->
 
 ## Companion SQL rules (retained in `docs/greptile-learnings/RULES.md`)
 
@@ -99,16 +114,23 @@ No string literal in `schema/**.sql` may name a value or identifier the applicat
 
 > [DETERMINISTIC → TODO-CHECK]
 
-No magic numbers; all SQL in handlers is schema-qualified (`core.table`, not `table`) — unqualified names fail when `search_path` differs across environments. (RULES.md `RULE NSQ`.)
+No magic numbers; qualify tables with the repository's actual schema —
+unqualified names fail when `search_path` differs across environments.
+(RULES.md `RULE NSQ`.)
 
 ### RULE SGR — Migrations include GRANT statements
 
 > [DETERMINISTIC → TODO-CHECK]
 
-Every `CREATE TABLE` migration ends with `GRANT`s for every role that queries the table (`api_runtime` / `worker_runtime`), mirroring the table's callers. PostgreSQL denies by default — a missing grant fails only at first runtime use. (RULES.md `RULE SGR`.)
+Every `CREATE TABLE` migration grants the required operations to the roles that
+actually query the table. PostgreSQL denies by default — a missing grant fails
+only at first runtime use. (RULES.md `RULE SGR`.)
 
 ### RULE ITF — Integration tests use the real schema
 
 > [JUDGMENT → ITF]
 
-An integration test touching a production table seeds rows through a shared `src/db/test_fixtures_<scope>.zig` module against the real schema — never a session-local `CREATE TEMP TABLE` mocking the production shape (the mock drifts and hides schema changes). Fixtures use semantic scope names, never milestone-numbered ones. (RULES.md `RULE ITF`.)
+An integration test touching a production table uses shared repository fixture
+helpers against the real schema — never a session-local `CREATE TEMP TABLE`
+mocking the production shape. Fixtures use semantic scope names.
+(RULES.md `RULE ITF`.)

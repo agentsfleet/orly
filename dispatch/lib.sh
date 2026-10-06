@@ -49,6 +49,7 @@ DISPATCH_LANG=""
 DISPATCH_EXTS=()
 DISPATCH_FILES=()
 DISPATCH_RC=0
+source "$DISPATCH_SCRIPTS/scope.sh"
 
 # Rule-code gloss map — canonical short expansions (full text in RULES.md legend).
 # Keep in sync with RULES.md; dispatch-coverage.sh fails on a code with no
@@ -111,29 +112,37 @@ dispatch_init() {
 # orly's own length gate — audits/logging.sh is 444 lines against a 350 cap —
 # and the first commit of an adoption failed on the adoption itself.
 dispatch_managed_paths() {
-  local config="$TARGET_ROOT/.oracle/orly.json"
+  local config="$TARGET_ROOT/.orly/orly.json"
   [ -f "$config" ] || return 0
-  sed -n '/"managed"[[:space:]]*:[[:space:]]*\[/,/\]/p' "$config" \
-    | grep -oE '"[^"]+"' \
-    | sed -e 's/^"//' -e 's/"$//' \
-    | grep -vx 'managed' || true
+  bun -e 'const c = JSON.parse(await Bun.file(process.argv[1]).text());
+    if (!Array.isArray(c.managed) || c.managed.some(p => typeof p !== "string" || p.includes("\u0000")))
+      throw new Error("invalid managed ownership array");
+    for (const p of c.managed) process.stdout.write(p + "\u0000");' "$config"
 }
 
 # Resolve targets: explicit file args, or --staged self-discovery via git.
 # Explicit arguments are never filtered — naming a file is asking about it.
 dispatch_resolve_files() {
   DISPATCH_FILES=()
+  audit_scope_init --all "$@"
+  audit_index_snapshot "$@"
+  DISPATCH_STAGED=0
   if [ "${1:-}" = "--staged" ]; then
-    local pathspecs=() e managed
+    DISPATCH_STAGED=1
+    local pathspecs=() e f owned skip managed_file
     for e in "${DISPATCH_EXTS[@]}"; do pathspecs+=("$e"); done
-    managed="$(dispatch_managed_paths)"
-    while IFS= read -r f; do
-      [ -n "$f" ] || continue
-      [ -n "$managed" ] && grep -qxF "$f" <<<"$managed" && continue
+    managed_file="$(mktemp "${TMPDIR:-/tmp}/orly-managed.XXXXXX")"
+    if ! dispatch_managed_paths > "$managed_file"; then
+      rm -f -- "$managed_file"; exit 2
+    fi
+    while IFS= read -r -d '' f; do
+      case "$f" in */vendor/*|vendor/*|*/third_party/*|third_party/*|*/node_modules/*|node_modules/*|*/dist/*|*/build/*|*/.next/*|*/.zig-cache/*) continue ;; esac
+      skip=0
+      while IFS= read -r -d '' owned; do [ "$f" != "$owned" ] || skip=1; done < "$managed_file"
+      [ "$skip" -eq 0 ] || continue
       DISPATCH_FILES+=("$f")
-    done \
-      < <(git -C "$TARGET_ROOT" diff --cached --name-only --diff-filter=ACMRT -- "${pathspecs[@]}" \
-          | grep -vE '(^|/)(vendor|third_party|node_modules|\.zig-cache|dist|build|\.next)/' || true)
+    done < <(audit_scope_paths "${pathspecs[@]}")
+    rm -f -- "$managed_file"
   elif [ "$#" -ge 1 ]; then
     local f matched
     for f in "$@"; do
@@ -157,18 +166,20 @@ dispatch_resolve_files() {
 # dispatch must never claim a file its gates cannot parse.
 dispatch_add_shebang_files() {
   [ "${1:-}" = "--staged" ] || return 0
-  local f base path firstline managed
-  managed="$(dispatch_managed_paths)"
-  while IFS= read -r f; do
-    [ -n "$f" ] || continue
-    [ -n "$managed" ] && grep -qxF "$f" <<<"$managed" && continue
+  local f base path firstline owned skip managed_file
+  managed_file="$(mktemp "${TMPDIR:-/tmp}/orly-managed.XXXXXX")"
+  if ! dispatch_managed_paths > "$managed_file"; then rm -f -- "$managed_file"; exit 2; fi
+  while IFS= read -r -d '' f; do
+    skip=0
+    while IFS= read -r -d '' owned; do [ "$f" != "$owned" ] || skip=1; done < "$managed_file"
+    [ "$skip" -eq 0 ] || continue
     base="${f##*/}"
     case "$base" in *.*) continue ;; esac
     path="$TARGET_ROOT/$f"; [ -f "$path" ] || path="$f"; [ -f "$path" ] || continue
     IFS= read -r firstline < "$path" || true
     case "$firstline" in "#!"*) DISPATCH_FILES+=("$f") ;; esac
-  done < <(git -C "$TARGET_ROOT" diff --cached --name-only --diff-filter=ACMRT \
-            | grep -vE '(^|/)(vendor|third_party|node_modules|\.zig-cache|dist|build|\.next)/' || true)
+  done < <(audit_scope_paths)
+  rm -f -- "$managed_file"
 }
 
 dispatch_header() {
@@ -198,9 +209,8 @@ dispatch_length_gate() {
 # Delegate to a deterministic leaf helper in audits/. Normalizes the verdict.
 # CODE prints with its gloss (no naked codes — audit-enforced).
 #
-# Leaf helpers have NON-UNIFORM arg contracts (e.g. audit-deinit-pairs takes
-# --staged; audit-ufs takes --all/no-arg after M70). The caller MUST pass the
-# mode the helper actually accepts as the 3rd arg — never assume --staged.
+# Leaf helpers receive explicit targets when the caller names files. In
+# staged mode the third argument preserves the helper's declared wider scope.
 #   dispatch_run_helper UFS    ufs.sh          --all
 #   dispatch_run_helper DEINIT deinit-pairs.sh --staged
 dispatch_run_helper() {
@@ -213,9 +223,14 @@ dispatch_run_helper() {
     DISPATCH_RC=1
     return 1
   fi
-  local log="/tmp/dispatch-${DISPATCH_LANG}-${code}.log"
-  if bash "$DISPATCH_SCRIPTS/$script" $mode >"$log" 2>&1; then
-    printf '  %-8s 🟢 %s — pass (audits/%s %s)\n' "$code" "$g" "$script" "$mode"
+  local receipt_dir log args=()
+  receipt_dir="$(mktemp -d "${TMPDIR:-/tmp}/orly-dispatch.XXXXXX")" || return 1
+  log="$receipt_dir/receipt.log"
+  if [ "$DISPATCH_STAGED" -eq 1 ]; then [ -z "$mode" ] || args+=("$mode")
+  else args=("${DISPATCH_FILES[@]}"); fi
+  if (umask 077; bash "$DISPATCH_SCRIPTS/$script" ${args[@]+"${args[@]}"} >"$log" 2>&1); then
+    printf '  %-8s 🟢 %s — pass (audits/%s); receipt: %s\n' "$code" "$g" "$script" "$log"
+    cat "$log"
   else
     printf '  %-8s 🔴 %s — fail (audits/%s %s) — see %s\n' "$code" "$g" "$script" "$mode" "$log"
     DISPATCH_RC=1

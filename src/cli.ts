@@ -3,8 +3,10 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { printHelp } from "./cli_help";
-import { CONFIG_PATH, localSelection, managedDrift, readConfig, RepoConfig, seedConfig, selectPacks, staleVersion, writeConfig } from "./config";
+import { selectPacks } from "./config_discovery";
+import { CONFIG_PATH, managedDrift, readConfig, RepoConfig, staleVersion, writeConfig } from "./config";
 import { GateReport, isGateName, recordOverride, runGate, runGates } from "./gates";
+import { readInstallConfig } from "./installation/migration";
 import { install, InstallResult } from "./install";
 import { isString, OrlyError, readJsonObject, RulesModel } from "./model";
 import { Renderer } from "./render";
@@ -77,6 +79,12 @@ async function run(model: RulesModel, args: string[]): Promise<CliResult> {
     const { judgmentCommand } = await import("./judgments/command");
     return cliResult(await judgmentCommand(rest));
   }
+  if (command === "lifecycle") {
+    if (rest.some((argument) => argument !== JSON_FLAG)) throw new OrlyError("usage: orly lifecycle [--json]");
+    const { lifecyclePlan } = await import("./execution/plan");
+    console.log(JSON.stringify(lifecyclePlan(projectRoot()), undefined, JSON_INDENT));
+    return cliResult(0);
+  }
   if (command === "gate") return gate(model, rest);
   if (command === "override") return cliResult(override(rest));
   if (command === SKILL_EVENT_COMMAND) {
@@ -133,12 +141,12 @@ async function packageVersion(model: RulesModel): Promise<string> {
   return manifest.version;
 }
 
-// Both verbs materialise the same way: the repository's own `.oracle/orly.json`
+// Both verbs materialise the same way: the repository's own `.orly/orly.json`
 // names its packs and commands, so neither asks the caller who this repo is.
 async function materialise(model: RulesModel, args: string[], isInit: boolean): Promise<number> {
   model.validate();
   const targetRoot = projectRoot();
-  const existing = await readConfig(targetRoot);
+  const existing = await readInstallConfig(targetRoot);
   if (!isInit && !existing) throw new OrlyError(`no ${CONFIG_PATH} here — run \`orly init\` first`);
   const requested = optionalValues(args, WITH_FLAG);
   // --dry-run changes nothing, and recording an opt-in pack is a change. It
@@ -148,9 +156,9 @@ async function materialise(model: RulesModel, args: string[], isInit: boolean): 
   // Otherwise the pack is a property of the repository, recorded before the
   // render rather than passed through it: the next `orly update` in a
   // teammate's clone selects the same set with no flag to remember.
-  await recordOptIn(model, targetRoot, existing, requested);
   const result = await install(model, {
     targetRoot,
+    requestedPacks: requested,
     force: args.includes(FORCE_FLAG),
     installHooks: !args.includes(NO_HOOKS_FLAG),
     orlyVersion: await packageVersion(model),
@@ -212,7 +220,8 @@ async function doctorInstall(model: RulesModel): Promise<string[]> {
 // What init would write, without writing it. Replaces the `render` verb: the
 // preview belongs on the command you are about to run, not beside it.
 async function preview(model: RulesModel, targetRoot: string, requested: string[] = []): Promise<number> {
-  const local = await localSelection(model, targetRoot);
+  const config = await readInstallConfig(targetRoot);
+  const local = { packs: selectPacks(model, targetRoot, config?.packs ?? [], new Set(config?.managed ?? [])), commands: config?.commands ?? {} };
   // selectPacks validates the requested names and unions them with what the
   // repository's own sources select — the same call the real run makes, minus
   // the write.
@@ -220,20 +229,6 @@ async function preview(model: RulesModel, targetRoot: string, requested: string[
   const text = await new Renderer(model).renderText(packs, local.commands);
   console.log(text);
   return 0;
-}
-
-// Opt-in packs never auto-select from file extensions, so naming one is the
-// only way it lands. Validated against the registry here, before anything is
-// recorded, so a typo names the available set instead of writing a config the
-// next command rejects.
-async function recordOptIn(model: RulesModel, targetRoot: string, existing: RepoConfig | undefined, requested: string[]): Promise<void> {
-  if (requested.length === 0) return;
-  const config = existing ?? await seedConfig(targetRoot);
-  const packs = new Set(config.packs);
-  for (const name of requested) packs.add(name);
-  // selectPacks throws OrlyError on an unknown name, listing what is available.
-  selectPacks(model, targetRoot, [...packs]);
-  await writeConfig(targetRoot, { ...config, packs: [...packs].sort() });
 }
 
 async function verify(model: RulesModel, args: string[]): Promise<number> {

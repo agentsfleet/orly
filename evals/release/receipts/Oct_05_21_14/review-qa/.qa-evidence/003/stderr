@@ -1,0 +1,8 @@
+
+src/command_process.test.ts:
+(pass) a successful deadline stop is not repeated during supervisor cleanup [114.39ms]
+
+ 1 pass
+ 0 fail
+ 4 expect() calls
+Ran 1 test across 1 file. [131.00ms]

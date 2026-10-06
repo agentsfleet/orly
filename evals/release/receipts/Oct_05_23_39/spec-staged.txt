@@ -1,0 +1,3 @@
+OK:   docs/v1/done/M09_001_P1_CLI_DOCS_INFRA_SKILL_VERIFIED_COMMANDER_RELEASE.md — no prohibited patterns
+OK: docs/v1/done/M09_001_P1_CLI_DOCS_INFRA_SKILL_VERIFIED_COMMANDER_RELEASE.md — sections, references, test mappings, and declared commands checked
+OK:   SPEC TEMPLATE GATE: clean (1 specs)

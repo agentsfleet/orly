@@ -1,6 +1,9 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
+import { renderProfileSourceLines } from "./references";
+import { isString } from "./model";
+
 /**
  * Make targets that belong to ONE consuming repository.
  *
@@ -40,6 +43,7 @@ export const PRODUCT_ONLY_TARGETS: readonly string[] = [
  * the generic standard, which is what core documents are.
  */
 const CORE_PACK = "core";
+const PRODUCT_PREFIX = "product.";
 
 /** A file shipped by a pack, with the pack that ships it. */
 export interface ShippedFile {
@@ -50,21 +54,25 @@ export interface ShippedFile {
 /** Collects every `source` a registry node ships, tagged with its pack. */
 export function shippedFiles(registry: unknown): ShippedFile[] {
   const out: ShippedFile[] = [];
-  const walk = (node: unknown, pack: string): void => {
+  const walk = (node: unknown, pack: string, coreDocument = false): void => {
     if (Array.isArray(node)) {
-      for (const item of node) walk(item, pack);
+      for (const item of node) walk(item, pack, coreDocument);
+      return;
+    }
+    if (coreDocument && isString(node)) {
+      out.push({ source: node, pack });
       return;
     }
     if (node === null || typeof node !== "object") return;
     const record = node as Record<string, unknown>;
-    if (typeof record.source === "string") out.push({ source: record.source, pack });
+    if (isString(record.source)) out.push({ source: record.source, pack });
     for (const value of Object.values(record)) walk(value, pack);
   };
 
   const root = registry as Record<string, unknown>;
   const packs = (root.packs ?? {}) as Record<string, unknown>;
   for (const [name, pack] of Object.entries(packs)) walk(pack, name);
-  walk(root.core_documents, CORE_PACK);
+  walk(root.core_documents, CORE_PACK, true);
   walk(root.rules, CORE_PACK);
   return out;
 }
@@ -77,9 +85,11 @@ export function shippedFiles(registry: unknown): ShippedFile[] {
 export async function productLeakErrors(root: string, registry: unknown): Promise<string[]> {
   const errors: string[] = [];
   const seen = new Set<string>();
+  const knownPacks = new Set(Object.keys((registry as { packs?: object }).packs ?? {}));
+  const genericPacks = new Set([...knownPacks].filter((pack) => !pack.startsWith(PRODUCT_PREFIX)));
 
   for (const { source, pack } of shippedFiles(registry)) {
-    if (pack.startsWith("product.")) continue;
+    if (pack.startsWith(PRODUCT_PREFIX)) continue;
     if (!source.endsWith(".md")) continue;
     if (seen.has(source)) continue;
     seen.add(source);
@@ -91,19 +101,19 @@ export async function productLeakErrors(root: string, registry: unknown): Promis
       continue; // absent sources are the reference gate's business, not ours
     }
 
-    text.split("\n").forEach((line, index) => {
+    for (const { text: line, lineNumber } of renderProfileSourceLines(text, genericPacks, knownPacks, source)) {
       for (const target of PRODUCT_ONLY_TARGETS) {
         // Word-boundary on the tail so `test-integration` does not swallow
         // `test-integration-db`'s own, more specific, report.
         const pattern = new RegExp(`make ${target}(?![a-z0-9_-])`);
         if (pattern.test(line)) {
           errors.push(
-            `${source}:${index + 1}: pack '${pack}' is not product-scoped but names \`make ${target}\`, ` +
+            `${source}:${lineNumber}: pack '${pack}' is not product-scoped but names \`make ${target}\`, ` +
               `which only one repository defines — say what the command IS instead`,
           );
         }
       }
-    });
+    }
   }
   return errors;
 }

@@ -1,0 +1,16 @@
+{
+  "observationCapture": "006",
+  "observationArgv": [
+    "bun",
+    "test",
+    "src/installation_preservation.test.ts"
+  ],
+  "observed": "bun test v1.4.2 (744846f84)\n",
+  "hypothesis": "Owner bytes survive current staging refusal; verify owner cancellation and supervisor stop signals on the current shared filenames and named limits.",
+  "nextCapture": "007",
+  "nextArgv": [
+    "bun",
+    "test",
+    "src/command_process.test.ts"
+  ]
+}

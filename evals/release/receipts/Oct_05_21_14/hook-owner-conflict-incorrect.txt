@@ -1,0 +1,37 @@
+bun test v1.4.2 (744846f84)
+
+src/installation/migration.test.ts:
+137 |     if (stage === "journal") throw new Error("interrupt before hook configuration");
+138 |   } });
+139 |   expect(interrupted.ok).toBe(false);
+140 |   const changed = Bun.spawnSync(["git", "config", "core.hooksPath", OWNER_HOOKS], { cwd: repo, env: UNSCOPED_ENVIRONMENT });
+141 |   expect(changed.exitCode).toBe(0);
+142 |   await expect(install(model, { ...options, installHooks })).rejects.toThrow("hooks setting changed");
+                                                                           ^
+error: expect(received).rejects.toThrow(expected)
+
+Expected promise that rejects
+Received promise that resolved: Promise { <resolved> }
+
+      at <anonymous> (/private/tmp/orly-assertion-controls-Oct_05-5nygx8ve/hook-owner-conflict/src/installation/migration.test.ts:142:70)
+(fail) recovery preserves an owner-changed hooks setting with resumed hooks %s [216.22ms]
+137 |     if (stage === "journal") throw new Error("interrupt before hook configuration");
+138 |   } });
+139 |   expect(interrupted.ok).toBe(false);
+140 |   const changed = Bun.spawnSync(["git", "config", "core.hooksPath", OWNER_HOOKS], { cwd: repo, env: UNSCOPED_ENVIRONMENT });
+141 |   expect(changed.exitCode).toBe(0);
+142 |   await expect(install(model, { ...options, installHooks })).rejects.toThrow("hooks setting changed");
+                                                                           ^
+error: expect(received).rejects.toThrow(expected)
+
+Expected promise that rejects
+Received promise that resolved: Promise { <resolved> }
+
+      at <anonymous> (/private/tmp/orly-assertion-controls-Oct_05-5nygx8ve/hook-owner-conflict/src/installation/migration.test.ts:142:70)
+(fail) recovery preserves an owner-changed hooks setting with resumed hooks %s [163.44ms]
+
+ 0 pass
+ 18 filtered out
+ 2 fail
+ 6 expect() calls
+Ran 2 tests across 1 file. [419.00ms]

@@ -1,0 +1,27 @@
+bun test v1.4.2 (744846f84)
+
+src/review_poll.test.ts:
+(pass) review and summary fetches include every page and bind checks to the pushed revision [307.03ms]
+(pass) an unsupported bot override cannot certify feedback excluded from triage [391.82ms]
+(pass) incomplete fetch-failed review evidence cannot establish a green poll [374.85ms]
+(pass) incomplete malformed review evidence cannot establish a green poll [308.34ms]
+(pass) incomplete changed review evidence cannot establish a green poll [495.41ms]
+(pass) incomplete changed-check review evidence cannot establish a green poll [527.87ms]
+(pass) incomplete stale review evidence cannot establish a green poll [404.19ms]
+(pass) incomplete missing-review review evidence cannot establish a green poll [329.45ms]
+(pass) empty check discovery stays incomplete [468.94ms]
+(pass) fetch-failed check discovery stays incomplete [590.93ms]
+(pass) failed check discovery stays incomplete [616.58ms]
+(pass) GitLab polling collects nested project review pages using supported flags [520.16ms]
+(pass) GitLab incomplete fetch-failed evidence cannot establish a green poll [262.99ms]
+(pass) GitLab incomplete malformed evidence cannot establish a green poll [358.07ms]
+(pass) GitLab incomplete changed evidence cannot establish a green poll [291.79ms]
+(pass) GitLab incomplete changed-check evidence cannot establish a green poll [296.83ms]
+(pass) GitLab empty pipeline discovery stays incomplete [255.53ms]
+(pass) GitLab fetch-failed pipeline discovery stays incomplete [232.99ms]
+(pass) GitLab failed pipeline discovery stays incomplete [259.44ms]
+
+ 19 pass
+ 0 fail
+ 64 expect() calls
+Ran 19 tests across 1 file. [7.32s]

@@ -15,18 +15,23 @@ Gates (read-only; no PR without every criterion green or a recorded override):
               every declared verify.* command
   orly override <CRITERION> --reason <REASON>
                                     empty commit with an Orly-Override trailer
+  Commands default to 30 minutes and 64 mebibytes of combined output each.
+  Set limits.<command>.timeout_ms and output_bytes in .orly/orly.json to override.
+  Exceeding either limit fails the check and prints the saved output path.
 
 Advice (explicit; hooks stay offline):
   orly judge <plan|verify|review|document> --input <MANIFEST>
                                     exact replay of bounded Jev advice
   orly judge --help                 input selectors, questions and refresh
+  orly lifecycle [--json]           inspect stages, declared local checks and
+                                    resource ownership; remote adapter disabled
 
 Install (the repository is the unit — no checkout of this package required):
   orly init [--force] [--no-hooks] [--with <PACK>] [--dry-run] [--json]
                                     materialise rules, gates, hooks, and a
-                                    seeded .oracle/orly.json. A repository that
+                                    seeded .orly/orly.json. A repository that
                                     already has an AGENTS.md keeps it: orly's
-                                    rules land as AGENTS.orly.md, reached by a
+                                    rules land as .orly/AGENTS.md, reached by a
                                     pointer block in the file you own. One
                                     import line lands per runtime that needs
                                     one (CLAUDE.md, opencode.json), so the
@@ -36,7 +41,7 @@ Install (the repository is the unit — no checkout of this package required):
                                     re-materialise at the installed engine version
 
   --with <PACK>                     record an opt-in pack (repeatable) in
-                                    .oracle/orly.json, so every clone selects it
+                                    .orly/orly.json, so every clone selects it
   --dry-run                         show what would be written; change nothing
 
   orly doctor                       check this repository's installed rules

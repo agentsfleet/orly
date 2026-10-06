@@ -149,7 +149,10 @@ pub const Watcher = struct {
 **Mandatory rules:**
 
 1. **`deinit` must free everything `init` allocated.** Lints catch the inverse (`init` allocates, `deinit` doesn't free) but not silently-correct cases (`init` allocates A and B, `deinit` frees only A — silent leak). Reviewer responsibility: walk the alloc list against the free list.
-2. **`deinit` must be idempotent.** Calling it twice must not crash. Either set freed pointers to undefined (`self.events = &.{}` after free) or guard with `if (self.events.len > 0)`.
+2. **Cleanup follows the object's lifetime.** A surviving value clears its
+   owned fields and permits repeated cleanup. A heap object that destroys
+   itself is released exactly once by its owner, which clears its handle;
+   calling `deinit` through the freed pointer is forbidden.
 3. **`deinit` does not return errors.** Cleanup that *can* fail (closing a file, flushing a buffer) must be split into a separate explicit method (`pub fn close(self: *Self) !void`) called before `deinit`, or the failure must be logged and swallowed inside deinit.
 4. **No partial deinit.** Once `deinit` runs, the struct is dead. Don't leave half-freed state for "the caller will free the rest" — that's a leak waiting to happen.
 5. **Deinit order is reverse of init order.** Free children before freeing the parent that owns them. `errdefer` chains in init naturally produce the right order; mirror it in deinit.
@@ -254,17 +257,21 @@ Anything else is a smell:
 
 The struct's `deinit` method is the single source of truth for cleanup. Call sites use `defer self.deinit()` (or `errdefer` if ownership might transfer mid-function) and never reach inside the struct.
 
-## §10 · Anti-patterns flagged by `deinit-pairs.sh`
+## §10 · Machine checks and mandatory ownership review
 
-| Pattern | Severity | Fix |
+`deinit-pairs.sh` checks refined public initializer/cleanup pairing and nearby
+`defer`/`errdefer` conflicts on the same target. It does not prove struct-level
+ownership, cleanup placement, allocator lifetime or failure-path coverage.
+
+| Pattern | Detection | Fix |
 |---|---|---|
-| `pub fn init(` with no matching `pub fn deinit(` in the same struct | **blocking** | Add `deinit`, or remove `init` if the struct is value-type without resources. |
-| `pub fn deinit(` with no matching `pub fn init(` | **blocking** | Likely tail of a refactor — restore init, or rename deinit to a non-lifecycle name (e.g. `close`, `release`). |
-| `errdefer` at end of init scope (batched) | informational | Move adjacent to the allocation it protects. |
-| `defer` and `errdefer` on the same allocation | **blocking** | Pick one. |
-| `init` returning `*Self` without `errdefer alloc.destroy(self)` | **blocking** | The most common leak class on init failure. |
-| `deinit` that calls allocator-storing struct's `allocator` field after some other field's `.deinit()` (use-after-free risk if children depend on parent's allocator) | informational | Reorder cleanup to free children first. |
-| Stored allocator field never used in deinit | informational | Either remove the field or wire it. |
+| Allocating or heap-returning public `init` without a same-file cleanup method | **blocking machine check**; reviewer verifies the matching owner | Add the owner's cleanup method; resource-free value initialization needs no empty pair. |
+| Cleanup with no corresponding ownership acquisition | **mandatory review** | Check all acquisition paths before removing or renaming the method. |
+| `errdefer` at end of init scope (batched) | **mandatory review** | Move adjacent to the allocation it protects. |
+| `defer` and `errdefer` on the same allocation | **blocking machine check** within four lines; mandatory review elsewhere | Pick the cleanup matching the ownership path. |
+| `init` returning `*Self` without failure-path destruction | **mandatory review** | Release the heap owner on every failed initialization path. |
+| Cleanup order invalidates an allocator still needed by children | **mandatory review** | Release children before invalidating their allocator. |
+| Stored allocator field never used in cleanup | **mandatory review** | Remove the field or release the owned resources through it. |
 
 ## §10A · Tightening clauses (closures of common skip rationalizations)
 
@@ -272,18 +279,21 @@ Failure modes the audit script and reviewer must close. These are **not aspirati
 
 | # | Rationalization | Closure |
 |---|---|---|
-| LC1 | "Struct is small / one allocation, skip `deinit`" | Any heap allocation OR opaque handle (file descriptor, mutex, socket, GPU resource, lock) requires `deinit`. **No size threshold**. Audit script flags struct definitions with `allocator.alloc`/`alloc.create`/`std.fs.File.open` whose enclosing struct lacks `pub fn deinit`. |
+| LC1 | "Struct is small / one allocation, skip `deinit`" | Every owned allocation or opaque handle needs cleanup. The leaf checks allocating or heap-returning public initializers for a same-file cleanup method; the reviewer checks ownership acquired later and matches every acquisition to release. |
 | LC2 | "Renamed `deinit` to `close` / `release` to dodge pair audit" | Audit script treats `deinit`, `close`, `release`, `destroy`, `shutdown`, `free`, `dispose` as **lifecycle methods**. All require a paired `init` and trigger LIFECYCLE GATE. Rename does not bypass; intent does. |
-| LC3 | "I'll batch `errdefer` at the bottom of init, easier to read" | The LAST `errdefer` line in init must lexically precede the LAST allocation it protects. Audit script enforces line-position. Batched-at-bottom errdefer is **blocking**. |
+| LC3 | "I'll batch `errdefer` at the bottom of init, easier to read" | Place each `errdefer` immediately after its acquisition, before the next fallible operation. The reviewer checks every early return; the leaf does not enforce placement. |
 | LC4 | "Both `defer` and `errdefer` on the same allocation, belt-and-suspenders" | Audit greps for `defer X.free(Y)` + `errdefer X.free(Y)` (or the reverse) in the same scope. **Blocking violation** — pick one per §6. |
-| LC5 | "`deinit` is idempotent in practice; no test needed" | Every struct with `deinit` must have a `*_test.zig` test that calls `s.deinit(); s.deinit();` and asserts no crash (sentinel-on-second-call is fine). Reviewer responsibility. Audit cannot fully grep for this; reviewer must verify. |
-| LC6 | "Storing arena slice in long-lived struct works in my test" | Heuristic flag: struct fields of slice type AND a stored `*ArenaAllocator` field → audit raises informational warning. Reviewer must acknowledge or restructure. |
-| LC7 | "Empty no-op `init` paired with empty no-op `deinit` to satisfy the gate" | Audit informational-flags when both `init` and `deinit` bodies are empty or single `_ = self;`. Pair exists for shape, not for state — likely should be a `const` value or removed. |
+| LC5 | "Cleanup works in practice; no test needed" | Reviewer verifies repeated cleanup of surviving values or exactly-once release and cleared owner handles for self-destroying heap objects. Never invoke a freed object's method. The leaf reports no test-presence verdict. |
+| LC6 | "Storing arena slice in long-lived struct works in my test" | Reviewer checks that the arena outlives every retained slice and fixes any mismatch; the leaf emits no arena-lifetime warning. |
+| LC7 | "Empty no-op `init` paired with empty no-op `deinit` to satisfy the gate" | Reviewer removes redundant pairs or explains their owned state; the leaf emits no empty-pair warning. |
 | LC8 | "Auto-mode is on" | **Auto-mode does NOT cover gate skips.** Skip without explicit user-given override = automatic violation. |
 | LC9 | "Renamed-only file (no content change), gate doesn't fire" | Rename without content change does **not** fire LIFECYCLE GATE. Rename + content change does. Pure rename is a no-op for the gate. |
 | LC10 | "Two docs disagree (e.g. write_zig.md says X, LIFECYCLE_PATTERNS says Y)" | Precedence: dispatch façade > standards doc > spec. The façade (`dispatch/write_zig.md`, lifecycle) is the canonical enforcement layer. |
 
-These are enforced by `deinit-pairs.sh` (mechanical) and the dispatch façade (`dispatch/write_zig.md`, lifecycle — output discipline). When in conflict, the façade wins.
+`deinit-pairs.sh` checks allocating initializer pairs and adjacent conflicting
+`defer`/`errdefer` releases. The reviewer handles the other obligations above;
+a green leaf result cannot replace them. The dispatch façade names the same
+ownership rules.
 
 ## §11 · Carve-out: PUB GATE vs LIFECYCLE GATE
 

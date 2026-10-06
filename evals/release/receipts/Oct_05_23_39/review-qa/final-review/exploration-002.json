@@ -1,0 +1,17 @@
+{
+  "observationCapture": "001",
+  "observationArgv": [
+    "bun",
+    "test",
+    "src/command_process.test.ts",
+    "src/command_runner.test.ts"
+  ],
+  "observed": "bun test v1.4.2 (744846f84)\n",
+  "hypothesis": "Process setup failure and owned stop paths pass; confirm concurrent owner saves still preserve exact bytes and refuse without a journal.",
+  "nextCapture": "002",
+  "nextArgv": [
+    "bun",
+    "test",
+    "src/installation_preservation.test.ts"
+  ]
+}

@@ -1,0 +1,67 @@
+bun test v1.4.2 (744846f84)
+
+src/spec_template_io.test.ts:
+(pass) spec audit through real Git and file boundaries > an invalid v1 index fails even when its working copy was repaired [250.76ms]
+28 |     await modelFor(project);
+29 |     await Bun.write(join(project, path), `${GOOD}\n${RESIDUE}\n`);
+30 |     git(project, "add", path);
+31 |     await Bun.write(join(project, path), GOOD);
+32 |     const result = run(project, STAGED);
+33 |     expect(result.code).toBe(1);
+                             ^
+error: expect(received).toBe(expected)
+
+Expected: 1
+Received: 0
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/spec_template_io.test.ts:33:25)
+(fail) spec audit through real Git and file boundaries > an invalid v0.9.2 index fails even when its working copy was repaired [150.41ms]
+(pass) spec audit through real Git and file boundaries > a repaired v1 index passes despite invalid unstaged content and config [231.16ms]
+42 |     git(project, "add", path);
+43 |     await Bun.write(join(project, path), RESIDUE);
+44 |     await Bun.write(join(project, CONFIG_PATH), "invalid json");
+45 |     const result = run(project, STAGED);
+46 |     expect(result.code).toBe(0);
+47 |     expect(result.output).toContain("sections, references, test mappings");
+                               ^
+error: expect(received).toContain(expected)
+
+Expected to contain: "sections, references, test mappings"
+Received: "OK:   no spec files in scope (--staged)\n"
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/spec_template_io.test.ts:47:27)
+(fail) spec audit through real Git and file boundaries > a repaired v0.9.2 index passes despite invalid unstaged content and config [155.20ms]
+(pass) spec audit through real Git and file boundaries > read-first references are resolved from the index [135.29ms]
+(pass) spec audit through real Git and file boundaries > file mode checks working content and configuration [115.54ms]
+(pass) spec audit through real Git and file boundaries > refuses invalid JSON without skipping parity [163.07ms]
+(pass) spec audit through real Git and file boundaries > refuses missing commands without skipping parity [158.95ms]
+(pass) spec audit through real Git and file boundaries > refuses empty commands without skipping parity [167.80ms]
+(pass) spec audit through real Git and file boundaries > refuses empty group without skipping parity [164.63ms]
+(pass) spec audit through real Git and file boundaries > refuses invalid invocation without skipping parity [157.38ms]
+(pass) spec audit through real Git and file boundaries > refuses nonstring argument without skipping parity [158.84ms]
+(pass) spec audit through real Git and file boundaries > refuses nonarray group without skipping parity [162.72ms]
+(pass) spec audit through real Git and file boundaries > missing config, staged config, and arguments fail explicitly [96.23ms]
+(pass) spec audit through real Git and file boundaries > bulk scans retain their prohibited-pattern scope [216.73ms]
+
+src/surfaces.test.ts:
+(pass) user surface > handlers, openapi, cli, and app TypeScript count [0.14ms]
+(pass) user surface > tests, markdown, and other packages do not count [0.03ms]
+26 |   test("docs pages and README count; the spec tree never does", () => {
+27 |     expect(isDocs("docs/REST_API_DESIGN_GUIDELINES.md", DOCS_PREFIXES)).toBeTrue();
+28 |     expect(isDocs("README.md", DOCS_PREFIXES)).toBeTrue();
+29 |     expect(isDocs("docs/v1/active/M01_001_P2_CLI_DOCS_PROCESS_AS_CODE.md", DOCS_PREFIXES)).toBeFalse();
+30 |     expect(isDocs("docs/v2/pending/M52_001_P2_API_X.md", DOCS_PREFIXES)).toBeFalse();
+31 |     expect(isDocs("docs/v0.9.2/active/M05_001_P2_CLI_X.md", DOCS_PREFIXES)).toBeFalse();
+                                                                                 ^
+error: expect(received).toBeFalse()
+
+Received: true
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/surfaces.test.ts:31:77)
+(fail) docs surface > docs pages and README count; the spec tree never does [0.33ms]
+(pass) code classification > source and test files are code; prose is not [0.02ms]
+
+ 16 pass
+ 3 fail
+ 49 expect() calls
+Ran 19 tests across 2 files. [2.51s]

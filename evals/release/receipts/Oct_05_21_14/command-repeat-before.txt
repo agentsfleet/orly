@@ -1,0 +1,56 @@
+bun test v1.4.2 (744846f84)
+
+src/command_runner.test.ts: (run #1)
+(pass) a deadline stops the owned child group and keeps captured output [317.54ms]
+(pass) the output budget covers both streams and stops the owned child group [22.09ms]
+(pass) an explicit lane override applies through the public gate criteria [306.48ms]
+
+src/command_runner.test.ts: (run #2)
+(pass) a deadline stops the owned child group and keeps captured output [317.49ms]
+(pass) the output budget covers both streams and stops the owned child group [16.08ms]
+(pass) an explicit lane override applies through the public gate criteria [289.50ms]
+
+src/command_runner.test.ts: (run #3)
+(pass) a deadline stops the owned child group and keeps captured output [318.06ms]
+(pass) the output budget covers both streams and stops the owned child group [18.35ms]
+(pass) an explicit lane override applies through the public gate criteria [287.75ms]
+
+src/command_runner.test.ts: (run #4)
+(pass) a deadline stops the owned child group and keeps captured output [315.20ms]
+(pass) the output budget covers both streams and stops the owned child group [19.20ms]
+(pass) an explicit lane override applies through the public gate criteria [290.89ms]
+
+src/command_runner.test.ts: (run #5)
+(pass) a deadline stops the owned child group and keeps captured output [318.42ms]
+(pass) the output budget covers both streams and stops the owned child group [15.94ms]
+(pass) an explicit lane override applies through the public gate criteria [291.24ms]
+
+src/command_runner.test.ts: (run #6)
+(pass) a deadline stops the owned child group and keeps captured output [318.36ms]
+(pass) the output budget covers both streams and stops the owned child group [21.15ms]
+(pass) an explicit lane override applies through the public gate criteria [291.80ms]
+
+src/command_runner.test.ts: (run #7)
+(pass) a deadline stops the owned child group and keeps captured output [317.58ms]
+(pass) the output budget covers both streams and stops the owned child group [16.72ms]
+(pass) an explicit lane override applies through the public gate criteria [286.46ms]
+
+src/command_runner.test.ts: (run #8)
+(pass) a deadline stops the owned child group and keeps captured output [316.32ms]
+(pass) the output budget covers both streams and stops the owned child group [16.70ms]
+(pass) an explicit lane override applies through the public gate criteria [291.25ms]
+
+src/command_runner.test.ts: (run #9)
+(pass) a deadline stops the owned child group and keeps captured output [318.12ms]
+(pass) the output budget covers both streams and stops the owned child group [20.49ms]
+(pass) an explicit lane override applies through the public gate criteria [291.06ms]
+
+src/command_runner.test.ts: (run #10)
+(pass) a deadline stops the owned child group and keeps captured output [317.62ms]
+(pass) the output budget covers both streams and stops the owned child group [15.86ms]
+(pass) an explicit lane override applies through the public gate criteria [291.57ms]
+
+ 30 pass
+ 0 fail
+ 280 expect() calls
+Ran 30 tests across 1 file. [6.31s]

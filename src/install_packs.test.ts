@@ -8,8 +8,8 @@ import { RulesModel } from "./model";
 
 const SOURCE_EXTENSIONS = ["rs", "ts", "tsx", "js", "jsx", "py", "sh", "sql", "zig", "mdx"];
 const DESCRIPTION_BUDGET = 320;
-const RECORDER = "audits/doc-read.sh";
-const RECORDER_LIBRARY = "audits/rule-ledger-lib.sh";
+const RECORDER = ".orly/audits/doc-read.sh";
+const RECORDER_LIBRARY = ".orly/audits/rule-ledger-lib.sh";
 // Read from package.json rather than restated here: a hand-synced copy goes
 // stale at the next release and the test then proves an install at a version
 // that no longer ships.
@@ -18,6 +18,66 @@ const ENGINE_VERSION = (await Bun.file(join(ROOT, "package.json")).json()).versi
 afterEach(cleanupTemporaryDirectories);
 
 describe("opt-in pack selection", () => {
+  test("independent consumers keep their own database, build and documentation policies", async () => {
+    const model = await RulesModel.load(ROOT);
+    const repo = newRepository();
+    for (const extension of ["sql", "zig", "ts"]) {
+      await Bun.write(join(repo, `src/source.${extension}`), "\n");
+    }
+    await Bun.write(join(repo, ".orly/orly.json"), JSON.stringify({
+      schema_version: 1, packs: ["domain.http", "domain.changelog"],
+      commands: { conform: [["true"]], "verify.unit": [["true"]] },
+    }));
+    const result = await install(model, {
+      targetRoot: repo, force: false, installHooks: false, orlyVersion: ENGINE_VERSION,
+    });
+    expect(result.errors).toEqual([]);
+    expect(result.packs).not.toContain("product.agentsfleet");
+    expect(existsSync(join(repo, "VERSION"))).toBe(false);
+    const pages = [
+      "dispatch/lifecycle.md", "dispatch/write_sql.md", "dispatch/write_zig.md",
+      "dispatch/write_ts_adhere_bun.md", "dispatch/write_http.md",
+      "dispatch/write_changelog.md", "docs/SCHEMA_CONVENTIONS.md",
+      "docs/RELEASE_TEMPLATE.md", "docs/LOGGING_STANDARD.md",
+      "docs/REST_API_DESIGN_GUIDELINES.md",
+    ];
+    const installed = await Promise.all(pages.map((path) => Bun.file(join(repo, ".orly", path)).text()));
+    for (const content of installed) {
+      expect(content).not.toContain("playbooks/founding/");
+      expect(content).not.toContain("schema/embed.zig");
+      expect(content).not.toContain("src/cmd/common.zig");
+      expect(content).not.toContain("build_runner.zig");
+      expect(content).not.toContain("~/Projects/docs/");
+      expect(content).not.toContain("cat VERSION");
+    }
+    expect(installed[1]).toContain("Destructive changes require the owner's approval");
+    expect(installed[2]).toContain("declared platform matrix");
+    expect(installed[3]).toContain("repository's declared component library");
+    expect(installed[8]).toContain("repository's structured logger");
+    expect(installed[9]).toContain("canonical OpenAPI source");
+  });
+
+  test("explicit product selection retains its teardown guard and build graph", async () => {
+    const model = await RulesModel.load(ROOT);
+    const repo = newRepository();
+    await Bun.write(join(repo, "schema/example.sql"), "\n");
+    await Bun.write(join(repo, "src/example.zig"), "\n");
+    await Bun.write(join(repo, ".orly/orly.json"), JSON.stringify({
+      schema_version: 1, packs: ["product.agentsfleet"],
+      commands: { conform: [["true"]], "verify.unit": [["true"]] },
+    }));
+    const result = await install(model, {
+      targetRoot: repo, force: false, installHooks: false, orlyVersion: ENGINE_VERSION,
+    });
+    expect(result.errors).toEqual([]);
+    const sql = await Bun.file(join(repo, ".orly/dispatch/write_sql.md")).text();
+    const zig = await Bun.file(join(repo, ".orly/dispatch/write_zig.md")).text();
+    expect(sql).toContain("0.30.0");
+    expect(sql).toContain("schema/embed.zig");
+    expect(sql).toContain("**Forbidden:**");
+    expect(zig).toContain("build_runner.zig");
+  });
+
   // An opt-in pack may cite a file another opt-in pack owns, and every such
   // citation has to be gated by the pack that provides it. Ungated, the install
   // is refused for skipping rules the repository was never meant to take:
@@ -27,7 +87,7 @@ describe("opt-in pack selection", () => {
     const model = await RulesModel.load(ROOT);
     const repo = newRepository();
     for (const extension of SOURCE_EXTENSIONS) await Bun.write(join(repo, `src/source.${extension}`), "\n");
-    await Bun.write(join(repo, ".oracle/orly.json"), JSON.stringify({ schema_version: 1, orly_version: "", packs: ["product.agentsfleet"], commands: {}, managed: [] }));
+    await Bun.write(join(repo, ".orly/orly.json"), JSON.stringify({ schema_version: 1, orly_version: "", packs: ["product.agentsfleet"], commands: {}, managed: [] }));
 
     const result = await install(model, { targetRoot: repo, force: false, installHooks: true, orlyVersion: ENGINE_VERSION });
 
@@ -35,8 +95,8 @@ describe("opt-in pack selection", () => {
     expect(result.ok).toBe(true);
     expect(result.packs).toContain("product.agentsfleet");
     expect(result.packs).not.toContain("workflow.governance");
-    expect(existsSync(join(repo, "docs/EXECUTE_DOC_READS.md"))).toBe(true);
-    expect(existsSync(join(repo, "dispatch/edit_rules.md"))).toBe(false);
+    expect(existsSync(join(repo, ".orly/docs/EXECUTE_DOC_READS.md"))).toBe(true);
+    expect(existsSync(join(repo, ".orly/dispatch/edit_rules.md"))).toBe(false);
   });
 });
 
@@ -73,7 +133,7 @@ describe("the DOC READ recorder", () => {
   test("installs with the authoring pack and runs where it lands", async () => {
     const model = await RulesModel.load(ROOT);
     const repo = newRepository();
-    await Bun.write(join(repo, ".oracle/orly.json"), JSON.stringify({ schema_version: 1, orly_version: "", packs: [], commands: {}, managed: [] }));
+    await Bun.write(join(repo, ".orly/orly.json"), JSON.stringify({ schema_version: 1, orly_version: "", packs: [], commands: {}, managed: [] }));
 
     const result = await install(model, { targetRoot: repo, force: false, installHooks: true, orlyVersion: ENGINE_VERSION });
 

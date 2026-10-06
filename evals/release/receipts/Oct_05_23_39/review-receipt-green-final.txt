@@ -1,0 +1,19 @@
+bun test v1.4.2 (744846f84)
+
+src/command_process.test.ts:
+(pass) a failed pid receipt write stops the already started workload [104.15ms]
+(pass) a successful deadline stop is not repeated during supervisor cleanup [169.84ms]
+(pass) killing the gate owner stops its detached workload [429.16ms]
+(pass) supervisor SIGTERM stops its owned workload [103.32ms]
+(pass) supervisor SIGINT stops its owned workload [70.17ms]
+(pass) supervisor SIGHUP stops its owned workload [79.03ms]
+
+src/command_runner.test.ts:
+(pass) a deadline stops the owned child group and keeps captured output [354.39ms]
+(pass) the output budget covers both streams and stops the owned child group [67.92ms]
+(pass) an explicit lane override applies through the public gate criteria [515.91ms]
+
+ 9 pass
+ 0 fail
+ 50 expect() calls
+Ran 9 tests across 2 files. [2.18s]

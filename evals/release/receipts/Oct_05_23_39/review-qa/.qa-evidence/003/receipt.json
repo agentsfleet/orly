@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "id": "003",
+  "cwd": "/Users/kishore/Projects/orly",
+  "argv": [
+    "bun",
+    "test",
+    "src/installation_preservation.test.ts"
+  ],
+  "deadline": "/Users/kishore/.gstack/projects/agentsfleet-orly/qa-reports/Oct_06_00_05/deadline.json",
+  "timing": [
+    {
+      "guard": "qa-deadline",
+      "event": "started",
+      "version": 1,
+      "startedAt": "2026-10-05T18:26:27.806Z",
+      "deadlineAt": "2026-10-05T18:31:27.806Z",
+      "budgetMs": 300000,
+      "observedAt": "2026-10-05T18:30:03.444Z",
+      "remainingMs": 84362,
+      "expired": false
+    },
+    {
+      "guard": "qa-deadline",
+      "event": "finished",
+      "observedAt": "2026-10-05T18:30:06.450Z",
+      "deadlineAt": "2026-10-05T18:31:27.806Z",
+      "timedOut": false,
+      "exitCode": 0
+    }
+  ],
+  "startedAt": "2026-10-05T18:30:03.442Z",
+  "completedAt": "2026-10-05T18:30:06.452Z",
+  "exitCode": 0,
+  "signal": null,
+  "status": "complete",
+  "observation": {
+    "sha256": "8d48979deed41d2d9d17389f716d0691c35c370e3ac2a4192bbe44160a2945a8",
+    "bytes": 32
+  },
+  "publicOutput": true,
+  "stdout": {
+    "sha256": "6043908c8d26d62698476b88f737f39d5d3e91008d4155a81730902f5a37479c",
+    "bytes": 28
+  },
+  "stderr": {
+    "sha256": "dab9a5c955f0bcd2b4d578de51fe0aa75adaa52fb467d00e55b64151797061d1",
+    "bytes": 451
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "source": "evals/release/inventory.ts",
+  "source_sha256": "ccb8db3ed0101b72f7e4800a66913d3603c40e0876caf426e8291bd668964d4d",
+  "test": "src/release_inventory.test.ts",
+  "test_sha256": "680b948d754d499416ccaefbd471bd5c169adad5175ac7efa363abede874d9fd",
+  "mutation": "Carry recorded dispositions onto changed bytes without checking reviewedDigest.",
+  "results": [
+    {
+      "variant": "correct",
+      "exit": 0,
+      "assertion_failure": false
+    },
+    {
+      "variant": "incorrect",
+      "exit": 1,
+      "assertion_failure": true
+    }
+  ]
+}

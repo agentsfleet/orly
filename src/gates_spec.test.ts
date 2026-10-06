@@ -261,7 +261,7 @@ describe("closed-spec follow-through", () => {
 
     const acked = closedSpecRepository("feat/defer", [
       "- Dimension 1.2 was deferred to follow-up",
-      '> Indy (2026-08-11 09:00): "defer 1.2, ship the rest" — context: fixture',
+      '## Discovery\n\n> Indy (2026-08-11 09:00): "defer 1.2, ship the rest" — context: fixture',
     ]);
     const ackedModel = await modelFor(acked);
     expect(runGate(ackedModel, acked, "pr").results.find((result) => result.name === "spec.deferrals")?.ok).toBeTrue();

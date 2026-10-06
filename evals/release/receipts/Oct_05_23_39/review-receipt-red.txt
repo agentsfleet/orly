@@ -1,0 +1,23 @@
+bun test v1.4.2 (744846f84)
+
+src/command_process.test.ts:
+38 |     const supervisor = Bun.spawnSync([process.execPath, script, request], { env: UNSCOPED_ENVIRONMENT, stdout: "pipe", stderr: "pipe", timeout: TEST_TIMEOUT_MS });
+39 |     expect(supervisor.exitCode).not.toBe(0);
+40 |     expect(supervisor.stderr.toString()).toContain("EISDIR");
+41 |     expect(existsSync(pidFile)).toBeTrue();
+42 |     pid = Number(readFileSync(pidFile, ENCODING));
+43 |     expect(() => process.kill(pid!, 0)).toThrow();
+                                             ^
+error: expect(received).toThrow()
+
+Received function did not throw
+Received value: true
+
+      at <anonymous> (/Users/kishore/Projects/orly/src/command_process.test.ts:43:41)
+(fail) a failed pid receipt write stops the already started workload [178.49ms]
+
+ 0 pass
+ 5 filtered out
+ 1 fail
+ 4 expect() calls
+Ran 1 test across 1 file. [347.00ms]

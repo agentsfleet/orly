@@ -5,7 +5,7 @@ import { auditSpec } from "../audits/spec-template";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { cleanupTemporaryDirectories, git, modelFor, newSpecRepository, ROOT, SPEC_RELATIVE, specFixture } from "./gates_test_support";
 
-const CONFIG_PATH = ".oracle/orly.json";
+const CONFIG_PATH = ".orly/orly.json";
 const STAGED = "--staged";
 const FILE = "--file";
 const RESIDUE = "path/to/file.ext";
@@ -22,23 +22,25 @@ function run(project: string, ...args: string[]) {
 }
 
 describe("spec audit through real Git and file boundaries", () => {
-  test("an invalid index fails even when its working copy was repaired", async () => {
+  test.each(["v1", "v0.9.2"])("an invalid %s index fails even when its working copy was repaired", async (version) => {
     const project = newSpecRepository();
+    const path = SPEC_RELATIVE.replace("v1", version);
     await modelFor(project);
-    await Bun.write(join(project, SPEC_RELATIVE), `${GOOD}\n${RESIDUE}\n`);
-    git(project, "add", SPEC_RELATIVE);
-    await Bun.write(join(project, SPEC_RELATIVE), GOOD);
+    await Bun.write(join(project, path), `${GOOD}\n${RESIDUE}\n`);
+    git(project, "add", path);
+    await Bun.write(join(project, path), GOOD);
     const result = run(project, STAGED);
     expect(result.code).toBe(1);
     expect(result.output).toContain("unfilled template placeholder");
   });
 
-  test("a repaired index passes despite invalid unstaged content and config", async () => {
+  test.each(["v1", "v0.9.2"])("a repaired %s index passes despite invalid unstaged content and config", async (version) => {
     const project = newSpecRepository();
+    const path = SPEC_RELATIVE.replace("v1", version);
     await modelFor(project);
-    await Bun.write(join(project, SPEC_RELATIVE), `${GOOD}\nReady.\n`);
-    git(project, "add", SPEC_RELATIVE);
-    await Bun.write(join(project, SPEC_RELATIVE), RESIDUE);
+    await Bun.write(join(project, path), `${GOOD}\nReady.\n`);
+    git(project, "add", path);
+    await Bun.write(join(project, path), RESIDUE);
     await Bun.write(join(project, CONFIG_PATH), "invalid json");
     const result = run(project, STAGED);
     expect(result.code).toBe(0);

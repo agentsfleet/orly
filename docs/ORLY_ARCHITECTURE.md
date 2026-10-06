@@ -31,7 +31,7 @@ unaffected by anything below.
 Every other repository gets its rules a different way: `orly init` materialises
 the packs its own sources select — rendered `AGENTS.md`, the rule docs, the gate
 scripts, the hooks that run them — into that repository, and writes
-`.oracle/orly.json` recording the engine version and every file it wrote,
+`.orly/orly.json` recording the engine version and every file it wrote,
 alongside the repository's own packs, commands, and surfaces. `orly update` re-materialises against the currently installed engine
 version; `orly doctor` reports drift between the lock and disk instead of
 silently tolerating it. A materialised repository needs no checkout of this
@@ -55,7 +55,7 @@ restores storage, but not the failure mode that got it removed: `orly update`
 turns a rule change into one command per repository instead of the manual
 sync M01 rejected, and the lock makes staleness a reported condition —
 `orly doctor` — instead of a silent one. cache-kit.rs is the evidence for both
-failure modes in the same repository: its `.oracle/` snapshot from the
+failure modes in the same repository: its `.orly/` snapshot from the
 pre-thin model sat frozen for four weeks with no update path, and its
 generated `AGENTS.md` told a Rust crate its project name was `agentsfleet` —
 a persona/product leak M03 also closes, by fencing both behind opt-in packs a
@@ -113,13 +113,15 @@ malformed trailer is not an override; the gate stays red.
 
 ## Profiles
 
-`.oracle/orly.json` names any opt-in packs, the command surface, and optionally the diff
+`.orly/orly.json` names any opt-in packs, the command surface, and optionally the diff
 surfaces:
 
 ```json
 {
+  "schema_version": 1,
   "commands": { "conform": [["make", "harness-verify"]],
                 "verify.unit": [["make", "test-unit-all"]] },
+  "limits": { "verify.unit": { "timeout_ms": 1800000, "output_bytes": 67108864 } },
   "surfaces": { "user": ["src/http/", "cli/src/"],
                 "docs": ["docs/"] }
 }
@@ -131,6 +133,14 @@ Documentation repositories can use `verify.docs` for site validation and link
 checks without declaring application test suites. `init` reports missing
 commands; `doctor` rejects incomplete setup without running those commands.
 The final tree check includes the spec, so its evidence must be committed.
+
+`schemas/profile.schema.json` describes the repository file, including ownership records and disabled execution settings.
+Both configuration readers refuse unknown settings, malformed types and unsupported execution modes before selecting commands.
+Each invocation defaults to 30 minutes and 64 mebibytes of combined output; `limits` supplies per-command overrides.
+
+The synchronous gate calls a Bun supervisor that reads both streams and stops the owned process group on either limit.
+Limited commands return a failure with measured duration, byte count and a private receipt directory containing all captured bytes.
+Normal commands remove their temporary files after the gate reads the complete output; limit receipts remain until the caller removes them.
 
 ## Usage telemetry
 
@@ -154,12 +164,12 @@ the Fleet is an analysis consumer and never the public ingestion boundary.
 ## Evidence
 
 `orly verify --all --write-evidence` records the source commit and every check
-into `.oracle/evidence.json` (git-ignored). Pre-push writes it when the pushed
+into `.orly/evidence.json` (git-ignored). Pre-push writes it when the pushed
 range touches governance paths.
 
 ## TypeScript judgment experiment
 
-The 0.11.0 experiment keeps the Bun command line and installed `.oracle/`
+The 0.11.0 experiment keeps the Bun command line and installed `.orly/`
 layout. `orly judge` accompanies the deterministic gates with explicit advice.
 Indy canceled the native rewrite and its Milestone 07 plans on Oct 04, 2026.
 

@@ -68,7 +68,7 @@ Spec asserts "503 on Redis down", code returns 200 → test the spec, flag the c
 
 1. **Read the spec** — Failure Modes, Error Contracts, Concurrency Contracts, Resource Limits, Streaming Contracts tables are authoritative.
 2. **Read `docs/greptile-learnings/RULES.md`** — every rule maps to a regression test.
-3. **Bring up real deps** — `make up` (or stack equivalent). Verify health before writing tests.
+3. **Bring up real deps** — use the repository's declared local dependency startup command. Verify health before writing tests; do not add a datastore the application does not use.
 4. **Follow lifecycle timing** — record the comparison revision at opening; measure full unit and integration baselines before the Pull Request. Run focused reproduction and Section proofs while implementing; first application hydration occurs at Section verification. `dispatch/lifecycle.md` owns the sequence.
 5. **Map the ordered request path** — list every dependency interaction in execution order, including repeated acquisitions of the same resource, plus every `catch`/`orelse`/`except`/`Err` in the chain. That list seeds T4 and its partial-completion matrix.
 
@@ -80,7 +80,7 @@ Spec asserts "503 on Redis down", code returns 200 → test the spec, flag the c
 | **Standard** | New service method, new Redis stream/key, schema change with logic | + T4 + T5 + T6 |
 | **Hardening** | Auth / payment / lease / migration / streaming / anything in the data-loss radius | + T7 (if applicable) + T8 + chaos pass |
 
-Auto-detect from diff: `src/auth/**`, `src/agent/leases/**`, `src/runner/**` + `rustd/crates/afd_fleet/**` (the lease/reclaim/fence + client-daemon surface → T9), schema migrations, streaming handlers → Hardening. CRUD-only against existing schema → Smoke. Default → Standard.
+Auto-detect from the repository's actual authentication, lease/reclaim/fence and client-daemon surfaces, schema migrations and streaming handlers → Hardening. The client-daemon surface also requires T9. CRUD-only against existing schema → Smoke. Default → Standard.
 
 Any operation that touches multiple systems or acquires the same resource more than once is **Standard at minimum** and must run T4, even when the endpoint is otherwise CRUD-only.
 
@@ -201,7 +201,7 @@ idempotency, compensation, reconciliation, and failure tests for each residual s
 **Parallelism at scale (≥100 connections) — proves there's no hidden global lock.**
 A single global `Thread.Mutex` keeps every correctness test green while serialising
 every request; this is the regression that proof exists to catch.
-- **≥100 concurrent connections** against real PG + Redis, released together off a
+- **≥100 concurrent connections** against the application's real dependencies, released together off a
   **barrier** so contention is real and reproducible (not staggered by spawn latency).
 - **Correctness invariant (deterministic hard gate):** same row / idempotency key / lease
   under the 100-way race → **exactly one effect**, no lost update.
@@ -393,7 +393,7 @@ Cross-stack failure-injection tools:
 
 Stack-specific must-knows:
 
-- **Zig** — `conn.query()` paired with `.drain()` in the same fn before `deinit()`; verify with the project's drain-audit target. Per-request arena, not per-app. `std.testing.allocator` over the full request lifecycle, not just handler unit, to catch cross-thread leaks. If integration tests share the binary with unit tests, an env var / build flag should gate live-deps mode — assert that gate is set in CI, not assumed. Cross-compile (`x86_64-linux`, `aarch64-linux`) before declaring done.
+- **Zig** — drain every query result before releasing its connection, including early exits. Use wrapper-owned draining where the repository provides it. Review the owner's cleanup path and run any actually declared cleanup check. Use a per-request arena for request ownership. Exercise `std.testing.allocator` over the full request lifecycle to catch cross-thread leaks. If integration tests share the binary with unit tests, assert the live-dependency setting in Continuous Integration (CI). Cross-compile the repository's declared platform matrix before declaring done.
 - **Python** — `pytest-asyncio` event loop scope = `function`, not `session` (avoid leakage). `respx`/`responses` for external HTTP only.
 - **Rust** — `#[sqlx::test]` for per-test schema; `tokio::test(flavor = "multi_thread")` for real concurrency. `loom` for races, not raw threads.
 - **Node** — `--isolate` per test if framework supports; otherwise reset module registry.

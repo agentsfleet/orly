@@ -1,0 +1,8 @@
+{
+  "command": "Production install runner definitions: three packed_root calls around install_update_repins_across_a_version_bump",
+  "exit": 0,
+  "package_constructions": 1,
+  "cached_package_bytes_unchanged": true,
+  "owned_probe_root": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-pack-cache-Oct_05-uci7qph7",
+  "receipt": "evals/release/receipts/Oct_05_21_14/package-cache.txt"
+}

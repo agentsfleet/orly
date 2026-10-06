@@ -1,0 +1,59 @@
+bun test v1.4.2 (744846f84)
+
+src/installation_preservation.test.ts:
+(pass) strong_assertion_exposes_real_defect [474.51ms]
+(pass) an owner edit to .orly/orly.json during staging refuses without overwriting it [448.52ms]
+(pass) an owner edit to .orly/AGENTS.md during staging refuses without overwriting it [485.66ms]
+(pass) an owner edit to AGENTS.md during staging refuses without overwriting it [657.71ms]
+
+src/command_process.test.ts:
+(pass) a successful deadline stop is not repeated during supervisor cleanup [133.12ms]
+(pass) killing the gate owner stops its detached workload [194.61ms]
+
+src/command_runner.test.ts:
+(pass) a deadline stops the owned child group and keeps captured output [338.35ms]
+(pass) the output budget covers both streams and stops the owned child group [47.79ms]
+(pass) an explicit lane override applies through the public gate criteria [432.72ms]
+
+src/installation/migration.test.ts:
+(pass) an active owner hook in .git/hooks remains connected [284.14ms]
+(pass) an active owner hook in .githooks remains connected [292.60ms]
+(pass) interrupted_install_recovers at journal 0 [263.90ms]
+(pass) interrupted_install_recovers at write 0 [281.42ms]
+(pass) interrupted_install_recovers at write 1 [239.61ms]
+(pass) interrupted_install_recovers at write 2 [245.24ms]
+(pass) interrupted_install_recovers at write 3 [283.63ms]
+(pass) interrupted_install_recovers at write 4 [236.62ms]
+(pass) interrupted_install_recovers at write 5 [312.48ms]
+(pass) interrupted_install_recovers at metadata 0 [233.16ms]
+(pass) interrupted_install_recovers at delete 0 [352.87ms]
+(pass) interrupted_install_recovers at delete 1 [230.87ms]
+(pass) interrupted_install_recovers at delete 2 [243.78ms]
+(pass) hook installation recovers interruption at journal 0 [502.85ms]
+(pass) hook installation recovers interruption at write 0 [481.82ms]
+(pass) hook installation recovers interruption at write 1 [493.24ms]
+(pass) hook installation recovers interruption at write 2 [544.98ms]
+(pass) hook installation recovers interruption at write 3 [670.85ms]
+(pass) hook installation recovers interruption at write 4 [602.07ms]
+(pass) hook installation recovers interruption at write 5 [678.93ms]
+(pass) hook installation recovers interruption at write 6 [485.23ms]
+(pass) hook installation recovers interruption at write 7 [495.49ms]
+(pass) hook installation recovers interruption at metadata 0 [508.98ms]
+(pass) hook installation recovers interruption at delete 0 [580.71ms]
+(pass) hook installation recovers interruption at delete 1 [530.14ms]
+(pass) hook installation recovers interruption at delete 2 [611.12ms]
+(pass) migration_preserves_owned_content refuses edited or unowned dispatch/check.md [163.63ms]
+(pass) migration_preserves_owned_content refuses edited or unowned AGENTS.orly.md [184.50ms]
+(pass) migration_preserves_owned_content refuses edited or unowned .orly/dispatch/check.md [117.16ms]
+(pass) recovery refuses an edited destination before deleting any old source [159.91ms]
+(pass) changed journal cannot authorize recovery [171.49ms]
+(pass) a current installation preserves an independent previous configuration [164.96ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [308.53ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [289.59ms]
+(pass) owner hook changes during destination writes are refused before metadata or cleanup [294.85ms]
+(pass) migration removes only proven obsolete instruction references [140.75ms]
+
+ 45 pass
+ 0 fail
+ 869 expect() calls
+Ran 45 tests across 4 files. [16.07s]

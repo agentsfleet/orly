@@ -6,7 +6,7 @@ type MarkdownNode = string | MarkdownElement;
 type Section = { title: string; nodes: MarkdownNode[] };
 type Commands = Record<string, string[][]>;
 
-const CONFIG_PATH = ".oracle/orly.json";
+const CONFIG_PATH = ".orly/orly.json";
 const SPEC_LINE_LIMIT = 320;
 const BACKTICK = "`";
 const EMPTY = "";

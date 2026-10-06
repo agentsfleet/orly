@@ -1,0 +1,10 @@
+bun test v1.4.2 (744846f84)
+
+src/spec_completion.test.ts:
+(pass) a NOT_DONE Dimension remains incomplete [326.15ms]
+
+ 1 pass
+ 10 filtered out
+ 0 fail
+ 2 expect() calls
+Ran 1 test across 1 file. [346.00ms]

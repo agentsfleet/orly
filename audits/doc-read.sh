@@ -101,16 +101,13 @@ run_log() {
   # The section rides the SAME row rather than a second file: a citation that
   # could be written without a read beside it would be a third assertion to
   # reconcile, and the pair is what carries meaning.
-  printf '{"ts":%s,"path":"%s","blob":"%s","section":"%s"}\n' \
-    "$(date +%s)" "$(json_escape "$relative")" "$blob" "$(json_escape "$section")" >> "$log"
-  return 0
+  bun "$HERE/doc-reads.ts" log "$(date +%s)" "$relative" "$blob" "$section" >> "$log"
 }
 
-# Backslash and double quote are legal in a POSIX filename and illegal raw in a
-# JSON string. Unescaped, `we"ird.md` writes a row no parser can read — and this
-# one mis-splits it, reporting a path that was never read.
+# JSON encoding preserves quoted names, tabs, newlines and other controls.
+# Fields are escaped while passing through the tab-delimited comparison file.
 json_escape() {
-  printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+  bun "$HERE/doc-reads.ts" escape "$1"
 }
 
 # The content a read actually saw. Validity is keyed to this rather than to a
@@ -134,12 +131,8 @@ expected_facade_pages() {
     scope="$(ledger_facade_scope "$page")"
     [ -n "$scope" ] || continue
     stem="$(basename "$page" .md)"
-    [ "$(ledger_match_count "$scope" < "$staged")" -gt 0 ] && printf 'dispatch/%s.md\n' "$stem"
+    [ "$(ledger_match_count "$scope" < "$staged")" -gt 0 ] && printf '%s\n' "${page#"$LEDGER_ROOT"/}"
   done < <(ledger_facade_pages)
-}
-
-json_unescape() {
-  printf '%s' "$1" | sed -e 's/\\"/"/g' -e 's/\\\\/\\/g'
 }
 
 # Paths whose recorded read saw the content that is on disk now, one
@@ -148,26 +141,10 @@ json_unescape() {
 # rows from before this milestone, which carry no blob, cannot prove anything
 # and are ignored.
 #
-# The path is cut at the first `","blob":"` rather than by stripping a fixed
-# tail: the row gained a trailing `section` field, and a suffix strip that
-# spelled the old shape would have silently yielded a path that matches nothing
-# — reading as "never read" for every document.
+# The helper validates each JSON row, skips malformed records and compares the
+# current file hash before emitting escaped fields for the shell comparison.
 current_reads() {
-  local log="$1" line path blob ts section
-  while IFS= read -r line; do
-    case "$line" in *'"blob":"'*) ;; *) continue ;; esac
-    blob="${line#*\"blob\":\"}"; blob="${blob%%\"*}"
-    [ -n "$blob" ] || continue
-    path="${line#*\"path\":\"}"; path="${path%%\",\"blob\":\"*}"
-    path="$(json_unescape "$path")"
-    ts="${line#*\"ts\":}"; ts="${ts%%,*}"
-    section=""
-    case "$line" in
-      *'"section":"'*) section="${line#*\"section\":\"}"; section="${section%%\"*}" ;;
-    esac
-    [ "$blob" = "$(content_hash "$path")" ] &&
-      printf '%s\t%s\t%s\n' "$path" "$ts" "$(json_unescape "$section")"
-  done < "$log"
+  bun "$HERE/doc-reads.ts" current "$1" "$LEDGER_ROOT"
 }
 
 # Timestamps carrying BULK_ASSERTION_THRESHOLD or more distinct façades, one
@@ -212,7 +189,7 @@ run_check() {
   current_reads "$log" | sort -u > "$recorded"
 
   while IFS= read -r page; do
-    grep -qF "$(printf '%s\t' "$page")" "$recorded" && continue
+    grep -qF "$(printf '%s\t' "$(json_escape "$page")")" "$recorded" && continue
     printf '  %s🔴%s DOC READ: %s triggered by the staged diff, not read at its current content\n' "$R" "$X" "$page"
     unread=1
   done < "$expected"
@@ -229,7 +206,7 @@ report_citations() {
   local expected="$1" recorded="$2" page total=0 cited=0 section
   while IFS= read -r page; do
     total=$((total + 1))
-    section="$(grep -F "$(printf '%s\t' "$page")" "$recorded" | cut -f3 | grep -c '[^[:space:]]')"
+    section="$(grep -F "$(printf '%s\t' "$(json_escape "$page")")" "$recorded" | cut -f3 | grep -c '[^[:space:]]')"
     [ "$section" -gt 0 ] && cited=$((cited + 1))
   done < "$expected"
   [ "$total" -eq 0 ] && return 0

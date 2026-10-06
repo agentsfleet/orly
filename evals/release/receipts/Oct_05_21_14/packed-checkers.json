@@ -1,0 +1,109 @@
+{
+  "command": "Enumerate active mechanical entries in the actual packed registry; invoke each entrypoint in explicit authoring and installed-package contexts",
+  "declared_checkers": 2,
+  "distinct_commands": 1,
+  "registry_sha256": "021a01a494b4e9daedab3350e054c9781d10a3332c5ea333de5eae09b3ebe3f7",
+  "packed_entrypoint_sha256": "d36d1da30ba5d4a19a74f1c09e2f198a5c562478395175288197b1c9106e9bb5",
+  "owned_probe_root": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-release-layout-Oct_05-kme6fxfm",
+  "authoring_fixture_additions": [
+    "evals/install/run.sh copied from current source as engine marker",
+    ".orly/orly.json copied from current source to declare exact packs/commands"
+  ],
+  "results": [
+    {
+      "rule": "governance.registry.valid",
+      "declared": [
+        "bin/orly",
+        "verify"
+      ],
+      "context": "authoring",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-release-layout-Oct_05-kme6fxfm/packed-authoring/bin/orly",
+        "verify"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-governance.registry.valid-authoring.txt",
+      "receipt_sha256": "f715515fb8ffc62bae3a964bdc1a3d6681e8f6daa352ec6827d71f8d6d044dd5"
+    },
+    {
+      "rule": "governance.registry.valid",
+      "declared": [
+        "bin/orly",
+        "verify"
+      ],
+      "context": "installed-package",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-release-layout-Oct_05-kme6fxfm/proposed/package/bin/orly",
+        "verify"
+      ],
+      "exit": 1,
+      "expected_exit": 1,
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-governance.registry.valid-installed-package.txt",
+      "receipt_sha256": "66e61b143d850ea499b20be5ff92879a4ffb6c2eb37809f345f498bcacff3b64"
+    },
+    {
+      "rule": "governance.render.stable",
+      "declared": [
+        "bin/orly",
+        "verify"
+      ],
+      "context": "authoring",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-release-layout-Oct_05-kme6fxfm/packed-authoring/bin/orly",
+        "verify"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-governance.render.stable-authoring.txt",
+      "receipt_sha256": "f715515fb8ffc62bae3a964bdc1a3d6681e8f6daa352ec6827d71f8d6d044dd5"
+    },
+    {
+      "rule": "governance.render.stable",
+      "declared": [
+        "bin/orly",
+        "verify"
+      ],
+      "context": "installed-package",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-release-layout-Oct_05-kme6fxfm/proposed/package/bin/orly",
+        "verify"
+      ],
+      "exit": 1,
+      "expected_exit": 1,
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-governance.render.stable-installed-package.txt",
+      "receipt_sha256": "66e61b143d850ea499b20be5ff92879a4ffb6c2eb37809f345f498bcacff3b64"
+    },
+    {
+      "rule": "governance.registry.valid",
+      "context": "missing-fixture",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-release-layout-Oct_05-kme6fxfm/packed-missing-fixture/bin/orly",
+        "verify"
+      ],
+      "exit": 1,
+      "expected": "nonzero",
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-governance.registry.valid-missing-fixture.txt",
+      "receipt_sha256": "07e56363527fea766e9221a0877d7007b6f4c83ef95b2215ad1404ae4b38fd19"
+    },
+    {
+      "rule": "governance.render.stable",
+      "context": "stale-render",
+      "argv": [
+        "bash",
+        "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-release-layout-Oct_05-kme6fxfm/packed-stale-render/bin/orly",
+        "verify"
+      ],
+      "exit": 1,
+      "expected": "nonzero",
+      "receipt": "evals/release/receipts/Oct_05_21_14/checker-governance.render.stable-stale-render.txt",
+      "receipt_sha256": "3ccabc313e88fc0bcd1e9a999541786c6b2c8c07df3effe1d8b104b453226750"
+    }
+  ],
+  "scope": "These registry entries describe ruleset authoring. The authoring fixture adds only declared source context. Packed consumer invocation correctly refuses; no hosted execution or claim about every installed scanner behavior."
+}

@@ -1,0 +1,1 @@
+orly: orly verify edits the ruleset itself and only runs in an orly checkout — from an installed package use `orly init`, `orly update`, `orly doctor`, or `orly gate`

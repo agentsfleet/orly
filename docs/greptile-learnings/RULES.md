@@ -131,7 +131,9 @@ every code a dispatch `.sh` emits resolves to exactly one row here.
 
 ## RULE XCC — Cross-compile before commit (Zig)
 
-**Rule:** Run zig build -Dtarget=x86_64-linux && zig build -Dtarget=aarch64-linux before every Zig commit.
+**Rule:** Compile the repository's declared platform matrix and applicable test
+graphs before its Zig verification boundary.
+For `agentsfleet`, compile both `x86_64-linux` and `aarch64-linux`. <!-- oracle-packs:product.agentsfleet -->
 **Why:** macOS APIs (client.open, etc.) compile locally but don't exist on Linux; CI cache hides it in dev.
 **Tags:** zig, ci
 **Example:** client.open compiled on macOS, absent on Linux — 3 rounds to fix. v0.4.0 bare -gnu in CI.
@@ -139,7 +141,10 @@ every code a dispatch `.sh` emits resolves to exactly one row here.
 <!-- oracle-packs:start language.zig -->
 ## RULE FLS — Flush all layers — drain all results
 
-**Rule:** After TLS flush, also flush the socket layer. Cast UUID/JSONB to ::text in SELECT. For pg results: use `PgQuery` (see dispatch/write_zig.md "Pg Query Wrapper") — `defer q.deinit()` auto-drains. Manual `q.drain() catch {}; q.deinit()` on early-exit paths is eliminated by the wrapper.
+**Rule:** Flush every transport layer and drain query results on every exit.
+Use the repository's query wrapper when it owns draining; otherwise release
+results explicitly without discarding a failure silently.
+For `agentsfleet`, use `PgQuery` as `dispatch/write_zig.md` specifies. <!-- oracle-packs:product.agentsfleet -->
 **Why:** TLS flush only encrypts into buffer; undrained slices dangle; ::text prevents binary/text divergence across OS.
 **Tags:** zig, tls, postgres
 **Example:** Zig — missing socket flush → infinite hang. UUID read as binary on Linux CI, text on macOS. PgQuery wraps drain into deinit.
@@ -196,8 +201,14 @@ every code a dispatch `.sh` emits resolves to exactly one row here.
 
 ## RULE MIG — Migration index assertions track position
 
-**Rule:** When inserting, splitting, or removing migration files, update every index-based assertion in `src/cmd/common.zig`. While `cat VERSION` < 0.30.0, removed files become `SELECT 1;` (see RULE SCH) — their array slot stays but the assertion must match the new content.
-**Why:** Stale index silently points at the wrong SQL file with no compile-time error. assertions checked for CREATE TABLE in files that were now `SELECT 1;` version markers.
+**Rule:** When inserting, splitting or removing migrations, update registration
+and every position-based assertion under the repository's live-data policy.
+<!-- oracle-packs:start product.agentsfleet -->
+For `agentsfleet`, RULE SCH requires complete removal below `0.30.0`, including
+embed and migration registrations; `SELECT 1;` markers are forbidden.
+At and above that boundary, preserve shipped slots and add forward migrations.
+<!-- oracle-packs:end -->
+**Why:** A stale position points at the wrong SQL file without a compile error.
 **Tags:** zig, sql
 **Example:** migrations[7] pointed at wrong file after a split. migrations[14]/[15] asserted dropped table names in version marker files.
 
@@ -390,20 +401,34 @@ a rename of the first would have disabled the account purge with no failing test
 **Tags:** zig
 **Example:** HMAC version "v0" derived by slicing "v0=" prefix — fixed with explicit hmac_version field.
 
-## RULE SCH — Pre-v0.30 schema removal: full teardown, no markers, no DROP
+## RULE SCH — Schema removal follows the repository's live-data policy
+
+**Rule:** Preserve shipped migrations and live data under the repository's own
+deployment policy. A destructive change requires the owner's specific approval;
+another product's version number never authorizes a rebuild here.
+
+<!-- oracle-packs:start product.agentsfleet -->
 
 **Rule:** While `cat VERSION` < 0.30.0 (teardown-rebuild era), removing tables MUST be a full teardown: (1) delete the SQL file (`rm schema/NNN_foo.sql`), (2) remove the `@embedFile` constant from `schema/embed.zig`, (3) remove the migration array entry from `src/cmd/common.zig` and update its array length + any index-based tests. Never write ALTER TABLE, DROP TABLE, or `SELECT 1;` placeholders. Never keep version-marker files. Migration slot numbers are not sacred pre-v0.30 — the DB is wiped on every rebuild, and gaps in numbering are fine. From VERSION >= 0.30.0 the datastore is live production data, so every removal or reshape is a numbered ALTER/DROP migration and the teardown path is closed. **Compare the version field by field, never as a string:** `0.29.0` is under the anchor, `0.30.0` is not, and a lexical compare puts `0.30.0` below `0.9.0` — the anchor moved off a major-number boundary precisely so the minor field decides.
 **Why:** Markers accumulate dead code and still force CI to splitter-parse them. Below 0.30.0 the development database is dropped and re-created from empty, so there is no production data to protect and full removal leaves no false grep hits or stale migration slots. At 0.30.0 that stops being true: the deployment holds data nobody can re-create, which is what makes an in-place migration the only safe shape from then on.
 **Tags:** sql, process
 **Example:** harness teardown — supersedes prior "replace with `SELECT 1;`" guidance. Under the old rule, comment-only markers broke CI (apostrophe in "slots" opened unterminated string in splitter); full deletion avoids the marker problem entirely.
 
-## RULE EP4 — Removed endpoints return 410 Gone, not 404 (from v0.30 on)
+<!-- oracle-packs:end -->
+## RULE EP4 — Endpoint removal follows the declared client policy
+
+**Rule:** Check the repository's deployed clients and deprecation policy before
+removing an endpoint. State the client-visible result and test it; installing
+a pack cannot establish that every caller can be changed together.
+
+<!-- oracle-packs:start product.agentsfleet -->
 
 **Rule:** While `cat VERSION` < 0.30.0 (teardown-rebuild era), removed endpoints MAY simply 404 — API drift is allowed because no deployed client is pinned to the route. Do NOT write 410 Gone stubs for pre-v0.30 removals; they are ceremony without value. From VERSION >= 0.30.0, intentionally removed endpoints MUST return HTTP 410 Gone with a named error code — 404 implies a routing error to monitors and clients, 410 signals permanent intentional removal.
 **Why:** Below 0.30.0 this mirrors the schema teardown policy (RULE SCH) — we tear down DB + APIs freely because nobody downstream is pinned to them. From 0.30.0 the deployment is in production and 410 becomes load-bearing for client behavior and deprecation signals.
 **Tags:** zig, api
 **Example:** shipped /v1/runs/* + /v1/specs as 410 stubs before this rule was scoped. removed /v1/harness/* and /v1/agents/{id} as bare 404s under the teardown-era carve-out.
 
+<!-- oracle-packs:end -->
 ## RULE FXS — Fixed-size scan buffers are security bypasses
 
 **Rule:** Scan security-relevant input in overlapping chunks; never silently truncate at a fixed buffer size.
@@ -420,7 +445,10 @@ a rename of the first would have disabled the account purge with no failing test
 
 ## RULE OBS — Every observable state must have a log/event entry
 
-**Rule:** Every branch that changes how an external party perceives the system MUST emit a structured log line. "External party" includes operators reading dashboards, callers receiving an HTTP response, downstream consumers of a queue, end-users running `agentsfleet`, and incident responders running `journalctl`. If a code path can be read as "we decided to do something different here," it is observable, and it MUST be logged. **Applies to every Zig source file under `src/` and every JS source file under `agentsfleet/src/`** — handler code, middleware, workers, CLI commands, lifecycle code, retries, fallbacks, all of it.
+**Rule:** Every branch that changes externally observable behavior emits a
+structured event for operators, callers or downstream consumers.
+Apply this across the repository's runtime source paths: handlers, middleware,
+workers, commands, lifecycle code, retries and fallbacks.
 
 **Why:** Silent state transitions are invisible in dashboards and incident response. The code can be 100% correct on the wire and 100% opaque to the operator at the same time. A dropped GitHub webhook the user can't explain, an `agentsfleet` command that exited 0 with no output, a worker that silently skipped a job — same root cause, same fix: log the branch.
 
@@ -436,30 +464,32 @@ a rename of the first would have disabled the account purge with no failing test
 
 ### Per-stack convention
 
-#### Zig — `std.log.scoped(.module_name)`
+#### Zig — the repository's structured logger
 
 Every Zig source file that emits any log MUST declare a file-scoped logger with a snake_case scope tag derived from the module's job:
 
 ```zig
-const log = std.log.scoped(.<module_name>);
+const logging = @import("log");
+const log = logging.scoped(.module_name);
 ```
 
 Picking the scope name:
 - The scope IS the module identity in operator-facing logs. Choose specifically (`.webhook_sig_lookup`, `.agent_event_loop`, `.firewall`, `.clerk_webhook`) rather than generically (`.agentsfleetd`, `.utils`).
 - One scope per file is the default. Sibling files in the same package use the same scope only if they're a single logical module split across files for length-gate reasons.
-- Existing scopes already cover most subsystems — grep `std.log.scoped\(\.` before inventing a new one. Consistency with neighbors beats novelty.
+- Read the repository's logger exports and existing scopes before choosing a new one. For `agentsfleet`, use the named `log` module's `logging.scoped` as `docs/LOGGING_STANDARD.md` §7 specifies.
 
-Format the message body as `<scope>.<state> <key>=<value> <key>=<value>`:
+Emit an event name and structured fields through that logger:
 - **state** is a short snake_case noun phrase naming the branch — `parse_failed`, `dedup_replay`, `ignored_event`, `metering_debit`, `claim_skipped`. Operators grep on `<scope>.<state>`; make it unique and stable.
 - **key=value** pairs carry correlation IDs needed to join with downstream traces. Always include `req_id` for request-scoped paths. Add `agent_id` / `workspace_id` / `tenant_id` / `delivery` / `reason` / `err` where relevant.
-- Severity: `log.info` for routine non-default branches (ignores, dedupes, retries), `log.warn` for malformed input / fail-closed / unexpected-but-recoverable, `log.err` for internal failures and contract violations.
+- Severity and operation pairs follow `docs/LOGGING_STANDARD.md` §4, including `debug` for per-row and hot-poll events.
 
 ```zig
-const log = std.log.scoped(.http_webhook_github);
+const logging = @import("log");
+const log = logging.scoped(.http_webhook_github);
 // ...
-log.info("github_webhook.ignored_event agent_id={s} delivery={s} event={s}", .{ agent_id, delivery, event });
-log.warn("github_webhook.parse_failed agent_id={s} delivery={s} err={s}", .{ agent_id, delivery, @errorName(err) });
-log.err("github_webhook.enqueue_failed agent_id={s} delivery={s} err={s}", .{ agent_id, delivery, @errorName(err) });
+log.debug("github_webhook_ignored_event", .{ .agent_id = agent_id, .delivery = delivery, .kind = event });
+log.warn("github_webhook_parse_failed", .{ .reason = @errorName(err) });
+log.err("github_webhook_enqueue_failed", .{ .error_code = code, .reason = @errorName(err) });
 ```
 
 #### JS CLI (`agentsfleet`) — structured stderr via `writeError` + diagnostic JSON in `--json` mode
@@ -593,12 +623,21 @@ This is intentionally manual — the structural diversity of "function body" acr
 **Tags:** security, architecture, multi-tenancy, confused-deputy
 **Example:** design review — original draft proposed SQLite on a persistent host volume; rejected because agent shell tools could read sibling agents' directories. Storage moved to a dedicated Postgres database with a scoped `memory_runtime` role. The rule generalizes: it applies to any future cross-tenant data (per-workspace caches, per-customer artifacts, per-agent workspaces).
 
-## RULE WAUTH — Every workspace-scoped handler must call authorizeWorkspace after authenticate
+## RULE WAUTH — Authenticate and authorize workspace access before data access
 
-**Rule:** Any handler that takes a `workspace_id` URL parameter must (1) capture the principal from `common.authenticate` — never discard with `_ =` — and (2) call `common.authorizeWorkspace(conn, principal, workspace_id)` immediately after acquiring a DB connection. A 403 must be returned before any data is read or written.
+**Rule:** Every workspace-scoped operation authenticates the caller and proves
+workspace ownership before reading or writing data. Use the repository's
+canonical guard mechanism; mounted guards count only when the route declares
+both checks and tests prove unauthenticated and wrong-workspace callers fail.
+<!-- oracle-packs:start product.agentsfleet -->
+The current `agentsfleet` route row and mount perform these checks, as
+`docs/REST_API_DESIGN_GUIDELINES.md` §7–§8 specifies; handlers do not duplicate them.
+The former Zig `common.authenticate` and `common.authorizeWorkspace` call shape
+below records the original finding, not the current handler API.
+<!-- oracle-packs:end -->
 **Why:** External agents handlers discarded the principal with `_ = common.authenticate(...)`, so any authenticated workspace owner could enumerate, create, or delete agents in a different workspace just by substituting the workspace_id in the path. Caught by greptile on PR #205 (P0).
-**Do:** `const principal = common.authenticate(...) catch |err| { ... }; ... if (!common.authorizeWorkspace(conn, principal, workspace_id)) { return 403; }`
-**Don't:** `_ = common.authenticate(...) catch |err| { ... };`
+**Do:** Test the served route's unauthenticated and wrong-workspace requests.
+**Don't:** Discard the principal or rely on an unmounted guard.
 **Tags:** zig, security, IDOR, auth
 **Example:** Zig — external_agents.zig — all 3 handlers missing workspace check. Fixed PR #205.
 
@@ -650,7 +689,9 @@ return switch (resp) { .integer => |n| n == 1, else => false };
 
 ## RULE SGR — SQL migrations must include GRANT statements for all created tables
 
-**Rule:** Every `CREATE TABLE` migration must end with `GRANT` statements for every role that will query the table. Check which operations the application performs (`SELECT`, `INSERT`, `UPDATE`, `DELETE`) against this table and grant exactly those to `api_runtime` and/or `worker_runtime` as appropriate.
+**Rule:** Every `CREATE TABLE` migration grants exactly the operations its
+runtime callers need to the repository's actual roles; identify those roles
+from the connection configuration rather than another product's names.
 **Why:** PostgreSQL denies all access by default. Without grants, every query against the table fails with `permission denied` in production. This is invisible at migration time and only fails at first runtime use.
 **Do:** Follow every `CREATE TABLE` + indices block with grants mirroring the table's callers.
 **Don't:** Ship a migration without grants on the assumption that a superuser connection is used in production.
@@ -841,13 +882,19 @@ const handleConfirm = useCallback(async () => {
 
 ## RULE ITF — Integration tests use real schema via `test_fixtures_<name>.zig`
 
-**Rule:** An integration test that exercises any production SQL table must seed rows in the real schema through a shared `src/db/test_fixtures_<testname>.zig` module and assert against the real table. Do **not** create a session-local `CREATE TEMP TABLE` that mocks a production table's shape — the mock drifts from reality, hides schema changes, and lets tests pass against signatures the real query would reject.
+**Rule:** An integration test exercising a production table seeds the real
+schema through shared repository fixture helpers and asserts against that table.
+Never mock its shape with a session-local temporary table: the mock can hide
+schema changes that the production query would reject.
 **Why:** Every workspace-column migration in M11 broke TEMP-TABLE-based tests silently because the temp shape still matched the old column set. Real-schema fixtures fail loudly when a NOT NULL column is added, which is the correct failure mode. Fixtures also keep auth/scope UUIDs out of production source files so `src/http/**` stays free of test scaffolding.
-**Do:**
+**Do:** Name fixture helpers by behavior and keep them outside production modules.
+Use the repository's actual language, registration and cleanup conventions.
+<!-- oracle-packs:start product.agentsfleet -->
 - One fixture module per test scope, named `src/db/test_fixtures_<scope>.zig` with a **semantic** scope name — e.g. `test_fixtures_prompt_events.zig`, `test_fixtures_http_auth.zig`, `test_fixtures_workspace_credit.zig`. Do **not** use milestone-numbered names (`test_fixtures_uc1.zig`, `test_fixtures_m18.zig`, etc.); those rot as milestones churn and the filename stops describing the scope. Aliases inside test files should also be semantic (`credit_fx`, `billing_fx`, `proposal_fx`), never `uc1`/`uc3`.
 - Module exports: `TENANT_ID`/`WORKSPACE_ID` constants, `seed(conn)` / `seedXxx(conn, ...)`, and an idempotent `cleanup(conn)` that deletes in FK-safe order. Reference production seed helpers (`base.seedTenantById`, `base.seedWorkspaceWithTenant`, `base.seedWorkspaceWithCreator`) rather than re-rolling INSERT SQL.
 - Tests: `cleanup(conn)` as both pre-seed reset and `defer` bookend, then `seed(conn)` and run assertions against schema-qualified table names (`core.workspaces`, `core.prompt_lifecycle_events`, …).
 - Tables with append-only triggers: cleanup wraps DELETEs in `SET session_replication_role = 'replica'` / `origin` (superuser-only; test DB runs as superuser via docker-compose).
+<!-- oracle-packs:end -->
 **Don't:**
 - `CREATE TEMP TABLE <real_table_name>` that shadows a real table. `rls_probe`-style probe tables with no production counterpart are fine; naming an existing table is not.
 - Inline test-fixture constants (`GUARD_TENANT_ID`, `SCOPE_WS_PRIMARY`, …) or `cleanupXxxFixtures` helpers inside production source files. Move them to the fixture module.
@@ -939,7 +986,14 @@ const handleConfirm = useCallback(async () => {
 **Tags:** cli, error-messages, ux, refactor
 **Example:** Zig — pR #258. Greptile P1 finding `3145406909`: UZ-ZMB-008 hint still said `Run 'agentsfleet install <template>'` after the legacy positional form was removed in §1 of the same PR. Sweep also caught a stale `// agentsfleet up sends both files raw` comment in `config.zig` header. Fix in commit (this commit).
 
-## RULE NLG — No legacy compat shims pre-v0.30.0
+## RULE NLG — No speculative compatibility shims
+
+**Rule:** Update the existing interface and its callers together when the
+repository's deployment policy permits it. Do not add compatibility aliases
+without an explicit owner decision naming the external caller and migration.
+Never infer the absence of deployed clients from another product's version.
+
+<!-- oracle-packs:start product.agentsfleet -->
 
 **Rule:** Until `VERSION` reaches `0.30.0`, no deployment we owe compatibility to is running: the datastore is rebuilt from empty and every caller of every interface is in this tree. Every interface change therefore extends the existing surface in place — never via a `V2`-suffixed twin, parallel "legacy" path, `if (legacy_caller)` branch, command-line alias for an old verb or flag, or backward-compat fallback. When an RPC, route, struct, table, command, flag, or config key changes, edit the existing one and update every caller in the same commit. When a behavior is replaced, delete the old code path, do not leave it `orelse` reachable. The Schema Table Removal Guard's "teardown-rebuild era" framing applies to every interface, not just SQL. `0.30.0` is the release that ends it: from there the deployment is in production, a caller can be outside this tree, and a compatibility surface is a design decision with a migration behind it — proposed to the owner, never added as a hedge. Compare the version field by field, never as a string.
 
@@ -959,6 +1013,7 @@ const handleConfirm = useCallback(async () => {
 **Tags:** architecture, refactor, versioning, plan, execute
 **Example:** PLAN, Apr 29, 2026. The temptation to introduce `CreateExecutionV2` to avoid editing the existing RPC and its callers came up during spec audit — rejected because (a) the executor RPC has a single in-tree caller (the worker) and (b) the release that puts us in production had not shipped, so no external compatibility was owed. Rule generalizes the call: in-place extension is the only sanctioned path until VERSION crosses 0.30.0.
 
+<!-- oracle-packs:end -->
 ## RULE RTM — Route matchers segment-based, never substring-based
 
 **Rule:** All HTTP path matchers (in projects with a custom dispatch layer) operate on a canonical `Path` view — a stack-allocated array of segments parsed once at the dispatch boundary. Matchers compare by **segment count + segment[i] equality**. Do not use `startsWith` / `endsWith` / `indexOf` against the raw path. Do not encode disambiguation as call-site ordering. Reservations of literal segments live as explicit `if (p.eq(i, RESERVED)) return null` predicates inside the matchers, so any two matchers in a family are mutually exclusive by structure.

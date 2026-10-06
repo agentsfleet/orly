@@ -1,0 +1,2065 @@
+{
+  "approved_at": "Oct 05, 2026: 07:59 AM",
+  "owner_quote": "Yes fix them, also how about the TEMPLATE.md changes, is it deterministic for you when used to implement a spec will get realized as a PR",
+  "source_report": "evals/release/audit.md",
+  "audit_snapshot": "/private/tmp/orly-audit-Oct_04_PJSlYx/final-snapshot.json",
+  "findings": {
+    "A01": {
+      "status": "approved",
+      "files": [
+        "src/install.ts",
+        "src/config.ts",
+        "src/installation_preservation.test.ts",
+        "src/installation/migration.test.ts"
+      ],
+      "proof": "Original faulty behavior must fail the exact-byte assertion; approved update preserves refused bytes.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/install.ts",
+        "tests_or_control": "src/installation_preservation.test.ts",
+        "observed": "Exact owner bytes survive refusal; bypassing digest ownership fails the assertion.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/assertion-controls.json",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Original input digests are retained through staging; exact owner bytes survive refusal.",
+        "citations": [
+          "src/install.ts:40",
+          "src/install.ts:48",
+          "src/install.ts:81",
+          "src/install.ts:100",
+          "src/installation_preservation.test.ts:27"
+        ],
+        "limit": "Local source and fixture scope; final frozen candidate review remains pending.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A02": {
+      "status": "approved",
+      "files": [
+        "src/install.ts",
+        "src/installation/transaction.ts",
+        "src/installation/lock.ts",
+        "src/installation/migration.ts",
+        "src/installation/migration.test.ts"
+      ],
+      "proof": "Inject failure at every ordered mutation; inspect residual bytes, metadata, journal and next-run recovery.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": "src/installation/transaction.ts",
+        "tests_or_control": "src/installation/migration.test.ts",
+        "observed": "Residual bytes and configuration are inspected at eleven no-hook and thirteen hook-enabled interruption points; retry completes.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt",
+        "limit": "Checkpoint proofs cover the ordered write/metadata/delete boundaries; arbitrary kernel failures inside each atomic write are not exhaustively injected.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Ordered write, metadata and delete checkpoints preserve residual state and retry recovery.",
+        "citations": [
+          "src/installation/transaction.ts:38",
+          "src/installation/transaction.ts:83",
+          "src/installation/migration.test.ts:85"
+        ],
+        "limit": "Eleven no-hook and thirteen hook checkpoints; arbitrary failures within each atomic write are not exhaustively injected.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A03": {
+      "status": "approved",
+      "files": [
+        "src/installation/hooks.ts",
+        "src/install_loaders.test.ts",
+        "evals/install/cases.sh",
+        "README.md",
+        "llms.txt"
+      ],
+      "proof": "Packed source package and generated hooks work on a consumer with no global orly; no native build.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": "src/installation/hooks.ts",
+        "tests_or_control": "src/install_loaders.test.ts",
+        "observed": "Pinned bunx hook text and installed npm entrypoint are tested.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/installation.txt",
+        "limit": "Actual generated pinned bunx hook invocation across both requested operating systems remains unobserved; no native build is authorized.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Generated hooks invoke the pinned source package through bunx.",
+        "citations": [
+          "src/installation/hooks.ts:16",
+          "src/installation/hooks.ts:52",
+          "src/installation/hooks.ts:60"
+        ],
+        "limit": "Executing generated pinned hooks on both requested operating systems remains unobserved.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A04": {
+      "status": "approved",
+      "files": [
+        "src/installation/plan.ts",
+        "src/install.ts",
+        "src/config.ts",
+        "src/loaders.ts",
+        "src/references.ts",
+        "src/render.ts",
+        "registry.json",
+        ".gitignore",
+        "src/install_loaders.test.ts",
+        "src/installation/migration.test.ts",
+        "src/render.test.ts",
+        "src/config.test.ts"
+      ],
+      "proof": "Full installation/package suite, real prior-release migration, owner-file preservation and host loading.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/installation/plan.ts",
+        "tests_or_control": "src/installation/migration.test.ts",
+        "observed": "Current layout, recorded ownership, thin loaders and disposable previous-release migration have bounded proofs.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/installation.txt",
+        "limit": "Previous-release upgrades are disposable fixtures. The actual live consuming-repository trial remains later work.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Managed layout, digests, thin loaders and proven prior-layout migration agree.",
+        "citations": [
+          "src/installation/plan.ts:14",
+          "src/installation/plan.ts:61",
+          "src/installation/migration.ts:12",
+          "src/installation/migration.ts:21"
+        ],
+        "limit": "Actual live consumer trial remains an owner action.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A05": {
+      "status": "approved",
+      "files": [
+        "evals/install/run.sh",
+        "evals/ledger/lib.sh",
+        "evals/ledger/run.sh",
+        "evals/dispatch/parity.sh",
+        "evals/llms/run.sh"
+      ],
+      "proof": "Normal/failing/interrupted runs remove only their own directories; retained receipts remain readable.",
+      "priority": "supporting_maintenance_later",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "evals/ledger/lib.sh",
+        "tests_or_control": "src/evaluation_resources.test.ts",
+        "observed": "Parent-owned roots survive command substitution and cleanup only their own paths on normal/failure/termination exits.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/cleanup-controls.json",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Evaluation runners own parent temporary roots and cleanup only those roots.",
+        "citations": [
+          "evals/ledger/lib.sh:1",
+          "evals/llms/run.sh:54",
+          "evals/release/receipts/Oct_05_21_14/cleanup-controls.json:1"
+        ],
+        "limit": "Startup/cleanup controls do not execute every suite body in failing/termination cases. Instrumented ledger timeout remains a failed run.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A06": {
+      "status": "approved",
+      "files": [
+        "evals/install/run.sh",
+        "evals/install/release_cases.sh"
+      ],
+      "proof": "Measure one package construction; deliberate mutation in one case does not affect another.",
+      "priority": "supporting_maintenance_later",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "evals/install/run.sh",
+        "tests_or_control": "evals/install/release_cases.sh",
+        "observed": "Three cache requests construct one package; mutating the upgrade copy preserves cached manifest and rule bytes.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/package-cache.json",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "One cached package construction serves three calls; a mutated upgrade copy leaves cached bytes unchanged.",
+        "citations": [
+          "evals/install/run.sh:1",
+          "evals/install/release_cases.sh:1",
+          "evals/release/receipts/Oct_05_21_14/package-cache.json:1"
+        ],
+        "limit": "Local cache and fixture proof; no publication claim.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A07": {
+      "status": "approved",
+      "files": [
+        ".github/workflows/release.yml"
+      ],
+      "proof": "Hosted release job installs the scanner and passes the existing real-scanner tests.",
+      "priority": "supporting_maintenance_later",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": ".github/workflows/release.yml",
+        "tests_or_control": "src/required_scanner.test.ts",
+        "observed": "Existing workflow installs pinned Gitleaks before audit; local real-scanner assertions pass.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "No hosted workflow execution for this uncommitted candidate is observed. No workflow was edited in this resumed session.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Workflow installs the required secret scanner before the audit; absent/finding controls refuse.",
+        "citations": [
+          ".github/workflows/release.yml:1",
+          "src/required_scanner.test.ts:22",
+          "src/required_scanner.test.ts:32"
+        ],
+        "limit": "Hosted candidate workflow result remains pending.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A08": {
+      "status": "approved",
+      "files": [
+        "src/config.ts",
+        "src/config_discovery.ts",
+        "src/config.test.ts",
+        "src/setup.test.ts"
+      ],
+      "proof": "Typecheck, configuration/discovery regressions and unchanged file cap.",
+      "priority": "supporting_maintenance_later",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/config_discovery.ts",
+        "tests_or_control": "src/config.test.ts",
+        "observed": "Discovery responsibilities are extracted; configuration/discovery behavior and typechecking remain tested.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Configuration discovery is shared and used by actual readers.",
+        "citations": [
+          "src/config_discovery.ts:1",
+          "src/config.test.ts:1"
+        ],
+        "limit": "Retained local fixture and source scope.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A09": {
+      "status": "approved",
+      "files": [
+        "src/install.test.ts",
+        "src/install_loaders.test.ts",
+        "src/installation_preservation.test.ts",
+        "src/installation/migration.test.ts",
+        "src/install_nested.test.ts",
+        "src/install_packs.test.ts"
+      ],
+      "proof": "Compare original assertions with the split suites; full declared unit lane and file-length checks.",
+      "priority": "supporting_maintenance_later",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/install.test.ts",
+        "tests_or_control": "src/install_loaders.test.ts",
+        "observed": "Installation assertions are split by concern; asynchronous rejections are awaited; ordered recovery assertions are strengthened.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt",
+        "limit": "Full assertion equivalence after splitting is assessed through source and suite evidence; a count alone is not proof.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Installation tests are split by concern and assert exact preservation behavior.",
+        "citations": [
+          "src/install.test.ts:1",
+          "src/install_loaders.test.ts:1",
+          "src/installation_preservation.test.ts:10"
+        ],
+        "limit": "Source-equivalence and assertion review; test count alone is not the proof.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A10": {
+      "status": "approved",
+      "files": [
+        "src/execution/plan.ts",
+        "src/execution/plan.test.ts",
+        "src/criteria.ts",
+        "src/cli.ts",
+        "src/cli.test.ts"
+      ],
+      "proof": "Preview selection equals actual local lanes; failed local command remains failed; configured remote launcher never runs.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/execution/plan.ts",
+        "tests_or_control": "src/execution/plan.test.ts",
+        "observed": "Preview and local criteria share lane selection; active remote settings refuse and disabled launchers do not execute.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Preview and real gates share lane selection; active remote execution refuses and disabled settings do not launch.",
+        "citations": [
+          "src/execution/plan.ts:16",
+          "src/execution/plan.ts:32",
+          "src/execution/config.ts:1"
+        ],
+        "limit": "No remote runner implementation is claimed.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A11": {
+      "status": "approved",
+      "files": [
+        "src/references.ts",
+        "src/loaders.ts",
+        "src/installation/plan.ts",
+        "src/criteria_spec.ts",
+        "src/verify.ts",
+        "src/validation.ts",
+        "audits/spec-template.sh",
+        "audits/spec-template.ts",
+        "audits/doc-read.sh",
+        "audits/rule-ledger-lib.sh",
+        "registry.json",
+        "core/operating-model.md",
+        "dispatch/edit_rules.md",
+        "dispatch/lifecycle.md",
+        "dispatch/verify.md",
+        "dispatch/write_any.md",
+        "dispatch/write_go.md",
+        "dispatch/write_python.md",
+        "dispatch/write_rust.md",
+        "dispatch/write_shell.md",
+        "dispatch/write_zig.md",
+        "packs/language/go/rules.md",
+        "packs/language/python/rules.md",
+        "packs/language/rust/rules.md",
+        "packs/language/shell/rules.md",
+        "audits/agents-md.md",
+        "docs/ORLY_ARCHITECTURE.md",
+        "docs/TEMPLATE.md",
+        "docs/VERIFY_TIERS.md",
+        "README.md",
+        "llms.txt",
+        "skills/orly-babysit-prs/SKILL.md",
+        "src/references.test.ts",
+        "src/install_loaders.test.ts",
+        "src/config.test.ts",
+        "src/verify.test.ts",
+        "src/spec_template_io.test.ts",
+        "evals/install/cases.sh",
+        "evals/install/release_cases.sh",
+        "AGENTS.md"
+      ],
+      "proof": "Packed-consumer scripts, doc reads, link closure, generated hooks, skill loading and upgrade all resolve locally.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "README.md; src/installation/plan.ts",
+        "tests_or_control": "src/install_loaders.test.ts",
+        "observed": "Installed paths and current README hook directory agree with the owned layout.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/installation-guidance.txt",
+        "limit": "Current source review and local fixtures only; no sibling product runtime or live comprehension is claimed.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Installed references and current README hook destination agree with the .orly layout.",
+        "citations": [
+          "README.md:141",
+          "src/installation/hooks.ts:9",
+          "src/references.ts:1"
+        ],
+        "limit": "Local installed-package fixtures and source review.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A12": {
+      "status": "approved",
+      "files": [
+        "src/install.ts",
+        "src/installation/plan.ts",
+        "src/installation_preservation.test.ts",
+        "src/install_loaders.test.ts"
+      ],
+      "proof": "Unrecorded or edited banner-prefixed files retain exact bytes; owned unchanged files update.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/loaders.ts",
+        "tests_or_control": "src/install_loaders.test.ts",
+        "observed": "Unrecorded banners and owner-edited files retain exact owner bytes.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "A generated banner alone never authorizes owner-content replacement.",
+        "citations": [
+          "src/loaders.ts:17",
+          "src/install_loaders.test.ts:1"
+        ],
+        "limit": "Owner preservation is checked locally; no real consumer trial claim.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A13": {
+      "status": "approved",
+      "files": [
+        "src/cli.ts",
+        "src/install.ts",
+        "src/installation/transaction.ts",
+        "src/cli.test.ts",
+        "src/install_packs.test.ts"
+      ],
+      "proof": "Refusal and dry-run preserve configuration; interrupted accepted selection recovers consistently.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/install.ts",
+        "tests_or_control": "src/cli.test.ts",
+        "observed": "Refused/dry-run selections preserve configuration; acceptance uses the recoverable transaction.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Requested packs enter the successful transaction's configuration; previews and refusals preserve bytes.",
+        "citations": [
+          "src/install.ts:43",
+          "src/install.ts:76",
+          "src/install.ts:90"
+        ],
+        "limit": "Local command boundary fixtures.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A14": {
+      "status": "approved",
+      "files": [
+        "schemas/profile.schema.json",
+        "src/config.ts",
+        "src/config.test.ts",
+        "docs/ORLY_ARCHITECTURE.md",
+        "README.md"
+      ],
+      "proof": "Validate real seeded/updated settings; reject unknown fields and wrong types; agreement across parser/schema/examples.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/config_validation.ts",
+        "tests_or_control": "src/config_validation.test.ts",
+        "observed": "Strict configuration readers reject unknown keys and wrong types; bounded lane settings round-trip.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/assertion-controls.json",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Strict configuration validation rejects unknown or malformed input and preserves explicit lane limits.",
+        "citations": [
+          "src/config_validation.ts:10",
+          "src/config_validation.ts:20",
+          "src/config_validation.test.ts:24",
+          "src/config_validation.test.ts:34"
+        ],
+        "limit": "Negative-control receipt binds its historical execution copy; current source has been inspected.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A15": {
+      "status": "approved",
+      "files": [
+        "registry.json",
+        "src/validation.ts",
+        "src/verify.test.ts",
+        "docs/ORLY_ARCHITECTURE.md",
+        "README.md",
+        "llms.txt"
+      ],
+      "proof": "Enumerate registry checkers and run each through the packed package; stale command spelling is absent from current guidance.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": "src/validation.ts",
+        "tests_or_control": "src/verify.test.ts",
+        "observed": "Both declared registry checkers run through the actual packed entrypoint in explicit ruleset-authoring fixtures; valid sources pass, missing registry fixtures and stale generated rules fail. Installed-package context correctly refuses these authoring commands.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/packed-checkers-final.json",
+        "limit": "The registry declares two authoring checks sharing one command. This enumeration does not certify every installed scanner or hosted execution.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Declared registry-check commands share the authoring checker and packed positive/negative controls.",
+        "citations": [
+          "src/validation.ts:1",
+          "src/verify.ts:48",
+          "evals/release/receipts/Oct_05_21_14/packed-checkers-final.json:1"
+        ],
+        "limit": "Does not prove every scanner, every consumer environment, or a hosted run.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A16": {
+      "status": "approved",
+      "files": [
+        "src/criteria_spec.ts",
+        "src/criteria.test.ts",
+        "src/gates_spec.test.ts",
+        "src/gates.test.ts",
+        "evals/release/evaluation-plan.md",
+        "docs/ORLY_ARCHITECTURE.md"
+      ],
+      "proof": "NOT_DONE and an unrelated owner quote must fail; independent labeled evidence controls distinguish present markers from fulfilled obligations.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/spec_obligations.ts",
+        "tests_or_control": "src/spec_completion.test.ts",
+        "observed": "Exact DONE markers and item-bound Discovery acknowledgements reject examples, unrelated quotes and unnamed obligations.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/assertion-controls.json",
+        "limit": "A syntactic item-bound quote does not prove semantic fulfillment or a successor-specification mapping.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Exact DONE markers and item-bound Discovery quotes are parsed structurally.",
+        "citations": [
+          "src/spec_obligations.ts:6",
+          "src/spec_obligations.ts:32",
+          "src/spec_obligations.ts:51",
+          "src/spec_completion.test.ts:25",
+          "src/spec_completion.test.ts:62"
+        ],
+        "limit": "A syntactic quote does not prove semantic fulfillment or successor mapping.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A17": {
+      "status": "recorded_scope",
+      "files": [
+        "evals/release/audit.md"
+      ],
+      "proof": "Local fixture validation and stubbed runner controls only; no live result claimed.",
+      "current_review": {
+        "status": "recorded_scope",
+        "observed": "Local fixture/stub scope remains recorded without a live result.",
+        "citations": [
+          "evals/release/repairs.json:378"
+        ],
+        "limit": "No live comprehension matrix was run by this reviewer.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A18": {
+      "status": "recorded_scope",
+      "files": [
+        "SOUL_LOG.md",
+        "SOUL.md",
+        "AGENTS.md"
+      ],
+      "proof": "Active-reference search is empty; exact private backup remains; distribution allowlist stays protective.",
+      "current_review": {
+        "status": "recorded_scope_not_attested",
+        "observed": "Recorded personal-log decision is retained.",
+        "citations": [
+          "evals/release/repairs.json:385"
+        ],
+        "limit": "Private backup lies outside this review's permitted repository reads; its bytes and ownership are not attested.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A19": {
+      "status": "approved",
+      "files": [
+        ".githooks/pre-push",
+        "evals/test-agents-md.sh"
+      ],
+      "proof": "A missing-tool control must fail; clean scan continues and a detected credential still blocks.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": ".githooks/pre-push",
+        "tests_or_control": "src/required_scanner.test.ts",
+        "observed": "Missing required scanner and detected findings fail the real hook; clean scanning permits continuation.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Required scanner absence and findings block the actual push hook; a clean scan can proceed.",
+        "citations": [
+          ".githooks/pre-push:29",
+          ".githooks/pre-push:35",
+          "src/required_scanner.test.ts:22",
+          "src/required_scanner.test.ts:28",
+          "src/required_scanner.test.ts:32"
+        ],
+        "limit": "Local hook controls only.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A20": {
+      "status": "recorded_scope",
+      "files": [
+        ".github/workflows/release.yml",
+        "evals/install/release_cases.sh"
+      ],
+      "proof": "Stub registry responses for present, absent, denied and unavailable; only confirmed absence allows publication.",
+      "disposition": "owner_excluded",
+      "owner_quote": "i dont want to do telelmetry privacy, release recovery (this is orly itself i thinkk)",
+      "current_review": {
+        "status": "owner_excluded",
+        "observed": "Registry lookup publication failure handling remains owner-excluded.",
+        "citations": [
+          "evals/release/repairs.json:419",
+          "evals/release/repairs.json:420"
+        ],
+        "limit": "Not repaired or certified by this inspection.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A21": {
+      "status": "recorded_scope",
+      "files": [
+        ".github/workflows/release.yml",
+        "evals/install/release_cases.sh"
+      ],
+      "proof": "Owned stub controls interrupt after each external mutation and prove resume reaches one package, tag and release.",
+      "disposition": "owner_excluded",
+      "owner_quote": "i dont want to do telelmetry privacy, release recovery (this is orly itself i thinkk)",
+      "current_review": {
+        "status": "owner_excluded",
+        "observed": "Interrupted external publication recovery remains owner-excluded.",
+        "citations": [
+          "evals/release/repairs.json:429",
+          "evals/release/repairs.json:430"
+        ],
+        "limit": "Not repaired or certified by this inspection.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A22": {
+      "status": "approved",
+      "files": [
+        "src/loaders.ts",
+        "src/loaders.test.ts",
+        "src/install_loaders.test.ts",
+        "src/installation/migration.test.ts"
+      ],
+      "proof": "Add an owner instruction to a generated loader, update and compare exact bytes; include an unchanged owned positive control.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/loaders.ts",
+        "tests_or_control": "src/loaders.test.ts",
+        "observed": "Owner Claude instructions survive and an owned pointer block updates independently.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Claude pointer updates preserve content outside the delimited block.",
+        "citations": [
+          "src/loaders.ts:165",
+          "src/loaders.ts:168",
+          "src/loaders.test.ts:1"
+        ],
+        "limit": "Local loader fixtures.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A23": {
+      "status": "approved",
+      "files": [
+        "src/loaders.ts",
+        "src/loaders.test.ts",
+        "src/installation/migration.ts",
+        "src/installation/migration.test.ts"
+      ],
+      "proof": "Migrated settings reference existing new rules and owner files; unowned old references remain untouched.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/installation/migration.ts",
+        "tests_or_control": "src/installation/migration.test.ts",
+        "observed": "Only proven obsolete instruction references are removed; owner references remain.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Only proven obsolete managed sources authorize obsolete OpenCode reference removal.",
+        "citations": [
+          "src/installation/migration.ts:21",
+          "src/installation/migration.test.ts:207"
+        ],
+        "limit": "Independent owner references remain preserved.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A24": {
+      "status": "approved",
+      "files": [
+        ".github/workflows/release.yml",
+        "evals/install/release_cases.sh"
+      ],
+      "proof": "Run the same assertion against the packed TypeScript/Bun package; an intentionally wrong path still fails.",
+      "priority": "supporting_maintenance_later",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": ".github/workflows/release.yml",
+        "tests_or_control": "evals/install/release_cases.sh",
+        "observed": "The release probe still used the removed rules-file path and failed against the current packed package. After fresh owner approval, its one-line correction passes; old-path and missing-render controls remain red.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/release-layout-final.json",
+        "limit": "The exact local workflow body is exercised with owned temporary destinations and prior actual package acquisition; no hosted run or publication is claimed.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "resumed_owner_approval": {
+        "at": "Oct 05, 2026: 10:34 PM",
+        "quote": "Apply the one-line correction",
+        "scope": "Only .github/workflows/release.yml: test -f AGENTS.orly.md becomes test -f .orly/AGENTS.md."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Workflow layout corrections have local positive and stale-path negative controls.",
+        "citations": [
+          ".github/workflows/release.yml:1",
+          "evals/install/release_cases.sh:1",
+          "evals/release/receipts/Oct_05_21_14/release-layout-final.json:1"
+        ],
+        "limit": "Hosted publication unobserved.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A25": {
+      "status": "approved",
+      "files": [
+        "docs/RELEASE_TEMPLATE.md",
+        "dispatch/write_changelog.md",
+        "registry.json",
+        "src/pack_hygiene.test.ts"
+      ],
+      "proof": "Template names the actual version source and checks; consumer without VERSION or a sibling docs checkout has complete applicable guidance.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "docs/RELEASE_TEMPLATE.md",
+        "tests_or_control": "evals/install/release_cases.sh",
+        "observed": "Release guidance uses the declared manifest/checks and scopes sibling documentation to selected products.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/installation.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Release template uses declared version authority and repository commands with product paths selected explicitly.",
+        "citations": [
+          "docs/RELEASE_TEMPLATE.md:1",
+          "evals/install/release_cases.sh:1"
+        ],
+        "limit": "Source/template fixture scope only.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A26": {
+      "status": "approved",
+      "files": [
+        "src/gates_test_support.ts",
+        "src/install.ts",
+        "src/criteria.ts",
+        "src/config.ts"
+      ],
+      "proof": "Unchanged full-tree scanner reports zero violations; exact-byte behavior assertions and canonical audit remain intact.",
+      "priority": "supporting_maintenance_later",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "audits/ufs.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Full-tree unnamed-string scanning retains all checks and reports no violations.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Repeated TypeScript literals are bound through small existing shared constants.",
+        "citations": [
+          "audits/ufs.sh:1",
+          "src/scanner_scope.test.ts:51",
+          "src/command_process.ts:13"
+        ],
+        "limit": "No suppression or known-violation baseline proves closure.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A27": {
+      "status": "approved",
+      "files": [
+        "src/installation/migration.ts",
+        "src/installation/migration.test.ts"
+      ],
+      "proof": "Install with both a current configuration and an independently owned previous file; assert unchanged old bytes. Keep deliberate previous-version migration coverage.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/installation/migration.ts",
+        "tests_or_control": "src/installation/migration.test.ts",
+        "observed": "A separately owned previous configuration survives when the current installation exists.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Prior configuration deletion occurs only when that configuration was consumed for migration.",
+        "citations": [
+          "src/installation/migration.ts:32",
+          "src/installation/migration.test.ts:168"
+        ],
+        "limit": "Current configuration coexisting with an independent owner prior file is preserved.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A28": {
+      "status": "approved",
+      "files": [
+        "src/verify.ts",
+        "src/verify.test.ts"
+      ],
+      "proof": "Probe directory and file symlinks, including missing destinations; assert outside bytes unchanged.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/verify.ts",
+        "tests_or_control": "src/verify.test.ts",
+        "observed": "Outside and unresolved receipt symlinks refuse while owner bytes survive.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Evidence destination containment is checked before directory creation and before writing.",
+        "citations": [
+          "src/verify.ts:87",
+          "src/verify.ts:101",
+          "src/verify.test.ts:17"
+        ],
+        "limit": "Boundary fixtures preserve external owner bytes.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A29": {
+      "status": "approved",
+      "files": [
+        "src/install.ts",
+        "src/installation/transaction.ts",
+        "src/installation/hooks.ts",
+        "src/installation/migration.test.ts"
+      ],
+      "proof": "Interrupt before/after metadata, change the owner's hooks setting, resume with hooks enabled/disabled, and assert refusal preserves the owner setting.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": "src/installation/transaction.ts",
+        "tests_or_control": "src/installation/migration.test.ts",
+        "observed": "Owner metadata conflicts before resume and after destination writes refuse before cleanup; both resumed hook options retain owner settings.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt",
+        "limit": "The installation lock excludes cooperating installers; unrelated owner tools do not share an atomic compare-and-set with Git configuration.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Recovery validates hook settings and file digests before mutations and cleanup.",
+        "citations": [
+          "src/installation/transaction.ts:78",
+          "src/installation/transaction.ts:83",
+          "src/installation/migration.test.ts:177",
+          "src/installation/migration.test.ts:191"
+        ],
+        "limit": "Cooperating installation lock; no atomic compare-and-swap against unrelated Git-config writers.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A30": {
+      "status": "approved",
+      "files": [
+        "src/model.ts",
+        "src/model.test.ts",
+        "src/config.test.ts",
+        "src/installation/migration.test.ts"
+      ],
+      "proof": "Two or more symlink hops, missing final targets, loops, intermediate links and a contained positive control; prove no outside file is created.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": "src/model.ts",
+        "tests_or_control": "src/model.test.ts",
+        "observed": "Dangling multi-link destinations refuse before outside content is created; contained paths remain usable.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "The filesystem containment tests are bounded cases; racing an unrelated actor replacing paths between validation and mutation is not proven safe.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Unresolved symlink chains and loops refuse containment escapes.",
+        "citations": [
+          "src/model.ts:1",
+          "src/model.test.ts:1"
+        ],
+        "limit": "Bounded path fixtures; arbitrary adversarial link swapping is not exhaustively proved.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A31": {
+      "status": "approved",
+      "files": [
+        "src/pack_hygiene.ts",
+        "src/pack_hygiene.test.ts"
+      ],
+      "proof": "A core-document string containing a forbidden product command is caught; object entries and actual registry still pass legitimate cases.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/pack_hygiene.ts",
+        "tests_or_control": "src/pack_hygiene.test.ts",
+        "observed": "Core-document strings containing product commands are rejected alongside object entries.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Core string entries are included in pack hygiene inspection.",
+        "citations": [
+          "src/pack_hygiene.ts:55",
+          "src/pack_hygiene.ts:62",
+          "src/pack_hygiene.ts:75"
+        ],
+        "limit": "Current shipped registry source scope.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A32": {
+      "status": "approved",
+      "files": [
+        "src/surfaces.ts",
+        "src/surfaces.test.ts",
+        "audits/spec-template.sh",
+        "src/spec_template_io.test.ts"
+      ],
+      "proof": "Integer and dotted version directories are both treated as specifications; ordinary user documentation still satisfies its gate.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/surfaces.ts; audits/spec-template.sh",
+        "tests_or_control": "src/surfaces.test.ts; src/spec_template_io.test.ts",
+        "observed": "Dotted-version spec documentation exclusion and actual staged checking fail three assertions before repair and pass after repair; valid dotted specs still receive full checking.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/dotted-version-green.txt",
+        "limit": "Actual staged/file fixture results; this does not certify every specification claim.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Discovery, documentation exclusion and staged spec selection agree on integer and dotted versions.",
+        "citations": [
+          "src/surfaces.ts:10",
+          "src/surfaces.ts:54",
+          "audits/spec-template.sh:54",
+          "src/surfaces.test.ts:31",
+          "src/spec_template_io.test.ts:25"
+        ],
+        "limit": "Exact red and green local controls; not certification of all specification claims.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A33": {
+      "status": "approved",
+      "files": [
+        "src/cli.ts",
+        "src/cli.test.ts",
+        "src/installation/migration.ts"
+      ],
+      "proof": "Previous-only configuration preview equals real update for packs, commands and persona; dry-run leaves all bytes unchanged.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/install.ts",
+        "tests_or_control": "src/cli.test.ts",
+        "observed": "Previous-only preview selects the same settings as update without writing destination bytes.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Dry preview shares migration configuration and requested-pack selection with real installation.",
+        "citations": [
+          "src/install.ts:42",
+          "src/install.ts:43",
+          "src/cli.test.ts:1"
+        ],
+        "limit": "Local byte-preserving preview/refusal controls.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A34": {
+      "status": "approved",
+      "files": [
+        "dispatch/lib.sh",
+        "evals/dispatch/run.sh"
+      ],
+      "proof": "Compact and multiline JSON with quoted names select exactly managed paths; unrelated source still receives checks.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "audits/scope.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Managed selection parses compact/multiline JSON structurally, retaining quoted paths and unrelated source coverage.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Managed path metadata is parsed structurally for compact and multiline JSON and malformed input refuses.",
+        "citations": [
+          "audits/scope.sh:1",
+          "src/scanner_scope.test.ts:118",
+          "src/scanner_scope.test.ts:128"
+        ],
+        "limit": "Selected fixture forms, not arbitrary parser fuzzing.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A35": {
+      "status": "approved",
+      "files": [
+        "dispatch/lib.sh",
+        "audits/rust-error.sh",
+        "audits/logging.sh",
+        "audits/ufs.sh",
+        "audits/deinit-pairs.sh",
+        "audits/design-tokens.sh",
+        "audits/error-codes.sh",
+        "audits/sql-mod.sh",
+        "evals/dispatch/run.sh"
+      ],
+      "proof": "Stage bad bytes, then fix only working bytes: staged check stays red. Also test the inverse, deletions, renames and spaced paths.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "audits/scope.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Staged bytes and staged configuration are evaluated together; inverse working edits, rename/delete and spaced paths are controlled.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Staged source and configuration come from the same owned index snapshot.",
+        "citations": [
+          "audits/scope.sh:1",
+          "src/scanner_scope.test.ts:51",
+          "src/scanner_scope.test.ts:99",
+          "src/scanner_scope.test.ts:163",
+          "src/scanner_scope.test.ts:192"
+        ],
+        "limit": "Unstaged working-copy fixes cannot clear indexed violations.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A36": {
+      "status": "approved",
+      "files": [
+        "dispatch/lib.sh",
+        "dispatch/write_rust.sh",
+        "dispatch/write_zig.sh",
+        "dispatch/write_any.sh",
+        "dispatch/edit_rules.sh",
+        "audits/rust-error.sh",
+        "audits/logging.sh",
+        "audits/ufs.sh",
+        "audits/deinit-pairs.sh",
+        "audits/sql-mod.sh",
+        "audits/msid-ui.sh",
+        "audits/agents-md.sh",
+        "evals/dispatch/run.sh"
+      ],
+      "proof": "An unstaged bad explicit target fails its leaf check; unrelated staged paths are excluded. Staged mode keeps its original selection.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "dispatch/lib.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Explicit target mode evaluates unstaged selected paths and omits unrelated staged files.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Explicit dispatch paths reach leaf scanners without unrelated staged inputs.",
+        "citations": [
+          "dispatch/lib.sh:1",
+          "src/scanner_scope.test.ts:61"
+        ],
+        "limit": "Actual local dispatch boundaries.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A37": {
+      "status": "approved",
+      "files": [
+        "audits/error-codes.sh",
+        "evals/dispatch/run.sh"
+      ],
+      "proof": "Unknown argument exits two before discovery; real paths with spaces survive every scan.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "audits/error-codes.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Unknown arguments fail before discovery; quoted and spaced paths retain selection.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Unknown and mixed scope options refuse before clean verdicts.",
+        "citations": [
+          "audits/error-codes.sh:1",
+          "audits/scope.sh:1",
+          "src/scanner_scope.test.ts:153"
+        ],
+        "limit": "Current leaf entrypoint argument controls.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A38": {
+      "status": "approved",
+      "files": [
+        "audits/rust-error.sh",
+        "evals/dispatch/run.sh"
+      ],
+      "proof": "A valid Result alias in a spaced filename satisfies its own crate; missing aliases and lossy causes remain red.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "audits/rust-error.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "A local Result alias with spaces satisfies its own crate; missing/lossy cases stay red.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Rust crate alias discovery preserves spaced paths and shares staged input.",
+        "citations": [
+          "audits/rust-error.sh:1",
+          "src/scanner_scope.test.ts:99"
+        ],
+        "limit": "Local spaced-path and index fixtures.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A39": {
+      "status": "approved",
+      "files": [
+        "src/criteria_support.ts",
+        "src/config.ts",
+        "src/config.test.ts",
+        "src/criteria.test.ts",
+        "schemas/profile.schema.json",
+        "src/cli_help.ts",
+        "README.md"
+      ],
+      "proof": "Fast deadline/output controls stop every owned child, fail explicitly and retain complete captured receipts; ordinary commands and explicit per-lane overrides remain usable.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/command_process.ts",
+        "tests_or_control": "src/command_runner.test.ts",
+        "observed": "Deadlines and combined output limits stop owned children and retain private complete receipts; repeated successful stops are now avoided.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/group-tests-after.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Owned groups stop on limits, gate-owner disappearance and termination signals; timers/listeners are released.",
+        "citations": [
+          "src/command_process.ts:20",
+          "src/command_process.ts:48",
+          "src/command_process.ts:55",
+          "src/command_process.ts:72",
+          "src/command_runner.ts:18",
+          "src/command_process.test.ts:39",
+          "src/command_process.test.ts:65"
+        ],
+        "limit": "Local supported platform proof; no cross-platform execution claim.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A40": {
+      "status": "recorded_scope",
+      "files": [
+        "src/telemetry.ts",
+        "src/telemetry_sync.ts",
+        "src/telemetry.test.ts",
+        "src/cli_help.ts",
+        "README.md"
+      ],
+      "proof": "Custom project names never enter spool or upload fields; a real failed custom lane maps to a published fixed category.",
+      "disposition": "owner_excluded",
+      "owner_quote": "i dont want to do telelmetry privacy, release recovery (this is orly itself i thinkk)",
+      "current_review": {
+        "status": "owner_excluded",
+        "observed": "Telemetry privacy expansion remains owner-excluded.",
+        "citations": [
+          "evals/release/repairs.json:809",
+          "evals/release/repairs.json:810"
+        ],
+        "limit": "Not repaired or certified.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A41": {
+      "status": "approved",
+      "files": [
+        "evals/release/inventory.ts",
+        "evals/release/reviewed.json",
+        "evals/release/inventory.json"
+      ],
+      "proof": "Changed bytes invalidate review status; final snapshot binds record self-reference externally; package membership remains independently checked.",
+      "priority": "supporting_maintenance_later",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": "evals/release/inventory.ts",
+        "tests_or_control": "src/release_inventory.test.ts",
+        "observed": "Changed or missing review digests invalidate status; self-referential records require external snapshot binding.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/inventory-stale-control.json",
+        "limit": "The inventory marks its own review record pending; external snapshot binding is recorded separately, not as self-certified review.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Inventory digest changes invalidate reviewed status and preserve explicit self-reference limits.",
+        "citations": [
+          "evals/release/inventory.ts:41",
+          "src/release_inventory.test.ts:1",
+          "evals/release/receipts/Oct_05_21_14/inventory-stale-control.json:1"
+        ],
+        "limit": "Final candidate inventory binding remains pending until freeze and fresh review.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A42": {
+      "status": "approved",
+      "files": [
+        "audits/doc-read.sh",
+        "evals/ledger/doc_read_cases.sh"
+      ],
+      "proof": "Quoted, tabbed, multiline and control-character citations round-trip through valid JSON; malformed input records no invalid row.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "audits/doc-reads.ts",
+        "tests_or_control": "src/doc_reads.test.ts",
+        "observed": "Quoted paths and control-character citations round-trip through structural JSON records.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Document-read JSON escaping and structural row validation preserve exact fields and reject malformed invented reads.",
+        "citations": [
+          "audits/doc-reads.ts:8",
+          "audits/doc-reads.ts:10",
+          "src/doc_reads.test.ts:15",
+          "src/doc_reads.test.ts:34"
+        ],
+        "limit": "Local exact odd-path/citation controls.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A43": {
+      "status": "approved",
+      "files": [
+        "dispatch/lib.sh",
+        "evals/dispatch/run.sh"
+      ],
+      "proof": "Concurrent runs have separate receipts; an attacker-owned predictable path cannot redirect output or cleanup.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "dispatch/lib.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Concurrent scanners retain separate private receipts without following predictable owner paths.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Each dispatch invocation owns a private unique receipt.",
+        "citations": [
+          "dispatch/lib.sh:1",
+          "src/scanner_scope.test.ts:76"
+        ],
+        "limit": "Concurrent local receipt readability/permissions checked.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A44": {
+      "status": "approved",
+      "files": [
+        "evals/llms/run.sh",
+        "evals/llms/agents.sh",
+        "evals/llms/fixtures.sh",
+        "evals/test-agents-md.sh",
+        "audits/agents-md.md",
+        "docs/ORLY_ARCHITECTURE.md"
+      ],
+      "proof": "Local stubs prove changed prompt/host/settings invalidate saved results and incomplete coverage cannot claim full completion; no live model calls.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": "evals/llms/cache.ts",
+        "tests_or_control": "src/comprehension_cache.test.ts",
+        "observed": "Local stub hosts invalidate cache on prompt/host/settings changes and reject incomplete results.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/comprehension-check.txt",
+        "limit": "The cache hashes the executable entrypoint/shim, not a tested transitive runtime closure. Fixture validation is not live comprehension.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Saved results bind prompt, adapter, host entrypoint and settings and reject incomplete coverage.",
+        "citations": [
+          "evals/llms/cache.ts:19",
+          "evals/llms/cache.ts:44",
+          "src/comprehension_cache.test.ts:1"
+        ],
+        "limit": "Entrypoint/shim bytes do not prove full transitive runtime identity; fixture validation is not live adherence.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A45": {
+      "status": "approved",
+      "files": [
+        "audits/msid-ui.sh",
+        "evals/dispatch/run.sh",
+        "audits/data.sh"
+      ],
+      "proof": "A spaced-path violation is detected; a missing comparison revision returns a clear error; plain positive/negative controls remain valid.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "audits/msid-ui.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Spaced paths are scanned; missing comparison revisions fail with a diagnostic.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Diff marker checks preserve selected/index paths and refuse missing comparisons.",
+        "citations": [
+          "audits/msid-ui.sh:71",
+          "src/scanner_scope.test.ts:173",
+          "src/scanner_scope.test.ts:182"
+        ],
+        "limit": "Local index/working-copy boundary controls.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A46": {
+      "status": "approved",
+      "files": [
+        "audits/ufs.sh",
+        "evals/dispatch/run.sh"
+      ],
+      "proof": "Factor sixty is caught; named constants and retained exemptions pass; other documented unit factors remain covered.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "audits/ufs.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Factor sixty is caught while named constants and documented exemptions pass.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Semantic numeric factors are covered by the unnamed-string/numeric scanner.",
+        "citations": [
+          "audits/ufs.sh:1",
+          "src/scanner_scope.test.ts:51",
+          "src/scanner_scope.test.ts:163"
+        ],
+        "limit": "Pattern-based numeric checks; no universal semantic inference claim.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A47": {
+      "status": "approved",
+      "files": [
+        "audits/deinit-pairs.sh",
+        "dispatch/write_zig.sh",
+        "evals/dispatch/run.sh",
+        "dispatch/write_zig.md"
+      ],
+      "proof": "Single-line allocating init, multiline control and non-src Zig target are checked; value types retain their exemption.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "audits/deinit-pairs.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Single-line allocating initialization outside src is caught; value-type initialization retains its exemption.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Initializer checking includes same-line allocation and tracked Zig files outside src.",
+        "citations": [
+          "audits/deinit-pairs.sh:1",
+          "src/scanner_scope.test.ts:110"
+        ],
+        "limit": "Implemented allocation/pair checks only; arena lifetime and empty pairs remain reviewer duties.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A48": {
+      "status": "approved",
+      "files": [
+        "registry.json",
+        "core/operating-model.md",
+        "dispatch/lifecycle.md",
+        "dispatch/write_sql.md",
+        "dispatch/write_ts_adhere_bun.md",
+        "dispatch/write_zig.md",
+        "dispatch/name_architecture.md",
+        "dispatch/write_http.md",
+        "dispatch/write_changelog.md",
+        "docs/SCHEMA_CONVENTIONS.md",
+        "docs/RELEASE_TEMPLATE.md",
+        "src/pack_hygiene.ts",
+        "src/pack_hygiene.test.ts",
+        "audits/agents-md.md",
+        "AGENTS.md",
+        "README.md",
+        "llms.txt",
+        "docs/LOGGING_STANDARD.md",
+        "docs/REST_API_DESIGN_GUIDELINES.md",
+        "docs/greptile-learnings/RULES.md",
+        "skills/orly-write-unit-test/SKILL.md",
+        "skills/orly-write-integration-test/SKILL.md"
+      ],
+      "proof": "Synthetic independent SQL, language and HTTP consumers receive no implicit product datastore/build policy; explicit product selection retains its safeguards.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/pack_hygiene.ts",
+        "tests_or_control": "src/install_packs.test.ts",
+        "observed": "Independent consumers receive their own SQL/build/documentation rules; explicit product selection retains its safeguards.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Product-specific policies are fenced; generic installed packs use consumer commands and authority.",
+        "citations": [
+          "src/pack_hygiene.ts:55",
+          "dispatch/write_sql.md:38",
+          "dispatch/write_sql.md:43",
+          "src/install_packs.test.ts:1"
+        ],
+        "limit": "Current explicit product selection remains available.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A49": {
+      "status": "approved",
+      "files": [
+        "src/render.ts",
+        "src/cli.ts"
+      ],
+      "proof": "Whole-tree call-site search, typecheck, rendering and command behavior show the removed private helper/import had no consumer.",
+      "priority": "supporting_maintenance_later",
+      "verification": {
+        "status": "observed_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "src/render.ts",
+        "tests_or_control": "src/render.test.ts",
+        "observed": "Uncalled renderer helper and unused command import are removed; the real seeder remains in configuration code.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Unused renderer file-writing export and CLI import were removed; production seeding remains.",
+        "citations": [
+          "src/render.ts:1",
+          "src/cli.ts:1",
+          "src/config_discovery.ts:1"
+        ],
+        "limit": "Source call/reference inspection, not test-count proof.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A50": {
+      "status": "approved",
+      "files": [
+        "dispatch/write_any.md",
+        "dispatch/write_zig.md",
+        "docs/LIFECYCLE_PATTERNS.md",
+        "docs/LOGGING_STANDARD.md",
+        "evals/dispatch/run.sh",
+        "evals/dispatch/coverage.sh",
+        "audits/agents-md.md",
+        "evals/llms/fixtures.jsonl"
+      ],
+      "proof": "Source/output-name checks agree with the pages; local comprehension controls require review of each absent machine check; existing scanner fixtures retain their pass/fail behavior.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_repair_reviewed",
+        "source": "dispatch/write_any.md",
+        "tests_or_control": "evals/dispatch/coverage.sh",
+        "observed": "Pages separate actual scanner output from mandatory human review; unchanged deterministic fixtures retain positive/negative behavior.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/comprehension-check.txt",
+        "limit": "Local fixture validity and scanner output checks do not establish live agent adherence to reviewer duties.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_local",
+        "observed": "Machine scanner claims are bounded and missing mechanical checks remain explicit reviewer duties.",
+        "citations": [
+          "dispatch/write_any.md:430",
+          "dispatch/write_any.md:466",
+          "dispatch/write_zig.md:859",
+          "dispatch/write_zig.md:877",
+          "docs/LOGGING_STANDARD.md:414",
+          "docs/LOGGING_STANDARD.md:474"
+        ],
+        "limit": "No live agent adherence claimed.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A51": {
+      "status": "approved",
+      "files": [
+        "skills/orly-babysit-prs/SKILL.md",
+        "audits/agents-md.md",
+        "evals/llms/fixtures.jsonl"
+      ],
+      "proof": "Stubbed multi-page review and failed-check responses stay incomplete; disputed findings require the owner; quiet-poll evidence uses the pushed revision.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": "skills/orly-babysit-prs/SKILL.md",
+        "tests_or_control": "src/review_poll.test.ts",
+        "observed": "All review/check pages are shape-validated against the pushed revision; missing, failed, malformed and changed evidence stays incomplete.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Single-poll collection and incomplete-result controls are observed. A complete two-quiet-poll babysitter session remains unobserved.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Review/check collection is paginated and revision-bound; incomplete, missing, malformed or disputed evidence cannot prove quiet.",
+        "citations": [
+          "skills/orly-babysit-prs/SKILL.md:97",
+          "skills/orly-babysit-prs/SKILL.md:177",
+          "skills/orly-babysit-prs/SKILL.md:314",
+          "src/review_poll.test.ts:1"
+        ],
+        "limit": "Full two-quiet-poll real Pull Request session remains pending.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A52": {
+      "status": "approved",
+      "files": [
+        "docs/greptile-learnings/RULES.md",
+        "docs/LIFECYCLE_PATTERNS.md",
+        "docs/REST_API_DESIGN_GUIDELINES.md",
+        "docs/LOGGING_STANDARD.md",
+        "dispatch/write_zig.md",
+        "audits/agents-md.md",
+        "evals/llms/fixtures.jsonl"
+      ],
+      "proof": "Cross-page consistency controls cover migrations, ownership, handler authorization and logging; owner approves changed semantics; no native build.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": "dispatch/write_sql.md; docs/SCHEMA_CONVENTIONS.md; dispatch/write_zig.md",
+        "tests_or_control": "audits/agents-md.md questions 27.5 and 17.1; current 186-answer questionnaire map",
+        "observed": "Migration registration agrees with canonical source. Cleanup requires draining before connection release on every exit and recognizes the canonical wrapper. No static coverage is invented.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/comprehension-check.txt",
+        "limit": "Current source review and local fixtures only; no sibling product runtime or live comprehension is claimed.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Migration paths, cleanup lifetime, mounted authorization and structured logging agree after source corrections. Query cleanup wording now requires draining on every exit before connection release and recognizes the canonical wrapper-owned cleanup.",
+        "citations": [
+          "dispatch/write_sql.md:61",
+          "dispatch/write_sql.md:77",
+          "docs/SCHEMA_CONVENTIONS.md:37",
+          "docs/LIFECYCLE_PATTERNS.md:151",
+          "docs/REST_API_DESIGN_GUIDELINES.md:630",
+          "docs/LOGGING_STANDARD.md:320",
+          "audits/agents-md.md:233",
+          "dispatch/write_zig.md:298",
+          "dispatch/write_zig.md:480",
+          "dispatch/write_zig.md:492",
+          "dispatch/write_zig.md:494",
+          "docs/greptile-learnings/RULES.md:145"
+        ],
+        "limit": "Current source review and local fixture scope only; no sibling product runtime, native build or live comprehension is claimed.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    },
+    "A53": {
+      "status": "approved",
+      "files": [
+        "skills/orly-spec-new/SKILL.md",
+        "skills/orly-write-unit-test/SKILL.md",
+        "docs/TEMPLATE.md",
+        "dispatch/lifecycle.md",
+        "audits/agents-md.md",
+        "evals/llms/fixtures.jsonl"
+      ],
+      "proof": "A filled body has no authoring prelude, uses the approved authoring branch, and emits descriptive source test names accepted by the unchanged naming scanner.",
+      "priority": "consumer_determinism_first",
+      "verification": {
+        "status": "partial_local_proof",
+        "closure": "local_source_repair_reviewed_proof_limits_retained",
+        "source": "core/operating-model.md; AGENTS.md; skills/orly-spec-new/SKILL.md",
+        "tests_or_control": "audits/agents-md.md question 1.6",
+        "observed": "Detected default branch guidance is consistent after source regeneration; active-stream work stays on its branch.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Current source review and local fixtures only; no sibling product runtime or live comprehension is claimed.",
+        "final_boundary": "Final frozen-candidate review and actual Pull Request follow-up are recorded separately; this disposition does not claim publication."
+      },
+      "current_review": {
+        "status": "supported_partial_local",
+        "observed": "Generated source now uses detected default branch; body-only copy and active-stream updates remain explicit.",
+        "citations": [
+          "core/operating-model.md:172",
+          "AGENTS.md:167",
+          "skills/orly-spec-new/SKILL.md:98",
+          "skills/orly-spec-new/SKILL.md:136",
+          "skills/orly-spec-new/SKILL.md:140"
+        ],
+        "limit": "Current source and disposable fixture scope; actual Pull Request boundary remains pending.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json"
+      }
+    }
+  },
+  "repair_order": {
+    "owner_quotes": [
+      "I want to focus on the getting the codebase where orly applies to improve the determinism",
+      "those must be fixed first",
+      "others must be moved down"
+    ],
+    "first": "Checks, configuration, completion evidence and consistent rule enforcement in repositories using orly; installation preserves these checks and owner data.",
+    "later": "Internal evaluation maintenance, packaging and release work.",
+    "completion": "Ordering only; approved later findings remain incomplete until their proof is observed."
+  },
+  "latest_consumer_verification": {
+    "observed_at": "Oct 05, 2026: 05:40 PM",
+    "branch": "feat/m09-verified-012",
+    "head": "4be34f70a14ffdffa6b26bbdaac4111379771817",
+    "working_tree_uncommitted": true,
+    "receipts": "evals/release/receipts/Oct_05_17_40",
+    "runtime_and_rule_source_digests": "evals/release/receipts/Oct_05_17_40/source-digests.json",
+    "audit": {
+      "command": [
+        "make",
+        "audit"
+      ],
+      "tests_passed": 476,
+      "tests_failed": 0,
+      "assertions": 1556,
+      "test_files": 49,
+      "rule_bytes": 37391,
+      "rule_byte_cap": 37888,
+      "unnamed_string_violations": 0,
+      "source_files_scanned": 101,
+      "dispatch_cases_passed": 46,
+      "error_parity_cases_passed": 10,
+      "ledger_cases_passed": 25,
+      "receipt": "evals/release/receipts/Oct_05_17_40/audit-local-server-receipt.json"
+    },
+    "installation": {
+      "command": [
+        "make",
+        "install-evals"
+      ],
+      "passed": 23,
+      "failed": 0,
+      "receipt": "evals/release/receipts/Oct_05_17_40/installation-network-receipt.json"
+    },
+    "upgrade": {
+      "previous_version": "0.10.14",
+      "candidate_version": "0.11.0",
+      "proof": "evals/release/receipts/Oct_05_17_40/published-upgrade-proof.json",
+      "assertions": [
+        "owner rule bytes preserved",
+        "owner instructions retained",
+        "unowned historical file preserved",
+        "runtime model and custom settings preserved",
+        "runtime instructions point to current rules",
+        "managed files present",
+        "installation lock released"
+      ],
+      "limit": "The fixture has no declared conform or verification commands. This proves installation and preservation, not a successful consuming-project gate."
+    },
+    "sandbox_attempts": {
+      "audit": {
+        "tests_passed": 474,
+        "tests_failed": 2,
+        "cause": "Local HTTP test servers could not listen in the sandbox.",
+        "receipt": "evals/release/receipts/Oct_05_17_40/audit-receipt.json"
+      },
+      "installation": {
+        "passed": 5,
+        "failed": 18,
+        "cause": "Declared dependencies could not resolve and npm could not install in the sandbox.",
+        "receipt": "evals/release/receipts/Oct_05_17_40/installation-receipt.json"
+      }
+    },
+    "secret_scan": {
+      "command": [
+        "gitleaks",
+        "detect",
+        "--source",
+        ".",
+        "--no-git",
+        "--redact",
+        "--config",
+        ".gitleaks.toml"
+      ],
+      "result": "no leaks found",
+      "receipt": "evals/release/receipts/Oct_05_17_40/secrets-receipt.json"
+    },
+    "still_required": [
+      "Comparison-revision baseline measurement",
+      "Required unit and integration test-quality audits",
+      "Current-diff adversarial review and per-finding dispositions",
+      "Milestone completion checks and pull-request boundary",
+      "Approved later maintenance and release work"
+    ],
+    "owner_exclusions": [
+      "A40 telemetry privacy",
+      "A20 registry lookup publication repair",
+      "A21 interrupted publication recovery",
+      "Further live model calls",
+      "Native builds"
+    ],
+    "proof_limit": "Passing checks do not close all findings or prove semantic completeness. No milestone completion, new repository commit, pull request or publication is claimed.",
+    "configured_consumer_upgrade": {
+      "proof": "evals/release/receipts/Oct_05_17_40/command-upgrade-proof.json",
+      "receipt": "evals/release/receipts/Oct_05_17_40/command-upgrade-receipt.json",
+      "declared_commands_preserved": {
+        "conform": [
+          [
+            "bun",
+            "build",
+            "src/main.ts",
+            "--outfile",
+            ".orly/build/main.js"
+          ]
+        ],
+        "verify.unit": [
+          [
+            "bun",
+            "test",
+            "src"
+          ]
+        ]
+      },
+      "conformance_passed_before_and_after_upgrade": true,
+      "build_passed_with_incorrect_behavior": true,
+      "unit_criterion_positive_negative_positive": [
+        true,
+        false,
+        true
+      ],
+      "limit": "Default-branch and missing-upstream checks intentionally stay red in this disposable migration fixture.",
+      "probe_correction": "The first observer wrongly expected JSON from the text-only gate command. Its failure is retained. The corrected observer reads the actual installed gate result while the installed command also runs."
+    }
+  },
+  "live_consumer_trial": {
+    "status": "owner_acknowledged_later",
+    "owner_quote": "Okay i think we can do it on the live repo later.",
+    "limit": "Applies only to the actual live consuming-repository trial; all other approved repairs remain required."
+  },
+  "resumed_verification": {
+    "observed_at": "Oct 05, 2026: 10:53 PM",
+    "baseline": "evals/release/receipts/Oct_05_21_14/baseline-unit.json",
+    "quality_audit": "evals/release/test-quality-Oct_05_21_14.md",
+    "failed_candidate_audit": "evals/release/receipts/Oct_05_21_14/audit-final.txt",
+    "failed_audit_counts": {
+      "passed": 496,
+      "failed": 1,
+      "assertions": 2210,
+      "test_files": 51
+    },
+    "failure": "Repeated process-group stop was reproduced and repaired in production code; current full and shuffled selections pass. The failed candidate receipt remains historical evidence.",
+    "review": "incomplete \u2014 required native adversarial agents excluded by owner work-alone instruction; three editing cycles reached; captured tree changed; completed=false and converged=false",
+    "completion": "No finding is closed solely by an approval or a green suite.",
+    "current_audit": {
+      "command": [
+        "make",
+        "audit"
+      ],
+      "passed": 498,
+      "failed": 0,
+      "assertions": 2219,
+      "test_files": 52,
+      "rule_bytes": 37391,
+      "rule_byte_cap": 37888,
+      "unnamed_string_violations": 0,
+      "source_files_scanned": 104,
+      "receipt": "evals/release/receipts/Oct_05_21_14/audit-guidance-serial.txt"
+    },
+    "randomized": {
+      "command": [
+        "bun",
+        "test",
+        "src",
+        "--randomize",
+        "--seed=2601005"
+      ],
+      "passed": 498,
+      "failed": 0,
+      "receipt": "evals/release/receipts/Oct_05_21_14/unit-randomized-repaired.txt",
+      "scope": "Full repaired implementation before final consumer-guide corrections; runtime/test bytes are unchanged and fresh canonical audit revalidates final guidance."
+    },
+    "test_delta": 159,
+    "review_report": "evals/release/review-Oct_05_21_14.md",
+    "secret_scan": {
+      "command": [
+        "gitleaks",
+        "detect",
+        "--source",
+        ".",
+        "--no-git",
+        "--redact",
+        "--config",
+        ".gitleaks.toml"
+      ],
+      "result": "no leaks found",
+      "receipt": "evals/release/receipts/Oct_05_21_14/secrets-repaired.txt"
+    },
+    "inventory_binding": "evals/release/receipts/Oct_05_21_14/inventory-snapshot.json",
+    "still_required": [
+      "Full current review coverage or an explicit change to its permitted scope",
+      "Remaining per-finding proof limits recorded in verification.limit",
+      "Milestone completion and actual Pull Request boundary",
+      "Generated pinned hooks and publication evidence on the requested operating systems"
+    ],
+    "current_installation": {
+      "command": [
+        "make",
+        "install-evals"
+      ],
+      "passed": 23,
+      "failed": 0,
+      "receipt": "evals/release/receipts/Oct_05_21_14/installation-guidance.txt"
+    },
+    "packed_checkers": "evals/release/receipts/Oct_05_21_14/packed-checkers-final.json",
+    "release_probe": "evals/release/receipts/Oct_05_21_14/release-layout-final.json",
+    "current_conform": "Included in current audit-guidance-serial.txt",
+    "fixture_validity": {
+      "command": [
+        "make",
+        "llmevals",
+        "CHECK=1"
+      ],
+      "fixtures": 73,
+      "receipt": "evals/release/receipts/Oct_05_21_14/comprehension-guidance.txt",
+      "live_calls": false
+    },
+    "review_record": "evals/release/receipts/Oct_05_21_14/review-log.json",
+    "concurrent_audit_failure": {
+      "command": [
+        "make",
+        "audit"
+      ],
+      "concurrent_command": [
+        "make",
+        "install-evals"
+      ],
+      "passed": 497,
+      "failed": 1,
+      "assertions": 2216,
+      "test_files": 52,
+      "observed": "Ledger-cleanup test reached its unchanged 20-second test timer. Isolated cleanup tests and the same canonical audit without the package suite alongside it passed. The failed receipt remains; no waiver or test-budget change was made.",
+      "receipt": "evals/release/receipts/Oct_05_21_14/audit-guidance.txt",
+      "isolated_receipt": "evals/release/receipts/Oct_05_21_14/cleanup-isolated.txt"
+    },
+    "protected_files": "evals/release/receipts/Oct_05_21_14/protected-files.json",
+    "source_recheck": "evals/release/receipts/Oct_05_21_14/review-input-final.json"
+  },
+  "current_session": {
+    "deliverable": "Ready 0.11.0 Pull Request with proposed 0.12.0 evaluation report; owner merges and deploys",
+    "owner_direction": "Keep thing simple, less configuration, and donot over engineer",
+    "native_review_authorization": "Allow one read-only reviewer (recommended)",
+    "review_repairs": [
+      "Original input digests retained through staging",
+      "Active owner hooks preserved in default and previous directories",
+      "Detached workload stopped when gate owner exits or supervisor receives a stop signal",
+      "A32 dotted-version selectors repaired and proof attribution corrected",
+      "A11 README hook destination corrected",
+      "A52 canonical migration registration synchronized",
+      "A53 detected default branch source rule regenerated",
+      "Spawned workload owned before receipt setup, with real failed-write cleanup regression",
+      "Consumer guide corrected for managed paths, owned loader refresh, link refusal and journaled interruption",
+      "Integration guidance aligned with verified wrapper cleanup and actually declared checks",
+      "Greptile completion, threads and summaries consistently selected; no completion-only bot override"
+    ],
+    "new_settings": 0,
+    "publication_observed": false,
+    "live_consumer_trial_observed": false,
+    "live_model_calls": 0,
+    "current_audit": {
+      "receipt": "evals/release/receipts/Oct_05_23_39/audit-current.txt",
+      "passed": 509,
+      "failed": 0,
+      "assertions": 2272,
+      "files": 52,
+      "baseline_passed": 339,
+      "net_growth": 170
+    },
+    "questionnaire": {
+      "receipt": "evals/release/receipts/Oct_05_23_39/native-inspection/questionnaire-review.json",
+      "yes": 186,
+      "no": 0,
+      "live_comprehension": false
+    },
+    "functional_revalidation": {
+      "receipt": "evals/release/receipts/Oct_05_23_39/review-qa/final-review/evidence.json",
+      "passed": 87,
+      "failed": 0,
+      "assertions": 1001,
+      "smoke_clock_reset": false,
+      "receipts": [
+        "evals/release/receipts/Oct_05_23_39/review-qa/required-checks/evidence.json",
+        "evals/release/receipts/Oct_05_23_39/review-qa/receipt-revalidation/evidence.json"
+      ],
+      "superseded_capture": "007; current supervisor and runner capture is 010",
+      "bot_selection_receipt": "evals/release/receipts/Oct_05_23_39/review-qa/final-review/bot-selection-revalidation/evidence.json"
+    },
+    "failed_coverage_attempts": [
+      "evals/release/receipts/Oct_05_23_39/coverage.txt",
+      "evals/release/receipts/Oct_05_23_39/coverage-isolated.txt"
+    ],
+    "failed_install_environment": "evals/release/receipts/Oct_05_23_39/install-current.txt",
+    "package_check": {
+      "command": "mise exec bun node -- make install-evals",
+      "receipt": "evals/release/receipts/Oct_05_23_39/install-runtime-path.txt",
+      "passed": 23,
+      "failed": 0
+    },
+    "report": "evals/release/release-report.md",
+    "review_record": "evals/release/review-Oct_06_00_30.md",
+    "spec": "docs/v1/done/M09_001_P1_CLI_DOCS_INFRA_SKILL_VERIFIED_COMMANDER_RELEASE.md",
+    "bounded_review": {
+      "receipt": "evals/release/receipts/Oct_05_23_39/review-cycle-limit.json",
+      "editing_cycles": 3,
+      "completed": false,
+      "converged": false,
+      "next": "Separate full finished-candidate review required; no clean claim for the earlier attempt"
+    },
+    "post_repair_audit_attempt": {
+      "receipt": "evals/release/receipts/Oct_05_23_39/audit-third-repair-failed.txt",
+      "passed": 509,
+      "failed": 1,
+      "assertions": 2273,
+      "files": 52,
+      "failure": "Existing twenty-second ledger cleanup timeout; no deadline or gate changed; final boundary pending"
+    }
+  }
+}

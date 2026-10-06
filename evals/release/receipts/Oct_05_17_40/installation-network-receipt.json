@@ -1,0 +1,12 @@
+{
+  "command": [
+    "make",
+    "install-evals"
+  ],
+  "cwd": "/Users/kishore/Projects/orly",
+  "started": "2026-10-05T12:03:28.743148+00:00",
+  "finished": "2026-10-05T12:05:14.519407+00:00",
+  "exit_code": 0,
+  "log": "evals/release/receipts/Oct_05_17_40/installation-network.log",
+  "sha256": "0b292eeede66dd7289548e3904bbe27054bd58891d715b44476df75c48fba286"
+}

@@ -1,0 +1,29 @@
+
+install evals (root: /Users/kishore/Projects/orly)
+
+  PASS  ORLY_ARCHITECTURE.md names the config, materialisation, and the superseded model
+  PASS  verify refuses from a published payload and names the install verbs
+  PASS  the CI workflow's audit step fails on a seeded governance violation
+  PASS  a hand edit is preserved by a refused update; repository instructions survive
+  PASS  a deleted managed file is reported, not silently ignored
+  PASS  every language selection installs with zero dangling references
+  PASS  init sets core.hooksPath and the hooks scrub inherited git scope
+  PASS  a second init writes nothing and leaves the tree byte-identical
+  PASS  --json emits the documented object and the human path emits none
+  PASS  init materialises rules, gates, hooks, and a lock into a fresh repository
+  PASS  a Rust repository receives no Zig façade and no foreign gate
+  PASS  missing bun fails with a message naming the runtime and a fix
+  PASS  package allowlist ships the engine and no personal file
+  PASS  installed npm bin shim runs init from the packed tarball
+  PASS  packed tarball installs and renders with no dotfiles checkout
+  PASS  README uses bunx for setup and generated hooks
+  PASS  init outside a git work tree refuses and names the fix
+  PASS  sync and render are gone, and no tracked file still calls them
+  PASS  init with no arguments selects packs from the repository's own sources
+  PASS  update moves a repository from an older pinned version to the current one
+  PASS  update refuses in a repository that was never installed into
+  PASS  --version reports the packaged manifest version
+  PASS  init works from a payload carrying no repositories.json
+
+  23 passed / 0 failed
+

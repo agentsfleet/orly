@@ -1,0 +1,14 @@
+1 | const initialKill = process.kill;
+2 | const stoppedGroups = new Set<number>();
+3 | process.kill = ((pid: number, signal?: NodeJS.Signals | number) => {
+4 |   if (pid < 0 && signal === "SIGKILL") {
+5 |     if (stoppedGroups.has(pid)) throw Object.assign(new Error("group already stopped"), { code: "EPERM" });
+                                                            ^
+error: group already stopped
+ code: "EPERM"
+
+      at <anonymous> (/private/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-group-cleanup-Oct_05-gw1eu5uz/command_process.ts:5:57)
+      at stopOwnedGroup (/private/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-group-cleanup-Oct_05-gw1eu5uz/command_process.ts:29:17)
+      at run (/private/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-group-cleanup-Oct_05-gw1eu5uz/command_process.ts:66:5)
+
+Bun v1.4.2 (macOS arm64)

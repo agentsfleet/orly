@@ -1,0 +1,17 @@
+{
+  "observationCapture": "008",
+  "observationArgv": [
+    "bun",
+    "test",
+    "src/installation/migration.test.ts"
+  ],
+  "observed": "bun test v1.4.2 (744846f84)\n",
+  "hypothesis": "Migration preserves owner hooks and all declared recovery points; verify dotted-version spec filtering and staged-index validation on the corrected selectors.",
+  "nextCapture": "009",
+  "nextArgv": [
+    "bun",
+    "test",
+    "src/surfaces.test.ts",
+    "src/spec_template_io.test.ts"
+  ]
+}

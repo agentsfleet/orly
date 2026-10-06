@@ -51,6 +51,12 @@ else G=''; R=''; Y=''; B=''; BO=''; X=''; fi
 AGENTS_ALL=(claude codex amp opencode)
 have() { command -v "$1" >/dev/null 2>&1; }
 
+RUN_TMP="$(mktemp -d "${TMPDIR:-/tmp}/orly-comprehension.XXXXXX")" || exit 2
+trap 'rm -rf "$RUN_TMP"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+export TMPDIR="$RUN_TMP"
+
 # Agent I/O and fixture loading live in siblings (FLL split, dispatch/write_any.md
 # §File & Function Length Gate). Located from this file rather than rebuilt from
 # ROOT, so moving or renaming the tree cannot desynchronise the three. Sourced
@@ -64,6 +70,9 @@ source "$HERE/fixtures.sh"
 printf '%s🧲 AGENTS.md cross-agent Large Language Model (LLM) evaluation%s  (mode=%s threshold=%s%%)\n\n' "$B$BO" "$X" "$MODE" "$THRESHOLD"
 
 [[ -f "$FIXTURES" ]] || { echo "${R}FAIL${X}: fixtures missing: $FIXTURES" >&2; exit 2; }
+[[ "$THRESHOLD" =~ ^[0-9]+$ && "$THRESHOLD" -ge 1 && "$THRESHOLD" -le 100 ]] || { echo 'threshold must be an integer from 1 to 100' >&2; exit 2; }
+[[ "$CALL_TIMEOUT" =~ ^[1-9][0-9]*$ ]] || { echo 'timeout must be a positive integer' >&2; exit 2; }
+if [[ -n "$ONLY_AGENT" && ! " ${AGENTS_ALL[*]} " == *" $ONLY_AGENT "* ]]; then echo "unknown agent: $ONLY_AGENT" >&2; exit 2; fi
 validate_agent_io || { echo "${R}FAIL${X}: agent input/output validation failed" >&2; exit 2; }
 validate_fixtures || { echo "${R}FAIL${X}: fixture validation failed" >&2; exit 2; }
 
@@ -81,11 +90,10 @@ fi
 [[ ${#AVAIL[@]} -gt 0 ]] || { echo "${R}FAIL${X}: no agent CLIs available to run" >&2; exit 2; }
 
 # Build context once.
-CTX_FILE="$(mktemp)"; build_context > "$CTX_FILE"
-trap 'rm -f "$CTX_FILE"' EXIT
+CTX_FILE="$RUN_TMP/context"; build_context > "$CTX_FILE" || exit 2
 
 # Determine target agents + fixture subset.
-TARGETS=("${AVAIL[@]}")
+TARGETS=("${AGENTS_ALL[@]}")
 [[ -n "$ONLY_AGENT" ]] && TARGETS=("$ONLY_AGENT")
 
 mapfile -t IDS    < <(fixtures_field id     | cut -f1)
@@ -110,13 +118,13 @@ if [[ -n "$ONLY_IDS" ]]; then
 fi
 
 # Resumability — a long live run can be killed (session restart, Ctrl-C). Each
-# agent's verdict is journalled the moment it completes, keyed to HEAD + the
-# fixtures hash, so a re-run skips finished agents instead of re-spending tokens.
-# A drifted ruleset/fixtures changes RUNKEY → stale journal is ignored. --fresh
-# forces a clean run. Journal is gitignored and machine-local.
-HEAD_SHA="$(cd "$ROOT" && git rev-parse --short HEAD 2>/dev/null || echo nogit)"
-FIX_HASH="$( (md5 -q "$FIXTURES" 2>/dev/null || md5sum "$FIXTURES" 2>/dev/null | cut -d' ' -f1) )"
-RUNKEY="${HEAD_SHA}-${FIX_HASH}-t${THRESHOLD}"
+# agent's result is keyed to the actual prompt bytes, selected hosts, adapter
+# source, executable bytes, fixture bytes and settings. Changed inputs cannot
+# reuse old evidence. Unavailable results are never reused as completed work.
+PROMPT_DIR="$RUN_TMP/prompts"; mkdir -p "$PROMPT_DIR"
+for id in "${IDS[@]}"; do build_prompt "${QTEXT[$id]}" "${CTXS[$id]:-__FULL__}" > "$PROMPT_DIR/$id" || exit 2; done
+TARGET_LIST="$(IFS=,; printf '%s' "${TARGETS[*]}")"
+RUNKEY="$(bun "$HERE/cache.ts" key "$ROOT" "$PROMPT_DIR" "$TARGET_LIST" "$THRESHOLD" "$CALL_TIMEOUT")" || exit 2
 RUN_JDIR="$JOURNAL_DIR/$RUNKEY"
 [[ "$MODE" == "full" && -z "$ONLY_IDS" ]] || RUN_JDIR=""  # journal only for full graded runs
 [[ $FRESH -eq 1 && -n "$RUN_JDIR" ]] && rm -rf "$RUN_JDIR"
@@ -129,16 +137,13 @@ for agent in "${TARGETS[@]}"; do
   have "$agent" || { echo "${R}requested agent absent: $agent${X}"; OVERALL_OK=0; continue; }
   # Resume: a journalled result for this agent at this RUNKEY is replayed.
   jf="${RUN_JDIR:+$RUN_JDIR/$agent}"
-  if [[ -n "$jf" && -f "$jf" ]]; then
-    read -r jstatus jcorrect jtotal < "$jf"
+  cached=""
+  if [[ -n "$jf" ]] && cached="$(bun "$HERE/cache.ts" read "$jf" "$RUNKEY" "$agent" "${#IDS[@]}" "$THRESHOLD")"; then
+    read -r jstatus jcorrect jtotal <<< "$cached"
     echo; echo "${BO}── $agent ──${X} ${B}(resumed from journal)${X}"
-    case "$jstatus" in
-      UNAVAIL) UNAVAIL="$UNAVAIL $agent"; REPORT="$REPORT$agent=UNAVAIL "
-               echo "  ${Y}🟠 unavailable${X} (journalled)" ;;
-      *) GRADED=$((GRADED + 1)); REPORT="$REPORT$agent=$jcorrect/$jtotal "
-         [[ "$jstatus" == PASS ]] && echo "  ${G}→ $jcorrect/$jtotal PASS (journalled)${X}" \
-           || { echo "  ${R}→ $jcorrect/$jtotal FAIL (journalled)${X}"; OVERALL_OK=0; } ;;
-    esac
+    GRADED=$((GRADED + 1)); REPORT="$REPORT$agent=$jcorrect/$jtotal "
+    [[ "$jstatus" == PASS ]] && echo "  ${G}→ $jcorrect/$jtotal PASS (journalled)${X}" \
+      || { echo "  ${R}→ $jcorrect/$jtotal FAIL (journalled)${X}"; OVERALL_OK=0; }
     continue
   fi
   echo; echo "${BO}── $agent ──${X}"
@@ -167,19 +172,18 @@ for agent in "${TARGETS[@]}"; do
   done
   if [[ $unavailable -eq 1 ]]; then
     UNAVAIL="$UNAVAIL $agent"; REPORT="$REPORT$agent=UNAVAIL "
-    [[ -n "$jf" ]] && echo "UNAVAIL 0 0" > "$jf"
     continue
   fi
   GRADED=$((GRADED + 1))
   pct=$(( correct * 100 / total ))
   if [[ $pct -ge $THRESHOLD ]]; then
     printf '  %s→ %d/%d = %d%% PASS%s\n' "$G" "$correct" "$total" "$pct" "$X"
-    [[ -n "$jf" ]] && echo "PASS $correct $total" > "$jf"
+    [[ -n "$jf" ]] && bun "$HERE/cache.ts" write "$jf" "$RUNKEY" "$agent" PASS "$correct" "$total"
   else
     printf '  %s→ %d/%d = %d%% FAIL (below %d%%)%s\n' "$R" "$correct" "$total" "$pct" "$THRESHOLD" "$X"
     [[ -n "$fails" ]] && echo "    misses:$fails"
     OVERALL_OK=0
-    [[ -n "$jf" ]] && echo "FAIL $correct $total" > "$jf"
+    [[ -n "$jf" ]] && bun "$HERE/cache.ts" write "$jf" "$RUNKEY" "$agent" FAIL "$correct" "$total"
   fi
   REPORT="$REPORT$agent=$correct/$total "
 done
@@ -203,13 +207,15 @@ if [[ "$MODE" == "smoke" ]]; then
 fi
 
 if [[ "$MODE" == "full" && -z "$ONLY_AGENT" && -z "$ONLY_IDS" && $OVERALL_OK -eq 1 ]]; then
-  if [[ $GRADED -eq 0 ]]; then
-    echo "${R}🔴 no agent could be graded; all were unavailable${X}"
+  if [[ $GRADED -ne ${#AGENTS_ALL[@]} ]]; then
+    echo "${R}🔴 incomplete host coverage:${X} graded=$GRADED required=${#AGENTS_ALL[@]}"
     exit 1
   fi
-  echo "${G}✅ live comprehension passed${X}: graded=$GRADED $REPORT"
+  echo "${G}✅ live comprehension passed${X}: graded=$GRADED/${#AGENTS_ALL[@]} $REPORT"
   [[ -n "$RUN_JDIR" ]] && rm -rf "$RUN_JDIR"   # run complete — clear its journal
   exit 0
 fi
+
+echo "${Y}partial comprehension coverage${X}: hosts=$GRADED/${#AGENTS_ALL[@]} fixtures=${#IDS[@]} — no full completion claimed"
 
 [[ $OVERALL_OK -eq 1 ]] && exit 0 || { echo "${R}🔴 LLM-eval below threshold — see misses${X}"; exit 1; }

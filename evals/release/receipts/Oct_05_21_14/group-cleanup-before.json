@@ -1,0 +1,8 @@
+{
+  "source": "src/command_process.ts",
+  "probe_root": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-group-cleanup-Oct_05-gw1eu5uz",
+  "probe": "A second signal to the same owned group returns EPERM after the first successful stop.",
+  "exit": 1,
+  "second_signal_failed": true,
+  "receipt": "evals/release/receipts/Oct_05_21_14/group-cleanup-before.txt"
+}

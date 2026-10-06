@@ -1,0 +1,16 @@
+{
+  "evidence": [
+    {
+      "capture": "010",
+      "command": "bun test src/command_process.test.ts src/command_runner.test.ts",
+      "contract": "Successful spawn transfers cleanup ownership immediately; receipt write failures, owner exits, signals, deadlines and output budgets stop the owned workload",
+      "expected": "9 passed, 0 failed, 50 assertions; pid receipt failure retains its exact error and leaves no surviving started workload",
+      "classification": "pass"
+    }
+  ],
+  "limits": [
+    "Required revalidation after accepted process cleanup repair; the original smoke deadline is unchanged and expired.",
+    "Capture 007 is historical after changed process source. Captures 006, 008 and 009 retain unchanged behavior inputs.",
+    "Owned disposable process fixtures; no live consumer, browser, publication, native build or model call."
+  ]
+}

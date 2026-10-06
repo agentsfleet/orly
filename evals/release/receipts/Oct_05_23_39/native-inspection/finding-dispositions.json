@@ -1,0 +1,1579 @@
+{
+  "metadata": {
+    "schema_version": 1,
+    "reviewer": "single authorized read-only reviewer",
+    "repository": "/Users/kishore/Projects/orly",
+    "recorded_at": "2026-10-05T18:56:38.927274+00:00",
+    "head": "4be34f70a14ffdffa6b26bbdaac4111379771817",
+    "worktree_status": " M .githooks/pre-push\n M .github/workflows/release.yml\n M .gitignore\n D .oracle/orly.json\n M AGENTS.md\n M CLAUDE.md\n M README.md\n M SOUL.md\nD  SOUL_LOG.md\n M audits/agents-md.md\n M audits/deinit-pairs.sh\n M audits/design-tokens.sh\n M audits/doc-read.sh\n M audits/error-codes.sh\n M audits/logging.sh\n M audits/msid-ui.sh\n M audits/rule-ledger-lib.sh\n M audits/rust-error.sh\n M audits/spec-template.sh\n M audits/spec-template.ts\n M audits/sql-mod.sh\n M audits/ufs.sh\n M core/operating-model.md\n M dispatch/edit_rules.md\n M dispatch/lib.sh\n M dispatch/lifecycle.md\n M dispatch/name_architecture.md\n M dispatch/verify.md\n M dispatch/write_any.md\n M dispatch/write_changelog.md\n M dispatch/write_go.md\n M dispatch/write_http.md\n M dispatch/write_python.md\n M dispatch/write_rust.md\n M dispatch/write_shell.md\n M dispatch/write_sql.md\n M dispatch/write_ts_adhere_bun.md\n M dispatch/write_zig.md\n M docs/CHANGELOG_VOICE.md\n M docs/EXECUTE_DOC_READS.md\n M docs/JUDGMENTS.md\n M docs/LIFECYCLE_PATTERNS.md\n M docs/LOGGING_STANDARD.md\n M docs/ORLY_ARCHITECTURE.md\n M docs/RELEASE_TEMPLATE.md\n M docs/REST_API_DESIGN_GUIDELINES.md\n M docs/RULE_ENFORCEMENT.md\n M docs/SCHEMA_CONVENTIONS.md\n M docs/TEMPLATE.md\n M docs/VERIFY_TIERS.md\n M docs/greptile-learnings/RULES.md\n M docs/v1/active/M09_001_P1_CLI_DOCS_INFRA_SKILL_VERIFIED_COMMANDER_RELEASE.md\n M evals/dispatch/parity.sh\n M evals/install/cases.sh\n M evals/install/release_cases.sh\n M evals/install/run.sh\n M evals/ledger/lib.sh\n M evals/llms/fixtures.jsonl\n M evals/llms/fixtures.sh\n M evals/llms/run.sh\n M llms.txt\n M packs/language/go/rules.md\n M packs/language/python/rules.md\n M packs/language/rust/rules.md\n M packs/language/shell/rules.md\n M registry.json\n M schemas/profile.schema.json\n M skills/orly-babysit-prs/SKILL.md\n M skills/orly-spec-new/SKILL.md\n M skills/orly-write-integration-test/SKILL.md\n M skills/orly-write-unit-test/SKILL.md\n M src/cli.test.ts\n M src/cli.ts\n M src/cli_help.ts\n M src/config.test.ts\n M src/config.ts\n M src/criteria.test.ts\n M src/criteria.ts\n M src/criteria_spec.ts\n M src/criteria_support.ts\n M src/doc_rules.ts\n M src/gates_spec.test.ts\n M src/gates_test_support.ts\n M src/install.test.ts\n M src/install.ts\n M src/install_nested.test.ts\n M src/install_packs.test.ts\n M src/judgments/constants.ts\n M src/judgments/replay.test.ts\n M src/loaders.test.ts\n M src/loaders.ts\n M src/model.test.ts\n M src/model.ts\n M src/pack_hygiene.test.ts\n M src/pack_hygiene.ts\n M src/references.ts\n M src/render.test.ts\n M src/render.ts\n M src/setup.test.ts\n M src/spec_baseline.test.ts\n M src/spec_template_io.test.ts\n M src/surfaces.test.ts\n M src/surfaces.ts\n M src/validation.ts\n M src/verify.test.ts\n M src/verify.ts\n?? .agents/skills/typesafe-ai/LICENSE\n?? .agents/skills/typesafe-ai/SKILL.md\n?? .orly/orly.json\n?? audits/doc-reads.ts\n?? audits/logging-rust.awk\n?? audits/scope.sh\n?? audits/ufs-strings.awk\n?? docs/architecture/installation.md\n?? docs/architecture/remote-execution.md\n?? evals/llms/cache.ts\n?? evals/release/audit.md\n?? evals/release/evaluation-plan.md\n?? evals/release/inventory.json\n?? evals/release/inventory.ts\n?? evals/release/receipts/Oct_05_17_40/audit-local-server-receipt.json\n?? evals/release/receipts/Oct_05_17_40/audit-receipt.json\n?? evals/release/receipts/Oct_05_17_40/command-upgrade-probe-failure-receipt.json\n?? evals/release/receipts/Oct_05_17_40/command-upgrade-proof.json\n?? evals/release/receipts/Oct_05_17_40/command-upgrade-receipt.json\n?? evals/release/receipts/Oct_05_17_40/installation-network-receipt.json\n?? evals/release/receipts/Oct_05_17_40/installation-receipt.json\n?? evals/release/receipts/Oct_05_17_40/published-upgrade-proof.json\n?? evals/release/receipts/Oct_05_17_40/published-upgrade-receipt.json\n?? evals/release/receipts/Oct_05_17_40/secrets-receipt.json\n?? evals/release/receipts/Oct_05_17_40/source-digests.json\n?? evals/release/receipts/Oct_05_21_14/assertion-controls.json\n?? evals/release/receipts/Oct_05_21_14/audit-final.txt\n?? evals/release/receipts/Oct_05_21_14/audit-guidance-serial.txt\n?? evals/release/receipts/Oct_05_21_14/audit-guidance.txt\n?? evals/release/receipts/Oct_05_21_14/audit-repaired.txt\n?? evals/release/receipts/Oct_05_21_14/audit.txt\n?? evals/release/receipts/Oct_05_21_14/baseline-unit.json\n?? evals/release/receipts/Oct_05_21_14/baseline-unit.txt\n?? evals/release/receipts/Oct_05_21_14/checker-final-governance.registry.valid-authoring.txt\n?? evals/release/receipts/Oct_05_21_14/checker-final-governance.registry.valid-installed-package.txt\n?? evals/release/receipts/Oct_05_21_14/checker-final-governance.registry.valid-missing-fixture.txt\n?? evals/release/receipts/Oct_05_21_14/checker-final-governance.render.stable-authoring.txt\n?? evals/release/receipts/Oct_05_21_14/checker-final-governance.render.stable-installed-package.txt\n?? evals/release/receipts/Oct_05_21_14/checker-final-governance.render.stable-stale-render.txt\n?? evals/release/receipts/Oct_05_21_14/checker-governance.registry.valid-authoring.txt\n?? evals/release/receipts/Oct_05_21_14/checker-governance.registry.valid-installed-package.txt\n?? evals/release/receipts/Oct_05_21_14/checker-governance.registry.valid-missing-fixture.txt\n?? evals/release/receipts/Oct_05_21_14/checker-governance.render.stable-authoring.txt\n?? evals/release/receipts/Oct_05_21_14/checker-governance.render.stable-installed-package.txt\n?? evals/release/receipts/Oct_05_21_14/checker-governance.render.stable-stale-render.txt\n?? evals/release/receipts/Oct_05_21_14/cleanup-controls.json\n?? evals/release/receipts/Oct_05_21_14/cleanup-isolated.txt\n?? evals/release/receipts/Oct_05_21_14/command-repeat-before.txt\n?? evals/release/receipts/Oct_05_21_14/comprehension-check.txt\n?? evals/release/receipts/Oct_05_21_14/comprehension-guidance.txt\n?? evals/release/receipts/Oct_05_21_14/conform-final.txt\n?? evals/release/receipts/Oct_05_21_14/conform-workflow.txt\n?? evals/release/receipts/Oct_05_21_14/conform.txt\n?? evals/release/receipts/Oct_05_21_14/exact-done-marker-correct.txt\n?? evals/release/receipts/Oct_05_21_14/exact-done-marker-incorrect.txt\n?? evals/release/receipts/Oct_05_21_14/git-status.txt\n?? evals/release/receipts/Oct_05_21_14/group-cleanup-before.json\n?? evals/release/receipts/Oct_05_21_14/group-cleanup-before.txt\n?? evals/release/receipts/Oct_05_21_14/group-test-before.txt\n?? evals/release/receipts/Oct_05_21_14/group-tests-after.txt\n?? evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt\n?? evals/release/receipts/Oct_05_21_14/hook-metadata-before.txt\n?? evals/release/receipts/Oct_05_21_14/hook-owner-conflict-correct.txt\n?? evals/release/receipts/Oct_05_21_14/hook-owner-conflict-incorrect.txt\n?? evals/release/receipts/Oct_05_21_14/installation-guidance.txt\n?? evals/release/receipts/Oct_05_21_14/installation-repaired.txt\n?? evals/release/receipts/Oct_05_21_14/installation.txt\n?? evals/release/receipts/Oct_05_21_14/inventory-snapshot.json\n?? evals/release/receipts/Oct_05_21_14/inventory-stale-control.json\n?? evals/release/receipts/Oct_05_21_14/inventory-stale-correct.txt\n?? evals/release/receipts/Oct_05_21_14/inventory-stale-incorrect.txt\n?? evals/release/receipts/Oct_05_21_14/inventory.txt\n?? evals/release/receipts/Oct_05_21_14/journal-integrity-correct.txt\n?? evals/release/receipts/Oct_05_21_14/journal-integrity-incorrect.txt\n?? evals/release/receipts/Oct_05_21_14/owner-byte-refusal-correct.txt\n?? evals/release/receipts/Oct_05_21_14/owner-byte-refusal-incorrect.txt\n?? evals/release/receipts/Oct_05_21_14/package-cache.json\n?? evals/release/receipts/Oct_05_21_14/package-cache.txt\n?? evals/release/receipts/Oct_05_21_14/packed-checkers-final.json\n?? evals/release/receipts/Oct_05_21_14/packed-checkers.json\n?? evals/release/receipts/Oct_05_21_14/protected-files.json\n?? evals/release/receipts/Oct_05_21_14/release-layout-applied.json\n?? evals/release/receipts/Oct_05_21_14/release-layout-applied.txt\n?? evals/release/receipts/Oct_05_21_14/release-layout-control.json\n?? evals/release/receipts/Oct_05_21_14/release-layout-current.txt\n?? evals/release/receipts/Oct_05_21_14/release-layout-final-applied.txt\n?? evals/release/receipts/Oct_05_21_14/release-layout-final-missing-render-control.txt\n?? evals/release/receipts/Oct_05_21_14/release-layout-final-old-path-control.txt\n?? evals/release/receipts/Oct_05_21_14/release-layout-final.json\n?? evals/release/receipts/Oct_05_21_14/release-layout-missing-render-control.txt\n?? evals/release/receipts/Oct_05_21_14/release-layout-missing-render.txt\n?? evals/release/receipts/Oct_05_21_14/release-layout-old-path-control.txt\n?? evals/release/receipts/Oct_05_21_14/release-layout-proposed.patch\n?? evals/release/receipts/Oct_05_21_14/release-layout-proposed.txt\n?? evals/release/receipts/Oct_05_21_14/review-input-check.json\n?? evals/release/receipts/Oct_05_21_14/review-input-final.json\n?? evals/release/receipts/Oct_05_21_14/review-log.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/001/observation.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/001/receipt.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/001/stderr\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/001/stdout\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/002/observation.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/002/receipt.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/002/stderr\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/002/stdout\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/003/observation.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/003/receipt.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/003/stderr\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/003/stdout\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/004/observation.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/004/receipt.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/004/stderr\n?? evals/release/receipts/Oct_05_21_14/review-qa/.qa-evidence/004/stdout\n?? evals/release/receipts/Oct_05_21_14/review-qa/annotations.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/charter.md\n?? evals/release/receipts/Oct_05_21_14/review-qa/deadline.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/evidence.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/exploration-002.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/exploration-003.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/exploration-004.json\n?? evals/release/receipts/Oct_05_21_14/review-qa/input-digests.json\n?? evals/release/receipts/Oct_05_21_14/secrets-repaired.txt\n?? evals/release/receipts/Oct_05_21_14/secrets.txt\n?? evals/release/receipts/Oct_05_21_14/supporting-tests.txt\n?? evals/release/receipts/Oct_05_21_14/test-case-ledger.json\n?? evals/release/receipts/Oct_05_21_14/unit-randomized-repaired.txt\n?? evals/release/receipts/Oct_05_21_14/unit-randomized.txt\n?? evals/release/receipts/Oct_05_21_14/unknown-configuration-correct.txt\n?? evals/release/receipts/Oct_05_21_14/unknown-configuration-incorrect.txt\n?? evals/release/receipts/Oct_05_21_14/write-checkpoint-order-correct.txt\n?? evals/release/receipts/Oct_05_21_14/write-checkpoint-order-incorrect.txt\n?? evals/release/receipts/Oct_05_23_39/audit-current.txt\n?? evals/release/receipts/Oct_05_23_39/audit-final.txt\n?? evals/release/receipts/Oct_05_23_39/audit.txt\n?? evals/release/receipts/Oct_05_23_39/coverage-isolated.txt\n?? evals/release/receipts/Oct_05_23_39/coverage.txt\n?? evals/release/receipts/Oct_05_23_39/doc-check-current.jsonl\n?? evals/release/receipts/Oct_05_23_39/dotted-version-green.txt\n?? evals/release/receipts/Oct_05_23_39/dotted-version-red.txt\n?? evals/release/receipts/Oct_05_23_39/fixture-check.txt\n?? evals/release/receipts/Oct_05_23_39/gitleaks-working.txt\n?? evals/release/receipts/Oct_05_23_39/install-current.txt\n?? evals/release/receipts/Oct_05_23_39/new-doc-check.jsonl\n?? evals/release/receipts/Oct_05_23_39/review-cancellation-red.txt\n?? evals/release/receipts/Oct_05_23_39/review-owner-green.txt\n?? evals/release/receipts/Oct_05_23_39/review-owner-red.txt\n?? evals/release/receipts/Oct_05_23_39/review-repairs-green.txt\n?? evals/release/release-report.md\n?? evals/release/repairs.json\n?? evals/release/review-Oct_05_21_14.md\n?? evals/release/reviewed.json\n?? evals/release/test-quality-Oct_05_21_14.md\n?? skills-lock.json\n?? src/command_limits.ts\n?? src/command_process.test.ts\n?? src/command_process.ts\n?? src/command_runner.test.ts\n?? src/command_runner.ts\n?? src/comprehension_cache.test.ts\n?? src/config_discovery.ts\n?? src/config_validation.test.ts\n?? src/config_validation.ts\n?? src/doc_reads.test.ts\n?? src/evaluation_resources.test.ts\n?? src/execution/config.ts\n?? src/execution/plan.test.ts\n?? src/execution/plan.ts\n?? src/install_loaders.test.ts\n?? src/installation/hooks.ts\n?? src/installation/lock.test.ts\n?? src/installation/lock.ts\n?? src/installation/migration.test.ts\n?? src/installation/migration.ts\n?? src/installation/plan.ts\n?? src/installation/transaction.ts\n?? src/installation_preservation.test.ts\n?? src/release_inventory.test.ts\n?? src/required_scanner.test.ts\n?? src/review_poll.test.ts\n?? src/scanner_scope.test.ts\n?? src/spec_completion.test.ts\n?? src/spec_obligations.ts\n?? src/spec_rehearsal.test.ts\n",
+    "scope": "Repair and evidence inspection; not the final frozen-candidate native review.",
+    "live_model_calls": false,
+    "reviewer_ran_test_suites": false,
+    "reviewer_ran_native_builds": false,
+    "final_pass_start": null,
+    "tests_review_mode": "Original test and fixture payloads reviewed in summary mode. Explicitly requested small regression tests read fully.",
+    "fully_read_regressions": [
+      "src/installation_preservation.test.ts",
+      "src/command_process.test.ts",
+      "src/command_runner.test.ts",
+      "src/installation/migration.test.ts",
+      "src/install_loaders.test.ts",
+      "src/surfaces.test.ts",
+      "src/spec_template_io.test.ts"
+    ],
+    "source_snapshots": {
+      ".githooks/pre-commit": {
+        "sha256": "5701230764664f1bab132b304c68f3b57d785fafaa33cdaccac05e5aa3c6bc1c",
+        "bytes": 2407
+      },
+      ".githooks/pre-push": {
+        "sha256": "563ea82a8d8d33cf3d600cd884ee97dcdc6bda6582c14cce0537993d9807f25f",
+        "bytes": 3238
+      },
+      ".github/workflows/release.yml": {
+        "sha256": "b6e9a174a58bcd56e9a29cdd6d8991f529d385bdb5a296c5f2c3f5dea9498310",
+        "bytes": 7358
+      },
+      "AGENTS.md": {
+        "sha256": "def9e6505e56420ed8407fd37cb83b4023e25fcf5102afb90243b1112c0b68e8",
+        "bytes": 37414
+      },
+      "Makefile": {
+        "sha256": "c17237f8744b1dc4d7564bcc2112c4cf22cc8ae30cd98875aa40fe1c2c1faad4",
+        "bytes": 5645
+      },
+      "README.md": {
+        "sha256": "7fca8704c671a1a5836f25df17b6af09da188819639e278fff0559fee6ce6258",
+        "bytes": 17454
+      },
+      "audits/agents-md.md": {
+        "sha256": "0f9fe5163ea042f828c0b7fc62f1123a8bdbc2f5a997f4b26a6cc8941ae074a4",
+        "bytes": 49239
+      },
+      "audits/deinit-pairs.sh": {
+        "sha256": "6444510b8980a867db1fede73066039002bb8cf96c54b2122b048fbd73e9f6f8",
+        "bytes": 9005
+      },
+      "audits/doc-read.sh": {
+        "sha256": "df26211a388cea3781bc09c241c9d6619a9d04c89e4111941d2331a8102d5f95",
+        "bytes": 10976
+      },
+      "audits/doc-reads.ts": {
+        "sha256": "b69fb77d71dd14ad7659e39ab36756ccafed03fc2c3fe52e56cdad6c835d8bbe",
+        "bytes": 1939
+      },
+      "audits/error-codes.sh": {
+        "sha256": "a5fab89d8c7d4b38b310568bab8eece7308ae4f820a8551a04bb1df7c9e9e7dc",
+        "bytes": 13228
+      },
+      "audits/msid-ui.sh": {
+        "sha256": "752ff4c839b5d19a41a696ed050ab51623ab1742423075cdb9bd9add0a5f67bc",
+        "bytes": 9982
+      },
+      "audits/rule-ledger.sh": {
+        "sha256": "80710a96bbff0fcd83b0bb1d2e4d18d17bff188736575b309b823f32557d7e09",
+        "bytes": 10243
+      },
+      "audits/rule-paths.sh": {
+        "sha256": "2d2878168efbc4b11be2ec7ced8254cbb68c9638a44974b5c3efa07bddece9ff",
+        "bytes": 5238
+      },
+      "audits/rust-error.sh": {
+        "sha256": "9cd8509c27f590115c30d746a3f3b03e604109072c4d1deea748be8d2fa8be9f",
+        "bytes": 9297
+      },
+      "audits/scope.sh": {
+        "sha256": "768342e45da5a1dd6871ac49c68fab79f274879dc0c76881e5fd21ee31a198bf",
+        "bytes": 3479
+      },
+      "audits/spec-template.sh": {
+        "sha256": "ea2aa79fd39c632e88be4d5b9f755beabfdd844c2c3fa882a0d13f9822daae29",
+        "bytes": 8034
+      },
+      "audits/ufs.sh": {
+        "sha256": "230a488464f1c89ee8ab78999bed1effa6c23b00afefd6c7227c592603fb4776",
+        "bytes": 13757
+      },
+      "core/operating-model.md": {
+        "sha256": "03dd16da552eb2bc934a2083291b004e95ccdf91e85fcf70a666496f7dab97ad",
+        "bytes": 33318
+      },
+      "dispatch/edit_rules.md": {
+        "sha256": "4bb26f05f43e088abf37185d14105779a9dcb00baa84d8b8c9aa028c2becac2c",
+        "bytes": 2796
+      },
+      "dispatch/lib.sh": {
+        "sha256": "203c8016e3043e132e9e96432a56adf195597e385eea0fcd10ebbaac800bbb78",
+        "bytes": 12645
+      },
+      "dispatch/lifecycle.md": {
+        "sha256": "4732b398132c07749945792b6877a96d8951d9ad4bf963581f3c874b7ab34aab",
+        "bytes": 17154
+      },
+      "dispatch/name_architecture.md": {
+        "sha256": "4e6f5c54a8e4cc6c19633c53aca91614ca02989e1d600414f9edaf68f8b63f5a",
+        "bytes": 4759
+      },
+      "dispatch/verify.md": {
+        "sha256": "f518a697067d0a4fcd8052536192f4806c30a0b2780a6599fc7cc00af8d88b4e",
+        "bytes": 6049
+      },
+      "dispatch/write_any.md": {
+        "sha256": "1034618f9737fef8b409568e4248d2249361c4b42393cb5f2b2912e12da318e3",
+        "bytes": 47853
+      },
+      "dispatch/write_any.sh": {
+        "sha256": "92ad9b8ea25a5f0e5e12be0a13cf3dab4a628e6fbf23bfd34f79dc3bf527a4f4",
+        "bytes": 3551
+      },
+      "dispatch/write_documentation.md": {
+        "sha256": "3f4d481e3a19396fae0ba133c7c7e13d8a80ee0aa6ef04ac8ff9070a6b988587",
+        "bytes": 1751
+      },
+      "dispatch/write_go.md": {
+        "sha256": "ed110290e7119770aed6e278a5c55cd17ea2cd49a120a772ef220975c6a94fe0",
+        "bytes": 1749
+      },
+      "dispatch/write_mdx.md": {
+        "sha256": "70ce22667e2ca60e1bf623d5ba0ca1a9bcc0586faf018d44328ddfeaa2cd4306",
+        "bytes": 355
+      },
+      "dispatch/write_pr_description.md": {
+        "sha256": "2e1a91b09e98faa0971968092b53be8d087c617fc1b9afb267b2deeccc5372e0",
+        "bytes": 8562
+      },
+      "dispatch/write_python.md": {
+        "sha256": "2b6fd567a12ccb92f19f29669cc9b1a2254127b49501a057b155991adde54988",
+        "bytes": 373
+      },
+      "dispatch/write_rust.md": {
+        "sha256": "61ef692d3fae844cf639363b5be53beb276416043e0487086d8e935550f35134",
+        "bytes": 11551
+      },
+      "dispatch/write_rust.sh": {
+        "sha256": "f6f3b5d136453f2f3247db268aa59b0f4467f7cf844d71619a2436aac8df0374",
+        "bytes": 2062
+      },
+      "dispatch/write_shell.md": {
+        "sha256": "0748aa03a8b985a720c5d2586a931a9a98fe865bb4a44dd54a898bb8eb59f2a7",
+        "bytes": 346
+      },
+      "dispatch/write_spec.md": {
+        "sha256": "6b15ab069c143f4274586c85fbdd573969725301db7332cbd5e424f3995417b7",
+        "bytes": 7466
+      },
+      "dispatch/write_sql.md": {
+        "sha256": "52daf24d08316aa1a91de855d56115d746efc26335614656aeb7b3116c3b511b",
+        "bytes": 7856
+      },
+      "dispatch/write_ts_adhere_bun.md": {
+        "sha256": "4cddb38640fbfb23926ce9158199ac23421b6d74aa1851a0ad1916892d55db4b",
+        "bytes": 30755
+      },
+      "dispatch/write_zig.md": {
+        "sha256": "eacea0d652537299baa086b9b32d991487af94379a28d4637524352288842dc8",
+        "bytes": 66483
+      },
+      "docs/EXECUTE_DOC_READS.md": {
+        "sha256": "b245f3fab08d8aae525d121b58cbfe822963ad411060464aaf11e9550560f0c9",
+        "bytes": 6788
+      },
+      "docs/LIFECYCLE_PATTERNS.md": {
+        "sha256": "1064ba4b7c9b900bcf178a76e202c37a468c51a94b14304622199bff730a4bcd",
+        "bytes": 20396
+      },
+      "docs/LOGGING_STANDARD.md": {
+        "sha256": "bfff09bdfbad608d15679cfb76ac31a13f3e819906ad568eb3c8f8c98496491c",
+        "bytes": 32372
+      },
+      "docs/ORLY_ARCHITECTURE.md": {
+        "sha256": "297b86c0ea4f09ec5fb6ff4dd4b3abd71c6286aefa58f38d6d6b74bc66d74954",
+        "bytes": 12758
+      },
+      "docs/RELEASE_TEMPLATE.md": {
+        "sha256": "a85d6b2caff66df5038c553976f98d05dc59eafca36b3162e488ced31cbf017a",
+        "bytes": 3305
+      },
+      "docs/REST_API_DESIGN_GUIDELINES.md": {
+        "sha256": "26113e63cef3176af7695e42a39e45a5a2ecb5733e6c8af5074a7bcb70bd8668",
+        "bytes": 48992
+      },
+      "docs/SCHEMA_CONVENTIONS.md": {
+        "sha256": "73319ce7d0cda386a3832fc6399eff8dc9ffd4438a7d83689d7f0f13b6bfc9f8",
+        "bytes": 7722
+      },
+      "docs/TEMPLATE.md": {
+        "sha256": "788864c176da85380dd19df7f19f0bad50bb3d36dd31151f11a868139c3c9098",
+        "bytes": 35247
+      },
+      "docs/greptile-learnings/RULES.md": {
+        "sha256": "47ed256fac4f6425d44cf08554a5c3f3adacd767323a012d4c5a413c7d9ad4a2",
+        "bytes": 104011
+      },
+      "evals/install/release_cases.sh": {
+        "sha256": "d52763845e2dfd3b861baf55a09f153e555f09f9d54787dc2fe1c4071ab1453f",
+        "bytes": 11053
+      },
+      "evals/install/run.sh": {
+        "sha256": "909281a9f5ca2a5ca83701a4ea8989f9f7344ef444451a37252a7cae30da1e81",
+        "bytes": 5164
+      },
+      "evals/ledger/lib.sh": {
+        "sha256": "9e5831e36ffd51ae736916738b61e638793320cb3bf131372abb23656ebf8c12",
+        "bytes": 2913
+      },
+      "evals/llms/cache.ts": {
+        "sha256": "67f568e43fb8bf6a32068cdca5011c70cd1051ed0aa0d3458302c73da526a830",
+        "bytes": 3468
+      },
+      "evals/llms/run.sh": {
+        "sha256": "8c408dc246b5950fe99e16b8814162195bce7956d6d1583a81d76e1e411de495",
+        "bytes": 10180
+      },
+      "evals/release/inventory.ts": {
+        "sha256": "ccb8db3ed0101b72f7e4800a66913d3603c40e0876caf426e8291bd668964d4d",
+        "bytes": 6538
+      },
+      "evals/release/receipts/Oct_05_21_14/cleanup-controls.json": {
+        "sha256": "100bcfd7857ab8c9d6be95cab6fd72b3d63ebb841f955f217cc4920047c3fdfb",
+        "bytes": 5316
+      },
+      "evals/release/receipts/Oct_05_21_14/inventory-stale-control.json": {
+        "sha256": "841d611e3f324d454467313f9a94ea6394bf01fccba2f2b74e1cdce21059713b",
+        "bytes": 559
+      },
+      "evals/release/receipts/Oct_05_21_14/package-cache.json": {
+        "sha256": "9dfa15745c32c48be31224a264531ad8e8021048b23d3d00c8835d173669484f",
+        "bytes": 394
+      },
+      "evals/release/receipts/Oct_05_21_14/packed-checkers-final.json": {
+        "sha256": "ea113516132e0475d041a4cb885acbc83e97dbb3df06524eaf2a9599f7ff6707",
+        "bytes": 3877
+      },
+      "evals/release/receipts/Oct_05_21_14/release-layout-final.json": {
+        "sha256": "48317c7ec766bc7f892d7a31b1cb72a2fef152d81af5fcdc3f4348d85b8fedf8",
+        "bytes": 1394
+      },
+      "evals/release/repairs.json": {
+        "sha256": "0249b6a9e28c360a24dbee77c4ee6b8505ba0666583d20084ea32fa76650c57e",
+        "bytes": 60859
+      },
+      "skills/orly-babysit-prs/SKILL.md": {
+        "sha256": "a4068e5fa80b9dc329eb887a840f5d5338382375df31f95fbccdbadb146f821d",
+        "bytes": 19995
+      },
+      "skills/orly-spec-new/SKILL.md": {
+        "sha256": "ed55bf0ca1e927272f7e6f29a9abe50fa558dc50b2801f2bf66020378026f868",
+        "bytes": 13052
+      },
+      "src/cli.test.ts": {
+        "sha256": "7a208a596ab841b43e6c99306708ec21f9b413a391ca968df0f6a3be090ed547",
+        "bytes": 7760
+      },
+      "src/cli.ts": {
+        "sha256": "15b54bc6fcd72877d2c08fdc5afedec2887b61682ab4dbea0ab934b0011cd810",
+        "bytes": 14013
+      },
+      "src/command_process.test.ts": {
+        "sha256": "e7cbf44ac6c208d83a47a00d8c23cfaea8760ba9772782f3533737fb43b52004",
+        "bytes": 4337
+      },
+      "src/command_process.ts": {
+        "sha256": "d1d4b553442acfaf1b40626e437875f18b2399901153b0697896cee6f7869215",
+        "bytes": 3780
+      },
+      "src/command_runner.ts": {
+        "sha256": "dc93f42b2fcef33428208888179f57e58ce5f94a3a9900a67e9b25483d075371",
+        "bytes": 2371
+      },
+      "src/comprehension_cache.test.ts": {
+        "sha256": "ff59f28a60876891325128bb00e1bbac7c7b8e4550fbf926c00f169ace4520e7",
+        "bytes": 5517
+      },
+      "src/config.test.ts": {
+        "sha256": "9ebe39710dc061be209b32ac026b40bc9381cfd9f1ecca398b76cbbc24f0567f",
+        "bytes": 13813
+      },
+      "src/config_discovery.ts": {
+        "sha256": "6b94ccd3bff83387bdd1f6c5f7d93d8103c50bdb02b2fab69c2bf5337a4dd8c3",
+        "bytes": 7338
+      },
+      "src/config_validation.test.ts": {
+        "sha256": "df7340809fd3ee13dbb68e540787e6812f02a13fc01248f5d3b3c6090eb5dd29",
+        "bytes": 3247
+      },
+      "src/config_validation.ts": {
+        "sha256": "bea2a436fd71938de4e9595d1eb146cba48bf9949c8498df951b9f2ed25a1382",
+        "bytes": 1190
+      },
+      "src/doc_reads.test.ts": {
+        "sha256": "c4a686371e76164a3aa910549d998919645486519d9e4ec9b99914ea28e1c711",
+        "bytes": 2292
+      },
+      "src/execution/config.ts": {
+        "sha256": "b0463067a9474c610186b4eec55cc8148bee2a84648bacc6f7d97ee0dc0da408",
+        "bytes": 889
+      },
+      "src/execution/plan.ts": {
+        "sha256": "08ca8e22c52d35d3e1c85da5809ad54177665d6f494b8222b3daecfd22698ce7",
+        "bytes": 3602
+      },
+      "src/install.test.ts": {
+        "sha256": "5f0662ea34cfc570778a451ff91f4ed0311e960161391ca5d1798ae19e53b151",
+        "bytes": 15806
+      },
+      "src/install.ts": {
+        "sha256": "2cdea58456864ec08e028e0c42a119919501c240257365095b6661f556b35e65",
+        "bytes": 10064
+      },
+      "src/install_loaders.test.ts": {
+        "sha256": "bde744fabbd0628bd769365f70b9e4af04e25528ac40fc7ea78b88debf718894",
+        "bytes": 10253
+      },
+      "src/install_packs.test.ts": {
+        "sha256": "c1dd2e9ee22cd648a02db091f30a4dcf360013be135ff9eec4ee114904dfc46b",
+        "bytes": 8343
+      },
+      "src/installation/hooks.ts": {
+        "sha256": "3e8e3ab44914de03d2521fc9b971d31f4d318de661f7a40cda3dfb0cc8f5b5fb",
+        "bytes": 3192
+      },
+      "src/installation/migration.test.ts": {
+        "sha256": "ef50578a3c6285826a7322a0645c48de1cb7deceb6330f98836e48c5d0ab85cc",
+        "bytes": 12059
+      },
+      "src/installation/migration.ts": {
+        "sha256": "91470f68b8a404a5dff362fe9cd18553f5049180279d1c6f4ca9ed3721252097",
+        "bytes": 3066
+      },
+      "src/installation/plan.ts": {
+        "sha256": "a52a65069658cbb791428b20c4ee779740dae559df6e1524e0b15d244019f8cc",
+        "bytes": 5753
+      },
+      "src/installation/transaction.ts": {
+        "sha256": "8ee6a9642c261fdb9a3b4702c79a1bbac8476a76c0bc4695af0aeec9c6ce6b9d",
+        "bytes": 7003
+      },
+      "src/installation_preservation.test.ts": {
+        "sha256": "d13025ffeac5a52f4d0ea6f9549bcad9b1c62b6c1980bedd91b3d531f48e6908",
+        "bytes": 2470
+      },
+      "src/loaders.test.ts": {
+        "sha256": "a0516dabffc8904a308337329d881b991aa0be061ae3c3082131f263c0d4b8ce",
+        "bytes": 8301
+      },
+      "src/loaders.ts": {
+        "sha256": "431336e622ed280ac7563e874bb2cd303cabac3fb9096990c1c514dac11ab110",
+        "bytes": 12067
+      },
+      "src/model.test.ts": {
+        "sha256": "c8999b37db65600fb1651bd3b429ff03e0e2b606eb3ed018ada501278a3d5749",
+        "bytes": 2135
+      },
+      "src/model.ts": {
+        "sha256": "9acbcc43d510d938cbb0cbe6546d69e50c268ca17f348caacd72722f5204b449",
+        "bytes": 9667
+      },
+      "src/pack_hygiene.ts": {
+        "sha256": "fac7253fa5c538b0d3afb2a4a23c0d2d98a63ea611f7418ea425a84010d58823",
+        "bytes": 4408
+      },
+      "src/references.ts": {
+        "sha256": "759056dff163b5900123eec65350b58026031328da4708fedc84db1c84c22124",
+        "bytes": 7031
+      },
+      "src/release_inventory.test.ts": {
+        "sha256": "680b948d754d499416ccaefbd471bd5c169adad5175ac7efa363abede874d9fd",
+        "bytes": 3946
+      },
+      "src/render.ts": {
+        "sha256": "4655e52c6bba14c768fbe0921048fc47a555421b45b876644d6d4c48a7e81f56",
+        "bytes": 4202
+      },
+      "src/required_scanner.test.ts": {
+        "sha256": "b75b4ba3e5a65584ba61aee8803f441602f0af56e6e5811a14122219dc750a9b",
+        "bytes": 1397
+      },
+      "src/review_poll.test.ts": {
+        "sha256": "ffaeb955f71f5e0086d8aa57a54edfd111885136391501d18ee28795fc65b8df",
+        "bytes": 8689
+      },
+      "src/scanner_scope.test.ts": {
+        "sha256": "ef1fc34d5fa225ba126ccdc45cdd304effccf31a28bd902a6ec0ea45966b12b3",
+        "bytes": 10173
+      },
+      "src/spec_completion.test.ts": {
+        "sha256": "2549b52ed5d8373d06d3db1db1673fc607c0bb70746c7a45cdc7bbff66e0e992",
+        "bytes": 3708
+      },
+      "src/spec_obligations.ts": {
+        "sha256": "fc2e08eae63eabe76c7628ba4f2a8dbc866c407b84f6c9b0e59b7627a20c38a1",
+        "bytes": 3267
+      },
+      "src/spec_template_io.test.ts": {
+        "sha256": "936713abacfd62a9771740f864f3c964ba3e1c1cb653981d661290dc09f616d9",
+        "bytes": 4707
+      },
+      "src/surfaces.test.ts": {
+        "sha256": "476a2afa88e6b9d75b93e62057aec835d1f3671ef2f02e01dd2336287aa4c9c3",
+        "bytes": 2343
+      },
+      "src/surfaces.ts": {
+        "sha256": "c85d1ccc5c90901389956a6670e3313c6496699cba9c96001952ae870d9ab253",
+        "bytes": 3670
+      },
+      "src/validation.ts": {
+        "sha256": "c615b62709ad820eb9854ccf5e4b5cb179d20db55e204695140cc74b3de8d43e",
+        "bytes": 4198
+      },
+      "src/verify.test.ts": {
+        "sha256": "24ba7082c3ebbe2b986f2d2019b51813725385ef20d283df24b2a007e90d98fb",
+        "bytes": 3901
+      },
+      "src/verify.ts": {
+        "sha256": "18cb52fba1d47fb4817746fd429108806f0992cda7edc792efddde3daa906f34",
+        "bytes": 5227
+      }
+    }
+  },
+  "dispositions": [
+    {
+      "id": "A01",
+      "status": "supported_local",
+      "observed": "Original input digests are retained through staging; exact owner bytes survive refusal.",
+      "citations": [
+        "src/install.ts:40",
+        "src/install.ts:48",
+        "src/install.ts:81",
+        "src/install.ts:100",
+        "src/installation_preservation.test.ts:27"
+      ],
+      "limit": "Local source and fixture scope; final frozen candidate review remains pending.",
+      "retained_status": "approved",
+      "retained_proof": "Original faulty behavior must fail the exact-byte assertion; approved update preserves refused bytes.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/install.ts",
+        "tests_or_control": "src/installation_preservation.test.ts",
+        "observed": "Exact owner bytes survive refusal; bypassing digest ownership fails the assertion.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/assertion-controls.json",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A02",
+      "status": "supported_partial_local",
+      "observed": "Ordered write, metadata and delete checkpoints preserve residual state and retry recovery.",
+      "citations": [
+        "src/installation/transaction.ts:38",
+        "src/installation/transaction.ts:83",
+        "src/installation/migration.test.ts:85"
+      ],
+      "limit": "Eleven no-hook and thirteen hook checkpoints; arbitrary failures within each atomic write are not exhaustively injected.",
+      "retained_status": "approved",
+      "retained_proof": "Inject failure at every ordered mutation; inspect residual bytes, metadata, journal and next-run recovery.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/installation/transaction.ts",
+        "tests_or_control": "src/installation/migration.test.ts",
+        "observed": "Residual bytes and configuration are inspected at eleven no-hook and thirteen hook-enabled interruption points; retry completes.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt",
+        "limit": "Checkpoint proofs cover the ordered write/metadata/delete boundaries; arbitrary kernel failures inside each atomic write are not exhaustively injected."
+      }
+    },
+    {
+      "id": "A03",
+      "status": "supported_partial_local",
+      "observed": "Generated hooks invoke the pinned source package through bunx.",
+      "citations": [
+        "src/installation/hooks.ts:16",
+        "src/installation/hooks.ts:52",
+        "src/installation/hooks.ts:60"
+      ],
+      "limit": "Executing generated pinned hooks on both requested operating systems remains unobserved.",
+      "retained_status": "approved",
+      "retained_proof": "Packed source package and generated hooks work on a consumer with no global orly; no native build.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/installation/hooks.ts",
+        "tests_or_control": "src/install_loaders.test.ts",
+        "observed": "Pinned bunx hook text and installed npm entrypoint are tested.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/installation.txt",
+        "limit": "Actual generated pinned bunx hook invocation across both requested operating systems remains unobserved; no native build is authorized."
+      }
+    },
+    {
+      "id": "A04",
+      "status": "supported_local",
+      "observed": "Managed layout, digests, thin loaders and proven prior-layout migration agree.",
+      "citations": [
+        "src/installation/plan.ts:14",
+        "src/installation/plan.ts:61",
+        "src/installation/migration.ts:12",
+        "src/installation/migration.ts:21"
+      ],
+      "limit": "Actual live consumer trial remains an owner action.",
+      "retained_status": "approved",
+      "retained_proof": "Full installation/package suite, real prior-release migration, owner-file preservation and host loading.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/installation/plan.ts",
+        "tests_or_control": "src/installation/migration.test.ts",
+        "observed": "Current layout, recorded ownership, thin loaders and disposable previous-release migration have bounded proofs.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/installation.txt",
+        "limit": "Previous-release upgrades are disposable fixtures. The actual live consuming-repository trial remains later work."
+      }
+    },
+    {
+      "id": "A05",
+      "status": "supported_local",
+      "observed": "Evaluation runners own parent temporary roots and cleanup only those roots.",
+      "citations": [
+        "evals/ledger/lib.sh:1",
+        "evals/llms/run.sh:54",
+        "evals/release/receipts/Oct_05_21_14/cleanup-controls.json:1"
+      ],
+      "limit": "Startup/cleanup controls do not execute every suite body in failing/termination cases. Instrumented ledger timeout remains a failed run.",
+      "retained_status": "approved",
+      "retained_proof": "Normal/failing/interrupted runs remove only their own directories; retained receipts remain readable.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "evals/ledger/lib.sh",
+        "tests_or_control": "src/evaluation_resources.test.ts",
+        "observed": "Parent-owned roots survive command substitution and cleanup only their own paths on normal/failure/termination exits.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/cleanup-controls.json",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A06",
+      "status": "supported_local",
+      "observed": "One cached package construction serves three calls; a mutated upgrade copy leaves cached bytes unchanged.",
+      "citations": [
+        "evals/install/run.sh:1",
+        "evals/install/release_cases.sh:1",
+        "evals/release/receipts/Oct_05_21_14/package-cache.json:1"
+      ],
+      "limit": "Local cache and fixture proof; no publication claim.",
+      "retained_status": "approved",
+      "retained_proof": "Measure one package construction; deliberate mutation in one case does not affect another.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "evals/install/run.sh",
+        "tests_or_control": "evals/install/release_cases.sh",
+        "observed": "Three cache requests construct one package; mutating the upgrade copy preserves cached manifest and rule bytes.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/package-cache.json",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A07",
+      "status": "supported_partial_local",
+      "observed": "Workflow installs the required secret scanner before the audit; absent/finding controls refuse.",
+      "citations": [
+        ".github/workflows/release.yml:1",
+        "src/required_scanner.test.ts:22",
+        "src/required_scanner.test.ts:32"
+      ],
+      "limit": "Hosted candidate workflow result remains pending.",
+      "retained_status": "approved",
+      "retained_proof": "Hosted release job installs the scanner and passes the existing real-scanner tests.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": ".github/workflows/release.yml",
+        "tests_or_control": "src/required_scanner.test.ts",
+        "observed": "Existing workflow installs pinned Gitleaks before audit; local real-scanner assertions pass.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "No hosted workflow execution for this uncommitted candidate is observed. No workflow was edited in this resumed session."
+      }
+    },
+    {
+      "id": "A08",
+      "status": "supported_local",
+      "observed": "Configuration discovery is shared and used by actual readers.",
+      "citations": [
+        "src/config_discovery.ts:1",
+        "src/config.test.ts:1"
+      ],
+      "limit": "Retained local fixture and source scope.",
+      "retained_status": "approved",
+      "retained_proof": "Typecheck, configuration/discovery regressions and unchanged file cap.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/config_discovery.ts",
+        "tests_or_control": "src/config.test.ts",
+        "observed": "Discovery responsibilities are extracted; configuration/discovery behavior and typechecking remain tested.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A09",
+      "status": "supported_local",
+      "observed": "Installation tests are split by concern and assert exact preservation behavior.",
+      "citations": [
+        "src/install.test.ts:1",
+        "src/install_loaders.test.ts:1",
+        "src/installation_preservation.test.ts:10"
+      ],
+      "limit": "Source-equivalence and assertion review; test count alone is not the proof.",
+      "retained_status": "approved",
+      "retained_proof": "Compare original assertions with the split suites; full declared unit lane and file-length checks.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/install.test.ts",
+        "tests_or_control": "src/install_loaders.test.ts",
+        "observed": "Installation assertions are split by concern; asynchronous rejections are awaited; ordered recovery assertions are strengthened.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt",
+        "limit": "Full assertion equivalence after splitting is assessed through source and suite evidence; a count alone is not proof."
+      }
+    },
+    {
+      "id": "A10",
+      "status": "supported_local",
+      "observed": "Preview and real gates share lane selection; active remote execution refuses and disabled settings do not launch.",
+      "citations": [
+        "src/execution/plan.ts:16",
+        "src/execution/plan.ts:32",
+        "src/execution/config.ts:1"
+      ],
+      "limit": "No remote runner implementation is claimed.",
+      "retained_status": "approved",
+      "retained_proof": "Preview selection equals actual local lanes; failed local command remains failed; configured remote launcher never runs.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/execution/plan.ts",
+        "tests_or_control": "src/execution/plan.test.ts",
+        "observed": "Preview and local criteria share lane selection; active remote settings refuse and disabled launchers do not execute.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A11",
+      "status": "supported_local",
+      "observed": "Installed references and current README hook destination agree with the .orly layout.",
+      "citations": [
+        "README.md:141",
+        "src/installation/hooks.ts:9",
+        "src/references.ts:1"
+      ],
+      "limit": "Local installed-package fixtures and source review.",
+      "retained_status": "approved",
+      "retained_proof": "Packed-consumer scripts, doc reads, link closure, generated hooks, skill loading and upgrade all resolve locally.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "README.md; src/installation/plan.ts",
+        "tests_or_control": "src/install_loaders.test.ts",
+        "observed": "Installed paths and current README hook directory agree with the owned layout.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/installation-guidance.txt",
+        "limit": "Current source review and local fixtures only; no sibling product runtime or live comprehension is claimed."
+      }
+    },
+    {
+      "id": "A12",
+      "status": "supported_local",
+      "observed": "A generated banner alone never authorizes owner-content replacement.",
+      "citations": [
+        "src/loaders.ts:17",
+        "src/install_loaders.test.ts:1"
+      ],
+      "limit": "Owner preservation is checked locally; no real consumer trial claim.",
+      "retained_status": "approved",
+      "retained_proof": "Unrecorded or edited banner-prefixed files retain exact bytes; owned unchanged files update.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/loaders.ts",
+        "tests_or_control": "src/install_loaders.test.ts",
+        "observed": "Unrecorded banners and owner-edited files retain exact owner bytes.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A13",
+      "status": "supported_local",
+      "observed": "Requested packs enter the successful transaction's configuration; previews and refusals preserve bytes.",
+      "citations": [
+        "src/install.ts:43",
+        "src/install.ts:76",
+        "src/install.ts:90"
+      ],
+      "limit": "Local command boundary fixtures.",
+      "retained_status": "approved",
+      "retained_proof": "Refusal and dry-run preserve configuration; interrupted accepted selection recovers consistently.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/install.ts",
+        "tests_or_control": "src/cli.test.ts",
+        "observed": "Refused/dry-run selections preserve configuration; acceptance uses the recoverable transaction.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A14",
+      "status": "supported_local",
+      "observed": "Strict configuration validation rejects unknown or malformed input and preserves explicit lane limits.",
+      "citations": [
+        "src/config_validation.ts:10",
+        "src/config_validation.ts:20",
+        "src/config_validation.test.ts:24",
+        "src/config_validation.test.ts:34"
+      ],
+      "limit": "Negative-control receipt binds its historical execution copy; current source has been inspected.",
+      "retained_status": "approved",
+      "retained_proof": "Validate real seeded/updated settings; reject unknown fields and wrong types; agreement across parser/schema/examples.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/config_validation.ts",
+        "tests_or_control": "src/config_validation.test.ts",
+        "observed": "Strict configuration readers reject unknown keys and wrong types; bounded lane settings round-trip.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/assertion-controls.json",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A15",
+      "status": "supported_partial_local",
+      "observed": "Declared registry-check commands share the authoring checker and packed positive/negative controls.",
+      "citations": [
+        "src/validation.ts:1",
+        "src/verify.ts:48",
+        "evals/release/receipts/Oct_05_21_14/packed-checkers-final.json:1"
+      ],
+      "limit": "Does not prove every scanner, every consumer environment, or a hosted run.",
+      "retained_status": "approved",
+      "retained_proof": "Enumerate registry checkers and run each through the packed package; stale command spelling is absent from current guidance.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/validation.ts",
+        "tests_or_control": "src/verify.test.ts",
+        "observed": "Both declared registry checkers run through the actual packed entrypoint in explicit ruleset-authoring fixtures; valid sources pass, missing registry fixtures and stale generated rules fail. Installed-package context correctly refuses these authoring commands.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/packed-checkers-final.json",
+        "limit": "The registry declares two authoring checks sharing one command. This enumeration does not certify every installed scanner or hosted execution."
+      }
+    },
+    {
+      "id": "A16",
+      "status": "supported_local",
+      "observed": "Exact DONE markers and item-bound Discovery quotes are parsed structurally.",
+      "citations": [
+        "src/spec_obligations.ts:6",
+        "src/spec_obligations.ts:32",
+        "src/spec_obligations.ts:51",
+        "src/spec_completion.test.ts:25",
+        "src/spec_completion.test.ts:62"
+      ],
+      "limit": "A syntactic quote does not prove semantic fulfillment or successor mapping.",
+      "retained_status": "approved",
+      "retained_proof": "NOT_DONE and an unrelated owner quote must fail; independent labeled evidence controls distinguish present markers from fulfilled obligations.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/spec_obligations.ts",
+        "tests_or_control": "src/spec_completion.test.ts",
+        "observed": "Exact DONE markers and item-bound Discovery acknowledgements reject examples, unrelated quotes and unnamed obligations.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/assertion-controls.json",
+        "limit": "A syntactic item-bound quote does not prove semantic fulfillment or a successor-specification mapping."
+      }
+    },
+    {
+      "id": "A17",
+      "status": "recorded_scope",
+      "observed": "Local fixture/stub scope remains recorded without a live result.",
+      "citations": [
+        "evals/release/repairs.json:378"
+      ],
+      "limit": "No live comprehension matrix was run by this reviewer.",
+      "retained_status": "recorded_scope",
+      "retained_proof": "Local fixture validation and stubbed runner controls only; no live result claimed."
+    },
+    {
+      "id": "A18",
+      "status": "recorded_scope_not_attested",
+      "observed": "Recorded personal-log decision is retained.",
+      "citations": [
+        "evals/release/repairs.json:385"
+      ],
+      "limit": "Private backup lies outside this review's permitted repository reads; its bytes and ownership are not attested.",
+      "retained_status": "recorded_scope",
+      "retained_proof": "Active-reference search is empty; exact private backup remains; distribution allowlist stays protective."
+    },
+    {
+      "id": "A19",
+      "status": "supported_local",
+      "observed": "Required scanner absence and findings block the actual push hook; a clean scan can proceed.",
+      "citations": [
+        ".githooks/pre-push:29",
+        ".githooks/pre-push:35",
+        "src/required_scanner.test.ts:22",
+        "src/required_scanner.test.ts:28",
+        "src/required_scanner.test.ts:32"
+      ],
+      "limit": "Local hook controls only.",
+      "retained_status": "approved",
+      "retained_proof": "A missing-tool control must fail; clean scan continues and a detected credential still blocks.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": ".githooks/pre-push",
+        "tests_or_control": "src/required_scanner.test.ts",
+        "observed": "Missing required scanner and detected findings fail the real hook; clean scanning permits continuation.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A20",
+      "status": "owner_excluded",
+      "observed": "Registry lookup publication failure handling remains owner-excluded.",
+      "citations": [
+        "evals/release/repairs.json:419",
+        "evals/release/repairs.json:420"
+      ],
+      "limit": "Not repaired or certified by this inspection.",
+      "retained_status": "recorded_scope",
+      "retained_proof": "Stub registry responses for present, absent, denied and unavailable; only confirmed absence allows publication."
+    },
+    {
+      "id": "A21",
+      "status": "owner_excluded",
+      "observed": "Interrupted external publication recovery remains owner-excluded.",
+      "citations": [
+        "evals/release/repairs.json:429",
+        "evals/release/repairs.json:430"
+      ],
+      "limit": "Not repaired or certified by this inspection.",
+      "retained_status": "recorded_scope",
+      "retained_proof": "Owned stub controls interrupt after each external mutation and prove resume reaches one package, tag and release."
+    },
+    {
+      "id": "A22",
+      "status": "supported_local",
+      "observed": "Claude pointer updates preserve content outside the delimited block.",
+      "citations": [
+        "src/loaders.ts:165",
+        "src/loaders.ts:168",
+        "src/loaders.test.ts:1"
+      ],
+      "limit": "Local loader fixtures.",
+      "retained_status": "approved",
+      "retained_proof": "Add an owner instruction to a generated loader, update and compare exact bytes; include an unchanged owned positive control.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/loaders.ts",
+        "tests_or_control": "src/loaders.test.ts",
+        "observed": "Owner Claude instructions survive and an owned pointer block updates independently.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A23",
+      "status": "supported_local",
+      "observed": "Only proven obsolete managed sources authorize obsolete OpenCode reference removal.",
+      "citations": [
+        "src/installation/migration.ts:21",
+        "src/installation/migration.test.ts:207"
+      ],
+      "limit": "Independent owner references remain preserved.",
+      "retained_status": "approved",
+      "retained_proof": "Migrated settings reference existing new rules and owner files; unowned old references remain untouched.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/installation/migration.ts",
+        "tests_or_control": "src/installation/migration.test.ts",
+        "observed": "Only proven obsolete instruction references are removed; owner references remain.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A24",
+      "status": "supported_partial_local",
+      "observed": "Workflow layout corrections have local positive and stale-path negative controls.",
+      "citations": [
+        ".github/workflows/release.yml:1",
+        "evals/install/release_cases.sh:1",
+        "evals/release/receipts/Oct_05_21_14/release-layout-final.json:1"
+      ],
+      "limit": "Hosted publication unobserved.",
+      "retained_status": "approved",
+      "retained_proof": "Run the same assertion against the packed TypeScript/Bun package; an intentionally wrong path still fails.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": ".github/workflows/release.yml",
+        "tests_or_control": "evals/install/release_cases.sh",
+        "observed": "The release probe still used the removed rules-file path and failed against the current packed package. After fresh owner approval, its one-line correction passes; old-path and missing-render controls remain red.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/release-layout-final.json",
+        "limit": "The exact local workflow body is exercised with owned temporary destinations and prior actual package acquisition; no hosted run or publication is claimed."
+      }
+    },
+    {
+      "id": "A25",
+      "status": "supported_local",
+      "observed": "Release template uses declared version authority and repository commands with product paths selected explicitly.",
+      "citations": [
+        "docs/RELEASE_TEMPLATE.md:1",
+        "evals/install/release_cases.sh:1"
+      ],
+      "limit": "Source/template fixture scope only.",
+      "retained_status": "approved",
+      "retained_proof": "Template names the actual version source and checks; consumer without VERSION or a sibling docs checkout has complete applicable guidance.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "docs/RELEASE_TEMPLATE.md",
+        "tests_or_control": "evals/install/release_cases.sh",
+        "observed": "Release guidance uses the declared manifest/checks and scopes sibling documentation to selected products.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/installation.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A26",
+      "status": "supported_local",
+      "observed": "Repeated TypeScript literals are bound through small existing shared constants.",
+      "citations": [
+        "audits/ufs.sh:1",
+        "src/scanner_scope.test.ts:51",
+        "src/command_process.ts:13"
+      ],
+      "limit": "No suppression or known-violation baseline proves closure.",
+      "retained_status": "approved",
+      "retained_proof": "Unchanged full-tree scanner reports zero violations; exact-byte behavior assertions and canonical audit remain intact.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "audits/ufs.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Full-tree unnamed-string scanning retains all checks and reports no violations.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A27",
+      "status": "supported_local",
+      "observed": "Prior configuration deletion occurs only when that configuration was consumed for migration.",
+      "citations": [
+        "src/installation/migration.ts:32",
+        "src/installation/migration.test.ts:168"
+      ],
+      "limit": "Current configuration coexisting with an independent owner prior file is preserved.",
+      "retained_status": "approved",
+      "retained_proof": "Install with both a current configuration and an independently owned previous file; assert unchanged old bytes. Keep deliberate previous-version migration coverage.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/installation/migration.ts",
+        "tests_or_control": "src/installation/migration.test.ts",
+        "observed": "A separately owned previous configuration survives when the current installation exists.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A28",
+      "status": "supported_local",
+      "observed": "Evidence destination containment is checked before directory creation and before writing.",
+      "citations": [
+        "src/verify.ts:87",
+        "src/verify.ts:101",
+        "src/verify.test.ts:17"
+      ],
+      "limit": "Boundary fixtures preserve external owner bytes.",
+      "retained_status": "approved",
+      "retained_proof": "Probe directory and file symlinks, including missing destinations; assert outside bytes unchanged.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/verify.ts",
+        "tests_or_control": "src/verify.test.ts",
+        "observed": "Outside and unresolved receipt symlinks refuse while owner bytes survive.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A29",
+      "status": "supported_partial_local",
+      "observed": "Recovery validates hook settings and file digests before mutations and cleanup.",
+      "citations": [
+        "src/installation/transaction.ts:78",
+        "src/installation/transaction.ts:83",
+        "src/installation/migration.test.ts:177",
+        "src/installation/migration.test.ts:191"
+      ],
+      "limit": "Cooperating installation lock; no atomic compare-and-swap against unrelated Git-config writers.",
+      "retained_status": "approved",
+      "retained_proof": "Interrupt before/after metadata, change the owner's hooks setting, resume with hooks enabled/disabled, and assert refusal preserves the owner setting.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/installation/transaction.ts",
+        "tests_or_control": "src/installation/migration.test.ts",
+        "observed": "Owner metadata conflicts before resume and after destination writes refuse before cleanup; both resumed hook options retain owner settings.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/hook-metadata-after.txt",
+        "limit": "The installation lock excludes cooperating installers; unrelated owner tools do not share an atomic compare-and-set with Git configuration."
+      }
+    },
+    {
+      "id": "A30",
+      "status": "supported_partial_local",
+      "observed": "Unresolved symlink chains and loops refuse containment escapes.",
+      "citations": [
+        "src/model.ts:1",
+        "src/model.test.ts:1"
+      ],
+      "limit": "Bounded path fixtures; arbitrary adversarial link swapping is not exhaustively proved.",
+      "retained_status": "approved",
+      "retained_proof": "Two or more symlink hops, missing final targets, loops, intermediate links and a contained positive control; prove no outside file is created.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/model.ts",
+        "tests_or_control": "src/model.test.ts",
+        "observed": "Dangling multi-link destinations refuse before outside content is created; contained paths remain usable.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "The filesystem containment tests are bounded cases; racing an unrelated actor replacing paths between validation and mutation is not proven safe."
+      }
+    },
+    {
+      "id": "A31",
+      "status": "supported_local",
+      "observed": "Core string entries are included in pack hygiene inspection.",
+      "citations": [
+        "src/pack_hygiene.ts:55",
+        "src/pack_hygiene.ts:62",
+        "src/pack_hygiene.ts:75"
+      ],
+      "limit": "Current shipped registry source scope.",
+      "retained_status": "approved",
+      "retained_proof": "A core-document string containing a forbidden product command is caught; object entries and actual registry still pass legitimate cases.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/pack_hygiene.ts",
+        "tests_or_control": "src/pack_hygiene.test.ts",
+        "observed": "Core-document strings containing product commands are rejected alongside object entries.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A32",
+      "status": "supported_local",
+      "observed": "Discovery, documentation exclusion and staged spec selection agree on integer and dotted versions.",
+      "citations": [
+        "src/surfaces.ts:10",
+        "src/surfaces.ts:54",
+        "audits/spec-template.sh:54",
+        "src/surfaces.test.ts:31",
+        "src/spec_template_io.test.ts:25"
+      ],
+      "limit": "Exact red and green local controls; not certification of all specification claims.",
+      "retained_status": "approved",
+      "retained_proof": "Integer and dotted version directories are both treated as specifications; ordinary user documentation still satisfies its gate.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/surfaces.ts; audits/spec-template.sh",
+        "tests_or_control": "src/surfaces.test.ts; src/spec_template_io.test.ts",
+        "observed": "Dotted-version spec documentation exclusion and actual staged checking fail three assertions before repair and pass after repair; valid dotted specs still receive full checking.",
+        "receipt": "evals/release/receipts/Oct_05_23_39/dotted-version-green.txt",
+        "limit": "Actual staged/file fixture results; this does not certify every specification claim."
+      }
+    },
+    {
+      "id": "A33",
+      "status": "supported_local",
+      "observed": "Dry preview shares migration configuration and requested-pack selection with real installation.",
+      "citations": [
+        "src/install.ts:42",
+        "src/install.ts:43",
+        "src/cli.test.ts:1"
+      ],
+      "limit": "Local byte-preserving preview/refusal controls.",
+      "retained_status": "approved",
+      "retained_proof": "Previous-only configuration preview equals real update for packs, commands and persona; dry-run leaves all bytes unchanged.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/install.ts",
+        "tests_or_control": "src/cli.test.ts",
+        "observed": "Previous-only preview selects the same settings as update without writing destination bytes.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A34",
+      "status": "supported_local",
+      "observed": "Managed path metadata is parsed structurally for compact and multiline JSON and malformed input refuses.",
+      "citations": [
+        "audits/scope.sh:1",
+        "src/scanner_scope.test.ts:118",
+        "src/scanner_scope.test.ts:128"
+      ],
+      "limit": "Selected fixture forms, not arbitrary parser fuzzing.",
+      "retained_status": "approved",
+      "retained_proof": "Compact and multiline JSON with quoted names select exactly managed paths; unrelated source still receives checks.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "audits/scope.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Managed selection parses compact/multiline JSON structurally, retaining quoted paths and unrelated source coverage.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A35",
+      "status": "supported_local",
+      "observed": "Staged source and configuration come from the same owned index snapshot.",
+      "citations": [
+        "audits/scope.sh:1",
+        "src/scanner_scope.test.ts:51",
+        "src/scanner_scope.test.ts:99",
+        "src/scanner_scope.test.ts:163",
+        "src/scanner_scope.test.ts:192"
+      ],
+      "limit": "Unstaged working-copy fixes cannot clear indexed violations.",
+      "retained_status": "approved",
+      "retained_proof": "Stage bad bytes, then fix only working bytes: staged check stays red. Also test the inverse, deletions, renames and spaced paths.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "audits/scope.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Staged bytes and staged configuration are evaluated together; inverse working edits, rename/delete and spaced paths are controlled.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A36",
+      "status": "supported_local",
+      "observed": "Explicit dispatch paths reach leaf scanners without unrelated staged inputs.",
+      "citations": [
+        "dispatch/lib.sh:1",
+        "src/scanner_scope.test.ts:61"
+      ],
+      "limit": "Actual local dispatch boundaries.",
+      "retained_status": "approved",
+      "retained_proof": "An unstaged bad explicit target fails its leaf check; unrelated staged paths are excluded. Staged mode keeps its original selection.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "dispatch/lib.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Explicit target mode evaluates unstaged selected paths and omits unrelated staged files.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A37",
+      "status": "supported_local",
+      "observed": "Unknown and mixed scope options refuse before clean verdicts.",
+      "citations": [
+        "audits/error-codes.sh:1",
+        "audits/scope.sh:1",
+        "src/scanner_scope.test.ts:153"
+      ],
+      "limit": "Current leaf entrypoint argument controls.",
+      "retained_status": "approved",
+      "retained_proof": "Unknown argument exits two before discovery; real paths with spaces survive every scan.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "audits/error-codes.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Unknown arguments fail before discovery; quoted and spaced paths retain selection.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A38",
+      "status": "supported_local",
+      "observed": "Rust crate alias discovery preserves spaced paths and shares staged input.",
+      "citations": [
+        "audits/rust-error.sh:1",
+        "src/scanner_scope.test.ts:99"
+      ],
+      "limit": "Local spaced-path and index fixtures.",
+      "retained_status": "approved",
+      "retained_proof": "A valid Result alias in a spaced filename satisfies its own crate; missing aliases and lossy causes remain red.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "audits/rust-error.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "A local Result alias with spaces satisfies its own crate; missing/lossy cases stay red.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A39",
+      "status": "supported_local",
+      "observed": "Owned groups stop on limits, gate-owner disappearance and termination signals; timers/listeners are released.",
+      "citations": [
+        "src/command_process.ts:20",
+        "src/command_process.ts:48",
+        "src/command_process.ts:55",
+        "src/command_process.ts:72",
+        "src/command_runner.ts:18",
+        "src/command_process.test.ts:39",
+        "src/command_process.test.ts:65"
+      ],
+      "limit": "Local supported platform proof; no cross-platform execution claim.",
+      "retained_status": "approved",
+      "retained_proof": "Fast deadline/output controls stop every owned child, fail explicitly and retain complete captured receipts; ordinary commands and explicit per-lane overrides remain usable.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/command_process.ts",
+        "tests_or_control": "src/command_runner.test.ts",
+        "observed": "Deadlines and combined output limits stop owned children and retain private complete receipts; repeated successful stops are now avoided.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/group-tests-after.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A40",
+      "status": "owner_excluded",
+      "observed": "Telemetry privacy expansion remains owner-excluded.",
+      "citations": [
+        "evals/release/repairs.json:809",
+        "evals/release/repairs.json:810"
+      ],
+      "limit": "Not repaired or certified.",
+      "retained_status": "recorded_scope",
+      "retained_proof": "Custom project names never enter spool or upload fields; a real failed custom lane maps to a published fixed category."
+    },
+    {
+      "id": "A41",
+      "status": "supported_partial_local",
+      "observed": "Inventory digest changes invalidate reviewed status and preserve explicit self-reference limits.",
+      "citations": [
+        "evals/release/inventory.ts:41",
+        "src/release_inventory.test.ts:1",
+        "evals/release/receipts/Oct_05_21_14/inventory-stale-control.json:1"
+      ],
+      "limit": "Final candidate inventory binding remains pending until freeze and fresh review.",
+      "retained_status": "approved",
+      "retained_proof": "Changed bytes invalidate review status; final snapshot binds record self-reference externally; package membership remains independently checked.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "evals/release/inventory.ts",
+        "tests_or_control": "src/release_inventory.test.ts",
+        "observed": "Changed or missing review digests invalidate status; self-referential records require external snapshot binding.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/inventory-stale-control.json",
+        "limit": "The inventory marks its own review record pending; external snapshot binding is recorded separately, not as self-certified review."
+      }
+    },
+    {
+      "id": "A42",
+      "status": "supported_local",
+      "observed": "Document-read JSON escaping and structural row validation preserve exact fields and reject malformed invented reads.",
+      "citations": [
+        "audits/doc-reads.ts:8",
+        "audits/doc-reads.ts:10",
+        "src/doc_reads.test.ts:15",
+        "src/doc_reads.test.ts:34"
+      ],
+      "limit": "Local exact odd-path/citation controls.",
+      "retained_status": "approved",
+      "retained_proof": "Quoted, tabbed, multiline and control-character citations round-trip through valid JSON; malformed input records no invalid row.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "audits/doc-reads.ts",
+        "tests_or_control": "src/doc_reads.test.ts",
+        "observed": "Quoted paths and control-character citations round-trip through structural JSON records.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A43",
+      "status": "supported_local",
+      "observed": "Each dispatch invocation owns a private unique receipt.",
+      "citations": [
+        "dispatch/lib.sh:1",
+        "src/scanner_scope.test.ts:76"
+      ],
+      "limit": "Concurrent local receipt readability/permissions checked.",
+      "retained_status": "approved",
+      "retained_proof": "Concurrent runs have separate receipts; an attacker-owned predictable path cannot redirect output or cleanup.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "dispatch/lib.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Concurrent scanners retain separate private receipts without following predictable owner paths.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A44",
+      "status": "supported_partial_local",
+      "observed": "Saved results bind prompt, adapter, host entrypoint and settings and reject incomplete coverage.",
+      "citations": [
+        "evals/llms/cache.ts:19",
+        "evals/llms/cache.ts:44",
+        "src/comprehension_cache.test.ts:1"
+      ],
+      "limit": "Entrypoint/shim bytes do not prove full transitive runtime identity; fixture validation is not live adherence.",
+      "retained_status": "approved",
+      "retained_proof": "Local stubs prove changed prompt/host/settings invalidate saved results and incomplete coverage cannot claim full completion; no live model calls.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "evals/llms/cache.ts",
+        "tests_or_control": "src/comprehension_cache.test.ts",
+        "observed": "Local stub hosts invalidate cache on prompt/host/settings changes and reject incomplete results.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/comprehension-check.txt",
+        "limit": "The cache hashes the executable entrypoint/shim, not a tested transitive runtime closure. Fixture validation is not live comprehension."
+      }
+    },
+    {
+      "id": "A45",
+      "status": "supported_local",
+      "observed": "Diff marker checks preserve selected/index paths and refuse missing comparisons.",
+      "citations": [
+        "audits/msid-ui.sh:71",
+        "src/scanner_scope.test.ts:173",
+        "src/scanner_scope.test.ts:182"
+      ],
+      "limit": "Local index/working-copy boundary controls.",
+      "retained_status": "approved",
+      "retained_proof": "A spaced-path violation is detected; a missing comparison revision returns a clear error; plain positive/negative controls remain valid.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "audits/msid-ui.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Spaced paths are scanned; missing comparison revisions fail with a diagnostic.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A46",
+      "status": "supported_local",
+      "observed": "Semantic numeric factors are covered by the unnamed-string/numeric scanner.",
+      "citations": [
+        "audits/ufs.sh:1",
+        "src/scanner_scope.test.ts:51",
+        "src/scanner_scope.test.ts:163"
+      ],
+      "limit": "Pattern-based numeric checks; no universal semantic inference claim.",
+      "retained_status": "approved",
+      "retained_proof": "Factor sixty is caught; named constants and retained exemptions pass; other documented unit factors remain covered.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "audits/ufs.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Factor sixty is caught while named constants and documented exemptions pass.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A47",
+      "status": "supported_local",
+      "observed": "Initializer checking includes same-line allocation and tracked Zig files outside src.",
+      "citations": [
+        "audits/deinit-pairs.sh:1",
+        "src/scanner_scope.test.ts:110"
+      ],
+      "limit": "Implemented allocation/pair checks only; arena lifetime and empty pairs remain reviewer duties.",
+      "retained_status": "approved",
+      "retained_proof": "Single-line allocating init, multiline control and non-src Zig target are checked; value types retain their exemption.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "audits/deinit-pairs.sh",
+        "tests_or_control": "src/scanner_scope.test.ts",
+        "observed": "Single-line allocating initialization outside src is caught; value-type initialization retains its exemption.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A48",
+      "status": "supported_local",
+      "observed": "Product-specific policies are fenced; generic installed packs use consumer commands and authority.",
+      "citations": [
+        "src/pack_hygiene.ts:55",
+        "dispatch/write_sql.md:38",
+        "dispatch/write_sql.md:43",
+        "src/install_packs.test.ts:1"
+      ],
+      "limit": "Current explicit product selection remains available.",
+      "retained_status": "approved",
+      "retained_proof": "Synthetic independent SQL, language and HTTP consumers receive no implicit product datastore/build policy; explicit product selection retains its safeguards.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/pack_hygiene.ts",
+        "tests_or_control": "src/install_packs.test.ts",
+        "observed": "Independent consumers receive their own SQL/build/documentation rules; explicit product selection retains its safeguards.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A49",
+      "status": "supported_local",
+      "observed": "Unused renderer file-writing export and CLI import were removed; production seeding remains.",
+      "citations": [
+        "src/render.ts:1",
+        "src/cli.ts:1",
+        "src/config_discovery.ts:1"
+      ],
+      "limit": "Source call/reference inspection, not test-count proof.",
+      "retained_status": "approved",
+      "retained_proof": "Whole-tree call-site search, typecheck, rendering and command behavior show the removed private helper/import had no consumer.",
+      "retained_verification": {
+        "status": "observed_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "src/render.ts",
+        "tests_or_control": "src/render.test.ts",
+        "observed": "Uncalled renderer helper and unused command import are removed; the real seeder remains in configuration code.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Local evidence does not replace current review or the real Pull Request boundary."
+      }
+    },
+    {
+      "id": "A50",
+      "status": "supported_local",
+      "observed": "Machine scanner claims are bounded and missing mechanical checks remain explicit reviewer duties.",
+      "citations": [
+        "dispatch/write_any.md:430",
+        "dispatch/write_any.md:466",
+        "dispatch/write_zig.md:859",
+        "dispatch/write_zig.md:877",
+        "docs/LOGGING_STANDARD.md:414",
+        "docs/LOGGING_STANDARD.md:474"
+      ],
+      "limit": "No live agent adherence claimed.",
+      "retained_status": "approved",
+      "retained_proof": "Source/output-name checks agree with the pages; local comprehension controls require review of each absent machine check; existing scanner fixtures retain their pass/fail behavior.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "dispatch/write_any.md",
+        "tests_or_control": "evals/dispatch/coverage.sh",
+        "observed": "Pages separate actual scanner output from mandatory human review; unchanged deterministic fixtures retain positive/negative behavior.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/comprehension-check.txt",
+        "limit": "Local fixture validity and scanner output checks do not establish live agent adherence to reviewer duties."
+      }
+    },
+    {
+      "id": "A51",
+      "status": "supported_partial_local",
+      "observed": "Review/check collection is paginated and revision-bound; incomplete, missing, malformed or disputed evidence cannot prove quiet.",
+      "citations": [
+        "skills/orly-babysit-prs/SKILL.md:97",
+        "skills/orly-babysit-prs/SKILL.md:177",
+        "skills/orly-babysit-prs/SKILL.md:314",
+        "src/review_poll.test.ts:1"
+      ],
+      "limit": "Full two-quiet-poll real Pull Request session remains pending.",
+      "retained_status": "approved",
+      "retained_proof": "Stubbed multi-page review and failed-check responses stay incomplete; disputed findings require the owner; quiet-poll evidence uses the pushed revision.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "skills/orly-babysit-prs/SKILL.md",
+        "tests_or_control": "src/review_poll.test.ts",
+        "observed": "All review/check pages are shape-validated against the pushed revision; missing, failed, malformed and changed evidence stays incomplete.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Single-poll collection and incomplete-result controls are observed. A complete two-quiet-poll babysitter session remains unobserved."
+      }
+    },
+    {
+      "id": "A52",
+      "status": "supported_partial_local",
+      "observed": "Migration paths, cleanup lifetime, mounted authorization and structured logging agree after source corrections. Query cleanup wording now requires draining on every exit before connection release and recognizes the canonical wrapper-owned cleanup.",
+      "citations": [
+        "dispatch/write_sql.md:61",
+        "dispatch/write_sql.md:77",
+        "docs/SCHEMA_CONVENTIONS.md:37",
+        "docs/LIFECYCLE_PATTERNS.md:151",
+        "docs/REST_API_DESIGN_GUIDELINES.md:630",
+        "docs/LOGGING_STANDARD.md:320",
+        "audits/agents-md.md:233",
+        "dispatch/write_zig.md:298",
+        "dispatch/write_zig.md:480",
+        "dispatch/write_zig.md:492",
+        "dispatch/write_zig.md:494",
+        "docs/greptile-learnings/RULES.md:145"
+      ],
+      "limit": "Current source review and local fixture scope only; no sibling product runtime, native build or live comprehension is claimed.",
+      "retained_status": "approved",
+      "retained_proof": "Cross-page consistency controls cover migrations, ownership, handler authorization and logging; owner approves changed semantics; no native build.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "dispatch/write_sql.md; docs/SCHEMA_CONVENTIONS.md",
+        "tests_or_control": "audits/agents-md.md question 27.5",
+        "observed": "Canonical embed and Rust migration registration agree; existing version and owner-removal safeguards remain.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/comprehension-check.txt",
+        "limit": "Current source review and local fixtures only; no sibling product runtime or live comprehension is claimed."
+      }
+    },
+    {
+      "id": "A53",
+      "status": "supported_partial_local",
+      "observed": "Generated source now uses detected default branch; body-only copy and active-stream updates remain explicit.",
+      "citations": [
+        "core/operating-model.md:172",
+        "AGENTS.md:167",
+        "skills/orly-spec-new/SKILL.md:98",
+        "skills/orly-spec-new/SKILL.md:136",
+        "skills/orly-spec-new/SKILL.md:140"
+      ],
+      "limit": "Current source and disposable fixture scope; actual Pull Request boundary remains pending.",
+      "retained_status": "approved",
+      "retained_proof": "A filled body has no authoring prelude, uses the approved authoring branch, and emits descriptive source test names accepted by the unchanged naming scanner.",
+      "retained_verification": {
+        "status": "partial_local_proof",
+        "closure": "open_pending_current_review",
+        "source": "core/operating-model.md; AGENTS.md; skills/orly-spec-new/SKILL.md",
+        "tests_or_control": "audits/agents-md.md question 1.6",
+        "observed": "Detected default branch guidance is consistent after source regeneration; active-stream work stays on its branch.",
+        "receipt": "evals/release/receipts/Oct_05_21_14/audit-repaired.txt",
+        "limit": "Current source review and local fixtures only; no sibling product runtime or live comprehension is claimed."
+      }
+    }
+  ]
+}

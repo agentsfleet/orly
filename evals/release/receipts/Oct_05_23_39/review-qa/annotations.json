@@ -1,0 +1,44 @@
+{
+  "evidence": [
+    {
+      "capture": "001",
+      "command": "bun test src/installation_preservation.test.ts",
+      "contract": "Exact owner-byte preservation, no overwritten concurrent edit, active owner hook retention and owned workload cleanup",
+      "expected": "Exit 0; no failing assertions; fixture side effects asserted by native tests",
+      "classification": "superseded"
+    },
+    {
+      "capture": "002",
+      "command": "bun test src/command_process.test.ts",
+      "contract": "Exact owner-byte preservation, no overwritten concurrent edit, active owner hook retention and owned workload cleanup",
+      "expected": "Exit 0; no failing assertions; fixture side effects asserted by native tests",
+      "classification": "superseded"
+    },
+    {
+      "capture": "003",
+      "command": "bun test src/installation_preservation.test.ts",
+      "contract": "Exact owner-byte preservation, no overwritten concurrent edit, active owner hook retention and owned workload cleanup",
+      "expected": "Exit 0; no failing assertions; fixture side effects asserted by native tests",
+      "classification": "pass"
+    },
+    {
+      "capture": "004",
+      "command": "bun test src/command_process.test.ts",
+      "contract": "Exact owner-byte preservation, no overwritten concurrent edit, active owner hook retention and owned workload cleanup",
+      "expected": "Exit 0; no failing assertions; fixture side effects asserted by native tests",
+      "classification": "pass"
+    },
+    {
+      "capture": "005",
+      "command": "bun test src/installation/migration.test.ts",
+      "contract": "Exact owner-byte preservation, no overwritten concurrent edit, active owner hook retention and owned workload cleanup",
+      "expected": "Exit 0; no failing assertions; fixture side effects asserted by native tests",
+      "classification": "pass"
+    }
+  ],
+  "limits": [
+    "Functional smoke only; no deployment, browser, native compilation or live model calls.",
+    "Original captures 001 and 002 superseded by identical commands 003 and 004 after runtime repairs.",
+    "Coverage is the scoped fixture assertions; arbitrary kernel races are not certified."
+  ]
+}

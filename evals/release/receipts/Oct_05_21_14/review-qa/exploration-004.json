@@ -1,0 +1,16 @@
+{
+  "observationCapture": "003",
+  "observationArgv": [
+    "bun",
+    "test",
+    "src/command_process.test.ts"
+  ],
+  "observed": "bun test v1.4.2 (744846f84)\n",
+  "hypothesis": "The supervisor retains the expected failure result; next verify changed and missing review digests and record self-reference cannot preserve reviewed status.",
+  "nextCapture": "004",
+  "nextArgv": [
+    "bun",
+    "test",
+    "src/release_inventory.test.ts"
+  ]
+}

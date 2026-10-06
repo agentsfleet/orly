@@ -1,0 +1,16 @@
+{
+  "evidence": [
+    {
+      "capture": "005",
+      "command": "bun test src/review_poll.test.ts",
+      "contract": "Completion and feedback select the same Greptile authors; missing current review, incomplete pages, failed checks and changed revisions cannot establish green",
+      "expected": "19 passed, 0 failed, 64 assertions; the unsupported alternate-bot override cannot approve excluded feedback",
+      "classification": "pass"
+    }
+  ],
+  "limits": [
+    "Required new-guide revalidation within the separate review invocation; the earlier three-cycle attempt stays nonconverged.",
+    "Real extracted shell snippets and typed synthetic forge pages through owned tools; no real forge outcome is implied.",
+    "Actual pushed revision, hosted checks and Greptile follow-up remain due after publication of the Pull Request."
+  ]
+}

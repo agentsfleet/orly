@@ -1,0 +1,93 @@
+{
+  "revision": "4be34f70a14ffdffa6b26bbdaac4111379771817",
+  "runtime": "bun 1.4.2",
+  "cwd": "/Users/kishore/Projects/orly",
+  "limits": [
+    "Separate finished-candidate review invocation; the earlier three-cycle attempt remains nonconverged.",
+    "One smoke success and real changed failure path; required plan checks use finite command limits, no clock reset.",
+    "Owned disposable local files, Git repositories and bounded child processes. No live consumer, publication, native build, browser or model call."
+  ],
+  "evidence": [
+    {
+      "command": "bun test src/command_process.test.ts src/command_runner.test.ts",
+      "contract": "Successful spawn owns cleanup, including failed receipt writes, owner exit, signals, deadlines and output limits",
+      "expected": "9 passed, 0 failed, 50 assertions",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/installation_preservation.test.ts",
+      "contract": "Concurrent owner saves retain exact bytes and refuse without a journal",
+      "expected": "4 passed, 0 failed, 23 assertions",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/installation/migration.test.ts",
+      "contract": "Owner hooks remain connected and ordered interrupted migration recovers",
+      "expected": "36 passed, 0 failed, 812 assertions",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    },
+    {
+      "command": "bun test src/surfaces.test.ts src/spec_template_io.test.ts",
+      "contract": "Dotted specifications and real indexed bytes remain authoritative",
+      "expected": "19 passed, 0 failed, 52 assertions",
+      "classification": "pass",
+      "observed": "bun test v1.4.2 (744846f84)\n"
+    }
+  ],
+  "learning": [
+    {
+      "observationCapture": "001",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/command_process.test.ts",
+        "src/command_runner.test.ts"
+      ],
+      "hypothesis": "Process setup failure and owned stop paths pass; confirm concurrent owner saves still preserve exact bytes and refuse without a journal.",
+      "nextCapture": "002",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/installation_preservation.test.ts"
+      ]
+    },
+    {
+      "observationCapture": "002",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/installation_preservation.test.ts"
+      ],
+      "hypothesis": "Staging preserves owner bytes; verify owner hooks and ordered migration interruption/retry through real Git and files.",
+      "nextCapture": "003",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/installation/migration.test.ts"
+      ]
+    },
+    {
+      "observationCapture": "003",
+      "observationArgv": [
+        "bun",
+        "test",
+        "src/installation/migration.test.ts"
+      ],
+      "hypothesis": "Owner hooks and migration retry checks pass; verify dotted specification filtering and authoritative indexed content on this final source.",
+      "nextCapture": "004",
+      "nextArgv": [
+        "bun",
+        "test",
+        "src/surfaces.test.ts",
+        "src/spec_template_io.test.ts"
+      ]
+    }
+  ],
+  "verdict": {
+    "status": "pass",
+    "open": []
+  }
+}

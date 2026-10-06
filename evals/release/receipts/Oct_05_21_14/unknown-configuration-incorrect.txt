@@ -1,0 +1,41 @@
+bun test v1.4.2 (744846f84)
+
+src/config_validation.test.ts:
+24 |   test(`both configuration readers reject invalid ${field} value ${JSON.stringify(value)}`, async () => {
+25 |     const root = mkdtempSync(join(tmpdir(), "orly-config-validation-"));
+26 |     roots.push(root);
+27 |     mkdirSync(join(root, ".orly"));
+28 |     writeFileSync(join(root, CONFIG_PATH), JSON.stringify({ ...BASE, [field]: value }));
+29 |     expect(() => readConfigSync(root)).toThrow(field === "unknown_setting" ? "Unrecognized key" : field);
+                                            ^
+error: expect(received).toThrow(expected)
+
+Expected substring: "Unrecognized key"
+
+Received function did not throw
+Received value: {
+  schema_version: 1,
+  orly_version: "",
+  packs: [],
+  commands: {
+    conform: [
+      [ "true" ]
+    ],
+    "verify.unit": [
+      [ "true" ]
+    ],
+  },
+  surfaces: undefined,
+  managed: [],
+  digests: {},
+  execution: undefined,
+}
+
+      at <anonymous> (/private/tmp/orly-assertion-controls-Oct_05-5nygx8ve/unknown-configuration/src/config_validation.test.ts:29:40)
+(fail) both configuration readers reject invalid unknown_setting value true [3.22ms]
+
+ 0 pass
+ 19 filtered out
+ 1 fail
+ 1 expect() calls
+Ran 1 test across 1 file. [30.00ms]

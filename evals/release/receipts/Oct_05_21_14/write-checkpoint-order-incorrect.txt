@@ -1,0 +1,25 @@
+bun test v1.4.2 (744846f84)
+
+src/installation/migration.test.ts:
+75 |   const journal: { data: { writes: FileWrite[] } } = await Bun.file(join(repo, JOURNAL)).json();
+76 |   expect(journal.data.writes).toHaveLength(WRITE_COUNT);
+77 |   const written = stage === JOURNAL_STAGE ? 0 : stage === WRITE_STAGE ? ordinal + 1 : WRITE_COUNT;
+78 |   for (const [index, file] of journal.data.writes.entries()) {
+79 |     const current = Bun.file(join(repo, file.path));
+80 |     if (index < written) expect(await current.bytes()).toEqual(Buffer.from(file.content, CONTENT_ENCODING));
+                                                   ^
+ENOENT: no such file or directory, open '/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-gates-test-K5k5v3/.orly/AGENTS.md'
+    path: "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-gates-test-K5k5v3/.orly/AGENTS.md",
+ syscall: "open",
+   errno: -2,
+    code: "ENOENT"
+
+      at async expectInterruptedState (/private/tmp/orly-assertion-controls-Oct_05-5nygx8ve/write-checkpoint-order/src/installation/migration.test.ts:80:47)
+      at async <anonymous> (/private/tmp/orly-assertion-controls-Oct_05-5nygx8ve/write-checkpoint-order/src/installation/migration.test.ts:64:9)
+(fail) interrupted_install_recovers at write 0 [140.62ms]
+
+ 0 pass
+ 19 filtered out
+ 1 fail
+ 4 expect() calls
+Ran 1 test across 1 file. [170.00ms]

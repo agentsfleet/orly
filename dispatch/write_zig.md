@@ -31,13 +31,15 @@ Status: Canonical Zig source of truth for agents and commits
 
 > [JUDGMENT → ARCH]
 
-For every commit that touches `*.zig`, the agent runs the workflow below — no human approvals required mid-loop. This façade is the human-discipline complement to `make lint`; rules already enforced by lint are not duplicated here. The agent owns the rules that lint cannot mechanically catch.
+For every commit touching Zig, run the workflow below alongside the repository's
+declared conformance and verification commands. The reviewer owns the rules
+those commands cannot mechanically check.
 
 1. **Before write (trigger: about to edit / create `*.zig`):** scan this façade's section headers (`grep -n "^## " dispatch/write_zig.md`). Re-read any section whose topic the diff touches: concurrency for atomics / threads, allocator-ownership for new structs, doc-comments for new `pub` types, comptime assertions for new invariants, single-type-module pattern for new file structure, etc.
 
 2. **During write:** for each surfaced uncertainty (atomic ordering choice, allocator pattern, naming, structural choice), state the rule and the choice in chat — don't decide silently.
 
-3. **Before commit (post-`make lint`):** run a self-audit grep against the staged diff for the rules `make lint` does not enforce. Don't ask for approval; do the audit and either comply or state explicitly why an exception applies.
+3. **Before commit (after declared conformance):** inspect the staged diff for rules the repository's checks do not enforce. Comply or record an explicitly authorized exception.
     - Weak atomic orderings (`\.\(acquire\|release\|monotonic\|unordered\)\b`) — every match needs a `// safe because: ...` comment within 3 lines.
     - New `pub` symbols — confirm at least one external import via `grep -rn "<symbol>"`. Remove `pub` if unreferenced.
     - New structs that own heap memory — confirm `alloc:` field OR doc-comment naming the caller-owned-allocator pattern.
@@ -55,15 +57,15 @@ For every commit that touches `*.zig`, the agent runs the workflow below — no 
 
 > [DETERMINISTIC → TODO-CHECK]
 
-- Run `make lint`, `make test`, and `gitleaks detect` before any commit that includes Zig changes.
-- Run the repository's database-backed integration lane, with `TEST_DATABASE_URL` pointed at its test database, when touching DB-backed handlers, proposal flows, or temp-table-based Zig tests.
+- Run the repository's declared conformance and verification commands and required secret scanner before committing Zig changes.
+- Run its database-backed integration lane with its declared test configuration when touching database behavior.
 - Read this file before creating any new `*.zig` file.
 - Use `conn.exec()` for INSERT / UPDATE / DDL whenever possible.
 - Drain early-exit `conn.query()` results before `deinit()`.
 - Copy row-backed slices before `q.drain()` or `q.deinit()`.
 - Materialize rows into owned memory before issuing writes on the same `pg.Conn`.
 - Keep temp-table fixtures aligned with the real production write contract.
-- Use `var rows: std.ArrayList(T) = .empty;` for ArrayList init (Zig 0.16; the `= .{}` form was 0.15). Pass alloc per-operation: `append(alloc, ...)`, `toOwnedSlice(alloc)`, `deinit(alloc)`.
+- Match container initialization and allocator calls to the repository's pinned Zig version; read that version's implementation before changing the shape.
 - Use `q.*.next()` and `q.*.drain()` when the query result is passed through `anytype` as a pointer (`&q`). Direct local vars use `q.next()`.
 - Reference nested struct types with the full path: `Module.Struct.NestedType`, not `Module.NestedType`.
 - Add new test files to test discovery. Either `_ = @import("path/to/new_file.zig");` in `main.zig`'s test block, or — preferred when a façade already exists — in a `test {}` block inside the façade (`test { _ = @import("foo_test.zig"); }`). Zig strips `test {}` blocks in release builds, so this adds zero bytes to the production binary. The façade pattern keeps `main.zig` at a flat one-line-per-module list and lets each module own its own test discovery.
@@ -99,12 +101,18 @@ For every commit that touches `*.zig`, the agent runs the workflow below — no 
 
 > [DETERMINISTIC → PUB]
 
+Use the repository's selected linter and preserve its unused-public-symbol
+checks. If it has no such checker, review public consumers explicitly;
+installing this language pack does not select a linter version.
+
+<!-- oracle-packs:start product.agentsfleet -->
 - This repo uses `zlint` as part of `make lint`.
 - Pinned version: `v0.9.0`.
 - **`unused-decls: error` is load-bearing.** PUB GATE (the pub-surface section of this façade) delegates mechanical consumer-grep to this rule — a `pub` without an in-tree consumer fails `make lint`. Disabling or downgrading it silently bypasses half the gate; if you must, amend PUB GATE in the same diff so the design call is captured elsewhere.
 - `suppressed-errors` stays off because this repo intentionally uses narrow `pg` cleanup patterns that a generic rule cannot classify correctly.
 - `unsafe-undefined` is a good future tightening target once current low-level uses are cleaned up or annotated.
 - A disabled ZLint is not useful; prefer a scoped ruleset that passes today and tightens over time.
+<!-- oracle-packs:end -->
 
 ## Memory Safety Rules
 
@@ -262,10 +270,15 @@ fix it in the same commit. No spec needed — these are incremental improvements
 - Decide ownership before writing helpers: allocator, free/deinit path, and whether data is owned or borrowed.
 - If the file touches `pg`, apply the query lifecycle rules above before writing the first helper.
 
-## HTTP Integration Tests — Use TestHarness
+## HTTP Integration Tests
 
 > [JUDGMENT → ARCH]
 
+Use the repository's shared HTTP harness and real schema fixtures.
+Register new tests in its discovery graph and keep setup and cleanup owned by
+each test. Do not assume another product's harness or environment variable.
+
+<!-- oracle-packs:start product.agentsfleet -->
 Canonical source: `src/http/test_harness.zig`. Every `*_http_integration_test.zig` under `src/http/` MUST consume it.
 
 - **Do not** define a local `TestServer` / `RunningServer` struct, local `startTestServer()` / `startServer()`, local `sendReq()` / `sendRequest()`, or local `waitForServer()`. These are provided by `TestHarness` with a fluent Request/Response API.
@@ -274,17 +287,17 @@ Canonical source: `src/http/test_harness.zig`. Every `*_http_integration_test.zi
 - **Test fixtures live in a sibling `*_test_fixtures.zig`** beside the integration file, or in a shared fixture module — not inlined. See `src/http/webhook_test_fixtures.zig` for the pattern.
 - **Skip gracefully when DB is absent** — `TestHarness.start` returns `error.SkipZigTest` when `TEST_DATABASE_URL` is unset; tests just propagate it.
 - New file registration: add `_ = @import("..._test.zig")` to the `test {}` block at the bottom of `src/http/server.zig` (not `src/main.zig`). Integration tests discover from there.
+<!-- oracle-packs:end -->
 
 ## Commands
 
 > [DETERMINISTIC → TODO-CHECK]
 
-- `make lint`
-- `make test`
-- The database-backed integration lane, with `TEST_DATABASE_URL` pointed at the test database
-- `gitleaks detect`
-- Connection-drain audit — a static check that every `conn.query()` has `.drain()` in the same function. Run the repository's lane for it when touching any file that calls `conn.query()`.
+- Declared `conform` and applicable `verify.*` commands from `.orly/orly.json`.
+- The repository's database integration configuration and required secret scanner.
+- Query cleanup — drain every result before releasing its connection, including early exits. Use wrapper-owned draining where the repository provides it. Run any declared cleanup check and review the owner's cleanup path; no generic static check proves wrapper behavior.
 
+<!-- oracle-packs:start product.agentsfleet -->
 ## Zig 0.15.2 API Gotchas (M3_001)
 
 > [DETERMINISTIC → XCOMPILE]
@@ -293,17 +306,24 @@ Canonical source: `src/http/test_harness.zig`. Every `*_http_integration_test.zi
 - `std.fmt.parseHex` does not exist. Use `std.fmt.hexToBytes(&out, hex_str)` to decode hex to bytes.
 - `std.fmt.fmtSliceHexLower` does not exist. Use `std.fmt.bytesToHex(bytes, .lower)` to encode bytes to hex.
 - When unsure about an API, check the codebase first: `grep -rn "ArrayList\|hexToBytes" src/ --include="*.zig"` to see how existing code uses it.
+<!-- oracle-packs:end -->
 
 ## Cross-Compile Verification (M22_001)
 
 > [DETERMINISTIC → XCOMPILE]
 
+Compile the repository's declared platform matrix, including applicable test
+graphs. Execute platform-specific tests on their declared supported runtime;
+compilation alone does not prove runtime behavior.
+
+<!-- oracle-packs:start product.agentsfleet -->
 - Run `zig build -Dtarget=x86_64-linux && zig build -Dtarget=aarch64-linux` before every commit that touches Zig files. Do not rely on macOS-only compilation.
 - **Production-binary targets alone do NOT catch Linux-gated drift.** Code inside `if (builtin.os.tag == .linux)` branches and test-only helpers is comptime-dead on a macOS target and never analysed in the production graph (M82 shipped green locally; three Linux-gated `std.fs.accessAbsolute` sites failed CI). For cross-platform changes, also compile the linux **test graphs**: `zig build test -Dtarget=x86_64-linux` + `zig build test-lib -Dtarget=x86_64-linux` + `zig build --build-file build_runner.zig test -Dtarget=x86_64-linux`. A clean compile ending only in `unable to execute binaries from the target` is the PASS signal.
 - **Linux-gated tests compile but never RUN on macOS** (`SkipZigTest` off-linux) — a wrong runtime assertion slips through to CI (M84_007). To execute locally: cross-compile the test graph `-Dtarget=aarch64-linux`, take the static ELF from `.zig-cache/o/*/`, and run it in a **native arm64** container: `docker run --rm --platform linux/arm64 -v "$PWD:/w" -w /w debian:stable-slim /w/<binary>`. qemu-emulated x86_64 is a false oracle — its fork/clone emulation breaks tests that pass on real Linux. Note: prod children run under bwrap (closes non-passed fds), so bwrap-less tests must assert the *relative* fd property (child fds ⊆ parent), never absolute fd counts.
 - `std.http.Client.open()` does not exist on Linux targets in Zig 0.15.2. Use `client.request()` + `response.reader()` + `readVec()` for cross-platform HTTP streaming.
 - `std.Io.Reader` on Linux has `readVec()`, not `read()`. Use `readVec(&[_][]u8{&buf})` for single-buffer reads.
 - Verify stdlib API existence by grepping: `grep -n "pub fn" ~/.local/share/mise/installs/zig/*/lib/std/http/Client.zig`
+<!-- oracle-packs:end -->
 
 ## TLS Transport (M22_001)
 
@@ -496,7 +516,7 @@ Rules:
 
 > [DETERMINISTIC → XCOMPILE]
 
-- Verification runs the repository's DECLARED commands (`.oracle/orly.json`), never `zig build test` standalone. `zig build test` runs only the Zig unit set and silently skips every other language's tests and the cross-language gates the declared commands cover. Use `zig build` for compilation, never for "did my change pass tests".
+- Verification runs the repository's DECLARED commands (`.orly/orly.json`), never `zig build test` standalone. `zig build test` runs only the Zig unit set and silently skips every other language's tests and the cross-language gates the declared commands cover. Use `zig build` for compilation, never for "did my change pass tests".
 - A memory-leak lane, where the repository declares one, is required when the diff touches server lifecycle, allocator wiring, or cross-thread heap ownership. The macOS `leaks` tool prints a "not debuggable" line under System Integrity Protection — that is expected; the authoritative signal is the allocator-leak phase across `std.testing.allocator`-wrapped tests.
 
 ## Doc-Comments and Inline Comments
@@ -530,7 +550,8 @@ Extends "Type Design Rules". Two patterns, both legitimate; pick deliberately an
 
 > [DETERMINISTIC → TODO-CHECK]
 
-- snake_case throughout: file names, fields, functions, locals, constants. agentsfleet has no JS-interop boundary — there is no carve-out for camelCase fields. (Bun mixes the two for JS-mapped fields; we do not.)
+- Use snake_case for Zig names. Match externally defined field spellings only at an explicit interoperability boundary.
+- `agentsfleet` has no JavaScript interoperability boundary; its Zig fields stay snake_case. <!-- oracle-packs:product.agentsfleet -->
 
 ## RULE UFS — Named constants for repeated and semantic literals
 
@@ -641,8 +662,8 @@ paths never reach a global to allocate. Debug/test builds pick the leak-checking
 Purpose Allocator (GPA); release picks the C allocator. Global state never holds the allocator
 for a Zig path.
 **Exemplar:** ghostty `global.zig:74-96` (allocator selection at `main`, Valgrind detected at
-runtime). In-repo: `agentsfleetd/main.zig` and `runner/daemon/worker_pool.zig` own the GPA;
-everything below takes `alloc` as an argument.
+runtime). Everything below the owner takes `alloc` as an argument.
+In `agentsfleet`, `agentsfleetd/main.zig` and `runner/daemon/worker_pool.zig` own the GPA. <!-- oracle-packs:product.agentsfleet -->
 
 ### A2 — errdefer ladder: one errdefer immediately after each acquisition
 
@@ -831,20 +852,31 @@ PUB GATE and LIFECYCLE GATE answer different questions and neither defers to the
 
 The init/deinit pairing audit treats all of `deinit`, `close`, `release`, `destroy`, `shutdown`, `dispose`, `free` as lifecycle (cleanup) methods. Renaming `deinit` to `close` or `release` does NOT bypass the pairing requirement — a struct owning heap memory or an opaque handle still needs an `init`-paired cleanup method under any of those names.
 
-### Empty-pair and arena-leakage informational flags
+### Empty-pair and arena-lifetime review
+
+> [JUDGMENT → ARCH]
+
+The reviewer checks empty lifecycle pairs and arena-backed slices retained
+beyond the arena's lifetime. `deinit-pairs.sh` emits neither finding.
+Remove a redundant pair or explain its owned state; fix any lifetime mismatch
+before the owning object can outlive the arena.
+
+### Scope: full tree, explicit files and indexed content
 
 > [DETERMINISTIC → DEINIT]
 
-Two non-blocking informational flags the pairing audit surfaces: (1) `init` body empty AND `deinit` body empty — likely a pair-for-shape that isn't actually needed; (2) an arena-allocated slice stored in a long-lived struct — the reviewer must either restructure the ownership or explicitly acknowledge the arena-lifetime mismatch. Neither blocks mechanically; both demand a reviewer decision rather than silent acceptance.
-
-### Scope: full-tree audit, staged content satisfies the same hook run
-
-> [DETERMINISTIC → DEINIT]
-
-`deinit-pairs.sh` walks the full `src/` working tree via `git ls-files`. The index includes staged-but-not-yet-committed content, so a fix staged in pre-commit satisfies the check on the same hook run. `--staged` is preserved as an opt-in narrowing mode for iterative dev.
+`deinit-pairs.sh` defaults to tracked Zig files throughout the working tree.
+`--staged` checks staged paths from an owned snapshot of their indexed bytes and
+configuration; `-- <files>` checks only the named working-tree files.
+An unstaged fix cannot clear a staged violation.
 
 ### Deinit idempotency assertion (reviewer-owned)
 
 > [JUDGMENT → DIDEM]
 
-Every type with a cleanup contract should carry a test proving its cleanup method is idempotent (or its single-shot ownership is asserted) — the mechanical audit reports idempotency-test:<present|missing> but does not block on it; presence/absence is a reviewer responsibility, not a machine pass/fail. A struct whose `deinit` frees fields must have a test that exercises the success-cleanup path so the leak detector fires on a missed or double free.
+Every owning type needs a test of its cleanup lifetime.
+For a value that survives cleanup, prove repeated cleanup is safe; for a heap
+object that destroys itself, prove the owner releases it exactly once and
+clears its handle. Never call a method through a freed pointer.
+The leaf emits no `idempotency-test` result; the reviewer inspects the tests and
+allocation paths, including success and failed initialization.

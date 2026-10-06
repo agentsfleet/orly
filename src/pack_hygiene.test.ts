@@ -8,8 +8,48 @@ import { PRODUCT_ONLY_TARGETS, productLeakErrors, shippedFiles } from "./pack_hy
 const registryFor = (pack: string, source: string) => ({
   packs: { [pack]: { documents: [{ source, target: source }] } },
 });
+const GUIDE_PATH = "docs/GUIDE.md";
+const PRODUCT_COMMAND = "Run `make test-integration` before you ship.";
 
 describe("productLeakErrors", () => {
+  test("checks string core documents and retains source lines after product blocks", async () => {
+    const output = mkdtempSync(join(tmpdir(), "orly-core-hygiene-"));
+    try {
+      mkdirSync(join(output, "docs"));
+      await Bun.write(join(output, GUIDE_PATH), [
+        "<!-- oracle-packs:start product.agentsfleet -->",
+        PRODUCT_COMMAND,
+        "<!-- oracle-packs:end -->",
+        PRODUCT_COMMAND,
+      ].join("\n"));
+      const errors = await productLeakErrors(output, {
+        core_documents: [GUIDE_PATH],
+        packs: { "product.agentsfleet": {} },
+      });
+      expect(errors).toHaveLength(1);
+      expect(errors[0]).toContain(`${GUIDE_PATH}:4`);
+    } finally {
+      rmSync(output, { recursive: true, force: true });
+    }
+  });
+
+  test("allows a product-only command when the installer excludes its block", async () => {
+    const output = mkdtempSync(join(tmpdir(), "orly-profile-hygiene-"));
+    try {
+      mkdirSync(join(output, "docs"));
+      await Bun.write(join(output, GUIDE_PATH), [
+        "<!-- oracle-packs:start product.agentsfleet -->",
+        PRODUCT_COMMAND,
+        "<!-- oracle-packs:end -->",
+        "Use the repository's declared integration command.",
+      ].join("\n"));
+      const registry = registryFor("domain.http", GUIDE_PATH);
+      Object.assign(registry.packs, { "product.agentsfleet": {} });
+      expect(await productLeakErrors(output, registry)).toEqual([]);
+    } finally {
+      rmSync(output, { recursive: true, force: true });
+    }
+  });
   test("flags a product-only target named by a generic pack", async () => {
     const output = mkdtempSync(join(tmpdir(), "orly-hygiene-"));
     try {
@@ -81,12 +121,13 @@ describe("shippedFiles", () => {
         "domain.http": { documents: [{ source: "docs/A.md" }] },
         "product.agentsfleet": { documents: [{ source: "docs/B.md" }] },
       },
-      core_documents: [{ source: "docs/C.md" }],
+      core_documents: [{ source: "docs/C.md" }, "docs/D.md"],
     });
 
     expect(files).toContainEqual({ source: "docs/A.md", pack: "domain.http" });
     expect(files).toContainEqual({ source: "docs/B.md", pack: "product.agentsfleet" });
     expect(files).toContainEqual({ source: "docs/C.md", pack: "core" });
+    expect(files).toContainEqual({ source: "docs/D.md", pack: "core" });
   });
 });
 

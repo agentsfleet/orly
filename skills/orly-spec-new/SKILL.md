@@ -95,7 +95,8 @@ Now the file. Pick the ID and copy the template:
 # next free M{N}_{WS}
 ls docs/v*/pending/ docs/v*/active/ docs/v*/done/ 2>/dev/null \
   | grep -oE 'M[0-9]+_[0-9]+' | sort -u | tail -5
-cp docs/TEMPLATE.md docs/v{N}/pending/M{N}_{WS}_P{P}_{CATEGORIES}_{NAME}.md
+sed -n '/^# Spec Body — Copy Everything Below This Line/,$p' docs/TEMPLATE.md \
+  | sed '1d' > docs/v{N}/pending/M{N}_{WS}_P{P}_{CATEGORIES}_{NAME}.md
 ```
 
 
@@ -132,17 +133,22 @@ Before the spec leaves `pending/`, it must pass this checklist — the determini
 - [ ] reporting sections present (Discovery; Acceptance Rubric with Graded column empty)
 - [ ] `bash audits/spec-template.sh --staged` is clean (it BLOCKs missing required sections and unfilled `{placeholders}`)
 
-Then commit in the current authoring context:
+Commit a new milestone spec on the repository's default branch, as the
+operating model requires. Check the remote and branch before authoring;
+do not infer the default branch name.
 
-- If the skill is running inside an existing branch/worktree, author and commit the spec there.
-- If there is no branch/worktree context, use the repo's `main` branch as the fallback.
+- Inside an active stream, revise its existing spec on the active branch.
+- A new, separate milestone inside an active stream needs the owner's decision
+  before creating another worktree or changing branches.
+- Never move the active stream's uncommitted work to the default branch.
 
 ```bash
 git add docs/v{N}/pending/M{N}_{WS}_*_{NAME}.md
 git commit -m "docs(m{N}): add spec — {short title}"
 ```
 
-The spec lands in `pending/` on the branch/worktree where the skill was invoked. CHORE(open) moves it to `active/` and creates any needed worktree — handled by the lifecycle, not this skill.
+The new spec lands in `pending/` on the default branch.
+CHORE(open) moves it to `active/` and creates the implementation worktree.
 
 ---
 
@@ -150,7 +156,7 @@ The spec lands in `pending/` on the branch/worktree where the skill was invoked.
 
 - It does **not** start coding, create a worktree, or move the spec to `active/`. That's CHORE(open), when implementation begins.
 - It does **not** modify any rule file, ARCHITECTURE doc, or changelog.
-- It does **not** create a branch just to author a spec. Spec creation uses the current branch/worktree, falling back to `main` only when no branch/worktree exists.
+- It does not create an implementation branch or silently switch an active stream.
 
 ## Failure modes
 

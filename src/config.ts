@@ -1,60 +1,27 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
-import { dirname, extname, join, relative } from "node:path";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 
 import { assertWritableInside, hashContent, isObject, isString, JsonObject, objectValue, OrlyError, readJsonObject, RulesModel, stringArray } from "./model";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { selectPacks, sniffCommands } from "./config_discovery";
+import { readExecution, type ExecutionConfig } from "./execution/config";
 import { validateCommands, validateSurfaces } from "./validation";
+import { validateConfiguration } from "./config_validation";
+import { commandLimitsSchema, type LaneLimits } from "./command_limits";
 
-const ORACLE_DIRECTORY = ".oracle";
+const ORACLE_DIRECTORY = ".orly";
 export const CONFIG_PATH = `${ORACLE_DIRECTORY}/orly.json`;
 
 const CONFIG_SCHEMA_VERSION = 1;
 const JSON_INDENT = 2;
 const NEWLINE = "\n";
-const REGISTRY_PACKS_LABEL = "registry packs";
-const EXTENSIONS_FIELD = "extensions";
 const PACKS_FIELD = "packs";
 const VERSION_FIELD = "orly_version";
 const MANAGED_FIELD = "managed";
 const DIGESTS_FIELD = "digests";
 const DIGEST_ALGORITHM = "sha256";
 const COMMANDS_FIELD = "commands";
-const CONFORM_COMMAND = "conform";
-const MAKE_COMMAND = "make";
-const BUN_COMMAND = "bun";
-const RUN_SUBCOMMAND = "run";
-const MAKEFILE = "Makefile";
-const PACKAGE_MANIFEST = "package.json";
-const SCRIPTS_FIELD = "scripts";
-const LINT_ALL_TARGET = "lint-all";
-const LINT_TARGET = "lint";
-const BUILD_TARGET = "build";
 const TEXT_ENCODING = "utf8";
-const TARGET_PATTERN = /^([A-Za-z0-9][A-Za-z0-9_.-]*):/;
-const INCLUDE_PATTERN = /^-?include\s+(\S+)/;
-
-// Packs a repository only receives when it asks: Kishore's own address handles
-// and agentsfleet's product surface mean nothing in a stranger's checkout, so
-// they are never inferred — `.oracle/orly.json` names them or they stay out.
-const OPT_IN_PACKS = ["persona.indy", "product.agentsfleet", "workflow.governance"];
-
-// Directories that are never the repository's own source: scanning them makes
-// a Rust crate look like it writes TypeScript because one dependency does.
-const SKIPPED_DIRECTORIES = new Set([".git", ".oracle", "node_modules", "vendor", "third_party", "target", "dist", "build", ".zig-cache", "zig-out", ".venv", "__pycache__", ".next", ".turbo", ".cache", "coverage", "out"]);
-const SCAN_DEPTH = 4;
-
-// A Makefile target or package script orly knows how to map onto a gate
-// command. The first match wins, so the more specific name is listed first.
-const CONFORM_TARGETS = ["harness-verify", "conform", "audit", LINT_ALL_TARGET, LINT_TARGET];
-const VERIFY_TARGETS: Array<[string, string[]]> = [
-  ["verify.lint", [LINT_ALL_TARGET, LINT_TARGET]],
-  ["verify.unit", ["test-unit-all", "test-unit", "test"]],
-  ["verify.integration", ["test-integration"]],
-  ["verify.memory", ["memleak"]],
-  ["verify.version", ["check-version"]],
-  ["verify.build", [BUILD_TARGET]],
-];
-
 // One file per repository. Two regions, one owner each: `packs`, `commands` and
 // `surfaces` are the repository's answer and orly only ever reads them;
 // `orly_version` and `managed` are orly's record of what it installed and what
@@ -68,6 +35,8 @@ export type RepoConfig = {
   surfaces: JsonObject | undefined;
   managed: string[];
   digests: Record<string, string>;
+  execution?: ExecutionConfig | undefined;
+  limits?: LaneLimits;
 };
 
 export function configPath(targetRoot: string): string {
@@ -98,8 +67,9 @@ export function readConfigSync(targetRoot: string): RepoConfig | undefined {
 // One shape check for both readers: the declared commands and surfaces are what
 // `orly gate` runs and diffs against, so a malformed one fails here by name
 // rather than as a confusing red criterion later.
-function parseConfig(value: JsonObject): RepoConfig {
+export function parseConfig(value: JsonObject): RepoConfig {
   if (value.schema_version !== CONFIG_SCHEMA_VERSION) throw new OrlyError(`${CONFIG_PATH} schema_version must equal ${CONFIG_SCHEMA_VERSION}`);
+  validateConfiguration(value);
   const errors: string[] = [];
   if (value[COMMANDS_FIELD] !== undefined) validateCommands(CONFIG_PATH, value[COMMANDS_FIELD], errors);
   validateSurfaces(CONFIG_PATH, value.surfaces, errors);
@@ -113,6 +83,8 @@ function parseConfig(value: JsonObject): RepoConfig {
     surfaces: isObject(value.surfaces) ? value.surfaces : undefined,
     managed: stringArray(value[MANAGED_FIELD] ?? [], `${CONFIG_PATH} ${MANAGED_FIELD}`),
     digests: readDigests(value[DIGESTS_FIELD]),
+    execution: readExecution(value.execution),
+    ...(isObject(value.limits) ? { limits: Object.fromEntries(Object.entries(value.limits).map(([lane, limits]) => [lane, commandLimitsSchema.parse(limits)])) } : {}),
   };
 }
 
@@ -121,7 +93,8 @@ function parseConfig(value: JsonObject): RepoConfig {
 // read as "no claim", which is what keeps an older checkout green until its
 // next update rather than failing it for a record it never had.
 function readDigests(value: unknown): Record<string, string> {
-  if (!isObject(value)) return {};
+  if (value === undefined) return {};
+  if (!isObject(value)) throw new OrlyError(`${CONFIG_PATH} digests must be an object`);
   const digests: Record<string, string> = {};
   for (const [path, digest] of Object.entries(value)) if (isString(digest)) digests[path] = digest;
   return digests;
@@ -144,7 +117,7 @@ export function contentDigest(bytes: Uint8Array): string {
 // checkout installed on that version is not reported as wholly drifted before
 // its next update — a format change is not an edit, and saying so would be the
 // false alarm that teaches people to ignore the real ones.
-function sameDigest(recorded: string, actual: string): boolean {
+export function sameDigest(recorded: string, actual: string): boolean {
   const bare = (digest: string) => digest.startsWith(`${DIGEST_ALGORITHM}:`) ? digest.slice(DIGEST_ALGORITHM.length + 1) : digest;
   return bare(recorded) === bare(actual);
 }
@@ -212,7 +185,7 @@ function editedManaged(targetRoot: string, config: RepoConfig, present: string[]
     if (!recorded) return [];
     const actual = contentDigest(readFileSync(join(targetRoot, relativePath)));
     if (sameDigest(recorded, actual)) return [];
-    return [`managed file was edited after orly wrote it: ${relativePath} — move the change into the pack source, or \`orly update\` to discard it`];
+    return [`managed file was edited after orly wrote it: ${relativePath} — move the change into the pack source, or explicitly use \`orly update --force\` to discard it`];
   });
 }
 
@@ -222,17 +195,23 @@ export async function writeConfig(targetRoot: string, config: RepoConfig): Promi
   assertWritableInside(targetRoot, CONFIG_PATH, "config");
   const path = configPath(targetRoot);
   mkdirSync(dirname(path), { recursive: true });
+  await Bun.write(path, serialiseConfig(config));
+  return path;
+}
+
+export function serialiseConfig(config: RepoConfig): string {
   const ordered = {
     schema_version: config.schema_version,
     orly_version: config.orly_version,
     packs: config.packs,
     commands: config.commands,
     ...(config.surfaces ? { surfaces: config.surfaces } : {}),
+    ...(config.execution ? { execution: config.execution } : {}),
+    ...(config.limits ? { limits: config.limits } : {}),
     managed: [...config.managed].sort(),
     digests: Object.fromEntries(Object.entries(config.digests).sort(([a], [b]) => a.localeCompare(b))),
   };
-  await Bun.write(path, `${JSON.stringify(ordered, undefined, JSON_INDENT)}${NEWLINE}`);
-  return path;
+  return `${JSON.stringify(ordered, undefined, JSON_INDENT)}${NEWLINE}`;
 }
 
 // Seeded once, on the install that finds no config. The commands are a guess
@@ -242,129 +221,12 @@ export async function seedConfig(targetRoot: string): Promise<RepoConfig> {
   return { schema_version: CONFIG_SCHEMA_VERSION, orly_version: "", packs: [], commands: await sniffCommands(targetRoot), surfaces: undefined, managed: [], digests: {} };
 }
 
-// What this repository installed and runs with, read from its own `.oracle/`.
+// What this repository installed and runs with, read from its own `.orly/`.
 // Every caller that used to ask a central registry "which profile is this
 // checkout" asks the checkout instead, so the answer travels with the clone.
 export async function localSelection(model: RulesModel, targetRoot: string): Promise<{ packs: string[]; commands: Record<string, string[][]>; surfaces: JsonObject | undefined }> {
   const config = await readConfig(targetRoot);
   return { packs: selectPacks(model, targetRoot, config?.packs ?? [], new Set(config?.managed ?? [])), commands: config?.commands ?? {}, surfaces: config?.surfaces };
-}
-
-// Which packs this repository takes: every always-on pack, the language packs
-// whose extensions actually appear in its tree, plus whatever it opted into.
-// No profile name, no central registry — the repository decides by its own
-// contents, so a fresh clone installs correctly with nothing to look up.
-export function selectPacks(model: RulesModel, targetRoot: string, requested: string[], managed: Set<string> = new Set()): string[] {
-  const packs = objectValue(model.registry.packs, REGISTRY_PACKS_LABEL);
-  const present = scanExtensions(targetRoot, managed);
-  const selected = new Set<string>();
-  for (const [name, value] of Object.entries(packs)) {
-    if (OPT_IN_PACKS.includes(name)) continue;
-    const extensions = isObject(value) ? stringArray(value[EXTENSIONS_FIELD] ?? [], `pack ${name} ${EXTENSIONS_FIELD}`) : [];
-    if (extensions.length === 0 || extensions.some((extension) => present.has(extension))) selected.add(name);
-  }
-  for (const name of requested) {
-    if (!(name in packs)) throw new OrlyError(`${CONFIG_PATH} names an unknown pack: ${name} (available: ${Object.keys(packs).sort().join(", ")})`);
-    selected.add(name);
-  }
-  return [...selected].sort();
-}
-
-// Every file extension the repository's OWN source uses. Bounded in depth and
-// blind to dependency directories, so the walk stays cheap on a large tree.
-// Files orly itself materialised are excluded: the gate scripts it writes are
-// shell, so counting them would select the shell pack on the second install,
-// which writes more shell, which selects more — a set that never settles.
-function scanExtensions(targetRoot: string, managed: Set<string>, depth = SCAN_DEPTH): Set<string> {
-  const found = new Set<string>();
-  const walk = (directory: string, remaining: number): void => {
-    let entries;
-    try {
-      entries = readdirSync(directory, { withFileTypes: true });
-    } catch {
-      return;
-    }
-    for (const entry of entries) {
-      if (entry.isDirectory()) {
-        if (remaining > 0 && !SKIPPED_DIRECTORIES.has(entry.name)) walk(join(directory, entry.name), remaining - 1);
-        continue;
-      }
-      const relativePath = relative(targetRoot, join(directory, entry.name)).replaceAll("\\", "/");
-      if (managed.has(relativePath)) continue;
-      const extension = extname(entry.name);
-      if (extension.length > 0) found.add(extension);
-    }
-  };
-  walk(targetRoot, depth);
-  return found;
-}
-
-async function sniffCommands(targetRoot: string): Promise<Record<string, string[][]>> {
-  const make = await makeTargets(targetRoot);
-  const scripts = await packageScripts(targetRoot);
-  const commands: Record<string, string[][]> = {};
-  const conform = pick(CONFORM_TARGETS, make, scripts);
-  if (conform) commands[CONFORM_COMMAND] = [conform];
-  for (const [key, candidates] of VERIFY_TARGETS) {
-    const found = pick(candidates, make, scripts);
-    // A repository with only `lint` matches both conform and verify.lint. The
-    // gate would then run one command twice, in two tiers, for one signal.
-    if (found && !(conform && sameInvocation(found, conform))) commands[key] = [found];
-  }
-  return commands;
-}
-
-function sameInvocation(left: string[], right: string[]): boolean {
-  return left.length === right.length && left.every((argument, index) => argument === right[index]);
-}
-
-function pick(candidates: string[], make: Set<string>, scripts: Set<string>): string[] | undefined {
-  for (const candidate of candidates) {
-    if (make.has(candidate)) return [MAKE_COMMAND, candidate];
-    if (scripts.has(candidate)) return [BUN_COMMAND, RUN_SUBCOMMAND, candidate];
-  }
-  return undefined;
-}
-
-// Target names as the Makefile declares them: a line starting at column zero,
-// up to the first colon. `include` is followed one level deep — a modular
-// Makefile keeps every real target in make/*.mk, so a root-only read finds
-// nothing but `help`. Enough to know a target exists, which is all the seed
-// needs; the agent completing the config reads the file properly.
-async function makeTargets(targetRoot: string): Promise<Set<string>> {
-  const targets = new Set<string>();
-  const root = join(targetRoot, MAKEFILE);
-  if (!existsSync(root)) return targets;
-  const files = [root, ...(await includedMakefiles(targetRoot, root))];
-  for (const file of files) {
-    if (!existsSync(file)) continue;
-    for (const line of (await Bun.file(file).text()).split(NEWLINE)) {
-      const match = TARGET_PATTERN.exec(line);
-      if (match?.[1]) targets.add(match[1]);
-    }
-  }
-  return targets;
-}
-
-async function includedMakefiles(targetRoot: string, root: string): Promise<string[]> {
-  const included: string[] = [];
-  for (const line of (await Bun.file(root).text()).split(NEWLINE)) {
-    const match = INCLUDE_PATTERN.exec(line);
-    if (match?.[1]) included.push(join(targetRoot, match[1].trim()));
-  }
-  return included;
-}
-
-async function packageScripts(targetRoot: string): Promise<Set<string>> {
-  const path = join(targetRoot, PACKAGE_MANIFEST);
-  if (!existsSync(path)) return new Set();
-  try {
-    const manifest = await readJsonObject(path);
-    const scripts = manifest[SCRIPTS_FIELD];
-    return isObject(scripts) ? new Set(Object.keys(scripts)) : new Set();
-  } catch {
-    return new Set();
-  }
 }
 
 function readCommands(value: unknown): Record<string, string[][]> {

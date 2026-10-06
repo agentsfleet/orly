@@ -26,7 +26,7 @@ describe("install package location", () => {
     const result = await install(model, { targetRoot: repo, force: false, installHooks: false, orlyVersion: "0.5.0" });
 
     expect(result.ok).toBe(true);
-    expect(result.written).toContain("rules.md");
-    expect(await Bun.file(join(repo, "rules.md")).text()).toBe("fixture rules\n");
+    expect(result.written).toContain(".orly/rules.md");
+    expect(await Bun.file(join(repo, ".orly/rules.md")).text()).toBe("fixture rules\n");
   });
 });

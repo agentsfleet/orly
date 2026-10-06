@@ -1,0 +1,29 @@
+{
+  "command": "Actual repaired workflow probe body; package acquisition and temporary destinations adapted to the owned fixture",
+  "source": ".github/workflows/release.yml",
+  "source_sha256": "b6e9a174a58bcd56e9a29cdd6d8991f529d385bdb5a296c5f2c3f5dea9498310",
+  "package_sha256": "e5ecc5df94a343327c2bd43ec5cd37f8d932670d7cb23b0d166ae7091d2c07b8",
+  "owned_probe_root": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-release-layout-Oct_05-kme6fxfm",
+  "owner_quote": "Apply the one-line correction",
+  "results": [
+    {
+      "mode": "applied",
+      "exit": 0,
+      "receipt": "evals/release/receipts/Oct_05_21_14/release-layout-applied.txt",
+      "receipt_sha256": "dbbdb8f429b8f658d171a6ac88c84dfa48593f64acb08d6ffa8b9cfd8c3fcbc8"
+    },
+    {
+      "mode": "old-path-control",
+      "exit": 1,
+      "receipt": "evals/release/receipts/Oct_05_21_14/release-layout-old-path-control.txt",
+      "receipt_sha256": "b654b15384fd08b85fc41544795aba16061ca85181c90daf45a47528ca14498c"
+    },
+    {
+      "mode": "missing-render-control",
+      "exit": 1,
+      "receipt": "evals/release/receipts/Oct_05_21_14/release-layout-missing-render-control.txt",
+      "receipt_sha256": "b654b15384fd08b85fc41544795aba16061ca85181c90daf45a47528ca14498c"
+    }
+  ],
+  "scope": "No hosted workflow, native build or publication was executed."
+}

@@ -23,8 +23,11 @@ for i,l in enumerate(open(sys.argv[1]),1):
     if not l: continue
     try: d=json.loads(l)
     except Exception as e: print("BAD JSON line",i,e); bad+=1; continue
+    if not isinstance(d,dict): print("line",i,"must be an object"); bad+=1; continue
     for k in ("id","mode","expect","q","why"):
-        if k not in d: print("line",i,"missing",k); bad+=1
+        if not isinstance(d.get(k),str) or not d[k]: print("line",i,"missing or invalid",k); bad+=1
+    if not isinstance(d.get("id"),str) or not re.fullmatch(r"[a-z0-9][a-z0-9_-]*",d["id"]):
+        print("line",i,"invalid fixture id"); bad+=1; continue
     if d.get("expect") not in ("YES","NO"): print("line",i,"bad expect"); bad+=1
     if d.get("id") in ids: print("dup id",d.get("id")); bad+=1
     ctx = d.get("ctx")
@@ -34,7 +37,9 @@ for i,l in enumerate(open(sys.argv[1]),1):
             print("line",i,"ctx must be a list of path strings"); bad+=1
         else:
             for p in ctx:
-                if not os.path.isfile(os.path.join(sys.argv[2], p)):
+                if os.path.isabs(p) or os.path.commonpath([os.path.abspath(sys.argv[2]),os.path.abspath(os.path.join(sys.argv[2],p))]) != os.path.abspath(sys.argv[2]) or any(c in p for c in (",","\t","\n","\0")):
+                    print("line",i,"ctx path must be an unambiguous repository path:",p); bad+=1
+                elif not os.path.isfile(os.path.join(sys.argv[2], p)):
                     print("line",i,"ctx path missing on disk:",p); bad+=1
     # Prompt-answerability: the prompt embeds AGENTS.md + gate bodies ONLY, not
     # audits/agents-md.md. A QUESTION that cites the invariance doc / a Scenario
