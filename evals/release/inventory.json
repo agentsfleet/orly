@@ -1,11 +1,11 @@
 {
-  "source_revision": "4be34f70a14ffdffa6b26bbdaac4111379771817",
+  "source_revision": "c929156b31916af1be11ab06312ffe65960d9afe",
   "scope": "Tracked, new release files and packed contents; user-owned installed skill and lock excluded explicitly.",
   "totals": {
-    "files": 549,
-    "packed": 196,
+    "files": 568,
+    "packed": 197,
     "reviewed": 258,
-    "pending": 291
+    "pending": 310
   },
   "excluded": [
     ".agents/skills/typesafe-ai/",
@@ -209,34 +209,11 @@
       }
     },
     {
-      "path": ".oracle/orly.json",
-      "present": false,
-      "package": false,
-      "bytes": 0,
-      "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "kind": "json",
-      "purpose": "Repository build, distribution, discovery or governance support.",
-      "authority": "repository-owned source",
-      "inspection": {
-        "completeBytesRead": false,
-        "shellSyntax": "not applicable",
-        "lines": 0
-      },
-      "review": {
-        "status": "reviewed",
-        "evidence": "Read the full committed predecessor with git show HEAD:.oracle/orly.json; tracked removal is the pre-hold configuration migration, not proof that unrelated old configurations are owned.",
-        "findings": [
-          "A27"
-        ],
-        "reviewedDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-      }
-    },
-    {
       "path": ".orly/orly.json",
       "present": true,
       "package": false,
       "bytes": 942,
-      "digest": "sha256:53622a9df9aceaa896d006b7d37113ac500d90ab05e6c222e6a540d94c8af451",
+      "digest": "sha256:f7109841ea73730f42f0bf646d9e56c4f057c6082154ba819a89ce75b920ac9e",
       "kind": "json",
       "purpose": "Repository build, distribution, discovery or governance support.",
       "authority": "repository-owned source",
@@ -246,15 +223,10 @@
         "lines": 55
       },
       "review": {
-        "status": "pending",
-        "evidence": "Recorded review does not cover the current bytes.",
+        "status": "reviewed",
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
         "findings": [],
-        "previousReview": {
-          "status": "reviewed",
-          "evidence": "Read every selected pack, command lane, user/doc surface, managed path and digest. It records the current generated root and version 0.11.0; it is not a release-completion receipt.",
-          "findings": [],
-          "reviewedDigest": "sha256:05219b0cac314f344e1de80f042f8d76462cdda67a5f039429543a06c19e63bd"
-        }
+        "reviewedDigest": "sha256:f7109841ea73730f42f0bf646d9e56c4f057c6082154ba819a89ce75b920ac9e"
       }
     },
     {
@@ -356,23 +328,21 @@
       "path": "README.md",
       "present": true,
       "package": true,
-      "bytes": 17665,
-      "digest": "sha256:6fef95bec4f897b28e2d6f499088dd0ef600ae98221e85f8d67ee0a0fa4ca74f",
+      "bytes": 19276,
+      "digest": "sha256:1d31ac71f9611cda1973c85bb4df83d453c3fbbdaad36d60f039075346bdb915",
       "kind": "md",
       "purpose": "orly",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 424
+        "lines": 455
       },
       "review": {
         "status": "reviewed",
-        "evidence": "Parent directly read the repaired source and assertions; real failed receipt write, owner exits, signals and limits pass in final-review captures. Consumer and integration guidance traced against installation, loader containment and canonical cleanup. Fresh native finished-candidate binding remains due in Pull Request Review.",
-        "findings": [
-          "A11"
-        ],
-        "reviewedDigest": "sha256:6fef95bec4f897b28e2d6f499088dd0ef600ae98221e85f8d67ee0a0fa4ca74f"
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
+        "findings": [],
+        "reviewedDigest": "sha256:1d31ac71f9611cda1973c85bb4df83d453c3fbbdaad36d60f039075346bdb915"
       }
     },
     {
@@ -396,29 +366,6 @@
           "A18"
         ],
         "reviewedDigest": "sha256:4e9964d454c2c47226399cc2a64a153422968eda6eedbeec7f7888ad53982473"
-      }
-    },
-    {
-      "path": "SOUL_LOG.md",
-      "present": false,
-      "package": false,
-      "bytes": 0,
-      "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "kind": "md",
-      "purpose": "Instructions or supporting prose.",
-      "authority": "repository-owned source",
-      "inspection": {
-        "completeBytesRead": false,
-        "shellSyntax": "not applicable",
-        "lines": 0
-      },
-      "review": {
-        "status": "reviewed",
-        "evidence": "Removed by explicit owner request after byte-identical private backup.",
-        "findings": [
-          "A18"
-        ],
-        "reviewedDigest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
       }
     },
     {
@@ -1441,21 +1388,26 @@
       "path": "dispatch/lifecycle.md",
       "present": true,
       "package": true,
-      "bytes": 17154,
-      "digest": "sha256:4732b398132c07749945792b6877a96d8951d9ad4bf963581f3c874b7ab34aab",
+      "bytes": 17376,
+      "digest": "sha256:f754a8748d095acd248e99522de486d279816aaa8155a497eb8dd6ec68bb0ef4",
       "kind": "md",
       "purpose": "lifecycle.md — stage-runbook latent façade",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 287
+        "lines": 290
       },
       "review": {
-        "status": "reviewed",
-        "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+        "status": "pending",
+        "evidence": "Recorded review does not cover the current bytes.",
         "findings": [],
-        "reviewedDigest": "sha256:4732b398132c07749945792b6877a96d8951d9ad4bf963581f3c874b7ab34aab"
+        "previousReview": {
+          "status": "reviewed",
+          "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+          "findings": [],
+          "reviewedDigest": "sha256:4732b398132c07749945792b6877a96d8951d9ad4bf963581f3c874b7ab34aab"
+        }
       }
     },
     {
@@ -1956,6 +1908,27 @@
       }
     },
     {
+      "path": "docs/CHANGELOG.md",
+      "present": true,
+      "package": true,
+      "bytes": 504,
+      "digest": "sha256:854d24a0af8f2b6d702a8ef2029b7681c49d39ca07391f6a8ef3e2fc18ffe3c4",
+      "kind": "md",
+      "purpose": "Changelog",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 10
+      },
+      "review": {
+        "status": "reviewed",
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
+        "findings": [],
+        "reviewedDigest": "sha256:854d24a0af8f2b6d702a8ef2029b7681c49d39ca07391f6a8ef3e2fc18ffe3c4"
+      }
+    },
+    {
       "path": "docs/CHANGELOG_VOICE.md",
       "present": true,
       "package": true,
@@ -2101,24 +2074,21 @@
       "path": "docs/JUDGMENTS.md",
       "present": true,
       "package": true,
-      "bytes": 7099,
-      "digest": "sha256:5fb4fa4fed060134d0b8b533bad70f323531cd4be3eec90b6575dc2449e51069",
+      "bytes": 7272,
+      "digest": "sha256:2c7dd1745d6c8a127a941e623e881e37458e929c0763d57ab5fecbd39c98444f",
       "kind": "md",
       "purpose": "Jev judgment advice",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 153
+        "lines": 156
       },
       "review": {
         "status": "reviewed",
-        "evidence": "Read all 153 lines; question catalog, selector limits, exact replay, explicit upload and error outcomes compared with current bounded implementation. Advisory thresholds remain uncalibrated.",
-        "findings": [
-          "A16",
-          "A17"
-        ],
-        "reviewedDigest": "sha256:5fb4fa4fed060134d0b8b533bad70f323531cd4be3eec90b6575dc2449e51069"
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
+        "findings": [],
+        "reviewedDigest": "sha256:2c7dd1745d6c8a127a941e623e881e37458e929c0763d57ab5fecbd39c98444f"
       }
     },
     {
@@ -2172,21 +2142,26 @@
       "path": "docs/ORLY_ARCHITECTURE.md",
       "present": true,
       "package": true,
-      "bytes": 12758,
-      "digest": "sha256:297b86c0ea4f09ec5fb6ff4dd4b3abd71c6286aefa58f38d6d6b74bc66d74954",
+      "bytes": 13012,
+      "digest": "sha256:ae976b35606e4a85a1cbe5b305b53fca84fe157a1b6a5fe7011e3db573e4bdff",
       "kind": "md",
       "purpose": "Orly architecture",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 226
+        "lines": 229
       },
       "review": {
-        "status": "reviewed",
-        "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+        "status": "pending",
+        "evidence": "Recorded review does not cover the current bytes.",
         "findings": [],
-        "reviewedDigest": "sha256:297b86c0ea4f09ec5fb6ff4dd4b3abd71c6286aefa58f38d6d6b74bc66d74954"
+        "previousReview": {
+          "status": "reviewed",
+          "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+          "findings": [],
+          "reviewedDigest": "sha256:297b86c0ea4f09ec5fb6ff4dd4b3abd71c6286aefa58f38d6d6b74bc66d74954"
+        }
       }
     },
     {
@@ -2371,6 +2346,27 @@
       }
     },
     {
+      "path": "docs/architecture/judgment-evaluation.md",
+      "present": true,
+      "package": false,
+      "bytes": 5150,
+      "digest": "sha256:3b30193e2624bd9ccb12194b55a7506136d75c5cbe3055b45858347cbf4a0b1a",
+      "kind": "md",
+      "purpose": "Independent judgment evaluation",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 97
+      },
+      "review": {
+        "status": "reviewed",
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
+        "findings": [],
+        "reviewedDigest": "sha256:3b30193e2624bd9ccb12194b55a7506136d75c5cbe3055b45858347cbf4a0b1a"
+      }
+    },
+    {
       "path": "docs/architecture/remote-execution.md",
       "present": true,
       "package": false,
@@ -2426,7 +2422,7 @@
       "present": true,
       "package": true,
       "bytes": 104011,
-      "digest": "sha256:47ed256fac4f6425d44cf08554a5c3f3adacd767323a012d4c5a413c7d9ad4a2",
+      "digest": "sha256:86c448a1dbd9bff141d40fb4b96677b1a7836e5c2d68612c7e7abc54f8bf1258",
       "kind": "md",
       "purpose": "Code Rules — Learned from Review",
       "authority": "repository-owned source",
@@ -2436,79 +2432,18 @@
         "lines": 1108
       },
       "review": {
-        "status": "reviewed",
-        "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
-        "findings": [
-          "A52"
-        ],
-        "reviewedDigest": "sha256:47ed256fac4f6425d44cf08554a5c3f3adacd767323a012d4c5a413c7d9ad4a2"
-      }
-    },
-    {
-      "path": "docs/v1/active/M08_001_P1_CLI_DOCS_SKILL_JEV_JUDGMENTS_IN_TYPESCRIPT_011.md",
-      "present": true,
-      "package": false,
-      "bytes": 23943,
-      "digest": "sha256:78a6c50a4576260e7b2b9998797dbc630fb6aa144fb78ef470bfaeadae58040a",
-      "kind": "md",
-      "purpose": "M08_001: Test bounded Jev advice in the TypeScript command line",
-      "authority": "repository-owned source",
-      "inspection": {
-        "completeBytesRead": true,
-        "shellSyntax": "not applicable",
-        "lines": 289
-      },
-      "review": {
-        "status": "reviewed",
-        "evidence": "Read complete Milestone 08 spec, called/tested Dimensions and explicit unfinished final review/live comprehension. Historical receipts remain historical; current owner excludes further live calls.",
-        "findings": [
-          "A16",
-          "A17"
-        ],
-        "reviewedDigest": "sha256:78a6c50a4576260e7b2b9998797dbc630fb6aa144fb78ef470bfaeadae58040a"
-      }
-    },
-    {
-      "path": "docs/v1/active/M09_001_P1_CLI_DOCS_INFRA_SKILL_VERIFIED_COMMANDER_RELEASE.md",
-      "present": false,
-      "package": false,
-      "bytes": 0,
-      "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "kind": "md",
-      "purpose": "Instructions or supporting prose.",
-      "authority": "repository-owned source",
-      "inspection": {
-        "completeBytesRead": false,
-        "shellSyntax": "not applicable",
-        "lines": 0
-      },
-      "review": {
         "status": "pending",
         "evidence": "Recorded review does not cover the current bytes.",
         "findings": [
-          "A11",
-          "A16",
-          "A17",
-          "A27",
-          "A29",
-          "A30",
-          "A39",
-          "A48"
+          "A52"
         ],
         "previousReview": {
           "status": "reviewed",
-          "evidence": "Read complete Milestone 09 scope, all Dimensions/proofs, ownership/resource invariants and excluded native/remote scope. Audit completion does not finish the release; repairs and final proof require approval.",
+          "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
           "findings": [
-            "A11",
-            "A16",
-            "A17",
-            "A27",
-            "A29",
-            "A30",
-            "A39",
-            "A48"
+            "A52"
           ],
-          "reviewedDigest": "sha256:b81cfb347b50f67afba7d7bd979bc1f2180f9798e1b3485ccbc934202f443e68"
+          "reviewedDigest": "sha256:47ed256fac4f6425d44cf08554a5c3f3adacd767323a012d4c5a413c7d9ad4a2"
         }
       }
     },
@@ -2642,8 +2577,8 @@
       "path": "docs/v1/done/M09_001_P1_CLI_DOCS_INFRA_SKILL_VERIFIED_COMMANDER_RELEASE.md",
       "present": true,
       "package": false,
-      "bytes": 35426,
-      "digest": "sha256:146b95736ee1e2db21f49ac9381107a9f3fc0e1e55b913721523475b2a416c75",
+      "bytes": 35328,
+      "digest": "sha256:e01e0e38f99e7ed5dc68edfc59f728f0fa9e132213420f13ef585361bd6daae6",
       "kind": "md",
       "purpose": "Historical specification; preserve the recorded outcome.",
       "authority": "repository-owned source",
@@ -2656,6 +2591,67 @@
         "status": "pending",
         "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
         "findings": []
+      }
+    },
+    {
+      "path": "docs/v2/active/M10_001_P1_CLI_DOCS_JUDGMENT_EVALUATION_012.md",
+      "present": false,
+      "package": false,
+      "bytes": 0,
+      "digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "kind": "md",
+      "purpose": "Instructions or supporting prose.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": false,
+        "shellSyntax": "not applicable",
+        "lines": 0
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "docs/v2/done/M08_001_P1_CLI_DOCS_SKILL_JEV_JUDGMENTS_IN_TYPESCRIPT_011.md",
+      "present": true,
+      "package": false,
+      "bytes": 24772,
+      "digest": "sha256:167d7306d8b734bead6a77ac48d5589f27b5b92aeaa1f6d00bfac42a455ce596",
+      "kind": "md",
+      "purpose": "M08_001: Test bounded Jev advice in the TypeScript command line",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 294
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "docs/v2/done/M10_001_P1_CLI_DOCS_JUDGMENT_EVALUATION_012.md",
+      "present": true,
+      "package": false,
+      "bytes": 13866,
+      "digest": "sha256:a13730600ea61c55d7d89557d7ecc0e3dd733acb27293d7689259c40e6cdbaff",
+      "kind": "md",
+      "purpose": "M10_001: Verify migration and prepare orly 0.12.0",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 184
+      },
+      "review": {
+        "status": "reviewed",
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
+        "findings": [],
+        "reviewedDigest": "sha256:a13730600ea61c55d7d89557d7ecc0e3dd733acb27293d7689259c40e6cdbaff"
       }
     },
     {
@@ -3461,25 +3457,34 @@
       "path": "evals/install/release_cases.sh",
       "present": true,
       "package": false,
-      "bytes": 11053,
-      "digest": "sha256:d52763845e2dfd3b861baf55a09f153e555f09f9d54787dc2fe1c4071ab1453f",
+      "bytes": 12806,
+      "digest": "sha256:79a85ac93c105acff4605f0a24f0f64dc6dc0015fb77095ca407e437a5d41087",
       "kind": "sh",
       "purpose": "Evaluation inputs, runner or recorded observations.",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "pass",
-        "lines": 213
+        "lines": 248
       },
       "review": {
-        "status": "reviewed",
-        "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+        "status": "pending",
+        "evidence": "Recorded review does not cover the current bytes.",
         "findings": [
           "A06",
           "A24",
           "A25"
         ],
-        "reviewedDigest": "sha256:d52763845e2dfd3b861baf55a09f153e555f09f9d54787dc2fe1c4071ab1453f"
+        "previousReview": {
+          "status": "reviewed",
+          "evidence": "Current native source and repair inspection, with individual finding evidence and proof limits in evals/release/receipts/Oct_05_23_39/native-inspection/finding-dispositions.json. Final candidate binding is recorded in Pull Request Review.",
+          "findings": [
+            "A06",
+            "A24",
+            "A25"
+          ],
+          "reviewedDigest": "sha256:d52763845e2dfd3b861baf55a09f153e555f09f9d54787dc2fe1c4071ab1453f"
+        }
       }
     },
     {
@@ -3817,39 +3822,28 @@
       "path": "evals/release/evaluation-plan.md",
       "present": true,
       "package": false,
-      "bytes": 25738,
-      "digest": "sha256:7c4a3f11d4fea3a3ba02fedea94e03a70269610d92fc69af61d6f56d1a560e80",
+      "bytes": 26039,
+      "digest": "sha256:71df4f067aa46b7493a5f38c2a14dc9b290deb07a77e3a09a51e6fa72f2ba369",
       "kind": "md",
       "purpose": "Evaluating an autonomous pull-request commander",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 257
+        "lines": 259
       },
       "review": {
-        "status": "pending",
-        "evidence": "Recorded review does not cover the current bytes.",
-        "findings": [
-          "A16",
-          "A17"
-        ],
-        "previousReview": {
-          "status": "reviewed",
-          "evidence": "Reviewed all release evaluation design sections, including remaining lines 171-250; proposals remain unimplemented, six-question controls uncalibrated, live/remote trials explicitly unavailable.",
-          "findings": [
-            "A16",
-            "A17"
-          ],
-          "reviewedDigest": "sha256:66094f0aeeaae6c72db3f5a366b9311ab76df4d143ad5e0c1f9009616206cb43"
-        }
+        "status": "reviewed",
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
+        "findings": [],
+        "reviewedDigest": "sha256:71df4f067aa46b7493a5f38c2a14dc9b290deb07a77e3a09a51e6fa72f2ba369"
       }
     },
     {
       "path": "evals/release/inventory.json",
       "present": true,
       "package": false,
-      "bytes": 439976,
+      "bytes": 460900,
       "digest": "self-generated",
       "kind": "json",
       "purpose": "Evaluation inputs, runner or recorded observations.",
@@ -3857,7 +3851,7 @@
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 11799
+        "lines": 12374
       },
       "review": {
         "status": "pending",
@@ -3896,6 +3890,48 @@
           "A41"
         ],
         "reviewedDigest": "sha256:ccb8db3ed0101b72f7e4800a66913d3603c40e0876caf426e8291bd668964d4d"
+      }
+    },
+    {
+      "path": "evals/release/package-hooks.ts",
+      "present": true,
+      "package": false,
+      "bytes": 10402,
+      "digest": "sha256:77bbb415ccde1b0e2e600b61ec1fc785958cb6593b583321ee356fe50f4a9a79",
+      "kind": "ts",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 194
+      },
+      "review": {
+        "status": "reviewed",
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
+        "findings": [],
+        "reviewedDigest": "sha256:77bbb415ccde1b0e2e600b61ec1fc785958cb6593b583321ee356fe50f4a9a79"
+      }
+    },
+    {
+      "path": "evals/release/package-registry.ts",
+      "present": true,
+      "package": false,
+      "bytes": 6473,
+      "digest": "sha256:c4b9ea4e8b5715064b5aeef7d66a14d2b3d60c1cff91b1b29355e5c2eb5f4fc1",
+      "kind": "ts",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 132
+      },
+      "review": {
+        "status": "reviewed",
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
+        "findings": [],
+        "reviewedDigest": "sha256:c4b9ea4e8b5715064b5aeef7d66a14d2b3d60c1cff91b1b29355e5c2eb5f4fc1"
       }
     },
     {
@@ -8934,23 +8970,344 @@
       }
     },
     {
-      "path": "evals/release/release-report.md",
+      "path": "evals/release/receipts/Oct_06_12_57/audit-final.txt",
       "present": true,
       "package": false,
-      "bytes": 11230,
-      "digest": "sha256:a07a4f0d43f2559a1021756e1ccaa7f718698820e4721b41428ad71b9f10e0e4",
-      "kind": "md",
-      "purpose": "Owned installation and deterministic checks in 0.11.0",
+      "bytes": 61516,
+      "digest": "sha256:5e7b04df02f860516af751f371fb6196cc366842c85ee992e642a4720dd284ec",
+      "kind": "txt",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 143
+        "lines": 905
       },
       "review": {
         "status": "pending",
         "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
         "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/baseline-source.json",
+      "present": true,
+      "package": false,
+      "bytes": 256,
+      "digest": "sha256:53e5b3831349fcc20cbd83864145d7c65ea48d2dff266e349b38ada782ee4aca",
+      "kind": "json",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 6
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/baseline-unit.txt",
+      "present": true,
+      "package": false,
+      "bytes": 47295,
+      "digest": "sha256:63786e8c037c861abb55d60be85254e6dcf9ac6692685417c0ddf4f2620e16f8",
+      "kind": "txt",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 629
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/cleanup-isolated.txt",
+      "present": true,
+      "package": false,
+      "bytes": 487,
+      "digest": "sha256:9afe99bdd6d39c891c9051b2976d136935726a80c227b6c8ed70dc6bc00b63ee",
+      "kind": "txt",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 12
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/consumer-migration.json",
+      "present": true,
+      "package": false,
+      "bytes": 6208,
+      "digest": "sha256:43108be01ad03213103b0257f0d7ffbaf3a3988300cec4af6a77f24cd4531849",
+      "kind": "json",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 159
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/fixtures-final.txt",
+      "present": true,
+      "package": false,
+      "bytes": 434,
+      "digest": "sha256:c0f3ca9ddf441a5ceee82b0cd113abc67a1e8a8e7eaced93104a3a4ce4627ed2",
+      "kind": "txt",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 8
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/install-final.txt",
+      "present": true,
+      "package": false,
+      "bytes": 1893,
+      "digest": "sha256:37198143f49ea536fa54c73826e01a0828b36f4a668ed5d0882fca6045a77764",
+      "kind": "txt",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 30
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/package-archives.json",
+      "present": true,
+      "package": false,
+      "bytes": 1662,
+      "digest": "sha256:201d6781b55087196aaa1d410d0ee2e1d077f9d1e08f76cb16d63013aa31809b",
+      "kind": "json",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 40
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/package-hooks.json",
+      "present": true,
+      "package": false,
+      "bytes": 8028,
+      "digest": "sha256:f8ecedfada10d3f24b746128ac4ad77caf7dcf599ee716afd7e0ba9ae61faddd",
+      "kind": "json",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 159
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/parked-comparison-spec.md",
+      "present": true,
+      "package": false,
+      "bytes": 37676,
+      "digest": "sha256:55b70b968c17f7cefbd1fd51ed6aa7309dcdd5726d4645d75305aa1e78301b06",
+      "kind": "md",
+      "purpose": "M10_001: Evaluate bounded judgment and prepare orly 0.12.0",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 307
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/published-comparison.json",
+      "present": true,
+      "package": false,
+      "bytes": 620,
+      "digest": "sha256:d2535180cf5e7fd75d0adc9afa1f4e9c5b48a5257dd90dad1d73e4a75d51da1c",
+      "kind": "json",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 29
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/questionnaire-continuity.json",
+      "present": true,
+      "package": false,
+      "bytes": 1794,
+      "digest": "sha256:6aa104a7a44051a09febd9f95b4119053ba671d9eeebcd960d8f81e99c5152a3",
+      "kind": "json",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 54
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/release-source.json",
+      "present": true,
+      "package": false,
+      "bytes": 968,
+      "digest": "sha256:67da997addf3550a105c78a5f90fb10764322b1dbbddead5ed0449e29e261e8e",
+      "kind": "json",
+      "purpose": "Evaluation inputs, runner or recorded observations.",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 16
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/review.md",
+      "present": true,
+      "package": false,
+      "bytes": 1211,
+      "digest": "sha256:f5a6a583eecb335b5244d682a3c69edf76d63ed2d7c7d6bca75a423dcd3276d8",
+      "kind": "md",
+      "purpose": "Release review",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 14
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/spec-amendment-review.md",
+      "present": true,
+      "package": false,
+      "bytes": 4569,
+      "digest": "sha256:d17d554ecfb1a88df4fee09ab28758a404fadde5eb1f244c9035b236821c17b6",
+      "kind": "md",
+      "purpose": "M10 pre-build amendment evidence",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 72
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/receipts/Oct_06_12_57/verification.md",
+      "present": true,
+      "package": false,
+      "bytes": 5532,
+      "digest": "sha256:646630cf513bf7594709b4259bf89bfe631a119d3eb1af3bff2caa95b6eeaed5",
+      "kind": "md",
+      "purpose": "0.12 verification record",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 81
+      },
+      "review": {
+        "status": "pending",
+        "evidence": "Awaiting semantic review; mechanical inspection is not completion.",
+        "findings": []
+      }
+    },
+    {
+      "path": "evals/release/release-report.md",
+      "present": true,
+      "package": false,
+      "bytes": 12722,
+      "digest": "sha256:ed41be40161de9480fc8ba95a8ac076c0ada4ff901391ad6ec783088037ec32e",
+      "kind": "md",
+      "purpose": "Migration verification for 0.12.0",
+      "authority": "repository-owned source",
+      "inspection": {
+        "completeBytesRead": true,
+        "shellSyntax": "not applicable",
+        "lines": 158
+      },
+      "review": {
+        "status": "reviewed",
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
+        "findings": [],
+        "reviewedDigest": "sha256:ed41be40161de9480fc8ba95a8ac076c0ada4ff901391ad6ec783088037ec32e"
       }
     },
     {
@@ -9017,15 +9374,15 @@
       "path": "evals/release/reviewed.json",
       "present": true,
       "package": false,
-      "bytes": 120201,
-      "digest": "sha256:71455569c73dc0a8c4847acfbb58b200c10ba73225149603dac624dd08f88ef4",
+      "bytes": 122242,
+      "digest": "sha256:aad37450600180c35ddb70bd90e1b640156edf8581b70e451239e65603463faf",
       "kind": "json",
       "purpose": "Evaluation inputs, runner or recorded observations.",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 2188
+        "lines": 2209
       },
       "review": {
         "status": "pending",
@@ -9200,36 +9557,21 @@
       "path": "llms.txt",
       "present": true,
       "package": true,
-      "bytes": 9059,
-      "digest": "sha256:727e6d7b7daff90db236d84162be0a40052949dbff285b1dbfdd35027e384a4a",
+      "bytes": 9928,
+      "digest": "sha256:c0d3775c8f257609b5d599105ef116947772ccef84f21c0532089bf8f3705ba4",
       "kind": "txt",
       "purpose": "Repository build, distribution, discovery or governance support.",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 227
+        "lines": 240
       },
       "review": {
-        "status": "pending",
-        "evidence": "Recorded review does not cover the current bytes.",
-        "findings": [
-          "A03",
-          "A11",
-          "A16",
-          "A48"
-        ],
-        "previousReview": {
-          "status": "reviewed",
-          "evidence": "Read all 228 lines; machine setup contradicts pinned bunx hooks and relocated installation; old generated-rule filename appears in read order and self-check.",
-          "findings": [
-            "A03",
-            "A11",
-            "A16",
-            "A48"
-          ],
-          "reviewedDigest": "sha256:ec37dbc83232d9eb50f89159872da9276a5882245ad81ddf595c3051d36af22b"
-        }
+        "status": "reviewed",
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
+        "findings": [],
+        "reviewedDigest": "sha256:c0d3775c8f257609b5d599105ef116947772ccef84f21c0532089bf8f3705ba4"
       }
     },
     {
@@ -9258,7 +9600,7 @@
       "present": true,
       "package": true,
       "bytes": 1470,
-      "digest": "sha256:6cf983921cf61f7afc69c1d90e1e9ddbd5b8dd63b51c4879a9a2d221ddcb5ba8",
+      "digest": "sha256:dfe8c36a8babbcbddd71aa995c6e10d095f57f60b9ede39caa9c777d88990239",
       "kind": "json",
       "purpose": "Repository build, distribution, discovery or governance support.",
       "authority": "repository-owned source",
@@ -9269,11 +9611,9 @@
       },
       "review": {
         "status": "reviewed",
-        "evidence": "Read all 69 lines: public manifest/version, Bun requirement, scripts without lifecycle hooks, CLI bin, packed allowlist and pinned runtime dependencies. Architecture subdirectory is absent from docs/*.md; source tests currently ship because src/ is broadly included. No native compilation is proposed.",
-        "findings": [
-          "A11"
-        ],
-        "reviewedDigest": "sha256:6cf983921cf61f7afc69c1d90e1e9ddbd5b8dd63b51c4879a9a2d221ddcb5ba8"
+        "evidence": "Native adversarial and parent release review; source-bound package, baseline and scope evidence in evals/release/receipts/Oct_06_12_57/. Final branch binding is recorded in the Pull Request.",
+        "findings": [],
+        "reviewedDigest": "sha256:dfe8c36a8babbcbddd71aa995c6e10d095f57f60b9ede39caa9c777d88990239"
       }
     },
     {
@@ -9728,24 +10068,32 @@
       "path": "src/command_process.ts",
       "present": true,
       "package": true,
-      "bytes": 3864,
-      "digest": "sha256:4c439eaae347b46b46e43a69790bb1e9c30c5fa17bff85b251e8c3747a89aafd",
+      "bytes": 3894,
+      "digest": "sha256:6501483796928313e6289b6a7f552772df3059b6b9d4c25666476f497f587aec",
       "kind": "ts",
       "purpose": "Runtime implementation or test support.",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 85
+        "lines": 88
       },
       "review": {
-        "status": "reviewed",
-        "evidence": "Parent directly read the repaired source and assertions; real failed receipt write, owner exits, signals and limits pass in final-review captures. Consumer and integration guidance traced against installation, loader containment and canonical cleanup. Fresh native finished-candidate binding remains due in Pull Request Review.",
+        "status": "pending",
+        "evidence": "Recorded review does not cover the current bytes.",
         "findings": [
           "A26",
           "A39"
         ],
-        "reviewedDigest": "sha256:4c439eaae347b46b46e43a69790bb1e9c30c5fa17bff85b251e8c3747a89aafd"
+        "previousReview": {
+          "status": "reviewed",
+          "evidence": "Parent directly read the repaired source and assertions; real failed receipt write, owner exits, signals and limits pass in final-review captures. Consumer and integration guidance traced against installation, loader containment and canonical cleanup. Fresh native finished-candidate binding remains due in Pull Request Review.",
+          "findings": [
+            "A26",
+            "A39"
+          ],
+          "reviewedDigest": "sha256:4c439eaae347b46b46e43a69790bb1e9c30c5fa17bff85b251e8c3747a89aafd"
+        }
       }
     },
     {
@@ -10243,38 +10591,45 @@
       "path": "src/gates.ts",
       "present": true,
       "package": true,
-      "bytes": 10067,
-      "digest": "sha256:94a104d3600f661ed2fcdf8ceaceb636bd551ff2126b4e7313e208a4e218b5ef",
+      "bytes": 10379,
+      "digest": "sha256:ad5e3dc87b64713cd432cbc43155facd7e2b9316407fff19786974345eea5772",
       "kind": "ts",
       "purpose": "Runtime implementation or test support.",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 214
+        "lines": 217
       },
       "review": {
-        "status": "reviewed",
-        "evidence": "Read gate ordering, override parsing, active/closed spec selection and Git calls. Override permission is an operating rule rather than authenticated by the parser.",
+        "status": "pending",
+        "evidence": "Recorded review does not cover the current bytes.",
         "findings": [
           "A16"
         ],
-        "reviewedDigest": "sha256:94a104d3600f661ed2fcdf8ceaceb636bd551ff2126b4e7313e208a4e218b5ef"
+        "previousReview": {
+          "status": "reviewed",
+          "evidence": "Read gate ordering, override parsing, active/closed spec selection and Git calls. Override permission is an operating rule rather than authenticated by the parser.",
+          "findings": [
+            "A16"
+          ],
+          "reviewedDigest": "sha256:94a104d3600f661ed2fcdf8ceaceb636bd551ff2126b4e7313e208a4e218b5ef"
+        }
       }
     },
     {
       "path": "src/gates_spec.test.ts",
       "present": true,
       "package": true,
-      "bytes": 12285,
-      "digest": "sha256:4dd156932335b6dd693e755c5a7ea1514a4966afee535d938afff935ee4e376f",
+      "bytes": 14771,
+      "digest": "sha256:ae003449bd8435736d5fa7b737345476e91559acd2a4661344bd17ba36338c71",
       "kind": "ts",
       "purpose": "Behavior assertions and failure-path evidence.",
       "authority": "repository-owned source",
       "inspection": {
         "completeBytesRead": true,
         "shellSyntax": "not applicable",
-        "lines": 269
+        "lines": 315
       },
       "review": {
         "status": "pending",

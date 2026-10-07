@@ -1,0 +1,29 @@
+{
+  "published_version": "0.11.0",
+  "candidate_version": "0.12.0",
+  "published_files": 196,
+  "candidate_files": 197,
+  "candidate_sha256": "c687b63e121712c3fc6f9d9b99f03013ce9cd76f8d213f49465f6536be13c43e",
+  "changes": [
+    {
+      "path": "package/README.md",
+      "change": "modified"
+    },
+    {
+      "path": "package/docs/CHANGELOG.md",
+      "change": "added"
+    },
+    {
+      "path": "package/docs/JUDGMENTS.md",
+      "change": "modified"
+    },
+    {
+      "path": "package/llms.txt",
+      "change": "modified"
+    },
+    {
+      "path": "package/package.json",
+      "change": "modified"
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "packages": [
+    {
+      "name": "@agentsfleet/orly",
+      "version": "0.12.0",
+      "tarball": "/private/tmp/orly-consumer-preflight-n34afvmd/hook-proof/packages/agentsfleet-orly-0.12.0.tgz",
+      "sha256": "c687b63e121712c3fc6f9d9b99f03013ce9cd76f8d213f49465f6536be13c43e"
+    },
+    {
+      "name": "@babel/helper-string-parser",
+      "version": "7.29.7",
+      "tarball": "/private/tmp/orly-consumer-preflight-n34afvmd/hook-proof/packages/babel-helper-string-parser-7.29.7.tgz",
+      "sha256": "124565ecd300d7187973060ba6b1d1c4f296e55f0489ddfd6af794f516fed127"
+    },
+    {
+      "name": "@babel/helper-validator-identifier",
+      "version": "7.29.7",
+      "tarball": "/private/tmp/orly-consumer-preflight-n34afvmd/hook-proof/packages/babel-helper-validator-identifier-7.29.7.tgz",
+      "sha256": "7a31904bc45f1bb232d5e5dd797d12296f4a27fb4bf0f6d517827700f997dc1f"
+    },
+    {
+      "name": "@babel/parser",
+      "version": "7.29.9",
+      "tarball": "/private/tmp/orly-consumer-preflight-n34afvmd/hook-proof/packages/babel-parser-7.29.9.tgz",
+      "sha256": "8f3b9fbc531e0c08e2c329cf1ff57bbe121e2d10061b65a05614a25b2255cc43"
+    },
+    {
+      "name": "@babel/types",
+      "version": "7.29.8",
+      "tarball": "/private/tmp/orly-consumer-preflight-n34afvmd/hook-proof/packages/babel-types-7.29.8.tgz",
+      "sha256": "514a4ed09355fe1417f03e89c5a5f518745e2eb75a4069d25b55a3e7298069de"
+    },
+    {
+      "name": "zod",
+      "version": "4.6.5",
+      "tarball": "/private/tmp/orly-consumer-preflight-n34afvmd/hook-proof/packages/zod-4.6.5.tgz",
+      "sha256": "a78c0c533de30dc1c4afc259ac43ac06e390cb0da8d2e32eae355301b50b36fc"
+    }
+  ]
+}
