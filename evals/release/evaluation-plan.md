@@ -14,7 +14,9 @@ The next evaluation must test whether the commander finds missing obligations, r
 Adding more Jev questions alone does not establish those outcomes.
 Each question needs a defined decision, complete inputs, independently labeled examples, and a tested downstream action.
 
-This is the evaluation design for 0.12.0 and subsequent judgment work.
+This comparison design is parked for proposed 0.13 work by the owner’s October 7 decision.
+The 0.12.0 scope is package verification, consumer migration and accurate documentation.
+The original comparison requirements and local source recovery identity are recorded in the [completed M10 specification](../../docs/v2/done/M10_001_P1_CLI_DOCS_JUDGMENT_EVALUATION_012.md).
 It distinguishes shipped behavior, this release's requested changes, and proposed experiments.
 An entry marked proposed is not an implemented feature or a passing evaluation.
 

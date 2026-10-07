@@ -42,22 +42,26 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
-## 0.11.0 experiment: explicit Jev advice
+## 0.12.0: migration verification
 
-The Bun command line adds `orly judge` for selected planning, test, review and
-documentation questions.
+0.12.0 is a local release candidate. Published 0.11.0 already provides the
+`.orly/` layout and the six existing `orly judge` questions.
+This release focuses on package verification, migration evidence and clearer setup guidance; it adds no new runtime judgment question.
 
-- **Judgments** — selected evidence produces a fixed next action; existing checks retain control of gate results.
-- **Installation** — `bunx` runs the source package through Bun, continuing the `0.10.x` setup on macOS and Linux.
+The `agentsfleet` trial upgraded a dedicated worktree from 0.10.14 using the packed candidate.
+Owner files, hooks and verification commands survived; a second update wrote nothing.
+See the [release report](evals/release/release-report.md) for exact proof and remaining release checks.
 
-Use `orly judge --help` and the [judgment reference](docs/JUDGMENTS.md) for the
-manifest, atomic criteria and explicit source upload. This page describes the
-0.11.0 source package, which is not yet published. The commands below fetch the
-published package; use them for this behavior after 0.11.0 is published.
+Jev, TypeSafe's bounded judgment model, supplies advice only when requested.
+Existing deterministic checks retain control of gate results.
+The comparison evaluator is parked for proposed 0.13 work; model accuracy and candidate benefits remain unmeasured.
+See the [judgment reference](docs/JUDGMENTS.md) for evidence selection, offline replay and explicit source upload.
+
+The install commands below fetch the published package. They do not select this unpublished candidate.
 
 ---
 
-## Prerequisites for 0.11.0
+## Prerequisites
 
 | You need | Why | Version |
 |---|---|---|
@@ -71,7 +75,7 @@ published package; use them for this behavior after 0.11.0 is published.
 
 ---
 
-## Install 0.11.0 after publication
+## Install the published package
 
 Run this inside the repository you want governed.
 
@@ -117,6 +121,32 @@ Set per-command overrides in `.orly/orly.json`, for example:
 
 The receipt retains all captured output until you remove its printed directory.
 Unknown settings and malformed values are refused; `schemas/profile.schema.json` describes the repository configuration.
+
+---
+
+## Upgrade from 0.10.x
+
+Run the update from the consumer repository. If the repository owns its hooks, preserve them explicitly:
+
+```bash
+bunx --bun @agentsfleet/orly update --no-hooks
+```
+
+Expected: managed files move under `.orly/`; owner hooks remain unchanged. Conflicting owner edits stop the update and name the affected path.
+Use the installed candidate executable for an unpublished release trial; the command above fetches the published version.
+
+Update repository-owned callers that still read `.oracle/orly.json`, root `dispatch/`, or managed root audit paths.
+Their replacements are `.orly/orly.json`, `.orly/dispatch/`, and `.orly/audits/`.
+Repository-owned audit scripts and project documents retain their existing locations.
+Review existing hooks before choosing an update without `--no-hooks`.
+
+```bash
+bunx --bun @agentsfleet/orly doctor
+```
+
+Expected: installed rules match `.orly/orly.json` and work and verification commands are declared.
+Then run the repository's declared checks; `doctor` alone does not run them.
+An empty old directory can remain after its files move. Git does not track empty directories; remove one only after checking it is empty.
 
 ---
 

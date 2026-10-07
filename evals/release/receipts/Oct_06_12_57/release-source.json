@@ -1,0 +1,16 @@
+{
+  "comparison_revision": "153a3816b0713f1b0e5a7e363bad7d5b1bd5052d",
+  "working_tree_sha256": {
+    "evals/release/package-hooks.ts": "77bbb415ccde1b0e2e600b61ec1fc785958cb6593b583321ee356fe50f4a9a79",
+    "evals/release/package-registry.ts": "c4b9ea4e8b5715064b5aeef7d66a14d2b3d60c1cff91b1b29355e5c2eb5f4fc1",
+    "README.md": "1d31ac71f9611cda1973c85bb4df83d453c3fbbdaad36d60f039075346bdb915",
+    "llms.txt": "c0d3775c8f257609b5d599105ef116947772ccef84f21c0532089bf8f3705ba4",
+    "docs/JUDGMENTS.md": "2c7dd1745d6c8a127a941e623e881e37458e929c0763d57ab5fecbd39c98444f",
+    "docs/CHANGELOG.md": "854d24a0af8f2b6d702a8ef2029b7681c49d39ca07391f6a8ef3e2fc18ffe3c4",
+    "package.json": "dfe8c36a8babbcbddd71aa995c6e10d095f57f60b9ede39caa9c777d88990239",
+    ".orly/orly.json": "f7109841ea73730f42f0bf646d9e56c4f057c6082154ba819a89ce75b920ac9e"
+  },
+  "parked_stash": "656ec6b94cdead8e5d18d0e72af6315e79946679",
+  "consumer_commit": "4fd67c465",
+  "model_calls": 0
+}

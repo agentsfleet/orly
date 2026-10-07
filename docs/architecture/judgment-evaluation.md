@@ -1,8 +1,8 @@
 ---
 type: explanation
 audience: contributor
-verified: 2026-10-06
-product_version: 0.11.0
+verified: 2026-10-07
+product_version: 0.12.0
 executable: false
 ---
 
@@ -10,8 +10,9 @@ executable: false
 
 ## What it is
 
-Read this page for the planned M10 evaluation and its proof boundaries.
-Implementation and behavior checks remain pending in the [M10 specification](../v2/active/M10_001_P1_CLI_DOCS_JUDGMENT_EVALUATION_012.md).
+Read this page for the comparison evaluation parked for proposed 0.13 work.
+Implementation and behavior checks remain pending in the [preserved comparison specification](../../evals/release/receipts/Oct_06_12_57/parked-comparison-spec.md).
+The 0.12 release proves package installation and records the consumer migration; it does not complete this comparison design.
 The proposed contributor evaluation compares the six shipped questions with five proposed questions.
 
 The runtime catalog remains the comparison authority.
@@ -40,7 +41,7 @@ The validator rejects changed sources, overlapping origins, duplicate cases and 
 Scoring reports separate numerators and denominators for each property.
 An empty denominator produces an unavailable result.
 
-The specification's Interfaces table fixes native-answer mappings before observations.
+The preserved comparison specification's Interfaces table fixes native-answer mappings before observations.
 Rule applicability is scored against applicability, separately from task health.
 A yes/no abstention cannot distinguish ambiguity from missing context.
 
@@ -85,7 +86,8 @@ The 0.11 installed layout remains authoritative.
 Managed rules, audits, standards and skills stay under `.orly/`; repository-owned documentation keeps its own paths.
 
 Indy excluded the dedicated 0.11-to-0.12 upgrade proof in the specification's Discovery record.
-The separate `agentsfleet` 0.10.x-to-0.12 migration remains unverified by this evaluation.
+The separate `agentsfleet` 0.10.x-to-0.12 migration has local evidence in the [release report](../../evals/release/release-report.md).
+That migration does not measure model accuracy or candidate benefit.
 Existing installation, reference-resolution, ownership and recovery checks remain required.
 
 ## Related pages

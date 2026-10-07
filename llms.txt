@@ -12,9 +12,11 @@ Package: `@agentsfleet/orly` (npm)
 Source: https://github.com/agentsfleet/orly
 License: Massachusetts Institute of Technology (MIT)
 
-This guide describes the unpublished 0.11.0 source package. The `bunx` commands
-below fetch the published package, not this source checkout. Use this install
-sequence for the described behavior after 0.11.0 is published.
+This checkout prepares the unpublished 0.12.0 candidate. Published 0.11.0 already
+contains the same runtime commands and `.orly/` layout. The `bunx` commands below
+fetch the published package. Use the installed local tarball for candidate checks.
+The comparison evaluator is parked for proposed 0.13 work; do not claim measured
+judgment improvement or enable new questions from its unfinished results.
 
 ---
 
@@ -78,6 +80,13 @@ repositories can use `verify.docs` without application unit or integration
 suites. `init` reports missing configuration; `doctor` rejects it.
 
 ---
+
+For a 0.10.x consumer with repository-owned hooks, run `orly update --no-hooks`
+using the intended installed version. Change repository callers from
+`.oracle/orly.json` to `.orly/orly.json` and shared rule/audit paths to `.orly/`.
+Keep repository-owned scripts and documents in place. Run `orly doctor` and the
+declared checks before accepting the migration; doctor alone does not run checks.
+Empty old directories may remain, but contain no tracked managed files.
 
 ## 4. Read order before you edit anything
 

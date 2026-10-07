@@ -1,0 +1,8 @@
+🧲 AGENTS.md cross-agent Large Language Model (LLM) evaluation  (mode=check threshold=100%)
+
+✓ partial-completion skill rules valid
+mise WARN  failed to write cache file: /Users/kishore/Library/Caches/mise/yarn/4.18.0/exec_env_f0e232f89a3cd259-91a09.msgpack.z Operation not permitted (os error 1)
+fixtures: 73
+Agents available: claude codex amp opencode
+
+✓ check mode: fixtures valid, availability reported. No live calls made.

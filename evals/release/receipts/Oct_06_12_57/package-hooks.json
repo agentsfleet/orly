@@ -1,0 +1,159 @@
+{
+  "version": "0.12.0",
+  "identities": [
+    {
+      "name": "@agentsfleet/orly",
+      "version": "0.12.0",
+      "tarball_sha256": "c687b63e121712c3fc6f9d9b99f03013ce9cd76f8d213f49465f6536be13c43e",
+      "verified_files": 197
+    },
+    {
+      "name": "@babel/helper-string-parser",
+      "version": "7.29.7",
+      "tarball_sha256": "124565ecd300d7187973060ba6b1d1c4f296e55f0489ddfd6af794f516fed127",
+      "verified_files": 5
+    },
+    {
+      "name": "@babel/helper-validator-identifier",
+      "version": "7.29.7",
+      "tarball_sha256": "7a31904bc45f1bb232d5e5dd797d12296f4a27fb4bf0f6d517827700f997dc1f",
+      "verified_files": 9
+    },
+    {
+      "name": "@babel/parser",
+      "version": "7.29.9",
+      "tarball_sha256": "8f3b9fbc531e0c08e2c329cf1ff57bbe121e2d10061b65a05614a25b2255cc43",
+      "verified_files": 8
+    },
+    {
+      "name": "@babel/types",
+      "version": "7.29.8",
+      "tarball_sha256": "514a4ed09355fe1417f03e89c5a5f518745e2eb75a4069d25b55a3e7298069de",
+      "verified_files": 178
+    },
+    {
+      "name": "zod",
+      "version": "4.6.5",
+      "tarball_sha256": "a78c0c533de30dc1c4afc259ac43ac06e390cb0da8d2e32eae355301b50b36fc",
+      "verified_files": 840
+    }
+  ],
+  "same_version_wrong_bytes_refused": true,
+  "incomplete_inventories_refused": 2,
+  "real_hooks": {
+    "success": 2,
+    "failing_check": 2,
+    "resolution_failure": 1
+  },
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "init",
+        "-q"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "config",
+        "user.name",
+        "Package Proof"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "config",
+        "user.email",
+        "package-proof@example.invalid"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "bunx",
+        "--bun",
+        "@agentsfleet/orly@0.12.0",
+        "init",
+        "--json"
+      ],
+      "exit": 0,
+      "stdout": "{\n  \"ok\": true,\n  \"packs\": [\n    \"domain.auth\",\n    \"domain.changelog\",\n    \"domain.documentation\",\n    \"domain.http\",\n    \"universal.authoring\",\n    \"workflow.skills\",\n    \"workflow.specifications\"\n  ],\n  \"written\": [\n    \".agents/skills/orly-babysit-prs/SKILL.md\",\n    \".agents/skills/orly-spec-new/SKILL.md\",\n    \".agents/skills/orly-write-integration-test/SKILL.md\",\n    \".agents/skills/orly-write-unit-test/SKILL.md\",\n    \".claude/skills/orly-babysit-prs/SKILL.md\",\n    \".claude/skills/orly-spec-new/SKILL.md\",\n    \".claude/skills/orly-write-integration-test/SKILL.md\",\n    \".claude/skills/orly-write-unit-test/SKILL.md\",\n    \".opencode/skills/orly-babysit-prs/SKILL.md\",\n    \".opencode/skills/orly-spec-new/SKILL.md\",\n    \".opencode/skills/orly-write-integration-test/SKILL.md\",\n    \".opencode/skills/orly-write-unit-test/SKILL.md\",\n    \".orly/AGENTS.md\",\n    \".orly/audits/doc-read.sh\",\n    \".orly/audits/doc-reads.ts\",\n    \".orly/audits/logging-rust.awk\",\n    \".orly/audits/logging.sh\",\n    \".orly/audits/msid-ui.sh\",\n    \".orly/audits/rule-ledger-lib.sh\",\n    \".orly/audits/scope.sh\",\n    \".orly/audits/spec-template.sh\",\n    \".orly/audits/spec-template.ts\",\n    \".orly/audits/ufs-strings.awk\",\n    \".orly/audits/ufs.sh\",\n    \".orly/dispatch/lib.sh\",\n    \".orly/dispatch/lifecycle.md\",\n    \".orly/dispatch/name_architecture.md\",\n    \".orly/dispatch/write_any.md\",\n    \".orly/dispatch/write_any.sh\",\n    \".orly/dispatch/write_auth.md\",\n    \".orly/dispatch/write_changelog.md\",\n    \".orly/dispatch/write_documentation.md\",\n    \".orly/dispatch/write_http.md\",\n    \".orly/dispatch/write_pr_description.md\",\n    \".orly/dispatch/write_spec.md\",\n    \".orly/docs/CHANGELOG_VOICE.md\",\n    \".orly/docs/DOCUMENTATION_RULES.md\",\n    \".orly/docs/LOGGING_STANDARD.md\",\n    \".orly/docs/RELEASE_TEMPLATE.md\",\n    \".orly/docs/REST_API_DESIGN_GUIDELINES.md\",\n    \".orly/docs/TEMPLATE.md\",\n    \".orly/docs/greptile-learnings/RULES.md\",\n    \".orly/hooks/pre-commit\",\n    \".orly/hooks/pre-push\",\n    \".orly/orly.json\",\n    \".orly/skills/orly-babysit-prs/SKILL.md\",\n    \".orly/skills/orly-spec-new/SKILL.md\",\n    \".orly/skills/orly-write-integration-test/SKILL.md\",\n    \".orly/skills/orly-write-unit-test/SKILL.md\",\n    \"AGENTS.md\",\n    \"CLAUDE.md\",\n    \"opencode.json\"\n  ],\n  \"skipped\": [],\n  \"errors\": [],\n  \"setupErrors\": []\n}\n",
+      "stderr": "Resolving dependencies\nResolved, downloaded and extracted [24]\nSaved lockfile\n"
+    },
+    {
+      "argv": [
+        "/bin/bash",
+        ".orly/hooks/pre-commit"
+      ],
+      "exit": 0,
+      "stdout": "🔆 gate work\n   🟢 repo.config: 2 command(s) declared\n   🟢 cmd.conform: 1 invocation(s) exit 0\n/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun -e const p=Bun.spawnSync(['ps','-p',String(process.ppid),'-o','command='],{stdout:'pipe'});await Bun.write('check.called',p.stdout);process.exit(Number(await Bun.file('check.exit').text())); -> exit 0\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/bin/bash",
+        ".orly/hooks/pre-push"
+      ],
+      "exit": 0,
+      "stdout": "🔆 gate verify\n   🟢 repo.config: 2 command(s) declared\n   🟢 docs.language: 569 finding(s) across 34 page(s), reporting only: .agents/skills/orly-babysit-prs/SKILL.md:0 DOCHEAD, .agents/skills/orly-spec-new/SKILL.md:0 DOCHEAD, .agents/skills/orly-write-integration-test/SKILL.md:0 DOCHEAD\n   🟢 cmd.verify.docs: 1 invocation(s) exit 0\n/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun -e const p=Bun.spawnSync(['ps','-p',String(process.ppid),'-o','command='],{stdout:'pipe'});await Bun.write('check.called',p.stdout);process.exit(Number(await Bun.file('check.exit').text())); -> exit 0\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/bin/bash",
+        ".orly/hooks/pre-commit"
+      ],
+      "exit": 1,
+      "stdout": "🔆 gate work\n   🟢 repo.config: 2 command(s) declared\n   🔴 cmd.conform: /Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun -e const p=Bun.spawnSync(['ps','-p',String(process.ppid),'-o','command='],{stdout:'pipe'});await Bun.write('check.called',p.stdout);process.exit(Number(await Bun.file('check.exit').text())); -> exit 7: no output\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/bin/bash",
+        ".orly/hooks/pre-push"
+      ],
+      "exit": 1,
+      "stdout": "🔆 gate verify\n   🟢 repo.config: 2 command(s) declared\n   🟢 docs.language: 569 finding(s) across 34 page(s), reporting only: .agents/skills/orly-babysit-prs/SKILL.md:0 DOCHEAD, .agents/skills/orly-spec-new/SKILL.md:0 DOCHEAD, .agents/skills/orly-write-integration-test/SKILL.md:0 DOCHEAD\n   🔴 cmd.verify.docs: /Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun -e const p=Bun.spawnSync(['ps','-p',String(process.ppid),'-o','command='],{stdout:'pipe'});await Bun.write('check.called',p.stdout);process.exit(Number(await Bun.file('check.exit').text())); -> exit 7: no output\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "/bin/bash",
+        ".orly/hooks/pre-commit"
+      ],
+      "exit": 1,
+      "stdout": "",
+      "stderr": "Resolving dependencies\nResolved, downloaded and extracted [1]\nerror: GET http://127.0.0.1:55889/@agentsfleet%2forly - 404\n"
+    }
+  ],
+  "registry_requests": [
+    "@agentsfleet/orly",
+    "@babel/parser",
+    "@babel/types",
+    "zod",
+    "@agentsfleet-orly-0.12.0.tgz",
+    "@babel/helper-string-parser",
+    "zod-4.6.5.tgz",
+    "@babel-parser-7.29.9.tgz",
+    "@babel-helper-string-parser-7.29.7.tgz",
+    "@babel/helper-validator-identifier",
+    "@babel-types-7.29.8.tgz",
+    "@babel-helper-validator-identifier-7.29.7.tgz",
+    "@agentsfleet/orly"
+  ],
+  "live_model_requests": 0,
+  "cleanup": {
+    "owned_root_removed": true,
+    "registry_stopped": true
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "source_revision": "153a3816b0713f1b0e5a7e363bad7d5b1bd5052d",
+  "method": "git archive",
+  "dependencies": "Existing exact locked development dependencies via node_modules symlink",
+  "path": "/private/tmp/orly-consumer-preflight-n34afvmd/baseline"
+}

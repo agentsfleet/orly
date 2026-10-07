@@ -1,17 +1,32 @@
 ---
 type: explanation
 audience: contributor
-verified: 2026-10-06
-product_version: 0.11.0
+verified: 2026-10-07
+product_version: 0.12.0
 executable: false
 ---
 
-# Owned installation and deterministic checks in 0.11.0
+# Migration verification for 0.12.0
 
 ## What it is
 
-This report covers the 0.11.0 source package prepared for Indy's Pull Request review.
-The 0.12.0 work below is proposed. Merging, publication and the live `agentsfleet` trial are separate owner actions.
+This document retains the historical 0.11.0 findings below. Published 0.11.0 already contains the runtime used by the 0.12.0 candidate.
+
+The 0.12.0 release scope is package verification, consumer migration and documentation. The owner parked the comparison evaluator for proposed 0.13 work.
+The authorized `agentsfleet` migration is committed locally as `4fd67c465`; publication and merge remain separate owner actions.
+
+The initial packed comparison found identical runtime bytes: only the package version and four unfinished comparison tests differed.
+Those tests are now parked with the evaluator, outside the release tree.
+Package installation evaluations passed 25 checks; consumer hooks, owner bytes and declared commands survived the update.
+The repeat update wrote no files. Offline judgment returned incomplete with zero requests because no exact replay existed.
+
+The deterministic audit passed 519 tests with zero failures. Real generated hooks passed both successful-check and failing-check controls.
+The proof refused altered package bytes, incomplete inventories and missing resolution; it cleaned its temporary root and local registry.
+See the [current verification record](receipts/Oct_06_12_57/verification.md) and [package proof](receipts/Oct_06_12_57/package-hooks.json).
+The final branch gate and hosted checks remain separate release boundaries. No live model accuracy or new candidate benefit is claimed.
+See the current M10 specification and the receipts under `receipts/Oct_06_12_57/`.
+
+Historical 0.11.0 evidence and the original follow-up proposal continue below; they do not establish completion of the current release.
 
 ## Why it exists
 
@@ -104,7 +119,7 @@ No test deadline was increased. The [first package attempt](receipts/Oct_05_23_3
 The [post-repair audit attempt](receipts/Oct_05_23_39/audit-third-repair-failed.txt) reported 509 passed and one failure at the same cleanup deadline.
 Its 510 cases and 2,273 assertions remain failed-run evidence; final boundary results belong in the Pull Request.
 
-### Jev observations and proposed 0.12.0 work
+### Historical Jev observations and the original 0.12.0 proposal
 
 Jev is TypeSafe's bounded judgment model. The existing six typed questions remain the fixed starting catalog.
 [The judgment report](../judgments/report.md) records nineteen historical requests and their failures, uncertainty, duration and token usage.
@@ -125,7 +140,7 @@ Begin with useful assertion and evidence repairs. Avoid another configuration su
 ## Limits
 
 Further live model calls and native builds remain owner-excluded. No new live Jev request ran in this session.
-The live consuming-repository trial remains later work under Indy's recorded instruction.
+The dedicated `agentsfleet` checkout was migrated with owner approval; its application suites and live model accuracy are not claimed here.
 
 Local package fixtures do not prove published hooks on both operating systems, hosted publication or arbitrary failures inside each atomic filesystem operation.
 

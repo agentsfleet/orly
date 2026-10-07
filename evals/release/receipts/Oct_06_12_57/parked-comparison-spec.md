@@ -57,9 +57,9 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | `docs/v2/done/M08_001_P1_CLI_DOCS_SKILL_JEV_JUDGMENTS_IN_TYPESCRIPT_011.md` | EDIT | Preserve results, open checks, parking quote and reactivation condition |
 | `docs/v2/pending/M10_001_P1_CLI_DOCS_JUDGMENT_EVALUATION_012.md` | CREATE/MOVE | This spec; move through active and done under the same prototype |
 | `evals/judgments/comparison/{catalog,cases,labels,tasks}.json` | CREATE | Frozen baseline, five candidates, evidence, independent labels and task definitions |
-| `evals/judgments/comparison/{types,validate,score,run,tasks}.ts` | CREATE | Offline validation, scoring, bounded task execution and report entrypoint |
+| `evals/judgments/comparison/{types,validate,labels,score,run,corpus,tasks,execution,recovery,package}.ts` | CREATE | Split validation, scoring, corpus grounding, process ownership and package controls by concern within source bounds |
 | `evals/judgments/comparison/hidden/assertions.ts` | CREATE | Evaluator-only task expectations, withheld from each task workspace |
-| `src/judgment_comparison.test.ts`, `src/judgment_tasks.test.ts` | CREATE | Independent negative controls and subprocess/task integration coverage |
+| `src/judgment_{comparison,labels,score,tasks,package}.test.ts` | CREATE | Split independent negative controls and real process/package proofs by concern within test bounds |
 | `docs/architecture/judgment-evaluation.md` | CREATE | Evidence authority, split rules, task isolation and adoption mechanism |
 | `docs/JUDGMENTS.md`, `README.md`, `llms.txt` | EDIT | 0.12.0 behavior, offline evaluation use and proof limits |
 | `docs/CHANGELOG.md` | CREATE | Repository-local 0.12.0 user-visible changes; preserve any existing history |
@@ -301,3 +301,7 @@ Move only the M08 specification; preserve historical receipts. Discovery command
 > Indy (2026-10-06 12:57): "I think move the M08 to parked and docs/v2/done/ and create a M10 new spec with what is needed now and acceptance?" — context: park M08, preserve unfinished evidence and author M10 with current acceptance.
 
 > Indy (2026-10-06 12:57): "I will deploy  0..12 in agentsfleet repo." — context: Indy performs the live consuming-repository deployment of 0.12.0; this work prepares orly's ready Pull Request.
+
+> Indy (Oct 07, 2026; time not recorded): "Okay keep going, just focus on the must have open items to do a migration and evaluate in agentsfleet repo" — context: prioritize package identity, preservation and consuming-repository caller checks. Unfinished comparison requirements remain open; local migration evidence does not close this release specification.
+
+> Indy (Oct 07, 2026; time not recorded): "Also migrate and evaluate the live agentsfleet checkout" and "you can create your own worktree of agentsfleet" — context: supersede the owner-only deployment restriction for a dedicated consuming-repository worktree. Evaluate a locally packed 0.12.0 candidate; publication and merge remain separate owner actions.
