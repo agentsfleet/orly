@@ -17,8 +17,12 @@ originally shipped in 0.11.0. The 0.12.1 patch avoids irrelevant staged audit
 snapshots and preserves hosted-check diagnostics. The `bunx` commands below
 fetch the published package; available versions are listed at
 https://github.com/agentsfleet/orly/releases. Use an installed local tarball for candidate checks.
-The comparison evaluator is parked for proposed 0.13 work; do not claim measured
-judgment improvement or enable new questions from its unfinished results.
+The 0.13.0 source candidate adds a contributor-only offline comparison examiner.
+Run `bun evals/judgments/comparison/run.ts --check` or `--offline` from source.
+Expected output is JSON with `passed: true`; deliberate false completions stay failed.
+All five proposed checks remain evaluation-only. Do not infer model accuracy or
+agent improvement from scripted controls. Live model runs, publication, merge
+and live consumer upgrades need subsequent owner instruction.
 
 ---
 

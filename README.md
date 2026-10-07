@@ -42,25 +42,28 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
-## 0.12: migration verification
+## 0.13: offline judgment comparison
 
-0.12.0 shipped migration verification and setup guidance. The `.orly/` layout
-and six existing `orly judge` questions originally shipped in 0.11.0.
-This release focuses on package verification, migration evidence and clearer setup guidance; it adds no new runtime judgment question.
+The 0.13.0 source candidate adds a deterministic examiner for unsupported completion claims.
+It freezes the six runtime questions and evaluates five proposed checks separately.
+Those checks cover obligations, evidence, production wiring, failure tests and finding resolution.
 
-The `agentsfleet` trial upgraded a dedicated worktree from 0.10.14 using the packed candidate.
-Owner files, hooks and verification commands survived; a second update wrote nothing.
-See the [release report](evals/release/release-report.md) for exact proof and remaining release checks.
+From a source checkout, run `bun evals/judgments/comparison/run.ts --check` to validate the frozen inputs.
+Expected output is JSON with six baseline questions, five candidates and `passed: true`.
+Run `bun evals/judgments/comparison/run.ts --offline` for whole-task exercises with hidden behavioral checks.
+A successful run reports `passed: true`; seeded false completions remain failed task outcomes.
 
-Jev, TypeSafe's bounded judgment model, supplies advice only when requested.
-Existing deterministic checks retain control of gate results.
-The comparison evaluator is parked for proposed 0.13 work; model accuracy and candidate benefits remain unmeasured.
-See the [judgment reference](docs/JUDGMENTS.md) for evidence selection, offline replay and explicit source upload.
+The report retains missing model observations and gives each candidate a reasoned adoption decision.
+Offline controls measure the examiner. Model accuracy and autonomous agent improvement remain unmeasured.
+An additional rehearsal uses the packed candidate and actual `agentsfleet` source in an isolated worktree.
+See the [evaluation design](docs/architecture/judgment-evaluation.md) for commands, evidence and limits.
 
-0.12.1 avoids copying repository files for staged audits with no matching files
-and makes hosted-check monitoring show job states and links before reporting a failure.
+The `.orly/` layout, six runtime questions and 0.12.1 audit and check-diagnostic fixes remain unchanged.
+The [0.12 report](evals/release/release-report.md) retains the earlier package and consumer migration evidence.
+TypeSafe's Jev model supplies advice only when explicitly requested through `orly judge`.
+
 See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
-The install commands below fetch the published package.
+The install commands below fetch the published package; 0.13.0 publication is a separate owner action.
 
 ---
 

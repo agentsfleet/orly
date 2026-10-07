@@ -1,0 +1,1003 @@
+
+[1m--- bin/orly verify[0m
+🟢 render.local.idempotent
+🟢 render.all.idempotent
+🟢 generated.root.current
+🟢 packs.sources.current
+
+[1m--- bash audits/ufs.sh --all[0m
+OK:   audit-ufs: cross-runtime parity skipped — no Rust registry and no Zig ERR_* declared, so this repository has no source of truth to compare against
+OK:   audit-ufs: no violations across 130 file(s)
+
+[1m--- bash audits/agents-md.sh[0m
+🔆 Auditing /private/tmp/orly-m11-judgment-comparison/AGENTS.md
+🟢 PASS: dispatch inventory (19 entries present in table)
+🟢 PASS: trigger surface (10 extensions named)
+🟢 PASS: override syntax (12 mentions)
+🟢 PASS: always-forbidden list (6 bans present)
+🟢 PASS: skill-chain ordering (anchored to CHORE(close))
+🟢 PASS: unified review route + both test skills
+🟢 PASS: CONFORM coverage (10 rows present)
+🟢 PASS: cross-references (dotfiles-resident docs exist)
+🟢 PASS: audit fixture: dirty diff flagged exactly 4 hits
+🟢 PASS: audit fixture: clean diff produced 0 hits
+🟢 PASS: dispatch parity (disk=19 ↔ table=19 ↔ REQUIRED=19; docs/gates/ empty)
+🟢 PASS: audits/agents-md.md present (29 scenarios)
+🟢 PASS: lifecycle stages (9 headers present)
+🟢 PASS: lifecycle anchors (7 strings in essence + runbook)
+🟢 PASS: named scenarios (29 keywords ↔ 29 scenarios, parity holds)
+🟢 PASS: hook triggers (.githooks/pre-commit + pre-push both gate rules, package, toolchain, and fixtures)
+🟢 PASS: rule extension protocol section present (all 4 wiring steps enumerated)
+🟢 PASS: identity handles (Kishore/Indy ↔ Oracle/Orly present)
+🟢 PASS: memory discipline (disable flag + never-write + dispatch routing present)
+🟢 PASS: rule-path residence (doctrine + anchors + zero relative hrefs)
+🟢 PASS: size 37414 bytes (limit 37888)
+🟢 PASS: self-fingerprint (20 expected checks ran)
+
+✅ ALL CHECKS PASSED
+
+[1m--- bash audits/rule-ledger.sh --check[0m
+RULE ENFORCEMENT LEDGER — scoreboard currency
+  🟢 docs/RULE_ENFORCEMENT.md matches the tree
+
+[1m--- bun run typecheck && bun test src[0m
+$ tsc --noEmit
+bun test v1.4.2 (744846f84)
+
+src/install_loaders.test.ts:
+(pass) installation loaders and hooks > an existing AGENTS.md survives byte for byte and orly lands beside it [222.10ms]
+(pass) installation loaders and hooks > the orly pointer block is idempotent across repeated installs [271.45ms]
+(pass) installation loaders and hooks > a repository with no AGENTS.md still gets both files [188.16ms]
+(pass) installation loaders and hooks > an unrecorded generated banner cannot authorize deleting repository content [193.84ms]
+(pass) installation loaders and hooks > rule pages cite the file orly actually wrote, not the repository's [188.53ms]
+(pass) installation loaders and hooks > update rewrites orly's file and leaves the repository's own alone [305.14ms]
+(pass) installation loaders and hooks > a hook orly did not write is refused, not clobbered [95.18ms]
+(pass) installation loaders and hooks > generated_hooks_mark_telemetry_invocation [174.19ms]
+(pass) installation loaders and hooks > --no-hooks installs the rules over an existing hook without touching it [129.24ms]
+(pass) installation loaders and hooks > refuses to retarget a hooksPath already claimed by something else [89.38ms]
+(pass) installation loaders and hooks > --no-hooks proceeds even when hooksPath is claimed by something else [142.89ms]
+(pass) installation loaders and hooks > --force retargets a hooksPath claimed by something else [186.28ms]
+(pass) installation loaders and hooks > re-running init after it already set hooksPath is not a claim by another tool [240.51ms]
+
+src/review_poll.test.ts:
+(pass) review and summary fetches include every page and bind checks to the pushed revision [659.30ms]
+(pass) an unsupported bot override cannot certify feedback excluded from triage [206.31ms]
+(pass) incomplete fetch-failed review evidence cannot establish a green poll [185.65ms]
+(pass) incomplete malformed review evidence cannot establish a green poll [205.74ms]
+(pass) incomplete changed review evidence cannot establish a green poll [218.94ms]
+(pass) incomplete changed-check review evidence cannot establish a green poll [418.51ms]
+(pass) incomplete stale review evidence cannot establish a green poll [347.81ms]
+(pass) incomplete missing-review review evidence cannot establish a green poll [292.37ms]
+(pass) empty check discovery stays incomplete [351.93ms]
+(pass) fetch-failed check discovery stays incomplete [293.29ms]
+(pass) failed check discovery stays incomplete [286.46ms]
+(pass) pending check discovery stays incomplete [278.51ms]
+(pass) malformed-check check discovery stays incomplete [280.27ms]
+(pass) failed GitHub checks retain job details despite nonzero status [286.69ms]
+(pass) pending GitHub checks retain job details despite nonzero status [272.19ms]
+(pass) GitLab polling collects nested project review pages using supported flags [556.06ms]
+(pass) GitLab incomplete fetch-failed evidence cannot establish a green poll [184.63ms]
+(pass) GitLab incomplete malformed evidence cannot establish a green poll [197.33ms]
+(pass) GitLab incomplete changed evidence cannot establish a green poll [227.26ms]
+(pass) GitLab incomplete changed-check evidence cannot establish a green poll [261.36ms]
+(pass) GitLab empty pipeline discovery stays incomplete [239.47ms]
+(pass) GitLab fetch-failed pipeline discovery stays incomplete [298.15ms]
+(pass) GitLab failed pipeline discovery stays incomplete [271.93ms]
+(pass) GitLab pending pipeline discovery stays incomplete [294.66ms]
+(pass) GitLab failed pipeline retains its state and link [312.32ms]
+(pass) GitLab pending pipeline retains its state and link [365.00ms]
+
+src/gates.test.ts:
+(pass) gate groups > run in order and stop at the first red group [250.86ms]
+(pass) gate groups > each gate evaluates exactly its declared criteria [649.79ms]
+(pass) gate groups > the work gate passes on the default branch with a staged edit [190.82ms]
+(pass) gate groups > gates never write: the tree is byte-identical after a run [464.34ms]
+(pass) repository resolution > a linked worktree resolves the config its checkout committed [201.90ms]
+(pass) repository resolution > the declared commands run in the worktree, not in the main checkout [256.66ms]
+(pass) repository resolution > a repository with no orly config is red, and names the install command [208.57ms]
+(pass) overrides > a trailer satisfies its criterion as overridden, never green [743.53ms]
+(pass) overrides > an empty reason is refused and no commit is created [105.86ms]
+(pass) overrides > a malformed hand-written trailer is not an override [444.16ms]
+(pass) docs and tiered suites > docs.updated goes green when a docs page changes on the branch [410.04ms]
+(pass) docs and tiered suites > slow suites run on code branches and skip on prose-only branches [713.16ms]
+(pass) end to end > gate walk through the real command-line entry [1260.38ms]
+
+src/telemetry.test.ts:
+(pass) telemetry consent > resolves_telemetry_consent_in_precedence_order [0.07ms]
+(pass) telemetry consent > prompts_once_and_marks_aborted_prompt [2.54ms]
+(pass) telemetry consent > anonymous_opt_in_persists_identity_and_does_not_reprompt [1.56ms]
+(pass) telemetry consent > automation_never_prompts_for_telemetry [0.29ms]
+(pass) telemetry consent > consent_prompt_discloses_complete_collection_boundary [0.04ms]
+(pass) telemetry events > appends_one_valid_event_per_command [1.99ms]
+(pass) telemetry events > anonymous_installation_identity_is_stable_and_random [0.61ms]
+(pass) telemetry events > event_schema_rejects_private_context [1.16ms]
+(pass) telemetry events > packaged_skill_uses_the_command_spool [1.15ms]
+(pass) telemetry events > spool_lock_drops_contention_without_losing_the_owner_write [0.86ms]
+(pass) telemetry synchronization > sync_is_consent_gated_and_schema_safe [2.98ms]
+(pass) telemetry synchronization > sync_spaces_attempts_and_bounds_batches [3.31ms]
+(pass) telemetry synchronization > sync_retries_without_losing_or_renaming_events [2.78ms]
+(pass) telemetry synchronization > sync_retains_events_when_fetch_rejects [1.60ms]
+(pass) telemetry synchronization > sync_compacts_and_bounds_local_spool [15.15ms]
+(pass) telemetry synchronization > sync_names_skill_events_separately [2.21ms]
+
+src/scanner_snapshot.test.ts:
+(pass) ufs.sh skips repository checkout for a documentation-only index [488.95ms]
+(pass) logging.sh skips repository checkout for a documentation-only index [189.40ms]
+(pass) rust-error.sh skips repository checkout for a documentation-only index [190.36ms]
+(pass) deinit-pairs.sh skips repository checkout for a documentation-only index [194.62ms]
+(pass) sql-mod.sh skips repository checkout for a documentation-only index [194.58ms]
+(pass) design-tokens.sh skips repository checkout for a documentation-only index [214.31ms]
+(pass) relevant source snapshot checks staged bytes with violation %s [337.40ms]
+(pass) relevant source snapshot checks staged bytes with violation %s [577.15ms]
+(pass) a failed staged filename query refuses instead of reporting an empty scope [222.30ms]
+(pass) a deleted source path needs no repository checkout [343.54ms]
+
+src/judgment_comparison_controls.test.ts:
+(pass) hidden_assertions_reject_false_completion_and_preserve_honest_blocks [15941.60ms]
+(pass) missing_task_attempts_are_retained_without_preventing_later_attempts [0.83ms]
+(pass) question_oracles_use_role_evidence_and_never_the_stated_classification [19.35ms]
+(pass) exact_assertion_can_correctly_reject_wrong_application_output [18.67ms]
+(pass) missing_source_and_missing_dependency_inventory_have_different_answers [19.40ms]
+(pass) contributor_command_refuses_live_or_unknown_arguments [0.09ms]
+
+src/judgment_score.test.ts:
+(pass) metrics_preserve_missing_outcomes [0.87ms]
+(pass) healthy_applicable_yes_is_native_correctness_without_defect_metrics [0.06ms]
+(pass) noul_half_probability_abstains_without_inventing_insufficiency [0.06ms]
+(pass) zero_responses_and_empty_denominators_are_unavailable [0.03ms]
+(pass) invalid_defective_answers_are_misses_and_invalid_healthy_answers_raise_the_bound [0.04ms]
+(pass) weak_low_confidence_assertion_is_an_abstention [0.03ms]
+(pass) explicit_choice_insufficiency_is_scored_separately [0.03ms]
+(pass) observations_reject_stale_duplicate_unknown_and_executable_answers [0.15ms]
+(pass) adoption_requires_independent_measured_benefit [0.10ms]
+(pass) unmeasured_candidates_remain_evaluation_only [0.07ms]
+(pass) development_cases_cannot_fill_the_heldout_adoption_minimum [0.04ms]
+(pass) answers_from_another_question_format_count_as_invalid_attempts [0.05ms]
+(pass) pending_extra_cases_are_unscored_and_do_not_change_denominators [0.04ms]
+(pass) fabricated_measurement_enums_and_paired_counts_never_qualify_for_adoption [1.07ms]
+
+src/judgment_tasks.test.ts:
+(pass) task_receipts_bind_actual_execution [33.19ms]
+(pass) offline_tasks_bound_and_clean_owned_work [265.53ms]
+(pass) handled_interruption_captures_failure_and_removes_owned_directories [162.86ms]
+(pass) recovery_refuses_live_owner_or_altered_ownership_without_deleting_resources [10.57ms]
+(pass) closed_evaluation_refuses_new_commands_and_double_close_is_safe [6.48ms]
+(pass) cancellation_during_request_preparation_prevents_any_child_start [7.35ms]
+(pass) failed_process_inspection_never_authorizes_live_owner_cleanup [13.92ms]
+(pass) failed_second_directory_allocation_cleans_the_real_first_directory [6.08ms]
+
+src/model.test.ts:
+(pass) a dangling multi-link destination refuses before creating outside content [0.77ms]
+(pass) RulesModel > validates the current registry [1.03ms]
+(pass) RulesModel > rejects the declared invalid registry fixture [0.35ms]
+(pass) RulesModel > rejects missing mechanical rule fixtures [0.63ms]
+
+src/loaders.test.ts:
+(pass) runtime loaders > a fresh repository gets a loader for every runtime that has one [288.50ms]
+(pass) runtime loaders > the pointer block carries a bare import line, not a fenced one [282.66ms]
+(pass) runtime loaders > loaders are idempotent — a second install writes nothing [500.31ms]
+(pass) runtime loaders > loaders are never claimed as managed files [348.29ms]
+(pass) runtime loaders > a stale pointer block is replaced in place, and nothing either side of it [204.71ms]
+(pass) runtime loaders > an unrecorded Claude banner cannot authorize deleting existing instructions [169.03ms]
+(pass) runtime loaders > a dangling CLAUDE.md symlink is left alone, not written through [71.22ms]
+(pass) runtime loaders > a repository's own CLAUDE.md is reported, never edited [156.33ms]
+(pass) runtime loaders > a CLAUDE.md symlinked at the host counts as delivery and is left alone [169.47ms]
+(pass) runtime loaders > an existing opencode.json keeps its own keys and gains only what is missing [157.42ms]
+(pass) runtime loaders > an unparseable opencode.json survives byte for byte [154.27ms]
+(pass) runtime loaders > refuses a loader symlinked outside the target repository [116.59ms]
+
+src/release_inventory.test.ts:
+(pass) inventory_covers_repository_and_package without inheriting a changed-byte review [728.36ms]
+(pass) a review missing a digest cannot authorize current bytes [388.68ms]
+(pass) inventory and review records require an external snapshot binding [352.29ms]
+
+src/judgment_tasks_recovery.test.ts:
+(pass) restart_recovers_verified_stale_resources_without_completion_credit [31.40ms]
+(pass) foreign_paths_and_symlinked_markers_cannot_authorize_cleanup [3.46ms]
+(pass) invalid_limits_refuse_before_starting_any_process [5.14ms]
+(pass) one_owner_refuses_concurrent_execution_and_close_until_work_finishes [44.98ms]
+(pass) recovery_refuses_live_descendants_after_the_group_leader_exits [34.85ms]
+
+src/install_packs.test.ts:
+(pass) opt-in pack selection > independent consumers keep their own database, build and documentation policies [145.08ms]
+(pass) opt-in pack selection > explicit product selection retains its teardown guard and build graph [163.51ms]
+(pass) opt-in pack selection > one opt-in pack installs without dragging in the others [217.48ms]
+(pass) packaged skill metadata > every description stays inside the host budget [1.21ms]
+(pass) the DOC READ recorder > installs with the authoring pack and runs where it lands [357.53ms]
+
+src/install.test.ts:
+(pass) install > materialises the packs its own sources imply, hooks, and a config into a fresh repository [174.08ms]
+(pass) install > a second install over the same target reports zero writes [240.14ms]
+(pass) install > refuses to replace a managed file edited after installation [218.79ms]
+(pass) install > refuses a file it never wrote, names it, and leaves the tree untouched [96.82ms]
+(pass) install > --force overwrites a hand-edited managed file [276.72ms]
+(pass) install > rejects a target that is not a git repository, naming the fix [7.98ms]
+(pass) install > rejects a target directory that does not exist at all [0.21ms]
+(pass) install > rejects an unknown pack named by the repository's own config, before writing anything [56.77ms]
+(pass) install > sets core.hooksPath and installs both hooks with the git-scope-unsetting preamble [173.35ms]
+(pass) install > --no-hooks skips hook installation and leaves core.hooksPath unset [120.97ms]
+(pass) install > refuses when the pointer host is a symlink escaping the target repository [65.71ms]
+(pass) install > --force still refuses a hook that is a symlink out of the repository [79.45ms]
+(pass) install > refuses when a managed file's path is a symlink escaping the target repository [95.84ms]
+(pass) install > refuses when the hooks directory path is a symlink escaping the target repository [84.33ms]
+(pass) install > refuses when the .orly lock directory path is a symlink escaping the target repository [53.92ms]
+(pass) install > stages inside the target repository, not the OS tmp dir [176.75ms]
+(pass) install > a successful install leaves .orly/ intact for the lock the caller writes next [176.86ms]
+(pass) install > the written config records the engine version and every materialised file [180.69ms]
+(pass) install > refuses atomically when a selected pack's file cites a façade no selected pack provides [75.46ms]
+(pass) install > two packs disagreeing on one target's source is a registry error, not a silent pick [58.19ms]
+
+src/spec_template_io.test.ts:
+(pass) spec audit through real Git and file boundaries > an invalid v1 index fails even when its working copy was repaired [312.39ms]
+(pass) spec audit through real Git and file boundaries > an invalid v0.9.2 index fails even when its working copy was repaired [251.10ms]
+(pass) spec audit through real Git and file boundaries > a repaired v1 index passes despite invalid unstaged content and config [231.96ms]
+(pass) spec audit through real Git and file boundaries > a repaired v0.9.2 index passes despite invalid unstaged content and config [208.55ms]
+(pass) spec audit through real Git and file boundaries > read-first references are resolved from the index [126.52ms]
+(pass) spec audit through real Git and file boundaries > file mode checks working content and configuration [108.71ms]
+(pass) spec audit through real Git and file boundaries > refuses invalid JSON without skipping parity [160.97ms]
+(pass) spec audit through real Git and file boundaries > refuses missing commands without skipping parity [341.25ms]
+(pass) spec audit through real Git and file boundaries > refuses empty commands without skipping parity [192.85ms]
+(pass) spec audit through real Git and file boundaries > refuses empty group without skipping parity [291.93ms]
+(pass) spec audit through real Git and file boundaries > refuses invalid invocation without skipping parity [245.53ms]
+(pass) spec audit through real Git and file boundaries > refuses nonstring argument without skipping parity [165.07ms]
+(pass) spec audit through real Git and file boundaries > refuses nonarray group without skipping parity [155.33ms]
+(pass) spec audit through real Git and file boundaries > missing config, staged config, and arguments fail explicitly [100.23ms]
+(pass) spec audit through real Git and file boundaries > bulk scans retain their prohibited-pattern scope [243.16ms]
+
+src/judgment_tasks_findings.test.ts:
+(pass) hidden_checks_reject_inline_completion_without_required_missing-production-caller [285.56ms]
+(pass) hidden_checks_reject_inline_completion_without_required_missing-failure-proof [271.49ms]
+(pass) consumer_hidden_evidence_refuses_missing_malformed_and_unrelated_checks [2.38ms]
+(pass) consumer_package_identity_changes_when_same_version_source_changes [6.89ms]
+(pass) consumer_report_refuses_to_overwrite_prior_attempts [92.06ms]
+
+src/spec_completion.test.ts:
+(pass) a NOT_DONE Dimension remains incomplete [587.17ms]
+(pass) a UNDONE Dimension remains incomplete [496.52ms]
+(pass) a DONE_LATER Dimension remains incomplete [400.64ms]
+(pass) a IN_PROGRESS — DONE mentioned in the explanation Dimension remains incomplete [357.56ms]
+(pass) example and quoted Dimension markers cannot supply completion [347.19ms]
+(pass) an exact DONE marker completes the declared Dimension [357.53ms]
+(pass) an unrelated owner quote cannot acknowledge another Dimension [384.00ms]
+(pass) a quote in a code example cannot acknowledge a deferral [341.23ms]
+(pass) a quote outside Discovery cannot acknowledge a deferral [362.33ms]
+(pass) an item-bound owner quote acknowledges only the named deferral [1093.94ms]
+(pass) an unnamed deferral must name its obligation before acknowledgement [409.41ms]
+
+src/installation_preservation.test.ts:
+(pass) strong_assertion_exposes_real_defect [149.96ms]
+(pass) an owner edit to .orly/orly.json during staging refuses without overwriting it [167.18ms]
+(pass) an owner edit to .orly/AGENTS.md during staging refuses without overwriting it [155.25ms]
+(pass) an owner edit to AGENTS.md during staging refuses without overwriting it [150.01ms]
+
+src/doc_rules.test.ts:
+(pass) scanDocument > passes a clean page [0.40ms]
+(pass) scanDocument > fails the slop fixture on every mechanical rule [0.40ms]
+(pass) scanDocument > names the banned word it found [0.03ms]
+(pass) scanDocument > counts an over-budget page by its overage [0.03ms]
+(pass) scanDocument > reads a lowercase product name as a sentence start [0.04ms]
+(pass) scanDocument > leaves a hyphenated command name alone [0.02ms]
+(pass) scanDocument > counts a code span as one word, not as a hole [0.05ms]
+(pass) scanDocument > requires exactly one level-one heading [0.04ms]
+(pass) documentationSurfaces > covers the readme and the pages orly renders [0.43ms]
+
+src/criteria_spec.ts:
+
+src/install_nested.test.ts:
+(pass) install package location > materialises managed files when the engine package is nested in a consumer repository [61.24ms]
+
+src/required_scanner.test.ts:
+(pass) a push fails when its required scanner is missing [56.98ms]
+(pass) a clean scan permits an unrelated push [182.38ms]
+(pass) a scanner finding blocks the push [121.41ms]
+
+src/comprehension_cache.test.ts:
+(pass) changed prompt bytes invalidate saved results without a new commit [6553.96ms]
+(pass) host selection and adapter settings cannot reuse incompatible saved proof [3861.91ms]
+(pass) malformed journal counts are discarded instead of becoming a pass [2013.51ms]
+(pass) a missing required host keeps full coverage incomplete [1034.92ms]
+(pass) full completion requires every selected fixture on all required local stub hosts [1280.66ms]
+
+src/references.test.ts:
+(pass) renderProfileText > keeps selected pack lines and removes their marker [0.09ms]
+(pass) renderProfileText > rejects unknown pack markers [0.05ms]
+(pass) referenceClosureErrors > flags missing dispatch references in every rendered Markdown file [0.69ms]
+
+src/spec_baseline.test.ts:
+(pass) baseline evidence requirements > records declared counts and an existing comparison commit and report [155.72ms]
+(pass) baseline evidence requirements > rejects incomplete evidence: **Test Baseline:** unit=12 integration=4 → **Test Baseline:** pending [135.92ms]
+(pass) baseline evidence requirements > rejects incomplete evidence: **Test Baseline:** unit=12 integration=4 → **Test Baseline:** unit=12 integration=pending [139.82ms]
+(pass) baseline evidence requirements > rejects incomplete evidence: **Test Baseline:** unit=12 integration=4 → **Test Baseline:** unit=12oops integration=4 [155.34ms]
+(pass) baseline evidence requirements > rejects incomplete evidence: **Test Baseline:** unit=12 integration=4 → **Test Baseline:** n/a — no code on this branch [178.37ms]
+(pass) baseline evidence requirements > rejects incomplete evidence: **Baseline evidence:** README.md → **Baseline evidence:** missing-report.txt [148.98ms]
+(pass) baseline evidence requirements > rejects incomplete evidence: **Baseline evidence:** README.md →  [138.58ms]
+(pass) baseline evidence requirements > a missing header cannot disappear into an empty spec [104.18ms]
+(pass) baseline evidence requirements > a run URL is a reference for review, not a claim of fetched evidence [153.34ms]
+(pass) baseline evidence requirements > a revision must be a full existing ancestor [208.11ms]
+(pass) baseline evidence requirements > a documentation branch can explain why no baseline applies [159.71ms]
+(pass) baseline evidence requirements > repositories without baseline lanes use an explicit reason [238.67ms]
+(pass) baseline evidence requirements > missing configuration cannot validate a claimed baseline [169.34ms]
+(pass) baseline evidence requirements > malformed configuration reports a failure without aborting the gate [140.72ms]
+
+src/judgment_comparison.test.ts:
+(pass) comparison_preserves_runtime_baseline [0.25ms]
+(pass) comparison_rejects_changed_model [0.11ms]
+(pass) comparison_rejects_changed_baseline_definition [0.39ms]
+(pass) comparison_rejects_missing_baseline_question [0.11ms]
+(pass) comparison_rejects_duplicate_baseline_question [0.07ms]
+(pass) candidate_inputs_are_complete [0.11ms]
+(pass) comparison_rejects_missing_candidate [0.05ms]
+(pass) comparison_rejects_duplicate_candidates [0.07ms]
+(pass) comparison_rejects_missing_evidence_roles [0.10ms]
+(pass) comparison_rejects_empty_question_instructions [0.16ms]
+(pass) comparison_rejects_unbounded_answer_fields [0.07ms]
+(pass) comparison_rejects_unknown_catalog_fields [0.07ms]
+(pass) comparison_rejects_invalid_provenance [1.25ms]
+(pass) comparison_rejects_duplicate_cases [0.62ms]
+(pass) comparison_rejects_copied_evidence_with_changed_identity [0.49ms]
+(pass) comparison_rejects_origin_crossing_splits [0.42ms]
+(pass) comparison_rejects_invented_evidence_text [0.42ms]
+(pass) comparison_rejects_incomplete_case_roles [0.93ms]
+(pass) comparison_rejects_empty_case_corpus [1.63ms]
+
+src/config_validation.test.ts:
+(pass) both configuration readers reject invalid packs value null [1.43ms]
+(pass) both configuration readers reject invalid packs value [false] [0.64ms]
+(pass) both configuration readers reject invalid managed value {} [0.48ms]
+(pass) both configuration readers reject invalid managed value [""] [0.55ms]
+(pass) both configuration readers reject invalid digests value [] [1.01ms]
+(pass) both configuration readers reject invalid digests value {"path":false} [0.61ms]
+(pass) both configuration readers reject invalid digests value {"path":"broken"} [0.56ms]
+(pass) both configuration readers reject invalid orly_version value {} [0.52ms]
+(pass) both configuration readers reject invalid orly_version value "yesterday" [0.56ms]
+(pass) both configuration readers reject invalid schema_version value 2 [0.41ms]
+(pass) both configuration readers reject invalid unknown_setting value true [14.45ms]
+(pass) both configuration readers reject invalid limits value [] [5.48ms]
+(pass) both configuration readers reject invalid limits value {"verify.unit":{"timeout_ms":0}} [3.17ms]
+(pass) both configuration readers reject invalid limits value {"verify.unit":{"output_bytes":-1}} [4.58ms]
+(pass) both configuration readers reject invalid limits value {"verify.unit":{"timeout_ms":1.5}} [7.40ms]
+(pass) both configuration readers reject invalid limits value {"verify.unit":{"typo":10}} [10.53ms]
+(pass) both configuration readers reject invalid limits value {"verify.unit":null} [3.33ms]
+(pass) configuration limits survive a rewrite and override only their named lane [0.25ms]
+(pass) a minimal seeded configuration normalizes optional ownership records [0.03ms]
+(pass) disabled execution settings round-trip while active remote execution refuses [0.13ms]
+
+src/doc_reads.test.ts:
+(pass) a document read round-trips the path "we\"ird.md" and complete citation [230.73ms]
+(pass) a document read round-trips the path "tab\tpage.md" and complete citation [129.92ms]
+(pass) a document read round-trips the path "line\npage.md" and complete citation [239.13ms]
+(pass) a document read round-trips the path "control\u0001page.md" and complete citation [220.05ms]
+(pass) malformed saved rows cannot invent a current document read [94.10ms]
+
+src/spec_rehearsal.test.ts:
+(pass) a filled spec blocks missing production wiring and wrong behavior before accepting the real command [3424.32ms]
+(pass) the authoring skill copies the executable spec body and preserves behavior test names [585.32ms]
+
+src/pack_hygiene.test.ts:
+(pass) productLeakErrors > checks string core documents and retains source lines after product blocks [1.05ms]
+(pass) productLeakErrors > allows a product-only command when the installer excludes its block [0.55ms]
+(pass) productLeakErrors > flags a product-only target named by a generic pack [0.47ms]
+(pass) productLeakErrors > allows the same target inside a product-scoped pack [0.39ms]
+(pass) productLeakErrors > does not fire on English that begins with 'make' [0.43ms]
+(pass) productLeakErrors > reports the most specific target, not its prefix [0.43ms]
+(pass) shippedFiles > tags each source with the pack that ships it [0.04ms]
+(pass) the real corpus > no generic pack names a product-only make target [20.69ms]
+(pass) the real corpus > every denied target is spelled once [0.03ms]
+
+src/evaluation_resources.test.ts:
+(pass) evaluation cleanup preserves caller state after evals/ledger/run.sh [9871.86ms]
+(pass) evaluation cleanup preserves caller state after evals/dispatch/parity.sh [1355.42ms]
+(pass) ledger command-substitution fixtures are removed after a failing caller [17.93ms]
+(pass) ledger command-substitution fixtures are removed after termination [20.60ms]
+
+src/command_process.test.ts:
+(pass) a failed pid receipt write stops the already started workload [27.12ms]
+(pass) a successful deadline stop is not repeated during supervisor cleanup [115.48ms]
+(pass) killing the gate owner stops its detached workload [143.84ms]
+(pass) supervisor SIGTERM stops its owned workload [34.64ms]
+(pass) supervisor SIGINT stops its owned workload [33.61ms]
+(pass) supervisor SIGHUP stops its owned workload [34.46ms]
+
+src/spec_template.test.ts:
+(pass) spec content readiness > a filled spec passes without product-specific commands or paths [0.27ms]
+(pass) spec content readiness > rejects empty section [0.12ms]
+(pass) spec content readiness > rejects missing reference [0.08ms]
+(pass) spec content readiness > rejects absolute reference [0.08ms]
+(pass) spec content readiness > rejects parent reference [0.08ms]
+(pass) spec content readiness > rejects unresolved reference [0.08ms]
+(pass) spec content readiness > rejects missing test [0.07ms]
+(pass) spec content readiness > rejects wrong test [0.06ms]
+(pass) spec content readiness > rejects missing assertion [0.06ms]
+(pass) spec content readiness > rejects missing tier [0.06ms]
+(pass) spec content readiness > rejects orphan test [0.05ms]
+(pass) spec content readiness > rejects missing columns [0.05ms]
+(pass) spec content readiness > rejects missing proof name [0.05ms]
+(pass) spec content readiness > rejects command suffix [0.05ms]
+(pass) spec content readiness > rejects missing expected [0.06ms]
+(pass) spec content readiness > rejects missing command column [0.06ms]
+(pass) spec content readiness > rejects authoring residue {{fill:goal}} [0.07ms]
+(pass) spec content readiness > rejects authoring residue {unresolved_goal} [0.06ms]
+(pass) spec content readiness > rejects authoring residue <!-- tpl: delete me --> [0.05ms]
+(pass) spec content readiness > rejects authoring residue path/to/file.ext [0.04ms]
+(pass) spec content readiness > comments and fenced headings cannot supply required sections [0.09ms]
+(pass) spec content readiness > a ```` code fence cannot supply a required heading [0.07ms]
+(pass) spec content readiness > a ~~~ code fence cannot supply a required heading [0.06ms]
+(pass) spec content readiness > a quoted heading cannot supply a required section [0.07ms]
+(pass) spec content readiness > dimensions inside code do not count as implementation requirements [0.06ms]
+(pass) spec content readiness > comments containing a command do not satisfy its rubric row [0.06ms]
+(pass) spec content readiness > missing files fail while URLs and file fragments resolve [0.14ms]
+(pass) spec content readiness > duplicate dimensions fail even when they share a test [0.06ms]
+(pass) spec content readiness > all declared lanes are required for a source change [0.07ms]
+(pass) spec content readiness > the rubric lists conditional suites without guessing their applicability from prose [0.13ms]
+(pass) spec content readiness > documentation verification does not require an application test lane [0.06ms]
+(pass) spec content readiness > the Markdown parser handles escaped pipes inside command arguments [0.06ms]
+(pass) spec content readiness > oversize specs report their measured size against the cap [0.14ms]
+
+src/criteria.test.ts:
+(pass) criteriaFor > work evaluates the profile and the conform tier [113.78ms]
+(pass) criteriaFor > verify permits unfinished Sections and excludes boundary test suites [115.93ms]
+(pass) criteriaFor > pr carries every closed-spec follow-through criterion [119.30ms]
+(pass) criteriaFor > final verification runs test lanes even when push verification never ran [148.40ms]
+(pass) criteriaFor > an unknown gate name yields no criteria rather than throwing [108.56ms]
+(pass) criteriaFor > an unregistered repository still yields a red profile criterion on verify [155.67ms]
+(pass) git scope leaking from a hook environment > criteria judge the handed path even with GIT_DIR exported [128.90ms]
+(pass) runCommand > a zero exit reports ok with the exit-0 detail [10.31ms]
+(pass) runCommand > a non-zero exit retains all output, including earlier findings [12.33ms]
+(pass) runCommand > a successful command retains its measured counts [11.16ms]
+(pass) runCommand > a silent failure still reports a detail rather than an empty string [10.18ms]
+(pass) runCommand > a missing binary is a failure, never a throw [8.80ms]
+(pass) repo.config > a repository with a config resolves its declared commands [103.31ms]
+(pass) repo.config > a repository with no config names the install command [101.73ms]
+(pass) the final tree check > requires a active spec edit to be committed [165.02ms]
+(pass) the final tree check > requires a done spec edit to be committed [171.16ms]
+
+src/verify.test.ts:
+(pass) evidence refuses a directory symlink escape without replacing owner bytes [1.25ms]
+(pass) every profile renders deterministically [5.17ms]
+(pass) pack targets match their sources [0.45ms]
+(pass) pack target drift names the pack and both paths [0.88ms]
+(pass) a pack target the checkout does not carry is not drift [0.47ms]
+(pass) a matched pack target reports clean [0.75ms]
+(pass) verify reports pack source parity beside the render proofs [4.71ms]
+
+src/surfaces.test.ts:
+(pass) user surface > handlers, openapi, cli, and app TypeScript count [0.02ms]
+(pass) user surface > tests, markdown, and other packages do not count [0.02ms]
+(pass) docs surface > docs pages and README count; the spec tree never does [0.02ms]
+(pass) code classification > source and test files are code; prose is not [0.01ms]
+
+src/judgment_labels.test.ts:
+(pass) labels_require_independent_evidence [13.32ms]
+(pass) all_pending_and_all_disputed_labels_cannot_satisfy_minimums [1.62ms]
+(pass) a_missing_independent_source_and_invented_selected_text_refuse_labels [2.17ms]
+(pass) an_independence_flag_cannot_replace_external_oracle_proof [1.50ms]
+(pass) stale_oracle_revision_and_changed_label_evidence_refuse_labels [1.39ms]
+(pass) missing_duplicate_and_mismatched_labels_refuse_scoring [21.93ms]
+(pass) labels_cannot_change_answer_types_or_relabel_case_health [1.13ms]
+(pass) frozen_reference_bytes_validate_without_git_history_and_reject_modified_sources [22.34ms]
+
+src/config.test.ts:
+(pass) selectPacks > selects a language pack only when the repository carries that language [0.48ms]
+(pass) selectPacks > never infers an opt-in pack, and takes it when the config names it [0.23ms]
+(pass) selectPacks > an unknown pack in the config is named, not silently dropped [0.27ms]
+(pass) selectPacks > files orly materialised are excluded, so selection settles [0.43ms]
+(pass) seedConfig > maps Makefile targets onto gate commands, following one include level [0.61ms]
+(pass) seedConfig > maps package.json scripts when there is no Makefile [0.26ms]
+(pass) seedConfig > a command that satisfies conform is not repeated as a verify tier [0.22ms]
+(pass) seedConfig > a Makefile target beats a package.json script of the same name [0.32ms]
+(pass) seedConfig > a repository with no build files seeds no commands rather than wrong ones [0.08ms]
+(pass) readConfig > a malformed command is rejected by name [0.25ms]
+(pass) readConfig > an unknown surface field is rejected [0.23ms]
+(pass) readConfig > the sync and async readers agree [0.29ms]
+(pass) readConfig > an absent config is undefined, not an error — the normal pre-init state [0.08ms]
+(pass) staleVersion > a config installed by the running engine reports no staleness [0.10ms]
+(pass) staleVersion > an older install names both versions and the fix command [0.10ms]
+(pass) managedDrift — content > a managed file edited after orly wrote it is drift [11.20ms]
+(pass) managedDrift — content > a digest is algorithm-prefixed, and the unprefixed spelling still matches [9.62ms]
+(pass) managedDrift — content > a file with no recorded digest makes no claim [4.76ms]
+(pass) managedDrift > every managed file present reports no drift [4.60ms]
+(pass) managedDrift > an edited managed file is not drift — git already shows it [4.85ms]
+(pass) managedDrift > a deleted managed file is reported, sorted, with a recovery command [0.23ms]
+(pass) managedDrift > a managed file git refuses to track is drift, even though it is present [18.49ms]
+(pass) managedDrift > the same file reports nothing once the ignore is scoped to spare it [17.15ms]
+(pass) writeConfig > a rewrite preserves the repository's fields and updates only orly's [1.35ms]
+(pass) writeConfig > managed paths are sorted, so a rewrite diffs cleanly [0.40ms]
+(pass) writeConfig > writeConfig creates the .orly/ parent directory [0.26ms]
+
+src/command_runner.test.ts:
+(pass) a deadline stops the owned child group and keeps captured output [315.81ms]
+(pass) the output budget covers both streams and stops the owned child group [20.01ms]
+(pass) an explicit lane override applies through the public gate criteria [286.04ms]
+
+src/render.test.ts:
+(pass) Renderer > renders byte-stable text for a pack set [0.66ms]
+(pass) Renderer > emits CommonMark and Markdown JSX compatible headers [0.30ms]
+(pass) Renderer > filters unselected pack rows from the core document [0.49ms]
+(pass) Renderer > the root render is current and reference-closed [0.37ms]
+(pass) Renderer > an unclosed pack block fails the render [0.40ms]
+(pass) the rendered rules match the machine > VERIFY distinguishes Section proof from final verification [0.39ms]
+(pass) the rendered rules match the machine > CHORE(close) names the pr gate, not the whole chain [0.37ms]
+(pass) the rendered rules match the machine > the integration skill is conditional on a real input/output boundary [0.35ms]
+(pass) the rendered rules match the machine > the engineering clauses survive without the persona pack [0.36ms]
+(pass) the rendered rules match the machine > SOUL does not claim the language criterion enforces anything [0.06ms]
+
+src/cli.test.ts:
+(pass) orly command > uses the concise public command surface [39.25ms]
+(pass) orly command > telemetry_help_names_tiers_storage_and_privacy [42.49ms]
+(pass) orly command > --dry-run records no pack [70.93ms]
+(pass) orly command > reports the version carried by the package manifest [41.24ms]
+(pass) orly command > verify validates the registry on its way to the render checks [48.02ms]
+(pass) orly command > validate is not a verb [45.14ms]
+(pass) orly command > verify needs no --all, because there was never a not-all [52.29ms]
+(pass) orly command > telemetry_failure_never_changes_command_result [208.44ms]
+(pass) orly command > gate_command_records_its_selected_gate_and_failed_criterion [165.81ms]
+(pass) orly command > skill_event_accepts_only_packaged_skills [239.19ms]
+
+src/validation.test.ts:
+(pass) relative paths cannot escape the output root [0.37ms]
+
+src/setup.test.ts:
+(pass) setup completeness > rust init reports missing commands without guessing a toolchain [271.23ms]
+(pass) setup completeness > zig init reports missing commands without guessing a toolchain [274.07ms]
+(pass) setup completeness > python init reports missing commands without guessing a toolchain [262.07ms]
+(pass) setup completeness > typescript init reports missing commands without guessing a toolchain [268.14ms]
+(pass) setup completeness > go init reports missing commands without guessing a toolchain [270.75ms]
+(pass) setup completeness > text output explains how to finish setup [216.91ms]
+(pass) setup completeness > gates reject incomplete command roles: empty [196.05ms]
+(pass) setup completeness > gates reject incomplete command roles: build [270.96ms]
+(pass) setup completeness > gates reject incomplete command roles: conform [214.51ms]
+(pass) setup completeness > gates reject incomplete command roles: verify.docs [219.80ms]
+(pass) setup completeness > gates reject incomplete command roles: conform, verify. [230.03ms]
+(pass) documentation repositories > md repositories run their own checks without application test lanes [1494.36ms]
+(pass) documentation repositories > mdx repositories run their own checks without application test lanes [1319.38ms]
+(pass) missing bunx fails the hook without running a different installer [282.93ms]
+
+src/gates_spec.test.ts:
+(pass) spec discovery > no spec tree: spec criteria skip and quality gates still run [207.91ms]
+(pass) spec discovery > cache-kit style docs/v0.9.2/ layout is discovered [51.90ms]
+(pass) spec discovery > active ownership follows the branch with quoted header %s [92.43ms]
+(pass) spec discovery > active ownership follows the branch with quoted header %s [91.94ms]
+(pass) spec discovery > an unrelated active spec cannot hide a closed owner with quoted header %s [97.41ms]
+(pass) spec discovery > an unrelated active spec cannot hide a closed owner with quoted header %s [98.55ms]
+(pass) spec discovery > an active spec without branch ownership still gates [92.41ms]
+(pass) spec discovery > two active owners on the current branch remain an error [91.95ms]
+(pass) spec discovery > two active specs are a hard error — one stream per worktree [84.66ms]
+(pass) spec discovery > a folded active spec yields ownership with quoted header %s [85.31ms]
+(pass) spec discovery > a folded active spec yields ownership with quoted header %s [84.77ms]
+(pass) spec discovery > a folded active spec must name the exact owner [87.08ms]
+(pass) spec discovery > a folded active spec cannot name itself [90.75ms]
+(pass) spec discovery > every active spec folded leaves no owning stream [53.02ms]
+(pass) spec discovery > a folded active spec still gates through its owner [171.11ms]
+(pass) closed-spec follow-through > two owning specs naming one branch remain a hard error [99.58ms]
+(pass) closed-spec follow-through > a folded closed spec yields ownership with quoted header %s [98.20ms]
+(pass) closed-spec follow-through > a folded closed spec yields ownership with quoted header %s [94.96ms]
+(pass) closed-spec follow-through > a folded spec must name the exact owner on its branch [99.66ms]
+(pass) closed-spec follow-through > a folded spec cannot name itself [108.68ms]
+(pass) closed-spec follow-through > a branch name is not a prefix match [100.45ms]
+(pass) closed-spec follow-through > prose mentioning a branch does not declare ownership [128.11ms]
+(pass) closed-spec follow-through > gate help does not discover specs [169.22ms]
+(pass) closed-spec follow-through > a spec closed to done/ is discovered by its Branch: header and still gated [607.06ms]
+(pass) closed-spec follow-through > a Test Baseline still reading `pending` is red at the Pull Request gate [490.20ms]
+(pass) closed-spec follow-through > a branch carrying no code records n/a and spec.baseline is green [394.60ms]
+(pass) closed-spec follow-through > Status: DONE while the spec still lives under active/ is red on spec.moved [439.27ms]
+(pass) closed-spec follow-through > code committed before the spec is red on spec.ordering [299.65ms]
+(pass) closed-spec follow-through > a deferral claim needs the Indy ack quote [795.24ms]
+
+src/scanner_scope.test.ts:
+(pass) staged literal checks grade index bytes with staged violation %s [168.48ms]
+(pass) staged literal checks grade index bytes with staged violation %s [152.92ms]
+(pass) explicit dispatch checks working bytes and forwards only the named file [208.63ms]
+(pass) successful concurrent dispatch receipts have distinct readable private owners [218.45ms]
+(pass) staged Rust aliases come from the same index with alias present %s [155.68ms]
+(pass) staged Rust aliases come from the same index with alias present %s [154.97ms]
+(pass) single-line initializers outside src need cleanup only when allocating %s [137.11ms]
+(pass) single-line initializers outside src need cleanup only when allocating %s [138.98ms]
+(pass) managed paths parse structurally with pretty configuration %s [386.40ms]
+(pass) managed paths parse structurally with pretty configuration %s [383.16ms]
+(pass) malformed managed metadata refuses before a clean verdict: { [136.91ms]
+(pass) malformed managed metadata refuses before a clean verdict: {"managed":"src/code.ts"} [140.27ms]
+(pass) malformed managed metadata refuses before a clean verdict: {"managed":[false]} [136.46ms]
+(pass) staged renames are checked and deleted paths are skipped [244.40ms]
+(pass) ufs.sh preserves help and rejects unknown or mixed options [98.72ms]
+(pass) logging.sh preserves help and rejects unknown or mixed options [98.97ms]
+(pass) deinit-pairs.sh preserves help and rejects unknown or mixed options [96.25ms]
+(pass) sql-mod.sh preserves help and rejects unknown or mixed options [96.05ms]
+(pass) error-codes.sh preserves help and rejects unknown or mixed options [105.96ms]
+(pass) rust-error.sh preserves help and rejects unknown or mixed options [92.28ms]
+(pass) design-tokens.sh preserves help and rejects unknown or mixed options [98.13ms]
+(pass) inherited SCOPE defaults select the index and ignore unstaged bytes [208.23ms]
+(pass) diff marker checks grade staged quoted paths with staged violation %s [88.18ms]
+(pass) diff marker checks grade staged quoted paths with staged violation %s [80.92ms]
+(pass) diff marker explicit files use working bytes and missing comparisons refuse [93.02ms]
+(pass) indexed source links cannot read outside their owned snapshot [122.07ms]
+
+src/judgments/wire.test.ts:
+(pass) validates the requested choice distribution and pinned model [85.64ms]
+(pass) rejects invalid schema, model and answer type [51.49ms]
+(pass) rejects missing answers and extra answers [52.30ms]
+(pass) rejects omitted options, bad sums and a non-maximum choice [49.24ms]
+(pass) rejects non-finite and out-of-range probabilities [50.25ms]
+
+src/judgments/types.test.ts:
+(pass) manifest boundaries > accepts bounded role-labeled evidence [1.14ms]
+(pass) manifest boundaries > rejects unknown questions and instruction fields [0.45ms]
+(pass) manifest boundaries > rejects missing required roles and mismatched stage [0.45ms]
+(pass) manifest boundaries > rejects duplicate items and references [0.35ms]
+(pass) manifest boundaries > rejects excessive input and terminal control characters [0.45ms]
+
+src/judgments/questions.test.ts:
+(pass) catalog covers the shipped atomic questions with no command outputs [0.04ms]
+(pass) documentation advice needs implementation or measured results [0.02ms]
+
+src/judgments/runner.integration.test.ts:
+(pass) live evidence becomes exact offline replay without another request [111.77ms]
+(pass) missing replay never falls through to live inference [49.33ms]
+(pass) missing credentials or failed scanning prevent all uploads [94.85ms]
+(pass) an invalid later item stops the whole batch before upload [51.56ms]
+(pass) a replay symlink stops the whole batch before upload, target exists: %s [155.40ms]
+(pass) a replay symlink stops the whole batch before upload, target exists: %s [163.70ms]
+(pass) a directory at a later replay filename stops the whole batch before upload [151.61ms]
+(pass) invalid provider replies count the attempt and never create a valid replay [174.40ms]
+(pass) a later scanner refusal leaves every item incomplete without upload [121.58ms]
+(pass) a later provider refusal preserves earlier evidence and never retries [252.45ms]
+(pass) a later replay failure after upload preserves usage and earlier evidence [312.09ms]
+
+src/judgments/files.test.ts:
+(pass) reads bounded UTF-8 without losing multibyte content [1.33ms]
+(pass) rejects traversal and absolute evidence paths [0.43ms]
+(pass) rejects a symlink escaping the selected project [0.89ms]
+(pass) refuses symlink reads and non-regular files [0.71ms]
+(pass) refuses oversized and invalid UTF-8 files [0.84ms]
+(pass) bounds streaming bytes and cancels the stream on refusal [0.09ms]
+(pass) aborting a waiting stream releases its reader [0.09ms]
+
+src/judgments/evidence.test.ts:
+(pass) evidence selects complete units and identity follows selected bytes [145.22ms]
+(pass) request keeps embedded instructions in state without changing the question [149.75ms]
+(pass) rejects oversized source and oversized complete state without truncating [31.26ms]
+(pass) refuses empty and missing evidence [1.76ms]
+
+src/judgments/replay.test.ts:
+(pass) replays validated exact evidence without storing source [57.54ms]
+(pass) rejects a missing exact replay after source changes [105.24ms]
+(pass) rejects corrupted replay checksum and invalid JSON [53.99ms]
+(pass) rejects a cache directory that redirects outside the project [1.13ms]
+
+src/judgments/syntax.test.ts:
+(pass) selects a whole function with nested blocks and template literals [38.18ms]
+(pass) selects complete named test calls [32.51ms]
+(pass) refuses duplicate symbols and skipped ancestor tests [51.81ms]
+(pass) refuses a statically computed skipped test: test["skip"] [24.90ms]
+(pass) refuses a statically computed skipped test: test["todo"] [24.09ms]
+(pass) refuses a statically computed skipped ancestor: describe["skip"] [24.48ms]
+(pass) refuses a statically computed skipped ancestor: describe["todo"] [24.63ms]
+(pass) refuses syntax errors, absent symbols and unsupported file types [51.45ms]
+(pass) selects a section including its child headings and ignores fenced headings [0.58ms]
+(pass) a fenced example can repeat a real heading with fence ``` [0.09ms]
+(pass) a fenced example can repeat a real heading with fence ~~~ [0.02ms]
+(pass) shorter and unterminated fences cannot introduce section headings [0.04ms]
+(pass) a list-item fence can repeat a real section heading [0.04ms]
+(pass) literal trailing hashes remain part of a Markdown heading [0.06ms]
+(pass) whitespace-separated closing hashes do not become part of the heading [0.03ms]
+(pass) refuses duplicate or missing Markdown headings [0.04ms]
+(pass) selects a typed function containing JSX without running its source [30.31ms]
+(pass) parser timeout ends its worker and a later parse remains usable [44.11ms]
+(pass) parser startup failure refuses evidence without exposing raw worker details [1.35ms]
+
+src/judgments/scan.test.ts:
+(pass) real secret scanning accepts ordinary evidence [480.49ms]
+(pass) real secret scanning refuses a generated credential without logging it [449.77ms]
+(pass) the secret scanner deadline terminates its owned process [2.24ms]
+
+src/judgments/advice.test.ts:
+(pass) weak assertions receive a fixed exact-result action [54.09ms]
+(pass) insufficient and diffuse answers suggest inspection without automatic repair [54.04ms]
+(pass) Noul uncertainty cannot become an applicability waiver [49.99ms]
+
+src/judgments/command.integration.test.ts:
+(pass) shipped command help exposes the six questions and Bun runtime [48.58ms]
+(pass) the shipped command stays offline and preserves source bytes [111.67ms]
+(pass) invalid options and manifests emit one incomplete result [131.47ms]
+
+src/judgments/transport.integration.test.ts:
+(pass) provider request crosses real HTTP with the selected request and no redirect [55.22ms]
+(pass) HTTP refusal never retries or echoes the response body [50.67ms]
+(pass) provider responses reject oversized and malformed JSON [48.29ms]
+(pass) the deadline covers a stalled response body and cancels its reader [49.31ms]
+(pass) transport failure hides credentials and cancels the request [47.43ms]
+
+src/installation/lock.test.ts:
+(pass) stale cleanup cannot remove a lock acquired by another installer [103.77ms]
+(pass) a live owner excludes contenders and a released lock can be acquired again [47.78ms]
+(pass) a dead owner can be recovered without changing unrelated owner files [57.55ms]
+(pass) an unrecognized lock file is preserved for owner inspection [45.85ms]
+
+src/installation/migration.test.ts:
+(pass) an active owner hook in .git/hooks remains connected [90.80ms]
+(pass) an active owner hook in .githooks remains connected [89.35ms]
+(pass) interrupted_install_recovers at journal 0 [85.43ms]
+(pass) interrupted_install_recovers at write 0 [95.66ms]
+(pass) interrupted_install_recovers at write 1 [88.92ms]
+(pass) interrupted_install_recovers at write 2 [89.46ms]
+(pass) interrupted_install_recovers at write 3 [93.83ms]
+(pass) interrupted_install_recovers at write 4 [89.55ms]
+(pass) interrupted_install_recovers at write 5 [100.25ms]
+(pass) interrupted_install_recovers at metadata 0 [97.78ms]
+(pass) interrupted_install_recovers at delete 0 [108.53ms]
+(pass) interrupted_install_recovers at delete 1 [108.37ms]
+(pass) interrupted_install_recovers at delete 2 [111.06ms]
+(pass) hook installation recovers interruption at journal 0 [211.06ms]
+(pass) hook installation recovers interruption at write 0 [207.92ms]
+(pass) hook installation recovers interruption at write 1 [204.59ms]
+(pass) hook installation recovers interruption at write 2 [195.58ms]
+(pass) hook installation recovers interruption at write 3 [200.85ms]
+(pass) hook installation recovers interruption at write 4 [186.14ms]
+(pass) hook installation recovers interruption at write 5 [194.66ms]
+(pass) hook installation recovers interruption at write 6 [191.48ms]
+(pass) hook installation recovers interruption at write 7 [191.48ms]
+(pass) hook installation recovers interruption at metadata 0 [244.39ms]
+(pass) hook installation recovers interruption at delete 0 [308.11ms]
+(pass) hook installation recovers interruption at delete 1 [329.91ms]
+(pass) hook installation recovers interruption at delete 2 [230.73ms]
+(pass) migration_preserves_owned_content refuses edited or unowned dispatch/check.md [77.81ms]
+(pass) migration_preserves_owned_content refuses edited or unowned AGENTS.orly.md [60.95ms]
+(pass) migration_preserves_owned_content refuses edited or unowned .orly/dispatch/check.md [65.68ms]
+(pass) recovery refuses an edited destination before deleting any old source [76.77ms]
+(pass) changed journal cannot authorize recovery [84.39ms]
+(pass) a current installation preserves an independent previous configuration [63.15ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [118.30ms]
+(pass) recovery preserves an owner-changed hooks setting with resumed hooks %s [115.95ms]
+(pass) owner hook changes during destination writes are refused before metadata or cleanup [109.75ms]
+(pass) migration removes only proven obsolete instruction references [72.73ms]
+
+src/execution/plan.test.ts:
+(pass) lifecycle_plan_names_actual_commands [44.76ms]
+(pass) disabled_adapter_has_no_side_effects [102.52ms]
+(pass) remote_adapter_is_disabled rejects malformed or active configuration: null [0.06ms]
+(pass) remote_adapter_is_disabled rejects malformed or active configuration: {} [0.02ms]
+(pass) remote_adapter_is_disabled rejects malformed or active configuration: {"remote":{}} [0.02ms]
+(pass) remote_adapter_is_disabled rejects malformed or active configuration: {"remote":{"mode":"enabled"}}
+(pass) remote_adapter_is_disabled rejects malformed or active configuration: {"remote":{"mode":"disabled","launcher":"agentsfleet run"}}
+(pass) remote_adapter_is_disabled rejects malformed or active configuration: {"remote":{"mode":"disabled","launcher":[]}} [0.03ms]
+(pass) remote_adapter_is_disabled rejects malformed or active configuration: {"remote":{"mode":"disabled","launcher":[""]}} [0.02ms]
+(pass) remote_adapter_is_disabled rejects malformed or active configuration: {"remote":{"mode":"disabled","launcher":["x\u0000y"]}} [0.03ms]
+(pass) remote_adapter_is_disabled rejects malformed or active configuration: {"remote":{"mode":"disabled","activate":true}}
+(pass) disabled_adapter_never_becomes_pass [93.11ms]
+(pass) missing adapter defaults to disabled and missing repository fails [48.06ms]
+
+ 601 pass
+ 0 fail
+ 2620 expect() calls
+Ran 601 tests across 60 files. [115.32s]
+
+[1m--- bash evals/dispatch/coverage.sh[0m
+DISPATCH COVERAGE AUDIT — façade-pair coherence (6.3 + 6.4)
+
+(a) DETERMINISTIC tag → .sh row (universal-code carve-out, global)
+    🟢 DEINIT — wired in some dispatch .sh
+    🟢 DTK — wired in some dispatch .sh
+    🟢 ERR — wired in some dispatch .sh
+    🟢 ERR-RS — wired in some dispatch .sh
+    🟢 FLL — wired in some dispatch .sh
+    🟢 LOG — wired in some dispatch .sh
+    🟢 MSID — wired in some dispatch .sh
+    🟢 PUB — wired in some dispatch .sh
+    🟢 SQLMOD — wired in some dispatch .sh
+    🟢 TSC — wired in some dispatch .sh
+    🟢 UFS — wired in some dispatch .sh
+    🟢 UIS — wired in some dispatch .sh
+    🟢 XCOMPILE — wired in some dispatch .sh
+
+(b) run-enforced DETERMINISTIC code → pass+fail fixture (delegated exempt)
+    🟢 DEINIT — pass + fail fixture present
+    🟢 ERR-RS — pass + fail fixture present
+    🟢 FLL — pass + fail fixture present
+    🟢 LOG — pass + fail fixture present
+    🟢 MSID — pass + fail fixture present
+    🟢 SQLMOD — pass + fail fixture present
+    🟢 UFS — pass + fail fixture present
+
+(c) JUDGMENT tag → comprehension probe (fixtures.jsonl mode dispatch-judgment-<code>)
+    🟢 ARCH — probe present
+    🟢 DIDEM — probe present
+    🟢 FSD — probe present
+    🟢 GRP — probe present
+    🟢 ITF — probe present
+    🟢 LDC — probe present
+    🟢 NLG — probe present
+    🟢 NLR — probe present
+    🟢 SCH — probe present
+    🟢 TGU — probe present
+    🟢 TSJ — probe present
+
+(d) .sh code → tag in some dispatch .md (orphan check, global)
+    🟢 ARCH — tagged in some .md
+    🟢 DEINIT — tagged in some .md
+    🟢 DIDEM — tagged in some .md
+    🟢 DTK — tagged in some .md
+    🟢 ERR — tagged in some .md
+    🟢 ERR-RS — tagged in some .md
+    🟢 FLL — tagged in some .md
+    🟢 FSD — tagged in some .md
+    🟢 GRP — tagged in some .md
+    🟢 ITF — tagged in some .md
+    🟢 LDC — tagged in some .md
+    🟢 LOG — tagged in some .md
+    🟢 MSID — tagged in some .md
+    🟢 NLG — tagged in some .md
+    🟢 NLR — tagged in some .md
+    🟢 PUB — tagged in some .md
+    🟢 SCH — tagged in some .md
+    🟢 SQLMOD — tagged in some .md
+    🟢 TGU — tagged in some .md
+    🟢 TSC — tagged in some .md
+    🟢 TSJ — tagged in some .md
+    🟢 UFS — tagged in some .md
+    🟢 UIS — tagged in some .md
+    🟢 XCOMPILE — tagged in some .md
+
+(e) dispatch_run_helper leaf present + executable
+    🟢 MSID → audits/msid-ui.sh (present, executable)
+    🟢 UFS → audits/ufs.sh (present, executable)
+    🟢 LOG → audits/logging.sh (present, executable)
+    🟢 MSID → audits/msid-ui.sh (present, executable)
+    🟢 DEINIT → audits/deinit-pairs.sh (present, executable)
+    🟢 SQLMOD → audits/sql-mod.sh (present, executable)
+
+(f) .sh code → lib.sh DISPATCH_GLOSS entry (no naked codes)
+    🟢 ARCH — gloss present
+    🟢 DEINIT — gloss present
+    🟢 DIDEM — gloss present
+    🟢 DTK — gloss present
+    🟢 ERR — gloss present
+    🟢 ERR-RS — gloss present
+    🟢 FLL — gloss present
+    🟢 FSD — gloss present
+    🟢 GRP — gloss present
+    🟢 ITF — gloss present
+    🟢 LDC — gloss present
+    🟢 LOG — gloss present
+    🟢 MSID — gloss present
+    🟢 NLG — gloss present
+    🟢 NLR — gloss present
+    🟢 PUB — gloss present
+    🟢 SCH — gloss present
+    🟢 SQLMOD — gloss present
+    🟢 TGU — gloss present
+    🟢 TSC — gloss present
+    🟢 TSJ — gloss present
+    🟢 UFS — gloss present
+    🟢 UIS — gloss present
+    🟢 XCOMPILE — gloss present
+
+(g) RULES.md canonical legend ↔ lib.sh DISPATCH_GLOSS (byte-identical map)
+    🟢 gloss maps identical (29 codes)
+
+(h) write_any façade extension → audits/ufs.sh is_source (silent-green scope hole)
+    🟢 .go — read by audits/ufs.sh
+    🟢 .js — read by audits/ufs.sh
+    🟢 .jsx — read by audits/ufs.sh
+    🟢 .py — held out: single-quoted literals are ~14% of a real tree and the matcher reads only double quotes; partial coverage reported as full is the bug this check exists to prevent
+    🟢 .rs — read by audits/ufs.sh
+    🟢 .sh — held out: a repeated "$var" is interpolation, not a magic string — 59% of hits on a real tree, and shell has no const to bind to
+    🟢 .sql — held out: owns a separate façade and leaf (dispatch/write_sql.sh)
+    🟢 .ts — read by audits/ufs.sh
+    🟢 .tsx — read by audits/ufs.sh
+    🟢 .zig — read by audits/ufs.sh
+
+✅ DISPATCH COVERAGE: ALL CHECKS PASSED
+
+[1m--- bash evals/dispatch/run.sh[0m
+
+dispatch-evals — prose-pinned deterministic fixtures
+
+  PASS  FLL   length_350_pass.zig    write_zig --staged -> exit 0
+  PASS  FLL   length_351_fail.zig    write_zig --staged -> exit 1
+  PASS  UFS   ufs_ok.zig             write_any --staged -> exit 0
+  PASS  UFS   ufs_dup_string.zig     write_any --staged -> exit 1
+  PASS  UFS   ufs_ok.rs              write_any --staged -> exit 0
+  PASS  UFS   ufs_dup_string.rs      write_any --staged -> exit 1
+  PASS  UFS   ufs_feature_gate.rs    write_any --staged -> exit 1
+  PASS  UFS   ufs_ok.go              write_any --staged -> exit 0
+  PASS  UFS   ufs_dup_string.go      write_any --staged -> exit 1
+  PASS  LOG   log_ok.zig             write_any --staged -> exit 0
+  PASS  LOG   log_violation.zig      write_any --staged -> exit 1
+  PASS  LOG   log_ok.rs              write_any --staged -> exit 0
+  PASS  LOG   log_ok.rs              write_any --staged -> exit 0
+  PASS  LOG   log_test_ok.rs         write_any --staged -> exit 0
+  PASS  LOG   log_path_test_ok.rs    write_any --staged -> exit 0
+  PASS  LOG   log_path_test_ok.rs    write_any --staged -> exit 0
+  PASS  LOG   log_println_violation.rs write_any --staged -> exit 0
+  PASS  LOG   log_println_violation.rs write_any --staged -> exit 0
+  PASS  LOG   log_println_violation.rs write_any --staged -> exit 0
+  PASS  LOG   log_println_violation.rs write_any --staged -> exit 0
+  PASS  LOG   log_println_violation.rs write_any --staged -> exit 0
+  PASS  LOG   log_println_violation.rs write_any --staged -> exit 0
+  PASS  LOG   log_println_violation.rs write_any --staged -> exit 1
+  PASS  LOG   log_eprintln_violation.rs write_any --staged -> exit 1
+  PASS  LOG   log_eprintln_violation.rs write_any --staged -> exit 1
+  PASS  LOG   log_dbg_violation.rs   write_any --staged -> exit 1
+  PASS  LOG   log_missing_event.rs   write_any --staged -> exit 1
+  PASS  LOG   log_tail_missing_event.rs write_any --staged -> exit 1
+  PASS  LOG   log_missing_event.rs   logging_all --all -> exit 1
+  PASS  LOG   log_eprintln_violation.rs logging_all --all -> exit 1
+  PASS  LOG   log_ok.rs              logging_all_missing --all -> exit 0
+  PASS  LOG   log_positional_violation.rs write_any --staged -> exit 1
+  PASS  MSID  msid_ok.zig            write_any --staged -> exit 0
+  PASS  MSID  msid_violation.zig     write_any --staged -> exit 1
+  PASS  MSID  msid_ui_section_wrapped.tsx msid_prewrapped_edit --staged -> exit 0
+  PASS  MSID  msid_ui_section_override.tsx msid_prewrapped_edit --staged -> exit 0
+  PASS  MSID  msid_ui_section_bare.tsx msid_prewrapped_edit --staged -> exit 1
+  PASS  DEINIT deinit_ok.zig          write_zig --staged -> exit 0
+  PASS  DEINIT deinit_missing.zig     write_zig --staged -> exit 1
+  PASS  SQLMOD sqlmod_ok.zig          write_zig --staged -> exit 0
+  PASS  SQLMOD sqlmod_violation.zig   write_zig --staged -> exit 1
+  PASS  ERR-RS err_rs_ok.rs           write_rust --staged -> exit 0
+  PASS  ERR-RS err_rs_map_err_to_string.rs write_rust --staged -> exit 1
+  PASS  ERR-RS err_rs_no_result_alias.rs write_rust --staged -> exit 1
+  PASS  ERR-RS err_rs_test_ok.rs      write_rust --staged -> exit 0
+  PASS  ERR-RS err_rs_map_err_to_string.rs write_rust --staged -> exit 0
+
+46 passed, 0 failed
+
+[1m--- bash evals/dispatch/parity.sh[0m
+
+parity evals — cross-runtime ERR_* scope
+
+  PASS  orphan outside the old hardcoded globs is caught
+  PASS  code present in Zig is not reported
+  PASS  codes in a fixtures/ tree are excluded
+  PASS  no Zig means skipped with a reason, not a vacuous pass
+  PASS  ui/ orphan still caught after the rewrite
+  PASS  a client string the Rust registry never declared is an orphan
+  PASS  a client string the Rust registry declares is not reported
+  PASS  Rust registry outranks a Zig mirror — a name Zig lacks is fine when the string is declared
+  PASS  Rust registry outranks a Zig mirror — a name Zig has does not excuse an undeclared string
+  PASS  a registry declaration under tests/ does not make Rust the oracle
+
+10 passed, 0 failed
+
+[1m--- bash evals/ledger/run.sh[0m
+ledger evals — census, scoreboard, doc-read
+
+  PASS  ledger_census_rows — 8 rows, exit 0
+  PASS  ledger_census_parity_red — exit 1, names the unregistered doc
+  PASS  ledger_census_missing_doc_red — exit 1, names the absent path
+  PASS  ledger_unenforced_class — unenforced=2, untagged=1 (not folded together)
+  PASS  ledger_census_facade_scope_red — exit 1, names the scope-less façade
+  PASS  ledger_write_deterministic — two renders of one tree are byte-identical
+  PASS  ledger_check_currency — absent 1, fresh 0, stale 1 with the fix command, regenerated 0
+  PASS  ledger_readlog_append — 2 well-formed rows, the out-of-tree path dropped
+  PASS  ledger_readlog_check_matrix — no record 0 🟠, unread 1 naming the façade, read 0 🟢
+  PASS  ledger_readlog_untriggered — a prose-only diff needs no read
+  PASS  ledger_readlog_content_keyed — editing the façade voids the read; re-reading restores it
+  PASS  ledger_precommit_wiring — pre-commit calls check behind a staged-source guard
+  PASS  ledger_pilot_fully_classified — LOGGING_STANDARD untagged=0 with a non-zero deterministic count
+  PASS  ledger_block_tag_scope — dispatch/write_any.md reads 9 deterministic clauses from block tags
+  PASS  ledger_doc_read_command_documented — AGENTS.md requires the recorded read
+  PASS  ledger_doc_read_runtime_neutral — enforcement path names no agent runtime
+  PASS  ledger_usage_exit_codes — every misuse exits 2, --help exits 0
+  PASS  ledger_write_aborts_on_missing_doc — exit 1 and no scoreboard written
+  PASS  ledger_trigger_uncited — uncited and latent are reported apart
+  PASS  ledger_readlog_escapes_path — a quoted filename still writes parseable JSON
+  PASS  ledger_readlog_fails_closed — an unhashable path records no row
+  PASS  ledger_readlog_cited_section — an uncited read reports 0 of 1, a cited one reports all
+  PASS  ledger_readlog_bulk_assertion — three façades in one second are named as a bulk assertion
+  PASS  ledger_write_locale_stable — multi-code rows render identically under C and en_US
+  PASS  ledger_census_read_only — fixture root byte-identical after census and check
+
+25 passed, 0 failed
+
+[1m--- bash audits/rule-ledger.sh --census[0m
+RULE ENFORCEMENT LEDGER — census
+  doc=docs/LOGGING_STANDARD.md                     clauses=28   det=5    judgment=10   unenforced=13   untagged=0
+  doc=docs/REST_API_DESIGN_GUIDELINES.md           clauses=67   det=0    judgment=0    unenforced=0    untagged=67
+  doc=docs/SCHEMA_CONVENTIONS.md                   clauses=17   det=0    judgment=0    unenforced=0    untagged=17
+  doc=docs/DOCUMENTATION_RULES.md                  clauses=22   det=0    judgment=0    unenforced=0    untagged=22
+  doc=docs/LIFECYCLE_PATTERNS.md                   clauses=22   det=0    judgment=0    unenforced=0    untagged=22
+  doc=docs/CHANGELOG_VOICE.md                      clauses=3    det=0    judgment=0    unenforced=0    untagged=3
+  doc=docs/VERIFY_TIERS.md                         clauses=4    det=0    judgment=0    unenforced=0    untagged=4
+  doc=docs/greptile-learnings/RULES.md             clauses=115  det=0    judgment=0    unenforced=0    untagged=115
+
+structural checks
+  🟢 every cited rule doc is registered; every façade declares a scope

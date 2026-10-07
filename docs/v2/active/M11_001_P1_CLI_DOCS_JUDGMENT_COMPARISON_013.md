@@ -22,8 +22,8 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Batch:** B1 — one implementation stream
 **Branch:** feat/m11-judgment-comparison
 **Baseline revision:** a09ae05042b66cde67c91c1f326fa1b7e3f5b94e
-**Test Baseline:** pending — measured before the Pull Request
-**Baseline evidence:** pending — measured command receipt
+**Test Baseline:** unit=536; integration included in unit lane; no separate integration command declared
+**Baseline evidence:** evals/judgments/comparison/receipts/baseline-unit.txt
 **Depends on:** M09_001 merged implementation; M08 historical observations only, not its unfinished checks
 **Provenance:** agent-generated through orly-spec-new from Indy's 0.13.0 request and parking instruction
 **Canonical architecture:** `docs/architecture/judgment-evaluation.md`; `docs/architecture/installation.md`
@@ -60,6 +60,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | `README.md`, `docs/JUDGMENTS.md`, `llms.txt`, `docs/CHANGELOG.md` | EDIT | Contributor usage, evidence limits and release notes |
 | `package.json`, `.orly/orly.json` | EDIT | Synchronize 0.13.0; preserve installed layout |
 | `evals/judgments/comparison/receipts/` | CREATE | Baseline, final, review and adoption evidence |
+| Isolated `agentsfleet` rehearsal worktree: `.orly/` managed update and `ui/packages/design-system/src/design-system/time-utils.ts` | REHEARSE/RESTORE | User-requested packed 0.13.0 installation and bounded mutations of actual consumer behavior; preserve source and owner files |
 
 Runtime catalog, installer, supervisor, hooks and audit rules remain read-only.
 Recover only the evaluator and tests from stash `656ec6b94cdead8e5d18d0e72af6315e79946679`; never pop or drop it.
@@ -99,26 +100,26 @@ Preserve 0.12.1 audit preflight and diagnostic fixes from current upstream.
 
 Prerequisite: opening metadata committed from current main. No provider credential is needed for offline work. A later live request would require renewed owner authorization, `TYPESAFE_API_KEY` from the environment, a passing real secret scan and available provider capacity; no credential is read during this scope.
 
-- **Dimension 1.1** — Pin all six current question definitions, answer types, fixed actions and `jev-1.13.0`; reject baseline drift. → Test `comparison_preserves_runtime_baseline`
-- **Dimension 1.2** — Define exactly five evaluation-only candidates with complete evidence roles and bounded answers; reject unknown questions and missing roles. → Test `candidate_inputs_are_complete`
-- **Dimension 1.3** — Validate source digests, disjoint origin families, provenance and all attempted outcomes; refuse stale, duplicate or cross-split evidence. → Test `comparison_rejects_invalid_provenance`
+- **Dimension 1.1** — DONE — Pin all six current question definitions, answer types, fixed actions and `jev-1.13.0`; reject baseline drift. → Test `comparison_preserves_runtime_baseline`
+- **Dimension 1.2** — DONE — Define exactly five evaluation-only candidates with complete evidence roles and bounded answers; reject unknown questions and missing roles. → Test `candidate_inputs_are_complete`
+- **Dimension 1.3** — DONE — Validate source digests, disjoint origin families, provenance and all attempted outcomes; refuse stale, duplicate or cross-split evidence. → Test `comparison_rejects_invalid_provenance`
 
 ### §2 — Establish independent labels and discriminating controls
 
 Depends on §1. Cover healthy, defective, ambiguous and insufficient-evidence cases for each baseline and candidate question, with at least two independently resolved development and two independently resolved held-out cases per class. Pending/disputed cases do not satisfy these minimums. Split by originating defect family before prompt tuning; copied mutations stay in one split. These are minimum corpus requirements, not an accuracy claim.
 
-- **Dimension 2.1** — Each label records task class, expected native answer, rationale, source/revision, fixture author and independent oracle or reviewer, plus adjudication status. A reviewer must differ from the fixture author; an oracle must ground the expected answer outside the evaluated implementation/reply. An independence flag alone is insufficient. Freeze before observing answers; absent support or insufficient resolved counts makes `--check` fail. → Test `labels_require_independent_evidence`
-- **Dimension 2.2** — Pair weak-pass, exact-fail and repair-pass controls on one fixed requirement; cover circular expectations, omitted obligations, uncalled helpers, unrelated negative tests and superficial repairs. → Test `controls_discriminate_wrong_implementations`
-- **Dimension 2.3** — Freeze the per-question mappings and denominator rules in Interfaces before reading observations. Score native-answer correctness separately from task health; retain invalid/unavailable attempts. Empty denominators and distinctions the answer format cannot express are unavailable, not perfect scores. → Test `metrics_preserve_missing_outcomes`
+- **Dimension 2.1** — DONE — Each label records task class, expected native answer, rationale, source/revision, fixture author and independent oracle or reviewer, plus adjudication status. A reviewer must differ from the fixture author; an oracle must ground the expected answer outside the evaluated implementation/reply. An independence flag alone is insufficient. Freeze before observing answers; absent support or insufficient resolved counts makes `--check` fail. → Test `labels_require_independent_evidence`
+- **Dimension 2.2** — DONE — Pair weak-pass, exact-fail and repair-pass controls on one fixed requirement; cover circular expectations, omitted obligations, uncalled helpers, unrelated negative tests and superficial repairs. → Test `hidden_assertions_reject_false_completion_and_preserve_honest_blocks`
+- **Dimension 2.3** — DONE — Freeze the per-question mappings and denominator rules in Interfaces before reading observations. Score native-answer correctness separately from task health; retain invalid/unavailable attempts. Empty denominators and distinctions the answer format cannot express are unavailable, not perfect scores. → Test `metrics_preserve_missing_outcomes`
 
 ### §3 — Evaluate complete tasks with hidden assertions
 
 Depends on §1–§2. Build at least five task families: missing obligation, missing production caller, missing failure proof, unresolved finding and a legitimate permission block. Each has a healthy control and a plausible false completion. Use fresh disposable Git repositories and real installed discovery files. The evaluator retains its expected results outside task workspaces and excludes them from supplied evidence and task logs. This is input separation, not a security sandbox against a hostile local user.
 
-- **Dimension 3.1** — Record initial/final source, installed package identity, allowed actions, command arguments, exits and cleanup; stale or incomplete task receipts refuse scoring. → Test `task_receipts_bind_actual_execution`
-- **Dimension 3.2** — Hidden behavioral assertions reject each false completion even when submitted tests pass; labels and hidden assertions cannot enter the actor payload. → Test `hidden_assertions_reject_false_completion`
-- **Dimension 3.3** — Distinguish completed, failed and truthfully blocked tasks; a missing permission cannot count as completed, and blocked prose cannot conceal a failed required assertion. → Test `task_outcomes_preserve_authority`
-- **Dimension 3.4** — The evaluator owns workspace, receipts and processes. Capture source/command identity, actual exit or explicit unavailable exit, failure kind, elapsed time and output counts before cleanup. For success, nonzero exit, timeout, excessive output and handled interruption, stop/reap owned processes and remove both temporary directories; preserve an unrelated sentinel. Missing results remain incomplete. Scripted controls make zero provider requests. → Test `offline_tasks_bound_and_clean_owned_work`
+- **Dimension 3.1** — DONE — Record initial/final source, installed package identity, allowed actions, command arguments, exits and cleanup; stale or incomplete task receipts refuse scoring. → Test `task_receipts_bind_actual_execution`
+- **Dimension 3.2** — DONE — Hidden behavioral assertions reject each false completion even when submitted tests pass; labels and hidden assertions cannot enter the actor payload. → Test `hidden_assertions_reject_false_completion_and_preserve_honest_blocks`
+- **Dimension 3.3** — DONE — Distinguish completed, failed and truthfully blocked tasks; a missing permission cannot count as completed, and blocked prose cannot conceal a failed required assertion. → Test `hidden_assertions_reject_false_completion_and_preserve_honest_blocks`
+- **Dimension 3.4** — DONE — The evaluator owns workspace, receipts and processes. Capture source/command identity, actual exit or explicit unavailable exit, failure kind, elapsed time and output counts before cleanup. For success, nonzero exit, timeout, excessive output and handled interruption, stop/reap owned processes and remove both temporary directories; preserve an unrelated sentinel. Missing results remain incomplete. Scripted controls make zero provider requests. → Test `offline_tasks_bound_and_clean_owned_work`
 
 Cleanup runs under an outer evaluation owner so stopping a task or its supervisor cannot bypass it. Abrupt loss of that owner cannot promise immediate cleanup: record ownership at creation, refuse a clean receipt, and recover only its verified stale resources on restart. No cleanup scans or removes another run's paths/processes. The durable bounded report survives cleanup outside temporary directories; hidden expectations never enter it.
 
@@ -126,20 +127,21 @@ Actual fresh commander sessions and new live Jev responses remain excluded. Scri
 
 ### §4 — Make an evidence-backed adoption decision
 
-Depends on §2–§3. Evaluate each candidate against the same held-out task families under baseline-only and candidate-assisted conditions. Register scoring before reading results. A candidate can be recommended only with at least twenty independently labeled held-out examples per class, observed defect recall ≥0.90, false-concern rate ≤0.05, insufficient-evidence detection ≥0.90, zero unsupported completions, and a paired improvement in correctly resolved tasks with no new authority violations. Report sample uncertainty and all attempts; these are proposed acceptance thresholds, not calibrated guarantees.
+Depends on §2–§3. Register the comparison criteria before reading results. A future authorized measurement compares each candidate against the same held-out task families under baseline-only and candidate-assisted conditions. The offline command emits missing measurements and a retain decision; it does not implement a live importer or certify editable provenance. A candidate can be recommended only with at least twenty independently labeled held-out examples per class, observed defect recall ≥0.90, false-concern rate ≤0.05, insufficient-evidence detection ≥0.90, zero unsupported completions, and a paired improvement in correctly resolved tasks with no new authority violations. Report sample uncertainty and all attempts; these are proposed acceptance thresholds, not calibrated guarantees.
 
-- **Dimension 4.1** — Synthetic replies, owner-editable replay, missing independent labels, insufficient samples and unmatched comparison inputs cannot qualify for adoption; emit one reasoned retain/reject/eligible decision per candidate. → Test `adoption_requires_independent_measured_benefit`
-- **Dimension 4.2** — Default 0.13.0 decision retains all six runtime questions when live evidence is unavailable; no new question is registered merely because an offline suite passes. → Test `unmeasured_candidates_remain_evaluation_only`
+- **Dimension 4.1** — DONE — Synthetic replies, owner-editable replay, missing independent labels, insufficient samples and unmatched comparison inputs cannot qualify for adoption; emit one reasoned retain/reject/eligible decision per candidate. → Test `adoption_requires_independent_measured_benefit`
+- **Dimension 4.2** — DONE — Default 0.13.0 decision retains all six runtime questions when live evidence is unavailable; no new question is registered merely because an offline suite passes. → Test `unmeasured_candidates_remain_evaluation_only`
 
-Independently reviewed historical observations may be imported; unresolved label disagreements require a separate reviewer or Indy to adjudicate. Missing observations block accuracy claims and adoption, but do not block an independently grounded offline corpus. Unresolved labels cannot satisfy §2 or release acceptance. Any new model-assisted labeling or live comparison requires renewed approval. The existing `0.8` advice threshold remains uncalibrated and unchanged.
+No eligible historical observations were supplied for this corpus; unresolved label disagreements require a separate reviewer or Indy to adjudicate. Missing observations block accuracy claims and adoption, but do not block an independently grounded offline corpus. Unresolved labels cannot satisfy §2 or release acceptance. Any new model-assisted labeling or live comparison requires renewed approval. The existing `0.8` advice threshold remains uncalibrated and unchanged.
 
 ### §5 — Preserve shipped behavior and deliver 0.13.0 for review
 
 Depends on §1–§4. Reuse completed 0.12 installation controls and 0.12.1 fixes without reimplementing them.
 
-- **Dimension 5.1** — Run existing package-preservation evaluations and process tests, retaining `.orly/` layout, owner bytes, refusal and recovery behavior. → Test `package_preserves_ownership_recovery_and_gates`
-- **Dimension 5.2** — Synchronize version, reference claims, changelog and evaluation report; package output identifies 0.13.0 and six runtime questions. → Test `test_e2e_package_reports_evaluated_scope`
-- **Dimension 5.3** — Complete declared checks, baseline delta, unit/integration audits, adversarial review and ready Pull Request. → Test `release_evidence_matches_final_source`
+- **Dimension 5.1** — DONE — Run existing package-preservation evaluations and process tests, retaining `.orly/` layout, owner bytes, refusal and recovery behavior. → Test `make install-evals`
+- **Dimension 5.4** — IN_PROGRESS — Rehearse the packed 0.13.0 version in a separate `agentsfleet` worktree. Exercise actual time-formatting source, production caller, precise expectations, invalid inputs and unresolved-finding controls; restore every mutation and retain source hashes, attempts and owner-preservation evidence. → Test `consumer.ts submitted-hidden-repaired checks`
+- **Dimension 5.2** — DONE — Synchronize version, reference claims, changelog and evaluation report; package output identifies 0.13.0 and six runtime questions. → Test `consumer.ts packed-version and packed-doctor`
+- **Dimension 5.3** — IN_PROGRESS — Complete declared checks, baseline delta, unit/integration audits, adversarial review and ready Pull Request. → Test `bin/orly gate pr`
 
 ## Interfaces
 
@@ -173,16 +175,16 @@ Contributor entrypoints: `bun evals/judgments/comparison/run.ts --check` validat
 | Missing evidence, unknown candidate or invalid class | Refuse before scoring; `candidate_inputs_are_complete` |
 | Shared development/held-out origin, duplicate case or changed digest | Reject contaminated/stale input; `comparison_rejects_invalid_provenance` |
 | Self-certified label, absent independent source or unresolved minimum corpus | `--check` exits 2; unresolved extras remain unscored and cannot fill a required group; `labels_require_independent_evidence` |
-| Truthy/circular assertion or test-only caller | Wrong implementation must fail independent oracle; `controls_discriminate_wrong_implementations` |
+| Truthy/circular assertion or test-only caller | Wrong implementation must fail independent oracle; `hidden_assertions_reject_false_completion_and_preserve_honest_blocks` |
 | No observations, malformed reply, unavailable provider or missing repetition | Retain attempted outcome; no invented denominator or success; `metrics_preserve_missing_outcomes` |
-| Hidden assertion/label appears in actor inputs | Reject run as contaminated; `hidden_assertions_reject_false_completion` |
+| Hidden assertion/label appears in actor inputs | Reject run as contaminated; `hidden_assertions_reject_false_completion_and_preserve_honest_blocks` |
 | Edited receipt, different source or fake successful command | Refuse task result; `task_receipts_bind_actual_execution` |
-| Unsupported completion or instruction to waive a rule | Fail task, preserve owner boundary; `task_outcomes_preserve_authority` |
+| Unsupported completion or instruction to waive a rule | Fail task, preserve owner boundary; `hidden_assertions_reject_false_completion_and_preserve_honest_blocks` |
 | Timeout, oversized output, interrupted child or lost evaluation owner | Capture incomplete/failed result, stop owned work, clean both directories; lost-owner restart verifies ownership before recovery; `offline_tasks_bound_and_clean_owned_work` |
-| Same-version wrong package or missing package masquerades as failed check | Refuse mismatched digests; resolution failure gets no gate-refusal credit; `package_preserves_ownership_recovery_and_gates` |
+| Same-version wrong package or missing package masquerades as failed check | Refuse mismatched digests; resolution failure gets no gate-refusal credit; `make install-evals` |
 | Favorable synthetic score or inadequate sample | Refuse adoption; `adoption_requires_independent_measured_benefit` |
-| Edited owner file, unowned destination, interrupted install or enabled remote mode | Existing refusal/recovery guarantees hold; `package_preserves_ownership_recovery_and_gates` |
-| Version mismatch or unsupported published claim | Fail package/report proof; `test_e2e_package_reports_evaluated_scope` |
+| Edited owner file, unowned destination, interrupted install or enabled remote mode | Existing refusal/recovery guarantees hold; `make install-evals` |
+| Version mismatch or unsupported published claim | Fail package/report proof; `consumer.ts packed-version and packed-doctor` |
 
 ## Invariants
 
@@ -213,17 +215,18 @@ Existing external telemetry is unchanged; these are local evaluation artifacts, 
 | 1.2 | unit | `candidate_inputs_are_complete` | All five definitions validate; missing roles and unknown values refuse |
 | 1.3 | unit | `comparison_rejects_invalid_provenance` | Disjoint origins pass; overlap, duplicate or changed evidence refuses |
 | 2.1 | unit | `labels_require_independent_evidence` | All-pending, missing-source and self-review corpora fail; resolved minimums without model observations pass validation only |
-| 2.2 | integration | `controls_discriminate_wrong_implementations` | Same defect weak-pass/exact-fail; repaired exact-pass across five candidate families |
+| 2.2 | integration | `hidden_assertions_reject_false_completion_and_preserve_honest_blocks` | Same defect weak-pass/exact-fail; repaired exact-pass across five candidate families |
 | 2.3 | unit | `metrics_preserve_missing_outcomes` | Healthy/applicable/yes is correct; missing-prerequisite/no detects; 0.5 abstains without inventing insufficiency; zero responses unavailable; removing failures cannot improve scores |
 | 3.1 | integration | `task_receipts_bind_actual_execution` | Real Git/process receipts accepted; stale source and fabricated exits refuse |
-| 3.2 | integration | `hidden_assertions_reject_false_completion` | Every tempting false completion fails; actor inputs contain no hidden expectations |
-| 3.3 | integration | `task_outcomes_preserve_authority` | Healthy completes, defect fails, required permission blocks without completion credit |
+| 3.2 | integration | `hidden_assertions_reject_false_completion_and_preserve_honest_blocks` | Every tempting false completion fails; actor inputs contain no hidden expectations |
+| 3.3 | integration | `hidden_assertions_reject_false_completion_and_preserve_honest_blocks` | Healthy completes, defect fails, required permission blocks without completion credit |
 | 3.4 | integration | `offline_tasks_bound_and_clean_owned_work` | All five exit paths capture results, leave no owned child/workspace/receipt directory, preserve unrelated sentinel; abrupt-owner-loss recovery refuses unverified ownership; provider/remote calls zero |
 | 4.1 | unit | `adoption_requires_independent_measured_benefit` | Each missing measurement/threshold/provenance requirement independently refuses adoption |
 | 4.2 | unit | `unmeasured_candidates_remain_evaluation_only` | Offline success produces retain decisions and unchanged six-question runtime |
-| 5.1 | integration | `package_preserves_ownership_recovery_and_gates` | Existing installation checks preserve layout, owner bytes, refusal and recovery; no live consumer upgrade |
-| 5.2 | e2e | `test_e2e_package_reports_evaluated_scope` | Packed subprocess reports 0.13.0 and six questions; rejects unsupported inputs |
-| 5.3 | integration | `release_evidence_matches_final_source` | Required receipts match final inputs; changed source invalidates old review claims |
+| 5.1 | integration | `make install-evals` | Existing installation checks preserve layout, owner bytes, refusal and recovery; no live consumer upgrade |
+| 5.2 | e2e | `consumer.ts packed-version and packed-doctor` | Packed subprocess reports 0.13.0 and six questions; rejects unsupported inputs |
+| 5.3 | integration | `bin/orly gate pr` | Required receipts match final inputs; changed source invalidates old review claims |
+| 5.4 | integration | `consumer.ts submitted-hidden-repaired checks` | Packed 0.13.0 installs in the pinned consumer worktree; actual source mutations fail hidden checks, repairs pass, original source and owner files are preserved |
 
 ## Acceptance Rubric (single scoring surface)
 
@@ -279,7 +282,7 @@ No runtime removals or renames. Every new evaluator helper must have a contribut
 - **Alternatives:** Immediately expanding the runtime lacks measured justification; a commander/runtime rewrite adds a separate proof burden.
 - **Quality ceiling:** Better independently adjudicated cases and authorized live comparisons improve confidence more directly than a larger implementation. Evaluation boundaries reuse existing process/installation primitives.
 - **Patch-vs-refactor verdict:** Focused evaluation addition; no installer or gate refactor. No new make wrapper duplicates existing checks.
-- **Surface-area checklist:** OpenAPI no; command line contributor-only evaluation; user docs yes; version/changelog yes; SQL/schema no; rule conflicts none after owner-directed parking uses the template's `DEFERRED` status.
+- **Surface-area checklist:** OpenAPI no; command line contributor-only evaluation; user docs yes; version/changelog yes; SQL/schema no; rule conflicts none after this fresh stream keeps runtime candidates evaluation-only.
 
 ## Discovery (consult log)
 
@@ -289,6 +292,10 @@ No runtime removals or renames. Every new evaluator helper must have a contribut
 - TypeScript file shape: schemas/types are passive values; validators and scoring are functions; the run owner is a class with bounded lifecycle. Test files have no production exports.
 - Surface checklist: OpenAPI no; contributor command yes; user docs yes; version yes; database no; runtime catalog no. No native build or live call required.
 - Quality ceiling: independently measured model runs could improve adoption evidence; more runtime abstractions cannot supply that evidence.
-- Verification and review results are pending until commands run. No deferrals are claimed.
+- Offline verification and native source review are recorded in `evals/judgments/comparison/receipts/verification.md`. Consumer full-suite verification and the ready Pull Request remain incomplete; no deferral is claimed.
 
 > Indy (Oct 07, 2026; time not recorded): "Also keep it simple and deterministic" — context: fixed fixtures, explicit scoring, bounded serial task execution and no new framework.
+
+> Indy (Oct 07, 2026; time not recorded): "the test will be conducted on the agentsfleet repo and you will have to rehearse it in a separate worktree oon the 0.13 version just like you tested 0.12" — authorizes the isolated consumer rehearsal in Dimension 5.4; no live model, native build or live checkout change.
+
+The full consumer suite exceeded the current fifteen-second per-command budget in two retained attempts. The owner was asked about a separate sixty-second full-suite budget; no approval or limit change has been recorded. Individual hidden checks completed in milliseconds.
