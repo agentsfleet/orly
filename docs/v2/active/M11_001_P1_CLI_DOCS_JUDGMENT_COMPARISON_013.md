@@ -15,23 +15,23 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Prototype:** v2.0.0
 **Milestone:** M11
 **Workstream:** 001
-**Date:** Oct 06, 2026
-**Status:** PENDING
+**Date:** Oct 07, 2026
+**Status:** IN_PROGRESS
 **Priority:** P1 — prove useful judgments and honest completion evidence
 **Categories:** CLI DOCS (command-line interface, documentation)
 **Batch:** B1 — one implementation stream
 **Branch:** feat/m11-judgment-comparison
-**Baseline revision:** pending — set at opening
+**Baseline revision:** a09ae05042b66cde67c91c1f326fa1b7e3f5b94e
 **Test Baseline:** pending — measured before the Pull Request
 **Baseline evidence:** pending — measured command receipt
 **Depends on:** M09_001 merged implementation; M08 historical observations only, not its unfinished checks
 **Provenance:** agent-generated through orly-spec-new from Indy's 0.13.0 request and parking instruction
-**Canonical architecture:** `docs/ORLY_ARCHITECTURE.md` §§Gates, Evidence, TypeScript judgment experiment; `docs/architecture/installation.md`; `docs/architecture/remote-execution.md`
+**Canonical architecture:** `docs/architecture/judgment-evaluation.md`; `docs/architecture/installation.md`
 
 ## Overview
 
 **Goal (testable):** Prepare an orly 0.13.0 Pull Request whose offline evaluation detects unsupported completion, compares five judgment candidates against the unchanged six-question baseline, and refuses runtime adoption without independent measured benefit.
-**Problem:** A passing selected test can miss an obligation, an uncalled implementation, a failure path or an unresolved finding. Historical Jev observations do not measure those gaps across complete tasks (`evals/release/evaluation-plan.md`, Evaluation set and measurement).
+**Problem:** A passing selected test can miss an obligation, an uncalled implementation, a failure path or an unresolved finding. Historical TypeSafe Jev model observations do not measure those gaps across complete tasks (`evals/release/evaluation-plan.md`, Evaluation set and measurement).
 **Solution summary:** Add a bounded offline evaluation suite with independent expectations, separated development and held-out families, hidden task assertions, complete outcome accounting and an adoption report. Retain the TypeScript/Bun runtime, installed ownership/recovery guarantees and deterministic gates. Produce the 0.13.0 source package and ready Pull Request; Merge, publication and live upgrades require subsequent owner instruction.
 
 ## PR Intent & comprehension handshake
