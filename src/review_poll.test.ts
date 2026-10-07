@@ -30,7 +30,11 @@ else if(args[0]==="pr" && args[1]==="view") {
   else { const prior=(await Bun.file(process.env.POLL_CALLS).text()).split("\\n").filter(x=>x.includes("headRefOid")).length; console.log((process.env.POLL_MODE==="changed" && prior>1) || (process.env.POLL_MODE==="changed-check" && prior>2) ? "changed-revision" : process.env.POLL_HEAD); }
 } else if(args[0]==="pr" && args[1]==="checks") {
   if(process.env.POLL_STATE==="fetch-failed"){console.error("temporary fetch refusal");process.exit(2);}
-  console.log(JSON.stringify(process.env.POLL_STATE==="empty" ? [] : [{name:"tests",state:"SUCCESS",bucket:process.env.POLL_STATE==="failed" ? "fail" : "pass",link:"https://example.invalid/check"}]));
+  const state=process.env.POLL_STATE;
+  const bucket=state==="failed" ? "fail" : state==="pending" ? "pending" : "pass";
+  console.log(JSON.stringify(state==="empty" ? [] : state==="malformed-check" ? [{name:"tests"}] : [{name:"tests",state:bucket==="pass" ? "SUCCESS" : bucket==="fail" ? "FAILURE" : "IN_PROGRESS",bucket,link:"https://example.invalid/check"}]));
+  if(state==="failed") process.exit(1);
+  if(state==="pending") process.exit(8);
 } else if(args[0]==="api") {
   if(process.env.POLL_MODE==="fetch-failed" && args[1].includes("/issues/")){console.error("temporary summary refusal");process.exit(2);}
   const revision=process.env.POLL_MODE==="stale" ? "old-revision" : process.env.POLL_HEAD;
@@ -75,12 +79,23 @@ for (const mode of ["fetch-failed", "malformed", "changed", "changed-check", "st
   });
 }
 
-for (const state of ["empty", "fetch-failed", "failed"]) {
+for (const state of ["empty", "fetch-failed", "failed", "pending", "malformed-check"]) {
   test(`${state} check discovery stays incomplete`, () => {
     const result = poll("complete", state);
     expect(result.code).not.toBe(0);
     expect(result.output).toContain("reset quiet polls");
     expect(result.output).not.toContain("ci=green");
+  });
+}
+
+for (const state of ["failed", "pending"]) {
+  test(`${state} GitHub checks retain job details despite nonzero status`, () => {
+    const result = poll("complete", state);
+    expect(result.code).not.toBe(0);
+    expect(result.output).toContain("tests |");
+    expect(result.output).toContain("https://example.invalid/check");
+    expect(result.output).toContain(state === "failed" ? "FAILURE | fail" : "IN_PROGRESS | pending");
+    expect(result.output).not.toContain("check fetch incomplete");
   });
 }
 
@@ -105,7 +120,7 @@ else if(args[0]==="mr") {
   if(process.env.POLL_MODE==="fetch-failed" && endpoint.endsWith("/notes")){console.error("temporary summary refusal");process.exit(2);}
   if(endpoint.endsWith("/pipelines")) {
     if(process.env.POLL_STATE==="fetch-failed"){console.error("temporary pipeline refusal");process.exit(2);}
-    console.log(JSON.stringify(process.env.POLL_STATE==="empty" ? [] : [{id:3,sha:process.env.POLL_HEAD,status:process.env.POLL_STATE==="failed" ? "failed" : "success"}]));
+    console.log(JSON.stringify(process.env.POLL_STATE==="empty" ? [] : [{id:3,sha:process.env.POLL_HEAD,status:process.env.POLL_STATE==="failed" ? "failed" : process.env.POLL_STATE==="pending" ? "running" : "success",web_url:"https://example.invalid/pipeline"}]));
   } else if(process.env.POLL_MODE==="malformed") console.log(JSON.stringify({message:"not review evidence"}));
   else {
     const note=id=>({id,author:{username:"greptile"},body:id===1 ? "first-page finding" : "second-page finding",type:null});
@@ -148,11 +163,20 @@ for (const mode of ["fetch-failed", "malformed", "changed", "changed-check"]) {
   });
 }
 
-for (const state of ["empty", "fetch-failed", "failed"]) {
+for (const state of ["empty", "fetch-failed", "failed", "pending"]) {
   test(`GitLab ${state} pipeline discovery stays incomplete`, () => {
     const result = gitlabPoll("complete", state);
     expect(result.code).not.toBe(0);
     expect(result.output).toContain("reset quiet polls");
     expect(result.output).not.toContain("ci=green");
+  });
+}
+
+for (const state of ["failed", "pending"]) {
+  test(`GitLab ${state} pipeline retains its state and link`, () => {
+    const result = gitlabPoll("complete", state);
+    expect(result.code).not.toBe(0);
+    expect(result.output).toContain(`pipeline 3 | ${state === "failed" ? "failed" : "running"}`);
+    expect(result.output).toContain("https://example.invalid/pipeline");
   });
 }

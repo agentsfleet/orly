@@ -12,9 +12,11 @@ Package: `@agentsfleet/orly` (npm)
 Source: https://github.com/agentsfleet/orly
 License: Massachusetts Institute of Technology (MIT)
 
-This checkout prepares the unpublished 0.12.0 candidate. Published 0.11.0 already
-contains the same runtime commands and `.orly/` layout. The `bunx` commands below
-fetch the published package. Use the installed local tarball for candidate checks.
+0.12.0 shipped migration verification; the runtime commands and `.orly/` layout
+originally shipped in 0.11.0. The 0.12.1 patch avoids irrelevant staged audit
+snapshots and preserves hosted-check diagnostics. The `bunx` commands below
+fetch the published package; available versions are listed at
+https://github.com/agentsfleet/orly/releases. Use an installed local tarball for candidate checks.
 The comparison evaluator is parked for proposed 0.13 work; do not claim measured
 judgment improvement or enable new questions from its unfinished results.
 

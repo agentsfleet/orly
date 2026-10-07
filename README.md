@@ -42,10 +42,10 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
-## 0.12.0: migration verification
+## 0.12: migration verification
 
-0.12.0 is a local release candidate. Published 0.11.0 already provides the
-`.orly/` layout and the six existing `orly judge` questions.
+0.12.0 shipped migration verification and setup guidance. The `.orly/` layout
+and six existing `orly judge` questions originally shipped in 0.11.0.
 This release focuses on package verification, migration evidence and clearer setup guidance; it adds no new runtime judgment question.
 
 The `agentsfleet` trial upgraded a dedicated worktree from 0.10.14 using the packed candidate.
@@ -57,7 +57,10 @@ Existing deterministic checks retain control of gate results.
 The comparison evaluator is parked for proposed 0.13 work; model accuracy and candidate benefits remain unmeasured.
 See the [judgment reference](docs/JUDGMENTS.md) for evidence selection, offline replay and explicit source upload.
 
-The install commands below fetch the published package. They do not select this unpublished candidate.
+0.12.1 avoids copying repository files for staged audits with no matching files
+and makes hosted-check monitoring show job states and links before reporting a failure.
+See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
+The install commands below fetch the published package.
 
 ---
 
