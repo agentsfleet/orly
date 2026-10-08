@@ -42,9 +42,19 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
-## 0.13: measured judgment comparison
+## 0.14: retained Jev answers explained
 
-The 0.13.0 source candidate adds a deterministic examiner for unsupported completion claims.
+The [offline diagnosis](https://github.com/agentsfleet/orly/blob/main/evals/judgments/comparison/diagnosis/report.md) explains all 188 retained TypeSafe Jev attempts.
+It separates native-answer agreement, confidence withholding, grading disagreements and unavailable replies.
+Each attempt links to its saved inputs and a bounded explanation; unknown provider causes stay unknown.
+
+The diagnosis uses existing receipts and sends no new provider requests.
+All five proposed checks remain evaluation-only while fixture meanings and independent adoption evidence need review.
+These contributor records live in the source checkout; installed packages link to the same published source.
+
+## Measured judgment comparison
+
+The source-checkout examiner checks unsupported completion claims.
 It freezes the six runtime questions and evaluates five proposed checks separately.
 Those checks cover obligations, evidence, production wiring, failure tests and finding resolution.
 
@@ -55,7 +65,9 @@ A successful run reports `passed: true`; seeded false completions remain failed 
 
 A separate explicit `jev-run.ts --live` command measures TypeSafe Jev answers against the frozen expectations.
 Its retained report lists every measured answer, grading match, disagreement and unavailable response.
-Replay reproduces every result with zero new requests. Autonomous agent improvement remains unmeasured.
+The saved replay reproduced every result with zero new requests at historical source revision [`751ee303`](https://github.com/agentsfleet/orly/tree/751ee303d0c97a403863f12f33adf8fbc20ff433).
+Replay requires that revision's unchanged source inventory; changed bytes fail admission.
+Autonomous agent improvement remains unmeasured.
 All five candidates remain evaluation-only; uncertain and failed replies stay in the report.
 An additional rehearsal uses the packed candidate and actual `agentsfleet` source in an isolated worktree.
 See the [evaluation design](docs/architecture/judgment-evaluation.md) for commands, evidence and limits.
@@ -65,7 +77,8 @@ The [0.12 report](evals/release/release-report.md) retains the earlier package a
 TypeSafe's Jev model supplies runtime advice through explicit `orly judge` requests; contributor measurement uses the separate live evaluator.
 
 See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
-The install commands below fetch the published package; 0.13.0 publication is a separate owner action.
+The install commands below fetch the published package.
+The release workflow publishes 0.14.0 after its version change merges to `main`.
 
 ---
 
