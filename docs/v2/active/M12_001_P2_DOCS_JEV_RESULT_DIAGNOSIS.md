@@ -16,12 +16,12 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** Milestone 12 (M12)
 **Workstream:** 001
 **Date:** Oct 08, 2026
-**Status:** PENDING
+**Status:** IN_PROGRESS
 **Priority:** P2 — internal evaluation evidence
 **Categories:** Documentation (DOCS)
 **Batch:** B1 — one sequential workstream
-**Branch:** pending — set at CHORE(open)
-**Baseline revision:** pending — record the full comparison commit at CHORE(open)
+**Branch:** feat/m12-jev-result-diagnosis
+**Baseline revision:** 751ee303d0c97a403863f12f33adf8fbc20ff433
 **Test Baseline:** pending — declare evidence-only applicability before the Pull Request
 **Baseline evidence:** pending — verification record before the Pull Request
 **Depends on:** M11_001 — retained 0.13.0 evaluation inputs and receipts
