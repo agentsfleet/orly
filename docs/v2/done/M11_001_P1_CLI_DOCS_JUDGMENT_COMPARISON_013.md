@@ -22,7 +22,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Batch:** B1 — one implementation stream
 **Branch:** feat/m11-judgment-comparison
 **Baseline revision:** a09ae05042b66cde67c91c1f326fa1b7e3f5b94e
-**Test Baseline:** unit=536; integration included in unit lane; no separate integration command declared
+**Test Baseline:** unit=536 — integration included in unit lane; no separate integration command declared
 **Baseline evidence:** evals/judgments/comparison/receipts/baseline-unit.txt
 **Depends on:** M09_001 merged implementation; M08 historical observations only, not its unfinished checks
 **Provenance:** agent-generated through orly-spec-new from Indy's 0.13.0 request and parking instruction
