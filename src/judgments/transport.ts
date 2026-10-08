@@ -1,4 +1,4 @@
-import type { Prepared } from "./types";
+import type { ProviderInput } from "./types";
 
 import { OrlyError } from "../model";
 import { ENDPOINT, MAX_RESPONSE_BYTES, REQUEST_TIMEOUT_MS } from "./constants";
@@ -7,7 +7,7 @@ import { parseReply, type Reply } from "./wire";
 
 export type Fetch = (request: Request) => Promise<Response>;
 
-export async function requestAdvice(prepared: Prepared, credential: string, fetcher: Fetch = fetch, timeoutMs = REQUEST_TIMEOUT_MS): Promise<Reply> {
+export async function requestAdvice(prepared: ProviderInput, credential: string, fetcher: Fetch = fetch, timeoutMs = REQUEST_TIMEOUT_MS): Promise<Reply> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   let response: Response | undefined;

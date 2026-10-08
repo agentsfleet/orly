@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.13.0 — 2026-10-07
+
+A source-checkout examiner checks unsupported completion claims and grades actual TypeSafe Jev answers against frozen expectations.
+
+- **Comparison** — freezes six runtime questions and evaluates five proposed checks with separately validated expected answers.
+- **Task evidence** — hidden behavioral checks reject seeded false completions; reports retain failed and missing attempts.
+- **Measurement** — retains typed Jev replies, uncertainty, failures and per-example grades; replay sends no new requests.
+- **OpenAPI guidance** — names the two surviving parity tests and makes build regeneration plus a clean diff an explicit verify step.
+- **Adoption** — keeps candidates evaluation-only because independent provenance and paired-task improvement remain unproved.
+
+The installed `.orly/` layout and 0.12.1 fixes remain unchanged.
+
 ## 0.12.1
 
 Staged audits avoid copying repository files when their filename scope is empty.

@@ -1,0 +1,24 @@
+bun test v1.4.2 (744846f84)
+
+src/judgment_comparison_controls.test.ts:
+(pass) hidden_assertions_reject_false_completion_and_preserve_honest_blocks [13793.95ms]
+(pass) missing_task_attempts_are_retained_without_preventing_later_attempts [0.36ms]
+(pass) question_oracles_use_role_evidence_and_never_the_stated_classification [19.88ms]
+(pass) exact_assertion_can_correctly_reject_wrong_application_output [19.42ms]
+(pass) missing_source_and_missing_dependency_inventory_have_different_answers [19.20ms]
+(pass) contributor_command_refuses_live_or_unknown_arguments [0.09ms]
+
+src/judgment_labels.test.ts:
+(pass) labels_require_independent_evidence [14.34ms]
+(pass) all_pending_and_all_disputed_labels_cannot_satisfy_minimums [2.36ms]
+(pass) a_missing_independent_source_and_invented_selected_text_refuse_labels [1.31ms]
+(pass) an_independence_flag_cannot_replace_external_oracle_proof [1.40ms]
+(pass) stale_oracle_revision_and_changed_label_evidence_refuse_labels [1.60ms]
+(pass) missing_duplicate_and_mismatched_labels_refuse_scoring [22.03ms]
+(pass) labels_cannot_change_answer_types_or_relabel_case_health [1.07ms]
+(pass) frozen_reference_bytes_validate_without_git_history_and_reject_modified_sources [20.94ms]
+
+ 14 pass
+ 0 fail
+ 103 expect() calls
+Ran 14 tests across 2 files. [13.95s]

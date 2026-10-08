@@ -1,0 +1,12 @@
+bun test v1.4.2 (744846f84)
+
+src/evaluation_resources.test.ts:
+(pass) evaluation cleanup preserves caller state after evals/ledger/run.sh [18605.05ms]
+(pass) evaluation cleanup preserves caller state after evals/dispatch/parity.sh [2080.57ms]
+(pass) ledger command-substitution fixtures are removed after a failing caller [29.39ms]
+(pass) ledger command-substitution fixtures are removed after termination [27.01ms]
+
+ 4 pass
+ 0 fail
+ 17 expect() calls
+Ran 4 tests across 1 file. [20.85s]

@@ -1,0 +1,691 @@
+{
+  "attempts": [
+    {
+      "label": "branch --show-current",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "git",
+          "-C",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "branch",
+          "--show-current"
+        ],
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "121092f778daedcc405f00a94131c1795fc2bb9d5c7502b53ed807d13f23389d",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 11,
+          "output_bytes": 24
+        },
+        "stdout": "test/orly-013-rehearsal\n",
+        "stderr": "",
+        "child_pid": 73577,
+        "stdout_digest": "07309c1ca30100378c2a60db605b64cd8a10ff1b8b89d0cd8293b36a55f330c7",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-S7Vgq9"
+      }
+    },
+    {
+      "label": "rev-parse HEAD",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "git",
+          "-C",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "rev-parse",
+          "HEAD"
+        ],
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "3443011a5e1d39025c9b8d6dbaacc1a3708f8356d7e4d0c4b0e980badc8016a0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 9,
+          "output_bytes": 41
+        },
+        "stdout": "0c52c2f421c5ad706e0c831831461201dc1828ea\n",
+        "stderr": "",
+        "child_pid": 73579,
+        "stdout_digest": "b3a0294e3db1afb2a968ef3d6a15305bb67e0a40d01818d9237c665f96826d14",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-IuDTWF"
+      }
+    },
+    {
+      "label": "status --porcelain",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "git",
+          "-C",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "status",
+          "--porcelain"
+        ],
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "2d2facec103e5e7e4e78f4caf0c977289d8a05dd171a0d7b4f6c9ee65b58f6b2",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 800,
+          "output_bytes": 0
+        },
+        "stdout": "",
+        "stderr": "",
+        "child_pid": 73581,
+        "stdout_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-vqCZdV"
+      }
+    },
+    {
+      "label": "packed-version",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "--cwd",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly/src/cli.ts",
+          "--root",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly",
+          "--version"
+        ],
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "502f625c5eed5f881d2e0d9fa2d48b7ef9f2f3bf04ab2c4f1c2d629589e0a7b8",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 33,
+          "output_bytes": 7
+        },
+        "stdout": "0.13.0\n",
+        "stderr": "",
+        "child_pid": 73584,
+        "stdout_digest": "d84c9e596c7d6a94e5f74579ef8d8912a807b0d28582474900ad35dfb3edfcf4",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-c0jCoJ"
+      }
+    },
+    {
+      "label": "packed-update",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "--cwd",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly/src/cli.ts",
+          "--root",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly",
+          "update",
+          "--no-hooks"
+        ],
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "109257e201e5934197896a1c9f576706a94d5aee8454df690d7c6b4c35764379",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 153,
+          "output_bytes": 46
+        },
+        "stdout": "🟢 1 written, 70 already current (16 packs)\n",
+        "stderr": "",
+        "child_pid": 73586,
+        "stdout_digest": "1c58c755951c3509752bfa4137ab056312a775d696fdc9fbd17a2f98a0c4e858",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-lbNibp"
+      }
+    },
+    {
+      "label": "packed-update-idempotent",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "--cwd",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly/src/cli.ts",
+          "--root",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly",
+          "update",
+          "--no-hooks"
+        ],
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "109257e201e5934197896a1c9f576706a94d5aee8454df690d7c6b4c35764379",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 116,
+          "output_bytes": 46
+        },
+        "stdout": "🟢 0 written, 71 already current (16 packs)\n",
+        "stderr": "",
+        "child_pid": 73590,
+        "stdout_digest": "e5d894cb0c39eef656967d6abcb1649ce0a01dcb7f09b1c2ac3319f664643008",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-07GgQX"
+      }
+    },
+    {
+      "label": "packed-doctor",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "--cwd",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly/src/cli.ts",
+          "--root",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly",
+          "doctor"
+        ],
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "4ec9b8e78815916c924a55bf64b6f8c9a2c6afda3c60c5640da235bc3bb7a4e7",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 65,
+          "output_bytes": 88
+        },
+        "stdout": "🟢 installed rules match .orly/orly.json; work and verification commands are declared\n",
+        "stderr": "",
+        "child_pid": 73594,
+        "stdout_digest": "94ea9c4e19f2411d8fb0bb48f3012ba0205ea14a8a69a31c39e14660f84dfe0d",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-siHCnr"
+      }
+    },
+    {
+      "label": "baseline-design-system",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "make",
+          "-C",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "test-unit-design-system"
+        ],
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "9acb6b6486d8bc378315c4fc61bfd1a2d9c9a5d0dca59d29bfcf0c82a1d5a09a",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 10996,
+          "output_bytes": 8965
+        },
+        "stdout": "→ [design-system] Running Vitest unit tests...\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv5.0.3 \u001b[39m\u001b[90m/private/tmp/agentsfleet-orly-013-rehearsal/ui/packages/design-system\u001b[39m\n\n \u001b[32m✓\u001b[39m src/tokens.css.test.ts \u001b[2m(\u001b[22m\u001b[2m94 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 15\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/time-utils.test.ts \u001b[2m(\u001b[22m\u001b[2m48 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 43\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Terminal.test.tsx \u001b[2m(\u001b[22m\u001b[2m19 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 246\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Button.test.tsx \u001b[2m(\u001b[22m\u001b[2m30 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 273\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/ConfirmDialog.test.tsx \u001b[2m(\u001b[22m\u001b[2m13 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 635\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Dialog.test.tsx \u001b[2m(\u001b[22m\u001b[2m16 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 678\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m Dialog \u001b[2m(16)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m returns focus to an external opener after a controlled dialog closes\u001b[33m 357\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Toast.test.tsx \u001b[2m(\u001b[22m\u001b[2m16 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 75\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/List.test.tsx \u001b[2m(\u001b[22m\u001b[2m16 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 58\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Time.test.tsx \u001b[2m(\u001b[22m\u001b[2m19 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 110\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Alert.test.tsx \u001b[2m(\u001b[22m\u001b[2m17 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 382\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DataTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m48 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1360\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Form.test.tsx \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 268\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DashboardPrimitives.test.tsx \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 232\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DropdownMenu.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 471\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DescriptionList.test.tsx \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 85\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Pagination.test.tsx \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 462\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/NavItem.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 197\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/utils.test.ts \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 93\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/LogLine.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 76\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/CopyButton.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 369\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/IconAction.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 268\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/RadioGroup.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 318\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/InstallBlock.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 288\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Card.test.tsx \u001b[2m(\u001b[22m\u001b[2m12 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 51\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/TabNav.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 267\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Tabs.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 333\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/StatusLine.test.tsx \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 199\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Select.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 440\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/use-resettable-timeout.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 33\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/PageHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 97\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Badge.test.tsx \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 100\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Input.test.tsx \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 56\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/UsageBar.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 97\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/StatusCard.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 82\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Section.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 52\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Separator.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 65\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Textarea.test.tsx \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 77\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/OptionCard.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 317\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/index.test.ts \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 7\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/WakePulse.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 60\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/TooltipButton.test.tsx \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 313\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/EmptyState.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 60\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Display.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 39\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DataTableModel.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 22\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/SectionLabel.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 52\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Nav.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 119\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Skeleton.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 31\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Tooltip.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 238\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Accordion.test.tsx \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 256\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Refpill.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 47\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DataTableFocus.test.tsx \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 470\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Grid.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 53\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/BrailleSpinner.test.tsx \u001b[2m(\u001b[22m\u001b[2m1 test\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 60\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Spinner.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 192\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/SectionHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 146\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/PageTitle.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 114\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/PageLayout.test.tsx \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 27\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Label.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 28\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/ActionForm.test.tsx \u001b[2m(\u001b[22m\u001b[2m1 test\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 73\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DashboardShellHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m1 test\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 63\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m60 passed\u001b[39m\u001b[22m\u001b[90m (60)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m647 passed\u001b[39m\u001b[22m\u001b[90m (647)\u001b[39m\n\u001b[2m   Start at \u001b[22m 09:51:24\n\u001b[2m   Duration \u001b[22m 9.79s\u001b[2m (environment 57%, tests 20%, setup 11%, import 7%, transform 4%, worker 1%)\u001b[22m\n\n\u001b[2mEnvironment \u001b[22m \u001b[33mjsdom was created 60 times\u001b[39m\u001b[2m · 33.61s total, 57% of tracked time\u001b[22m\n\u001b[2m            \u001b[22m \u001b[2mcreate it once per worker with \u001b[22m\u001b[33mpool: 'vmThreads'\u001b[39m\u001b[2m (keeps per-file isolation) or \u001b[22m\u001b[33misolate: false\u001b[39m\u001b[2m (shares it across files)\u001b[22m\n\u001b[2m            \u001b[22m \u001b[2mlearn more: https://vitest.dev/guide/improving-performance#test-environments\u001b[22m\n\n✓ [design-system] Unit tests passed\n",
+        "stderr": "$ vitest run\n\u001b[90mstderr\u001b[2m | src/design-system/CopyButton.test.tsx\u001b[2m > \u001b[22m\u001b[2mCopyButton\u001b[2m > \u001b[22m\u001b[2mreverts the accessible name after the reset window\n\u001b[22m\u001b[39mAn update to CopyButton inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act\n\n\u001b[90mstderr\u001b[2m | src/design-system/CopyButton.test.tsx\u001b[2m > \u001b[22m\u001b[2mCopyButton\u001b[2m > \u001b[22m\u001b[2mreverts from failed to idle after the reset window\n\u001b[22m\u001b[39mAn update to CopyButton inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act\n\nNot implemented: navigation to another Document\n",
+        "child_pid": 73599,
+        "stdout_digest": "4b91076fb25400ed145e2e99142225d32526a88dfbfe017f2dae9d6d787fb7fc",
+        "stderr_digest": "4d7dd3a59d61eb3d1af2a7bd28c6c2b1143c8f24b2836ae4e21e1acc3f66fbac",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-dxicof"
+      }
+    },
+    {
+      "label": "locale-false-completion:submitted",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "3392c05d0f9b3a7b705169de8c8e24b8acd1cd7d7efd37fc6ff54ff1471fd1ad",
+        "source_after": "3392c05d0f9b3a7b705169de8c8e24b8acd1cd7d7efd37fc6ff54ff1471fd1ad",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 20,
+          "output_bytes": 40
+        },
+        "stdout": "[{\"name\":\"output-exists\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 73728,
+        "stdout_digest": "81f66ec5d01d73b01eaa7951b1ab8aea00a14ebbd938a477ab8716386ab97bdc",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-x7DPHX"
+      }
+    },
+    {
+      "label": "locale-false-completion:hidden",
+      "expected": 1,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "2b6a944dd9d3b4b7c38c734c0f86e9f3c623ba40e74d8375bdcaac4107b0a536",
+        "source_after": "2b6a944dd9d3b4b7c38c734c0f86e9f3c623ba40e74d8375bdcaac4107b0a536",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 1,
+          "elapsed_ms": 20,
+          "output_bytes": 455
+        },
+        "stdout": "[{\"name\":\"exact-locale-en-US\",\"passed\":true},{\"name\":\"caller-clock-en-US\",\"passed\":true},{\"name\":\"caller-absolute-en-US\",\"passed\":true},{\"name\":\"exact-locale-en-GB\",\"passed\":false},{\"name\":\"caller-clock-en-GB\",\"passed\":true},{\"name\":\"caller-absolute-en-GB\",\"passed\":false},{\"name\":\"invalid-clock-not-a-date\",\"passed\":true},{\"name\":\"invalid-caller-not-a-date\",\"passed\":true},{\"name\":\"invalid-clock-\",\"passed\":true},{\"name\":\"invalid-caller-\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 73730,
+        "stdout_digest": "1db92eb43620a85ed90ff13d1e6a22f1c3ab8c139d2b92c553b5e80b546b572f",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-aS3dpJ"
+      }
+    },
+    {
+      "label": "locale-defect-existing-design-system",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "make",
+          "-C",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "test-unit-design-system"
+        ],
+        "source_before": "2b6a944dd9d3b4b7c38c734c0f86e9f3c623ba40e74d8375bdcaac4107b0a536",
+        "source_after": "2b6a944dd9d3b4b7c38c734c0f86e9f3c623ba40e74d8375bdcaac4107b0a536",
+        "command_digest": "9acb6b6486d8bc378315c4fc61bfd1a2d9c9a5d0dca59d29bfcf0c82a1d5a09a",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 10621,
+          "output_bytes": 9156
+        },
+        "stdout": "→ [design-system] Running Vitest unit tests...\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv5.0.3 \u001b[39m\u001b[90m/private/tmp/agentsfleet-orly-013-rehearsal/ui/packages/design-system\u001b[39m\n\n \u001b[32m✓\u001b[39m src/design-system/DropdownMenu.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 369\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/ConfirmDialog.test.tsx \u001b[2m(\u001b[22m\u001b[2m13 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 430\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Select.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 491\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Dialog.test.tsx \u001b[2m(\u001b[22m\u001b[2m16 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 524\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Pagination.test.tsx \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 409\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DataTableFocus.test.tsx \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 524\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m DataTable focus and cell identity \u001b[2m(2)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m keeps an edited field mounted when column render callbacks change\u001b[33m 363\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Alert.test.tsx \u001b[2m(\u001b[22m\u001b[2m17 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 180\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/OptionCard.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 132\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DataTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m48 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1351\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/RadioGroup.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 256\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Tabs.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 296\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/CopyButton.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 405\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/TooltipButton.test.tsx \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 326\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/InstallBlock.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 185\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Button.test.tsx \u001b[2m(\u001b[22m\u001b[2m30 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 240\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/TabNav.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 221\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/IconAction.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 269\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Form.test.tsx \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 325\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Accordion.test.tsx \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 298\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Terminal.test.tsx \u001b[2m(\u001b[22m\u001b[2m19 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 291\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Tooltip.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 193\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/StatusLine.test.tsx \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 159\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DashboardPrimitives.test.tsx \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 207\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Spinner.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 235\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/SectionHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 227\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Nav.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 329\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/NavItem.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 566\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m NavItem \u001b[2m(10)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m is a symmetric pill: rounded on every corner, with no accent rail\u001b[33m 433\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/PageTitle.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 191\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Time.test.tsx \u001b[2m(\u001b[22m\u001b[2m19 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 161\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Badge.test.tsx \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 77\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/UsageBar.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 253\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/PageHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 191\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/utils.test.ts \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 237\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DescriptionList.test.tsx \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 115\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/StatusCard.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 68\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Textarea.test.tsx \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 47\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/LogLine.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 96\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Toast.test.tsx \u001b[2m(\u001b[22m\u001b[2m16 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 105\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Separator.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 63\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/ActionForm.test.tsx \u001b[2m(\u001b[22m\u001b[2m1 test\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 146\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DashboardShellHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m1 test\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 211\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/WakePulse.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 59\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/BrailleSpinner.test.tsx \u001b[2m(\u001b[22m\u001b[2m1 test\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 44\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/EmptyState.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 105\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/List.test.tsx \u001b[2m(\u001b[22m\u001b[2m16 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 113\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Grid.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 64\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Input.test.tsx \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 125\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Section.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 25\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/SectionLabel.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 39\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Refpill.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 76\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Card.test.tsx \u001b[2m(\u001b[22m\u001b[2m12 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 79\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/time-utils.test.ts \u001b[2m(\u001b[22m\u001b[2m48 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 47\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Display.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 70\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/use-resettable-timeout.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 52\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Skeleton.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 27\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/tokens.css.test.ts \u001b[2m(\u001b[22m\u001b[2m94 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 11\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/PageLayout.test.tsx \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 23\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Label.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 25\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DataTableModel.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 15\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/index.test.ts \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 2\u001b[2mms\u001b[22m\u001b[39m\n\n\u001b[2m Test Files \u001b[22m \u001b[1m\u001b[32m60 passed\u001b[39m\u001b[22m\u001b[90m (60)\u001b[39m\n\u001b[2m      Tests \u001b[22m \u001b[1m\u001b[32m647 passed\u001b[39m\u001b[22m\u001b[90m (647)\u001b[39m\n\u001b[2m   Start at \u001b[22m 09:51:34\n\u001b[2m   Duration \u001b[22m 10.22s\u001b[2m (environment 59%, tests 20%, setup 10%, import 7%, transform 4%, worker 1%)\u001b[22m\n\n\u001b[2mEnvironment \u001b[22m \u001b[33mjsdom was created 60 times\u001b[39m\u001b[2m · 36.72s total, 59% of tracked time\u001b[22m\n\u001b[2m            \u001b[22m \u001b[2mcreate it once per worker with \u001b[22m\u001b[33mpool: 'vmThreads'\u001b[39m\u001b[2m (keeps per-file isolation) or \u001b[22m\u001b[33misolate: false\u001b[39m\u001b[2m (shares it across files)\u001b[22m\n\u001b[2m            \u001b[22m \u001b[2mlearn more: https://vitest.dev/guide/improving-performance#test-environments\u001b[22m\n\n✓ [design-system] Unit tests passed\n",
+        "stderr": "$ vitest run\n\u001b[90mstderr\u001b[2m | src/design-system/CopyButton.test.tsx\u001b[2m > \u001b[22m\u001b[2mCopyButton\u001b[2m > \u001b[22m\u001b[2mreverts the accessible name after the reset window\n\u001b[22m\u001b[39mAn update to CopyButton inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act\n\n\u001b[90mstderr\u001b[2m | src/design-system/CopyButton.test.tsx\u001b[2m > \u001b[22m\u001b[2mCopyButton\u001b[2m > \u001b[22m\u001b[2mreverts from failed to idle after the reset window\n\u001b[22m\u001b[39mAn update to CopyButton inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act\n\nNot implemented: navigation to another Document\n",
+        "child_pid": 73732,
+        "stdout_digest": "02c87e3b5187d0eccfc5d314971bb1fdf085fbd2c05d36e6e895099e21db79b1",
+        "stderr_digest": "4d7dd3a59d61eb3d1af2a7bd28c6c2b1143c8f24b2836ae4e21e1acc3f66fbac",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-mMvj4Y"
+      }
+    },
+    {
+      "label": "locale-false-completion:repaired",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "source_after": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 20,
+          "output_bytes": 453
+        },
+        "stdout": "[{\"name\":\"exact-locale-en-US\",\"passed\":true},{\"name\":\"caller-clock-en-US\",\"passed\":true},{\"name\":\"caller-absolute-en-US\",\"passed\":true},{\"name\":\"exact-locale-en-GB\",\"passed\":true},{\"name\":\"caller-clock-en-GB\",\"passed\":true},{\"name\":\"caller-absolute-en-GB\",\"passed\":true},{\"name\":\"invalid-clock-not-a-date\",\"passed\":true},{\"name\":\"invalid-caller-not-a-date\",\"passed\":true},{\"name\":\"invalid-clock-\",\"passed\":true},{\"name\":\"invalid-caller-\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74344,
+        "stdout_digest": "34173b819486523cf1cea2c06111c27064e037b3d0779c12ef426a32bfa4b50d",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-hh2IF2"
+      }
+    },
+    {
+      "label": "missing-seconds:submitted",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "a4e464818f779e33733b1cff36d987612df1c1cc004096d66ddb2b7b015f0894",
+        "source_after": "a4e464818f779e33733b1cff36d987612df1c1cc004096d66ddb2b7b015f0894",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 19,
+          "output_bytes": 40
+        },
+        "stdout": "[{\"name\":\"output-exists\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74363,
+        "stdout_digest": "81f66ec5d01d73b01eaa7951b1ab8aea00a14ebbd938a477ab8716386ab97bdc",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-TYezGk"
+      }
+    },
+    {
+      "label": "missing-seconds:hidden",
+      "expected": 1,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "34a71e746ac43041026b179d8f211882fb1805cb5dfe80fa134dd10406c73e36",
+        "source_after": "34a71e746ac43041026b179d8f211882fb1805cb5dfe80fa134dd10406c73e36",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 1,
+          "elapsed_ms": 20,
+          "output_bytes": 455
+        },
+        "stdout": "[{\"name\":\"exact-locale-en-US\",\"passed\":true},{\"name\":\"caller-clock-en-US\",\"passed\":false},{\"name\":\"caller-absolute-en-US\",\"passed\":true},{\"name\":\"exact-locale-en-GB\",\"passed\":true},{\"name\":\"caller-clock-en-GB\",\"passed\":false},{\"name\":\"caller-absolute-en-GB\",\"passed\":true},{\"name\":\"invalid-clock-not-a-date\",\"passed\":true},{\"name\":\"invalid-caller-not-a-date\",\"passed\":true},{\"name\":\"invalid-clock-\",\"passed\":true},{\"name\":\"invalid-caller-\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74375,
+        "stdout_digest": "33ed97b830d85e35a3877e713c41c211dca8c847a57ea9dba1d41f6ae5b30075",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-A8bz5K"
+      }
+    },
+    {
+      "label": "missing-seconds:repaired",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "source_after": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 20,
+          "output_bytes": 453
+        },
+        "stdout": "[{\"name\":\"exact-locale-en-US\",\"passed\":true},{\"name\":\"caller-clock-en-US\",\"passed\":true},{\"name\":\"caller-absolute-en-US\",\"passed\":true},{\"name\":\"exact-locale-en-GB\",\"passed\":true},{\"name\":\"caller-clock-en-GB\",\"passed\":true},{\"name\":\"caller-absolute-en-GB\",\"passed\":true},{\"name\":\"invalid-clock-not-a-date\",\"passed\":true},{\"name\":\"invalid-caller-not-a-date\",\"passed\":true},{\"name\":\"invalid-clock-\",\"passed\":true},{\"name\":\"invalid-caller-\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74378,
+        "stdout_digest": "34173b819486523cf1cea2c06111c27064e037b3d0779c12ef426a32bfa4b50d",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-XB3LhE"
+      }
+    },
+    {
+      "label": "uncalled-clock-helper:submitted",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "21ddb58bb75e39338545158ec6ab27c7f57d742bf53f2ae53e68ee9083f4663d",
+        "source_after": "21ddb58bb75e39338545158ec6ab27c7f57d742bf53f2ae53e68ee9083f4663d",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 45,
+          "output_bytes": 40
+        },
+        "stdout": "[{\"name\":\"output-exists\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74380,
+        "stdout_digest": "81f66ec5d01d73b01eaa7951b1ab8aea00a14ebbd938a477ab8716386ab97bdc",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-19A76O"
+      }
+    },
+    {
+      "label": "uncalled-clock-helper:hidden",
+      "expected": 1,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "925aab138310e4aa45f7f22a2ec1d4ef87c1f1420bbbfe7b3ed1796db5480220",
+        "source_after": "925aab138310e4aa45f7f22a2ec1d4ef87c1f1420bbbfe7b3ed1796db5480220",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 1,
+          "elapsed_ms": 21,
+          "output_bytes": 455
+        },
+        "stdout": "[{\"name\":\"exact-locale-en-US\",\"passed\":true},{\"name\":\"caller-clock-en-US\",\"passed\":false},{\"name\":\"caller-absolute-en-US\",\"passed\":true},{\"name\":\"exact-locale-en-GB\",\"passed\":true},{\"name\":\"caller-clock-en-GB\",\"passed\":false},{\"name\":\"caller-absolute-en-GB\",\"passed\":true},{\"name\":\"invalid-clock-not-a-date\",\"passed\":true},{\"name\":\"invalid-caller-not-a-date\",\"passed\":true},{\"name\":\"invalid-clock-\",\"passed\":true},{\"name\":\"invalid-caller-\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74382,
+        "stdout_digest": "33ed97b830d85e35a3877e713c41c211dca8c847a57ea9dba1d41f6ae5b30075",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-y4u8QZ"
+      }
+    },
+    {
+      "label": "uncalled-clock-helper:repaired",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "source_after": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 28,
+          "output_bytes": 453
+        },
+        "stdout": "[{\"name\":\"exact-locale-en-US\",\"passed\":true},{\"name\":\"caller-clock-en-US\",\"passed\":true},{\"name\":\"caller-absolute-en-US\",\"passed\":true},{\"name\":\"exact-locale-en-GB\",\"passed\":true},{\"name\":\"caller-clock-en-GB\",\"passed\":true},{\"name\":\"caller-absolute-en-GB\",\"passed\":true},{\"name\":\"invalid-clock-not-a-date\",\"passed\":true},{\"name\":\"invalid-caller-not-a-date\",\"passed\":true},{\"name\":\"invalid-clock-\",\"passed\":true},{\"name\":\"invalid-caller-\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74384,
+        "stdout_digest": "34173b819486523cf1cea2c06111c27064e037b3d0779c12ef426a32bfa4b50d",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-PgBR4t"
+      }
+    },
+    {
+      "label": "missing-invalid-guard:submitted",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "e77351fd34d2f6b5286ebcf1f8928c8a7a1dcf89dafd4b1cc8786a94f7e272b0",
+        "source_after": "e77351fd34d2f6b5286ebcf1f8928c8a7a1dcf89dafd4b1cc8786a94f7e272b0",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 27,
+          "output_bytes": 40
+        },
+        "stdout": "[{\"name\":\"output-exists\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74386,
+        "stdout_digest": "81f66ec5d01d73b01eaa7951b1ab8aea00a14ebbd938a477ab8716386ab97bdc",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-7tcfNn"
+      }
+    },
+    {
+      "label": "missing-invalid-guard:hidden",
+      "expected": 1,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "c3e4af699f5dd666b654e817003496916b2875c854281ee995eeb3919bad6a64",
+        "source_after": "c3e4af699f5dd666b654e817003496916b2875c854281ee995eeb3919bad6a64",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 1,
+          "elapsed_ms": 21,
+          "output_bytes": 753
+        },
+        "stdout": "[{\"name\":\"exact-locale-en-US\",\"passed\":true},{\"name\":\"caller-clock-en-US\",\"passed\":true},{\"name\":\"caller-absolute-en-US\",\"passed\":true},{\"name\":\"exact-locale-en-GB\",\"passed\":true},{\"name\":\"caller-clock-en-GB\",\"passed\":true},{\"name\":\"caller-absolute-en-GB\",\"passed\":true},{\"name\":\"invalid-clock-not-a-date\",\"passed\":false,\"error\":\"RangeError: date value is not finite in DateTimeFormat format()\"},{\"name\":\"invalid-caller-not-a-date\",\"passed\":false,\"error\":\"RangeError: date value is not finite in DateTimeFormat format()\"},{\"name\":\"invalid-clock-\",\"passed\":false,\"error\":\"RangeError: date value is not finite in DateTimeFormat format()\"},{\"name\":\"invalid-caller-\",\"passed\":false,\"error\":\"RangeError: date value is not finite in DateTimeFormat format()\"}]",
+        "stderr": "",
+        "child_pid": 74388,
+        "stdout_digest": "695cafcaa170a0bb19cb853b3c107db016b420df8c88e0f5999d0ebdba42ebe9",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-ZGYenP"
+      }
+    },
+    {
+      "label": "missing-invalid-guard:repaired",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "source_after": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 20,
+          "output_bytes": 453
+        },
+        "stdout": "[{\"name\":\"exact-locale-en-US\",\"passed\":true},{\"name\":\"caller-clock-en-US\",\"passed\":true},{\"name\":\"caller-absolute-en-US\",\"passed\":true},{\"name\":\"exact-locale-en-GB\",\"passed\":true},{\"name\":\"caller-clock-en-GB\",\"passed\":true},{\"name\":\"caller-absolute-en-GB\",\"passed\":true},{\"name\":\"invalid-clock-not-a-date\",\"passed\":true},{\"name\":\"invalid-caller-not-a-date\",\"passed\":true},{\"name\":\"invalid-clock-\",\"passed\":true},{\"name\":\"invalid-caller-\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74392,
+        "stdout_digest": "34173b819486523cf1cea2c06111c27064e037b3d0779c12ef426a32bfa4b50d",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-vZYmPP"
+      }
+    },
+    {
+      "label": "unresolved-locale-finding:submitted",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "ccbe77ff68797c1f425521aeb9567b1a222989cfce5b67a515897e66dabd47b6",
+        "source_after": "ccbe77ff68797c1f425521aeb9567b1a222989cfce5b67a515897e66dabd47b6",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 19,
+          "output_bytes": 40
+        },
+        "stdout": "[{\"name\":\"output-exists\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74395,
+        "stdout_digest": "81f66ec5d01d73b01eaa7951b1ab8aea00a14ebbd938a477ab8716386ab97bdc",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-7EKdVi"
+      }
+    },
+    {
+      "label": "unresolved-locale-finding:hidden",
+      "expected": 1,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "320463453bb0c4ece46a3e40fb9e16018631953fab74299996e7d0f8b9092a5a",
+        "source_after": "320463453bb0c4ece46a3e40fb9e16018631953fab74299996e7d0f8b9092a5a",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 1,
+          "elapsed_ms": 20,
+          "output_bytes": 455
+        },
+        "stdout": "[{\"name\":\"exact-locale-en-US\",\"passed\":true},{\"name\":\"caller-clock-en-US\",\"passed\":true},{\"name\":\"caller-absolute-en-US\",\"passed\":true},{\"name\":\"exact-locale-en-GB\",\"passed\":false},{\"name\":\"caller-clock-en-GB\",\"passed\":true},{\"name\":\"caller-absolute-en-GB\",\"passed\":false},{\"name\":\"invalid-clock-not-a-date\",\"passed\":true},{\"name\":\"invalid-caller-not-a-date\",\"passed\":true},{\"name\":\"invalid-clock-\",\"passed\":true},{\"name\":\"invalid-caller-\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74397,
+        "stdout_digest": "1db92eb43620a85ed90ff13d1e6a22f1c3ab8c139d2b92c553b5e80b546b572f",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-wix1Bi"
+      }
+    },
+    {
+      "label": "unresolved-locale-finding:repaired",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "probe.ts"
+        ],
+        "source_before": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "source_after": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "command_digest": "09fa061d162461e185c0b33aa7d9926700f8073401ba160133f770bca45980d0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 20,
+          "output_bytes": 453
+        },
+        "stdout": "[{\"name\":\"exact-locale-en-US\",\"passed\":true},{\"name\":\"caller-clock-en-US\",\"passed\":true},{\"name\":\"caller-absolute-en-US\",\"passed\":true},{\"name\":\"exact-locale-en-GB\",\"passed\":true},{\"name\":\"caller-clock-en-GB\",\"passed\":true},{\"name\":\"caller-absolute-en-GB\",\"passed\":true},{\"name\":\"invalid-clock-not-a-date\",\"passed\":true},{\"name\":\"invalid-caller-not-a-date\",\"passed\":true},{\"name\":\"invalid-clock-\",\"passed\":true},{\"name\":\"invalid-caller-\",\"passed\":true}]",
+        "stderr": "",
+        "child_pid": 74400,
+        "stdout_digest": "34173b819486523cf1cea2c06111c27064e037b3d0779c12ef426a32bfa4b50d",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-0m2DYW"
+      }
+    },
+    {
+      "label": "final-design-system",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "make",
+          "-C",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "test-unit-design-system"
+        ],
+        "source_before": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "source_after": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "command_digest": "9acb6b6486d8bc378315c4fc61bfd1a2d9c9a5d0dca59d29bfcf0c82a1d5a09a",
+        "result": {
+          "exit_code": null,
+          "elapsed_ms": 15018,
+          "output_bytes": 9613,
+          "failure": "deadline exceeded"
+        },
+        "stdout": "→ [design-system] Running Vitest unit tests...\n\n\u001b[1m\u001b[30m\u001b[46m RUN \u001b[49m\u001b[39m\u001b[22m \u001b[36mv5.0.3 \u001b[39m\u001b[90m/private/tmp/agentsfleet-orly-013-rehearsal/ui/packages/design-system\u001b[39m\n\n \u001b[32m✓\u001b[39m src/design-system/Select.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 472\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Pagination.test.tsx \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 600\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/ConfirmDialog.test.tsx \u001b[2m(\u001b[22m\u001b[2m13 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1108\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Dialog.test.tsx \u001b[2m(\u001b[22m\u001b[2m16 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1430\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m Dialog \u001b[2m(16)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m returns focus to an external opener after a controlled dialog closes\u001b[33m 320\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DataTableFocus.test.tsx \u001b[2m(\u001b[22m\u001b[2m2 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1246\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m DataTable focus and cell identity \u001b[2m(2)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m keeps an edited field mounted when column render callbacks change\u001b[33m 656\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m returns focus to a table action after its controlled dialog closes\u001b[33m 586\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/NavItem.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1139\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m NavItem \u001b[2m(10)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m is a symmetric pill: rounded on every corner, with no accent rail\u001b[33m 629\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/CopyButton.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 784\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m CopyButton \u001b[2m(7)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m writes the value to the clipboard and flips to Copied\u001b[33m 440\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Nav.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 424\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m Nav \u001b[2m(5)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m exposes its accessible name, so two landmarks are distinguishable\u001b[33m 370\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Form.test.tsx \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 523\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DropdownMenu.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 1033\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m DropdownMenu \u001b[2m(10)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m opens the menu on trigger click (jsdom: synthesised)\u001b[33m 503\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/TooltipButton.test.tsx \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 635\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m TooltipButton \u001b[2m(4)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders button text and opens a tooltip on focus\u001b[33m 490\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Accordion.test.tsx \u001b[2m(\u001b[22m\u001b[2m4 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 716\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m Accordion \u001b[2m(4)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders trigger buttons with the question text\u001b[33m 519\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DataTable.test.tsx \u001b[2m(\u001b[22m\u001b[2m48 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 4561\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m DataTable \u001b[2m(48)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders headers, rows, and cells\u001b[33m 442\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders a sortable header's aria-sort from sortKey/sortDirection, not per-column state\u001b[33m 326\u001b[2mms\u001b[22m\u001b[39m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m keeps externally sorted columns usable without exposing a TanStack accessor\u001b[33m 363\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/UsageBar.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 226\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Tabs.test.tsx \u001b[2m(\u001b[22m\u001b[2m6 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 840\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m Tabs \u001b[2m(6)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders a tablist with two tab triggers\u001b[33m 584\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Terminal.test.tsx \u001b[2m(\u001b[22m\u001b[2m19 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 714\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m Terminal \u001b[2m(19)\u001b[22m\n     \u001b[32m✓\u001b[39m copy interaction \u001b[2m(3)\u001b[22m\n       \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m writes command to clipboard and flips to Copied state on click\u001b[33m 358\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/IconAction.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 678\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m IconAction \u001b[2m(3)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m test_icon_action_accessible_name\u001b[33m 522\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/utils.test.ts \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 351\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m cn — single workspace declaration \u001b[2m(1)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m test_single_cn_export — exactly one cn declaration exists across ui/packages\u001b[33m 341\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/RadioGroup.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 846\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m RadioGroup \u001b[2m(5)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders a radiogroup with the listed items\u001b[33m 522\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Button.test.tsx \u001b[2m(\u001b[22m\u001b[2m30 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 808\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m Button \u001b[2m(25)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders as <button type=button> by default\u001b[33m 518\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/SectionHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 364\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Spinner.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 686\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m Spinner \u001b[2m(5)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m is a polite status region marked busy\u001b[33m 509\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/TabNav.test.tsx \u001b[2m(\u001b[22m\u001b[2m7 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 728\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m TabNav \u001b[2m(7)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders each item as a link inside the labelled nav landmark\u001b[33m 536\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DashboardShellHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m1 test\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 396\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m DashboardShellHeader \u001b[2m(1)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders semantic dashboard chrome with an overlaid one-pixel divider\u001b[33m 393\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/DashboardPrimitives.test.tsx \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 447\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m dashboard primitives \u001b[2m(11)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders a dashboard panel with header and content slots\u001b[33m 376\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Tooltip.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 583\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m Tooltip \u001b[2m(3)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders content when controlled open via TooltipProvider\u001b[33m 448\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/PageTitle.test.tsx \u001b[2m(\u001b[22m\u001b[2m3 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 409\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m PageTitle \u001b[2m(3)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders as an <h1> with children\u001b[33m 389\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/PageHeader.test.tsx \u001b[2m(\u001b[22m\u001b[2m8 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 343\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/InstallBlock.test.tsx \u001b[2m(\u001b[22m\u001b[2m10 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 670\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m InstallBlock \u001b[2m(10)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders the title as an h2\u001b[33m 482\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Alert.test.tsx \u001b[2m(\u001b[22m\u001b[2m17 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 697\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m Alert \u001b[2m(11)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m fires onDismiss exactly once when the dismiss button is clicked\u001b[33m 471\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Time.test.tsx \u001b[2m(\u001b[22m\u001b[2m19 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 201\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/StatusLine.test.tsx \u001b[2m(\u001b[22m\u001b[2m9 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 421\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m StatusLine \u001b[2m(9)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders a named, readable, tabular line with a hairline between cells\u001b[33m 371\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/ActionForm.test.tsx \u001b[2m(\u001b[22m\u001b[2m1 test\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 505\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m ActionForm \u001b[2m(1)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders a native form with design-system spacing\u001b[33m 503\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/OptionCard.test.tsx \u001b[2m(\u001b[22m\u001b[2m5 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[33m 775\u001b[2mms\u001b[22m\u001b[39m\n   \u001b[32m✓\u001b[39m OptionCard \u001b[2m(5)\u001b[22m\n     \u001b[33m\u001b[2m✓\u001b[22m\u001b[39m renders as an accessible radio item with label + description\u001b[33m 661\u001b[2mms\u001b[22m\u001b[39m\n \u001b[32m✓\u001b[39m src/design-system/Input.test.tsx \u001b[2m(\u001b[22m\u001b[2m11 tests\u001b[22m\u001b[2m)\u001b[22m\u001b[32m 184\u001b[2mms\u001b[22m\u001b[39m\n",
+        "stderr": "$ vitest run\n\u001b[90mstderr\u001b[2m | src/design-system/CopyButton.test.tsx\u001b[2m > \u001b[22m\u001b[2mCopyButton\u001b[2m > \u001b[22m\u001b[2mreverts the accessible name after the reset window\n\u001b[22m\u001b[39mAn update to CopyButton inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act\n\n\u001b[90mstderr\u001b[2m | src/design-system/CopyButton.test.tsx\u001b[2m > \u001b[22m\u001b[2mCopyButton\u001b[2m > \u001b[22m\u001b[2mreverts from failed to idle after the reset window\n\u001b[22m\u001b[39mAn update to CopyButton inside a test was not wrapped in act(...).\n\nWhen testing, code that causes React state updates should be wrapped into act(...):\n\nact(() => {\n  /* fire events that update state */\n});\n/* assert on the output */\n\nThis ensures that you're testing the behavior the user would see in the browser. Learn more at https://react.dev/link/wrap-tests-with-act\n\nNot implemented: navigation to another Document\n",
+        "child_pid": 74402,
+        "stdout_digest": "55fb87ab46cbd79f0995a64a91679fc47b6976f304ae21316b9326cba340601d",
+        "stderr_digest": "4d7dd3a59d61eb3d1af2a7bd28c6c2b1143c8f24b2836ae4e21e1acc3f66fbac",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-1kxvJq"
+      }
+    },
+    {
+      "label": "final-tracked-diff",
+      "expected": 0,
+      "receipt": {
+        "command": [
+          "git",
+          "-C",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "diff",
+          "--name-only"
+        ],
+        "source_before": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "source_after": "3c6bc63edc580190465c4181d9c6597f4420930a99875dfecdc68c0a2eaedec3",
+        "command_digest": "2b255c68198021452e972c32f6904d464fa56fdd585c0c37bc0356f6ceaf68e6",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 61,
+          "output_bytes": 16
+        },
+        "stdout": ".orly/orly.json\n",
+        "stderr": "",
+        "child_pid": 75656,
+        "stdout_digest": "19ef4260234e8b8b770acaaf5d24825a942f1c5416bad065c686333dfb79d909",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-Mpg4WN/command-uwKydJ"
+      }
+    }
+  ],
+  "failures": [
+    "final-design-system"
+  ],
+  "metadata": {
+    "revision": "0c52c2f421c5ad706e0c831831461201dc1828ea",
+    "original_source": "112df3cc2c96c5cb6956798a3a8609dbaca7a1588f567507b30681bbb12156d4",
+    "owner_files": {
+      "AGENTS.md": "0f58d153130a3b7143a7971a1c0d0d7b4d2a45103abcaa9e24fb10585fb64f1f",
+      ".orly/LOCAL.md": "b04230d858d649b3e6eed685390002b9b6e110e0f71c4063eb4e6be9647c2ff5",
+      ".githooks/pre-commit": "d23684f0fdce231e6ff9b1be155073fd01b70f41488d16d288b075a6f62120f4",
+      ".githooks/pre-push": "2ec14a6113b0446549f500a91c0adc4777a758eb78147bbf9ba7f4e0a8f033b3",
+      "Makefile": "f865b0ebf7856b0a535bb4fa46703fc2748ceb1913e726c9c282280e1f4b25ab",
+      "make/test-unit.mk": "00bb6c47d20ddb16b8101ddb9553c4348d9ed30de80a2143e19832100035d5a2",
+      "ui/packages/design-system/src/design-system/time-utils.test.ts": "6c9fe87b9e0932cd673a05067b6a32969145ce6f1993e8c90d4e74db4610d1b8"
+    },
+    "version": "0.13.0",
+    "model_calls": 0,
+    "native_builds": 0,
+    "restored_source": "112df3cc2c96c5cb6956798a3a8609dbaca7a1588f567507b30681bbb12156d4",
+    "preservation": true
+  },
+  "passed": false
+}

@@ -2,7 +2,7 @@
 type: reference
 audience: contributor
 verified: 2026-10-07
-product_version: 0.12.0
+product_version: 0.13.0
 executable: false
 ---
 
@@ -10,8 +10,9 @@ executable: false
 
 ## Synopsis
 
-The 0.12.0 candidate retains the six questions shipped in 0.11.0.
-The comparison evaluator is parked for proposed 0.13 work; this release makes no new model-quality claim.
+The 0.13.0 candidate retains the six questions shipped in 0.11.0.
+The contributor [comparison examiner](architecture/judgment-evaluation.md) tests five evaluation-only additions with offline controls and explicitly requested TypeSafe Jev measurements.
+Its results establish examiner behavior; model quality and autonomous agent improvement remain unmeasured.
 
 `orly judge` asks one bounded question about evidence you select.
 It accompanies planning, verification, review and documentation.

@@ -34,6 +34,7 @@ export type QuestionId = Item["question"];
 export type ProviderQuestion =
   | { type: "noul"; instructions: string; criteria: { true: string; false: string } }
   | { type: "choice"; instructions: string; criteria: Record<string, string> };
+export type ProviderInput = { request: string; definition: { question: ProviderQuestion } };
 export type Definition = {
   stage: Stage;
   requiredRoles: readonly Role[];
