@@ -16,7 +16,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** Milestone 12 (M12)
 **Workstream:** 001
 **Date:** Oct 08, 2026
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P2 — internal evaluation evidence
 **Categories:** Documentation (DOCS)
 **Batch:** B1 — one sequential workstream
@@ -231,5 +231,5 @@ N/A — no executable files or symbols deleted. Verify the final spec path is li
 - **Security and structure:** `gitleaks protect --staged` and `gitleaks detect` report no leaks; `bash audits/spec-template.sh --staged` reports one clean spec.
 - **Baseline:** Successful Continuous Integration run 37721747995 at the full comparison revision reports 619 passes, zero failures and 63 files; coverage flags retain the declared source selection.
 - **Scope:** User-facing behavior, version, published pages and architecture do not change. Original sources, labels, receipts and thresholds remain byte-identical.
-- **Cleanup:** The rejected verification page is absent. Closing moves this spec to `done/`; report and ledger reference that final path.
+- **Cleanup:** The rejected verification page is absent. CHORE(close) moved this spec to `done/`; report and ledger reference that final path.
 - **Deferrals:** None. Unavailable evidence is a diagnostic result, not a claim that approved work was postponed.
