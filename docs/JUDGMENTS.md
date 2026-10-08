@@ -11,7 +11,7 @@ executable: false
 ## Synopsis
 
 The 0.13.0 candidate retains the six questions shipped in 0.11.0.
-The contributor [comparison examiner](architecture/judgment-evaluation.md) tests five evaluation-only additions with deterministic offline exercises.
+The contributor [comparison examiner](architecture/judgment-evaluation.md) tests five evaluation-only additions with offline controls and explicitly requested TypeSafe Jev measurements.
 Its results establish examiner behavior; model quality and autonomous agent improvement remain unmeasured.
 
 `orly judge` asks one bounded question about evidence you select.

@@ -12,7 +12,7 @@ const MIN_RECALL = 0.9;
 const MAX_FALSE_CONCERNS = 0.05;
 const RETAIN = "retain";
 const ADOPTION_REASON = {
-  independent: "This offline evaluator cannot verify independent model and paired-run provenance; a measurement enum proves neither.",
+  independent: "This report does not certify independent measurement provenance or paired agent improvement; owner-editable files cannot establish either.",
   sample: "Fewer than twenty independently resolved held-out cases exist in at least one class.",
   thresholds: "Required recall, conservative false-concern bound or insufficiency detection is unavailable or below its threshold.",
   paired: "Paired task improvement without unsupported completion or authority violations is unproved.",

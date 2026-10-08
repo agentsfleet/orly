@@ -5,7 +5,7 @@ import { z } from "zod";
 import { MAX_SOURCE_BYTES, MAX_STATE_BYTES, NEWLINE } from "../../../src/judgments/constants";
 import { digest, readBounded } from "../../../src/judgments/files";
 import { EvaluationRun, type ExecutedReceipt } from "./execution";
-import { packageIdentity, validConsumerChecks } from "./consumer-evidence";
+import { packageIdentity, validConsumerChecks, validConsumerDiff } from "./consumer-evidence";
 import { CONSUMER_BRANCH, CONSUMER_CONFIG, CONSUMER_REVISION, CONSUMER_SCENARIOS, CONSUMER_SOURCE, OWNER_FILES, consumerProbe, mutateConsumer, type ConsumerScenario } from "./consumer-checks";
 
 const GIT = "git";
@@ -31,9 +31,12 @@ async function capture(root: string, paths: string[]): Promise<Record<string, st
 }
 
 async function execute(run: EvaluationRun, label: string, argv: string[], expected: number,
-  probe?: { hidden: boolean; scenario?: ConsumerScenario }): Promise<ExecutedReceipt> {
+  probe?: { hidden: boolean; scenario?: ConsumerScenario }, suiteRoot?: string): Promise<ExecutedReceipt> {
   try {
-    const receipt = await run.execute(argv, [SOURCE_CAPTURE, PROBE_FILE], undefined, undefined, { TZ: "UTC" });
+    const sources = [SOURCE_CAPTURE, PROBE_FILE];
+    const environment = { TZ: "UTC" };
+    const receipt = suiteRoot === undefined ? await run.execute(argv, sources, undefined, undefined, environment)
+      : await run.executeConsumerSuite(suiteRoot, sources, environment);
     run.verify(receipt);
     const checksValid = probe === undefined || validConsumerChecks(receipt.stdout, probe.hidden, probe.scenario);
     report.attempts.push({ label, expected, checks_valid: checksValid, receipt });
@@ -57,7 +60,6 @@ async function rehearse(run: EvaluationRun, root: string, packed: string): Promi
   const owners = await capture(root, OWNER_FILES);
   const before = configSchema.parse(JSON.parse(await readBounded(join(root, CONSUMER_CONFIG), MAX_STATE_BYTES)));
   packageSchema.parse(JSON.parse(await readBounded(join(packed, "package.json"), MAX_SOURCE_BYTES)));
-  const suite = ["make", DIRECTORY_FLAG, root, "test-unit-design-system"];
   const packedIdentity = await packageIdentity(packed);
   const cli = [process.execPath, "--cwd", root, join(packed, "src/cli.ts"), "--root", packed];
   report.metadata = { revision: CONSUMER_REVISION, package: packedIdentity, original_source: digest(original), owner_files: owners, version: VERSION, model_calls: 0, native_builds: 0 };
@@ -67,7 +69,7 @@ async function rehearse(run: EvaluationRun, root: string, packed: string): Promi
   await execute(run, "packed-doctor", [...cli, "doctor"], SUCCESS);
   const after = configSchema.parse(JSON.parse(await readBounded(join(root, CONSUMER_CONFIG), MAX_STATE_BYTES)));
   if (after.orly_version !== VERSION || JSON.stringify(before.commands) !== JSON.stringify(after.commands) || JSON.stringify(before.surfaces) !== JSON.stringify(after.surfaces)) throw new Error("Consumer configuration was not preserved.");
-  await execute(run, "baseline-design-system", suite, SUCCESS);
+  await execute(run, "baseline-design-system", [], SUCCESS, undefined, root);
   try {
     for (const scenario of CONSUMER_SCENARIOS) {
       const mutation = mutateConsumer(original, scenario);
@@ -77,15 +79,15 @@ async function rehearse(run: EvaluationRun, root: string, packed: string): Promi
       await execute(run, `${scenario}:submitted`, [process.execPath, PROBE_FILE], SUCCESS, { hidden: false });
       await Bun.write(join(run.workspace, PROBE_FILE), consumerProbe(root, true));
       await execute(run, `${scenario}:hidden`, [process.execPath, PROBE_FILE], EXPECTED_REJECTION, { hidden: true, scenario });
-      if (scenario === CONSUMER_SCENARIOS[0]) await execute(run, "locale-defect-existing-design-system", suite, SUCCESS);
+      if (scenario === CONSUMER_SCENARIOS[0]) await execute(run, "locale-defect-existing-design-system", [], SUCCESS, undefined, root);
       await Bun.write(join(root, CONSUMER_SOURCE), original);
       await Bun.write(join(run.workspace, SOURCE_CAPTURE), original);
       await execute(run, `${scenario}:repaired`, [process.execPath, PROBE_FILE], SUCCESS, { hidden: true });
     }
   } finally { await Bun.write(join(root, CONSUMER_SOURCE), original); }
-  await execute(run, "final-design-system", suite, SUCCESS);
+  await execute(run, "final-design-system", [], SUCCESS, undefined, root);
   const changed = await execute(run, "final-tracked-diff", [GIT, DIRECTORY_FLAG, root, "diff", "--name-only"], SUCCESS);
-  if (changed.stdout.trim() !== CONSUMER_CONFIG || JSON.stringify(await capture(root, OWNER_FILES)) !== JSON.stringify(owners) ||
+  if (!validConsumerDiff(changed.stdout) || JSON.stringify(await capture(root, OWNER_FILES)) !== JSON.stringify(owners) ||
     digest(await readBounded(join(root, CONSUMER_SOURCE), MAX_SOURCE_BYTES)) !== digest(original)) throw new Error("Consumer owner/source preservation failed.");
   if (JSON.stringify(await packageIdentity(packed)) !== JSON.stringify(packedIdentity)) throw new Error("Packed runtime changed during rehearsal.");
   report.metadata.restored_source = digest(original);

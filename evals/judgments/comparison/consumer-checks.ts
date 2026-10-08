@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 
 export const CONSUMER_REVISION = "0c52c2f421c5ad706e0c831831461201dc1828ea";
-export const CONSUMER_BRANCH = "test/orly-013-rehearsal";
+export const CONSUMER_BRANCH = "test/orly-013-final-main";
 export const CONSUMER_SOURCE = "ui/packages/design-system/src/design-system/time-utils.ts";
 export const CONSUMER_TEST = "ui/packages/design-system/src/design-system/time-utils.test.ts";
 export const CONSUMER_CONFIG = ".orly/orly.json";

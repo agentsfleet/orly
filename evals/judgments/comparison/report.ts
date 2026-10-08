@@ -8,7 +8,7 @@ import { TASK_CONTROL, TASK_FAMILY, TASK_STATE, type TaskDefinition } from "./ty
 const INCOMPLETE = "incomplete";
 const MAX_EVALUATOR_FILES = 64;
 const COMPARISON_PATH = "evals/judgments/comparison";
-const RUNTIME_FILES = ["src/judgments/questions.ts", "src/judgments/constants.ts", "src/command_process.ts", "src/command_limits.ts"];
+const RUNTIME_FILES = ["src/judgments/questions.ts", "src/judgments/constants.ts", "src/judgments/types.ts", "src/judgments/transport.ts", "src/judgments/wire.ts", "src/judgments/scan.ts", "src/command_process.ts", "src/command_limits.ts"];
 type TaskControl = typeof TASK_CONTROL[keyof typeof TASK_CONTROL];
 export type TaskAttempt = Awaited<ReturnType<typeof evaluateTask>> | {
   task: string; control: TaskControl; state: typeof INCOMPLETE; completion_credit: 0; error: string;

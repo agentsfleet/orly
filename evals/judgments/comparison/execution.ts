@@ -11,6 +11,7 @@ import { createOwnership, verifyOwnership, type EvaluationOwnership } from "./re
 
 export const EXECUTION_ERROR = "Task receipt differs from actual evaluator-owned execution.";
 export const TASK_LIMITS = { timeout_ms: 15_000, output_bytes: 64 * KIBIBYTE } as const;
+export const CONSUMER_SUITE_LIMITS = { ...TASK_LIMITS, timeout_ms: 60_000 } as const;
 const SUPERVISOR_PATH = join(import.meta.dir, "../../../src/command_process.ts");
 const REQUEST_FILE = "request.json";
 const COMMAND_PREFIX = "command-";
@@ -22,13 +23,14 @@ const OUTPUT_UNAVAILABLE = "Captured output exceeded the bounded report budget."
 const MAX_COMMANDS = 64;
 const executionInput = z.strictObject({ command: z.array(z.string().min(1).max(MAX_STATE_BYTES)).min(1).max(32),
   sources: z.array(z.string().min(1).max(MAX_STATE_BYTES)).max(16),
-  limits: z.strictObject({ timeout_ms: z.number().int().positive().max(TASK_LIMITS.timeout_ms),
+  limits: z.strictObject({ timeout_ms: z.number().int().positive().max(CONSUMER_SUITE_LIMITS.timeout_ms),
     output_bytes: z.number().int().positive().max(TASK_LIMITS.output_bytes) }) });
 const MAX_CAPTURE_BYTES = 4 * KIBIBYTE * KIBIBYTE;
 const resultSchema = z.strictObject({ exit_code: z.number().int().nullable(), elapsed_ms: z.number().int().nonnegative(),
   output_bytes: z.number().int().nonnegative(), failure: z.string().min(1).max(MAX_STATE_BYTES).optional() });
 export type ExecutedReceipt = {
   command: string[]; source_before: string; source_after: string; command_digest: string;
+  limits: CommandLimits;
   result: z.infer<typeof resultSchema>; stdout: string; stderr: string; child_pid: number | null;
   stdout_digest: string; stderr_digest: string; receipt_directory: string;
 };
@@ -44,10 +46,20 @@ export class EvaluationRun {
   get workspace(): string { return this.#ownership.workspace; }
   get ownership(): Readonly<EvaluationOwnership> { return Object.freeze({ ...this.#ownership }); }
 
-  async execute(command: string[], sources: string[], limits: CommandLimits = TASK_LIMITS,
+  execute(command: string[], sources: string[], limits: CommandLimits = TASK_LIMITS,
     signal?: AbortSignal, environment: Record<string, string> = {}): Promise<ExecutedReceipt> {
+    return this.#execute(command, sources, limits, signal, environment, TASK_LIMITS.timeout_ms);
+  }
+
+  executeConsumerSuite(root: string, sources: string[], environment: Record<string, string> = {}): Promise<ExecutedReceipt> {
+    return this.#execute(["make", "-C", root, "test-unit-design-system"], sources,
+      CONSUMER_SUITE_LIMITS, undefined, environment, CONSUMER_SUITE_LIMITS.timeout_ms);
+  }
+
+  async #execute(command: string[], sources: string[], limits: CommandLimits,
+    signal: AbortSignal | undefined, environment: Record<string, string>, maximumTimeout: number): Promise<ExecutedReceipt> {
     if (this.#closed || this.#active || signal?.aborted || this.#records.size >= MAX_COMMANDS ||
-      !executionInput.safeParse({ command, sources, limits }).success) throw new OrlyError(EXECUTION_ERROR);
+      !executionInput.safeParse({ command, sources, limits }).success || limits.timeout_ms > maximumTimeout) throw new OrlyError(EXECUTION_ERROR);
     this.#active = true;
     let receipt: string | undefined;
     let supervisor: ReturnType<typeof Bun.spawn> | undefined;
@@ -73,7 +85,7 @@ export class EvaluationRun {
       const stdout = await capturedOutput(join(receipt, COMMAND_FILES.stdout));
       const stderr = await capturedOutput(join(receipt, COMMAND_FILES.stderr));
       const childPid = existsSync(join(receipt, COMMAND_FILES.pid)) ? Number(await readBounded(join(receipt, COMMAND_FILES.pid), MAX_SOURCE_BYTES)) : null;
-      const executed = { command: [...command], source_before: sourceBefore, source_after: await sourceIdentity(this.workspace, sources),
+      const executed = { command: [...command], limits: { ...limits }, source_before: sourceBefore, source_after: await sourceIdentity(this.workspace, sources),
         command_digest: digest(JSON.stringify(command)), result, stdout, stderr, child_pid: childPid,
         stdout_digest: digest(stdout), stderr_digest: digest(stderr), receipt_directory: receipt };
       this.#records.set(receipt, digest(JSON.stringify(executed)));

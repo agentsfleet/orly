@@ -1,4 +1,4 @@
-import type { Prepared, ProviderQuestion } from "./types";
+import type { ProviderInput, ProviderQuestion } from "./types";
 
 import { z } from "zod";
 
@@ -15,7 +15,7 @@ export const replySchema = z.object({ model: z.literal(MODEL), answers: z.record
 export type Reply = z.infer<typeof replySchema>;
 export type Answer = z.infer<typeof answerSchema>;
 
-export function parseReply(value: unknown, prepared: Prepared): Reply {
+export function parseReply(value: unknown, prepared: ProviderInput): Reply {
   const parsed = replySchema.safeParse(value);
   if (!parsed.success) throw new OrlyError("Provider reply does not match the pinned model and answer schema.");
   const reply = parsed.data;

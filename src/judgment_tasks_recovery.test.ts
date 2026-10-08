@@ -2,7 +2,7 @@ import { afterEach, expect, test } from "bun:test";
 import { existsSync, symlinkSync, unlinkSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-import { EvaluationRun, EXECUTION_ERROR } from "../evals/judgments/comparison/execution";
+import { EvaluationRun, EXECUTION_ERROR, TASK_LIMITS, CONSUMER_SUITE_LIMITS } from "../evals/judgments/comparison/execution";
 import { recoverStaleOwnership, OWNER_ERROR } from "../evals/judgments/comparison/recovery";
 import { cleanupTemporaryDirectories, temporaryDirectory } from "./gates_test_support";
 
@@ -51,9 +51,23 @@ test("foreign_paths_and_symlinked_markers_cannot_authorize_cleanup", async () =>
 test("invalid_limits_refuse_before_starting_any_process", async () => {
   const run = await EvaluationRun.create();
   try {
-    for (const timeout_ms of [0, -1, Number.NaN, EXCESSIVE_TIMEOUT]) {
+    for (const timeout_ms of [0, -1, Number.NaN, CONSUMER_SUITE_LIMITS.timeout_ms, EXCESSIVE_TIMEOUT]) {
       await expect(run.execute(SUCCESS_COMMAND, [], { timeout_ms, output_bytes: OUTPUT_LIMIT })).rejects.toThrow(EXECUTION_ERROR);
     }
+  } finally { await run.close(); }
+});
+
+test("only_the_fixed_consumer_suite_command_receives_the_longer_budget", async () => {
+  const run = await EvaluationRun.create();
+  try {
+    await Bun.write(join(run.workspace, "Makefile"), "test-unit-design-system:\n\t@printf verified\n");
+    const suite = await run.executeConsumerSuite(run.workspace, []);
+    run.verify(suite);
+    expect(suite.command).toEqual(["make", "-C", run.workspace, "test-unit-design-system"]);
+    expect(suite.limits).toEqual(CONSUMER_SUITE_LIMITS);
+    expect(suite.result.exit_code).toBe(0);
+    expect(suite.stdout).toContain("verified");
+    expect((await run.execute(SUCCESS_COMMAND, [])).limits).toEqual(TASK_LIMITS);
   } finally { await run.close(); }
 });
 

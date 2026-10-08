@@ -1,0 +1,269 @@
+{
+  "attempts": [
+    {
+      "label": "branch --show-current",
+      "expected": 0,
+      "checks_valid": true,
+      "receipt": {
+        "command": [
+          "git",
+          "-C",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "branch",
+          "--show-current"
+        ],
+        "limits": {
+          "timeout_ms": 15000,
+          "output_bytes": 65536
+        },
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "121092f778daedcc405f00a94131c1795fc2bb9d5c7502b53ed807d13f23389d",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 26,
+          "output_bytes": 24
+        },
+        "stdout": "test/orly-013-rehearsal\n",
+        "stderr": "",
+        "child_pid": 16650,
+        "stdout_digest": "07309c1ca30100378c2a60db605b64cd8a10ff1b8b89d0cd8293b36a55f330c7",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-eDVHpU/command-Yyyv3D"
+      }
+    },
+    {
+      "label": "rev-parse HEAD",
+      "expected": 0,
+      "checks_valid": true,
+      "receipt": {
+        "command": [
+          "git",
+          "-C",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "rev-parse",
+          "HEAD"
+        ],
+        "limits": {
+          "timeout_ms": 15000,
+          "output_bytes": 65536
+        },
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "3443011a5e1d39025c9b8d6dbaacc1a3708f8356d7e4d0c4b0e980badc8016a0",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 23,
+          "output_bytes": 41
+        },
+        "stdout": "0c52c2f421c5ad706e0c831831461201dc1828ea\n",
+        "stderr": "",
+        "child_pid": 16737,
+        "stdout_digest": "b3a0294e3db1afb2a968ef3d6a15305bb67e0a40d01818d9237c665f96826d14",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-eDVHpU/command-zAu4U7"
+      }
+    },
+    {
+      "label": "status --porcelain",
+      "expected": 0,
+      "checks_valid": true,
+      "receipt": {
+        "command": [
+          "git",
+          "-C",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "status",
+          "--porcelain"
+        ],
+        "limits": {
+          "timeout_ms": 15000,
+          "output_bytes": 65536
+        },
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "2d2facec103e5e7e4e78f4caf0c977289d8a05dd171a0d7b4f6c9ee65b58f6b2",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 278,
+          "output_bytes": 0
+        },
+        "stdout": "",
+        "stderr": "",
+        "child_pid": 16794,
+        "stdout_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-eDVHpU/command-mkX8CU"
+      }
+    },
+    {
+      "label": "packed-version",
+      "expected": 0,
+      "checks_valid": true,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "--cwd",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly/src/cli.ts",
+          "--root",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly",
+          "--version"
+        ],
+        "limits": {
+          "timeout_ms": 15000,
+          "output_bytes": 65536
+        },
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "502f625c5eed5f881d2e0d9fa2d48b7ef9f2f3bf04ab2c4f1c2d629589e0a7b8",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 98,
+          "output_bytes": 7
+        },
+        "stdout": "0.13.0\n",
+        "stderr": "",
+        "child_pid": 17004,
+        "stdout_digest": "d84c9e596c7d6a94e5f74579ef8d8912a807b0d28582474900ad35dfb3edfcf4",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-eDVHpU/command-z6rMhZ"
+      }
+    },
+    {
+      "label": "packed-update",
+      "expected": 0,
+      "checks_valid": true,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "--cwd",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly/src/cli.ts",
+          "--root",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly",
+          "update",
+          "--no-hooks"
+        ],
+        "limits": {
+          "timeout_ms": 15000,
+          "output_bytes": 65536
+        },
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "109257e201e5934197896a1c9f576706a94d5aee8454df690d7c6b4c35764379",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 878,
+          "output_bytes": 46
+        },
+        "stdout": "🟢 1 written, 70 already current (16 packs)\n",
+        "stderr": "",
+        "child_pid": 17067,
+        "stdout_digest": "1c58c755951c3509752bfa4137ab056312a775d696fdc9fbd17a2f98a0c4e858",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-eDVHpU/command-qxfr5j"
+      }
+    },
+    {
+      "label": "packed-update-idempotent",
+      "expected": 0,
+      "checks_valid": true,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "--cwd",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly/src/cli.ts",
+          "--root",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly",
+          "update",
+          "--no-hooks"
+        ],
+        "limits": {
+          "timeout_ms": 15000,
+          "output_bytes": 65536
+        },
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "109257e201e5934197896a1c9f576706a94d5aee8454df690d7c6b4c35764379",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 625,
+          "output_bytes": 46
+        },
+        "stdout": "🟢 0 written, 71 already current (16 packs)\n",
+        "stderr": "",
+        "child_pid": 17580,
+        "stdout_digest": "e5d894cb0c39eef656967d6abcb1649ce0a01dcb7f09b1c2ac3319f664643008",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-eDVHpU/command-waaviW"
+      }
+    },
+    {
+      "label": "packed-doctor",
+      "expected": 0,
+      "checks_valid": true,
+      "receipt": {
+        "command": [
+          "/Users/kishore/.local/share/mise/installs/bun/1.4.2/bin/bun",
+          "--cwd",
+          "/private/tmp/agentsfleet-orly-013-rehearsal",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly/src/cli.ts",
+          "--root",
+          "/private/tmp/orly-013-packed/node_modules/@agentsfleet/orly",
+          "doctor"
+        ],
+        "limits": {
+          "timeout_ms": 15000,
+          "output_bytes": 65536
+        },
+        "source_before": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "source_after": "d4695de3102652c8a8063d4144dbd573108fdcf2c4d2a3c10081dd0b9cf8801c",
+        "command_digest": "4ec9b8e78815916c924a55bf64b6f8c9a2c6afda3c60c5640da235bc3bb7a4e7",
+        "result": {
+          "exit_code": 0,
+          "elapsed_ms": 322,
+          "output_bytes": 88
+        },
+        "stdout": "🟢 installed rules match .orly/orly.json; work and verification commands are declared\n",
+        "stderr": "",
+        "child_pid": 17871,
+        "stdout_digest": "94ea9c4e19f2411d8fb0bb48f3012ba0205ea14a8a69a31c39e14660f84dfe0d",
+        "stderr_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "receipt_directory": "/var/folders/sy/ny52vqjd3j56w4sfbmn3vd7w0000gn/T/orly-eval-receipts-eDVHpU/command-9Bmtc5"
+      }
+    },
+    {
+      "label": "baseline-design-system",
+      "expected": 0,
+      "state": "incomplete",
+      "error": "SystemError: kill() failed: EPERM: Operation not permitted"
+    }
+  ],
+  "failures": [
+    "kill() failed: EPERM: Operation not permitted"
+  ],
+  "metadata": {
+    "revision": "0c52c2f421c5ad706e0c831831461201dc1828ea",
+    "package": {
+      "digest": "f339f247d008cdbc1b040aa8208856d88daaeb49688fb0767190c99a5d3aba3d",
+      "files": 205,
+      "bytes": 1709065
+    },
+    "original_source": "112df3cc2c96c5cb6956798a3a8609dbaca7a1588f567507b30681bbb12156d4",
+    "owner_files": {
+      "AGENTS.md": "0f58d153130a3b7143a7971a1c0d0d7b4d2a45103abcaa9e24fb10585fb64f1f",
+      ".orly/LOCAL.md": "b04230d858d649b3e6eed685390002b9b6e110e0f71c4063eb4e6be9647c2ff5",
+      ".githooks/pre-commit": "d23684f0fdce231e6ff9b1be155073fd01b70f41488d16d288b075a6f62120f4",
+      ".githooks/pre-push": "2ec14a6113b0446549f500a91c0adc4777a758eb78147bbf9ba7f4e0a8f033b3",
+      "Makefile": "f865b0ebf7856b0a535bb4fa46703fc2748ceb1913e726c9c282280e1f4b25ab",
+      "make/test-unit.mk": "00bb6c47d20ddb16b8101ddb9553c4348d9ed30de80a2143e19832100035d5a2",
+      "ui/packages/design-system/src/design-system/time-utils.test.ts": "6c9fe87b9e0932cd673a05067b6a32969145ce6f1993e8c90d4e74db4610d1b8"
+    },
+    "version": "0.13.0",
+    "model_calls": 0,
+    "native_builds": 0
+  },
+  "passed": false
+}

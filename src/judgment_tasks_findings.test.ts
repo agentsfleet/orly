@@ -50,6 +50,16 @@ test("consumer_package_identity_changes_when_same_version_source_changes", async
   } finally { await run.close(); }
 });
 
+test("consumer_update_requires_guide_and_pin_without_unrelated_changes", async () => {
+  const { validConsumerDiff } = await import("../evals/judgments/comparison/consumer-evidence");
+  const guide = ".orly/docs/REST_API_DESIGN_GUIDELINES.md";
+  const config = ".orly/orly.json";
+  const expected = `${guide}\n${config}\n`;
+  expect(validConsumerDiff(expected)).toBe(true);
+  for (const changed of ["", guide, config, `${expected}AGENTS.md\n`, `${expected}${config}\n`,
+    `${config}\n${guide}\n`, `${guide}\n../.orly/orly.json\n`]) expect(validConsumerDiff(changed)).toBe(false);
+});
+
 test("consumer_report_refuses_to_overwrite_prior_attempts", async () => {
   const run = await EvaluationRun.create();
   const report = join(run.workspace, "retained.json");

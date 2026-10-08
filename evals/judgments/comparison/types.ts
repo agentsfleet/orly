@@ -18,7 +18,7 @@ export const ADJUDICATION = { resolved: "resolved", pending: "pending", disputed
 export const LABEL_AUTHORITY = { oracle: "oracle", reviewer: "reviewer" } as const;
 export const MIN_RESOLVED_PER_GROUP = 2;
 export const OBSERVATION = { valid: "valid", invalid: "invalid", unavailable: "unavailable" } as const;
-export const MEASUREMENT = { synthetic: "synthetic", editable: "editable-replay", independent: "independent-measured" } as const;
+export const MEASUREMENT = { synthetic: "synthetic", editable: "editable-replay", independent: "independent-measured", live: "live-provider" } as const;
 export const TASK_FAMILY = {
   obligation: "missing-obligation", wiring: "missing-production-caller", failure: "missing-failure-proof",
   finding: "unresolved-finding", permission: "required-permission", evidence: "circular-expectation",

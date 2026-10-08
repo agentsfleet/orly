@@ -17,8 +17,10 @@ originally shipped in 0.11.0. The 0.12.1 patch avoids irrelevant staged audit
 snapshots and preserves hosted-check diagnostics. The `bunx` commands below
 fetch the published package; available versions are listed at
 https://github.com/agentsfleet/orly/releases. Use an installed local tarball for candidate checks.
-The 0.13.0 source candidate adds a contributor-only offline comparison examiner.
+The 0.13.0 source candidate adds contributor-only offline controls and a separate explicit TypeSafe Jev measurement command.
 Run `bun evals/judgments/comparison/run.ts --check` or `--offline` from source.
+The separate `jev-run.ts --live` collects actual model replies; `--replay` checks saved answers with no new requests.
+See `docs/architecture/judgment-evaluation.md` for required inputs and measured limitations.
 Expected output is JSON with `passed: true`; deliberate false completions stay failed.
 All five proposed checks remain evaluation-only. Do not infer model accuracy or
 agent improvement from scripted controls. Live model runs, publication, merge

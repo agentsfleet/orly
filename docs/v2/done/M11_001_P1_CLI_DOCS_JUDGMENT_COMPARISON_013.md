@@ -16,7 +16,7 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** M11
 **Workstream:** 001
 **Date:** Oct 07, 2026
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P1 — prove useful judgments and honest completion evidence
 **Categories:** CLI DOCS (command-line interface, documentation)
 **Batch:** B1 — one implementation stream
@@ -30,16 +30,16 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 
 ## Overview
 
-**Goal (testable):** Prepare an orly 0.13.0 Pull Request whose offline evaluation detects unsupported completion, compares five judgment candidates against the unchanged six-question baseline, and refuses runtime adoption without independent measured benefit.
+**Goal (testable):** Prepare an orly 0.13.0 Pull Request whose TypeSafe Jev evaluation grades completion evidence against independent expectations, compares five judgment candidates against the unchanged six-question baseline, and refuses runtime adoption without independent measured benefit.
 **Problem:** A passing selected test can miss an obligation, an uncalled implementation, a failure path or an unresolved finding. Historical TypeSafe Jev model observations do not measure those gaps across complete tasks (`evals/release/evaluation-plan.md`, Evaluation set and measurement).
-**Solution summary:** Add a bounded offline evaluation suite with independent expectations, separated development and held-out families, hidden task assertions, complete outcome accounting and an adoption report. Retain the TypeScript/Bun runtime, installed ownership/recovery guarantees and deterministic gates. Produce the 0.13.0 source package and ready Pull Request; Merge, publication and live upgrades require subsequent owner instruction.
+**Solution summary:** Add bounded offline controls and explicit TypeSafe Jev measurement with independent expectations, separated development and held-out families, hidden task assertions, complete outcome accounting and an adoption report. Retain the TypeScript/Bun runtime, installed ownership/recovery guarantees and deterministic gates. Produce the 0.13.0 source package and ready Pull Request. Merge and the subsequent consumer upgrade follow the owner instructions recorded below.
 
 ## PR Intent & comprehension handshake
 
 - **Pull Request (PR) title:** Evaluate bounded judgments and prepare orly 0.13.0
 - **Intent:** Give the commander reproducible evidence about missing work and preserve an honest boundary between evaluated behavior and unavailable model evidence.
 - **Handshake:** Authoring understands the deliverable as one verified orly change, with the candidate experiment separate from runtime question registration. Implementation restates this before its first edit.
-- **ASSUMPTIONS I'M MAKING:** Prototype v2 follows the requested `docs/v2/` organization; package version is 0.13.0. Live calls stay excluded. In the absence of eligible independent model observations, all five candidates remain evaluation-only and the six runtime questions remain unchanged.
+- **ASSUMPTIONS I'M MAKING:** Prototype v2 follows the requested `docs/v2/` organization; package version is 0.13.0. Indy subsequently requested actual TypeSafe Jev judgments; bounded Jev measurements are now in scope, while other live agent calls remain excluded. In the absence of eligible independent model observations, all five candidates remain evaluation-only and the six runtime questions remain unchanged.
 
 ## Implementing agent — read these first
 
@@ -58,11 +58,13 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 | `src/judgment_comparison*.test.ts`, `src/judgment_labels*.test.ts`, `src/judgment_score*.test.ts`, `src/judgment_tasks*.test.ts` | CREATE | Validation, scoring, task and cleanup regression proofs |
 | `docs/architecture/judgment-evaluation.md`, `evals/release/evaluation-plan.md` | EDIT | Reconcile parked design with completed offline examiner |
 | `README.md`, `docs/JUDGMENTS.md`, `llms.txt`, `docs/CHANGELOG.md` | EDIT | Contributor usage, evidence limits and release notes |
+| `src/judgments/types.ts`, `src/judgments/transport.ts`, `src/judgments/wire.ts` | EDIT | Reuse the shipped TypeSafe request/response boundary through a minimal typed input; preserve runtime question definitions and behavior |
+| `docs/REST_API_DESIGN_GUIDELINES.md` | EDIT | Owner-requested correction after removal of the build-parity test; verify regeneration explicitly |
 | `package.json`, `.orly/orly.json` | EDIT | Synchronize 0.13.0; preserve installed layout |
 | `evals/judgments/comparison/receipts/` | CREATE | Baseline, final, review and adoption evidence |
 | Isolated `agentsfleet` rehearsal worktree: `.orly/` managed update and `ui/packages/design-system/src/design-system/time-utils.ts` | REHEARSE/RESTORE | User-requested packed 0.13.0 installation and bounded mutations of actual consumer behavior; preserve source and owner files |
 
-Runtime catalog, installer, supervisor, hooks and audit rules remain read-only.
+Runtime catalog, installer, supervisor, hooks and audit rules remain read-only. The TypeSafe transport input types may narrow to the fields actually consumed; its behavior stays unchanged.
 Recover only the evaluator and tests from stash `656ec6b94cdead8e5d18d0e72af6315e79946679`; never pop or drop it.
 Preserve 0.12.1 audit preflight and diagnostic fixes from current upstream.
 
@@ -123,7 +125,7 @@ Depends on §1–§2. Build at least five task families: missing obligation, mis
 
 Cleanup runs under an outer evaluation owner so stopping a task or its supervisor cannot bypass it. Abrupt loss of that owner cannot promise immediate cleanup: record ownership at creation, refuse a clean receipt, and recover only its verified stale resources on restart. No cleanup scans or removes another run's paths/processes. The durable bounded report survives cleanup outside temporary directories; hidden expectations never enter it.
 
-Actual fresh commander sessions and new live Jev responses remain excluded. Scripted task runs verify the evaluator and deterministic behavior; reports must identify them as scripted and leave autonomous model completion unmeasured. Stored observations are eligible only when their source, question, split and independent-label provenance match exactly.
+Actual fresh commander sessions remain excluded. New TypeSafe Jev responses are permitted only through the bounded measurement Section below. Scripted task runs verify the evaluator and deterministic behavior; reports must identify them as scripted and leave autonomous model completion unmeasured. Stored observations are eligible only when their source, question, split and independent-label provenance match exactly.
 
 ### §4 — Make an evidence-backed adoption decision
 
@@ -132,16 +134,26 @@ Depends on §2–§3. Register the comparison criteria before reading results. A
 - **Dimension 4.1** — DONE — Synthetic replies, owner-editable replay, missing independent labels, insufficient samples and unmatched comparison inputs cannot qualify for adoption; emit one reasoned retain/reject/eligible decision per candidate. → Test `adoption_requires_independent_measured_benefit`
 - **Dimension 4.2** — DONE — Default 0.13.0 decision retains all six runtime questions when live evidence is unavailable; no new question is registered merely because an offline suite passes. → Test `unmeasured_candidates_remain_evaluation_only`
 
-No eligible historical observations were supplied for this corpus; unresolved label disagreements require a separate reviewer or Indy to adjudicate. Missing observations block accuracy claims and adoption, but do not block an independently grounded offline corpus. Unresolved labels cannot satisfy §2 or release acceptance. Any new model-assisted labeling or live comparison requires renewed approval. The existing `0.8` advice threshold remains uncalibrated and unchanged.
+No eligible historical observations were supplied for this corpus; unresolved label disagreements require a separate reviewer or Indy to adjudicate. Missing observations block accuracy claims and adoption, but do not block an independently grounded offline corpus. Unresolved labels cannot satisfy §2 or release acceptance. Model-assisted labeling remains excluded. The owner-requested bounded Jev comparison below supplies actual model observations; larger measurement or runtime adoption requires subsequent approval. The existing `0.8` advice threshold remains uncalibrated and unchanged.
 
 ### §5 — Preserve shipped behavior and deliver 0.13.0 for review
 
 Depends on §1–§4. Reuse completed 0.12 installation controls and 0.12.1 fixes without reimplementing them.
 
 - **Dimension 5.1** — DONE — Run existing package-preservation evaluations and process tests, retaining `.orly/` layout, owner bytes, refusal and recovery behavior. → Test `make install-evals`
-- **Dimension 5.4** — IN_PROGRESS — Rehearse the packed 0.13.0 version in a separate `agentsfleet` worktree. Exercise actual time-formatting source, production caller, precise expectations, invalid inputs and unresolved-finding controls; restore every mutation and retain source hashes, attempts and owner-preservation evidence. → Test `consumer.ts submitted-hidden-repaired checks`
+- **Dimension 5.4** — DONE — Rehearse the packed 0.13.0 version in a separate `agentsfleet` worktree. Exercise actual time-formatting source, production caller, precise expectations, invalid inputs and unresolved-finding controls; restore every mutation and retain source hashes, attempts and owner-preservation evidence. → Test `consumer.ts submitted-hidden-repaired checks`
 - **Dimension 5.2** — DONE — Synchronize version, reference claims, changelog and evaluation report; package output identifies 0.13.0 and six runtime questions. → Test `consumer.ts packed-version and packed-doctor`
-- **Dimension 5.3** — IN_PROGRESS — Complete declared checks, baseline delta, unit/integration audits, adversarial review and ready Pull Request. → Test `bin/orly gate pr`
+- **Dimension 5.3** — DONE — Complete declared checks, baseline delta, unit/integration audits, adversarial review and ready Pull Request. → Test `bin/orly gate pr`
+
+### §6 — Use TypeSafe Jev for the actual examination
+
+Indy clarified that the examiner must use TypeSafe's Jev judgment model, rather than substitute handwritten semantic decisions. Keep deterministic native checks as independent expected-answer and behavior proofs. Freeze questions and inputs before observing model replies; do not tune held-out examples to obtain green results.
+
+- **Dimension 6.1** — DONE — Reuse the shipped TypeSafe transport and strict native response validation. Make one bounded request per input with no automatic retry; scan every upload first, preserve failed/missing attempts, and never serialize credentials or raw transport errors. → Test `jev_requests_preserve_actual_native_answers_and_failures`
+- **Dimension 6.2** — DONE — Measure all frozen six-baseline/five-candidate cases and independently grounded actual consumer examples through pinned `jev-1.13.0`. Bind source and question digests and keep expected labels outside requests. → Test `jev_inputs_exclude_expected_labels_and_validate_consumer_receipts`
+- **Dimension 6.3** — DONE — Produce a readable green/red report of actual Jev agreement, uncertainty and unavailable requests, alongside raw typed answers, usage, durations and conservative adoption decisions. Incorrect model answers stay red; no actual-agent improvement claim follows. → Test `jev_report_grades_actual_answers_without_model_accuracy_substitution`
+
+The explicit live entrypoint is separate from the offline control command. It accepts only the validated frozen corpus and pinned consumer evidence, caps the schedule at 256 requests, and inherits fifteen-second request, 32-kibibyte upload and 64-kibibyte reply limits. Missing credentials or scanner failure yields no upload. Native builds and commander model runs remain excluded; owner-authorized merge and consumer upgrade follow green checks.
 
 ## Interfaces
 
@@ -193,7 +205,7 @@ Contributor entrypoints: `bun evals/judgments/comparison/run.ts --check` validat
 3. Labels and held-out expectations never derive from evaluated replies; provenance checks reject missing evidence and split contamination, and resolved-label minimums block an empty semantic corpus.
 4. Task actors receive only allowlisted workspace content; evaluator assertions remain outside it and are checked for disclosure.
 5. Every attempted observation is represented, and missing evidence cannot raise scores or count as task completion.
-6. Evaluation commands cannot issue provider calls or activate remote execution; refusal and sentinel tests enforce this.
+6. Offline commands cannot issue provider calls; only explicit `jev-run.ts --live` sends scanned, bounded requests. No remote execution is activated.
 7. Advice and synthetic results cannot satisfy adoption or gate criteria; deterministic checks and recorded owner decisions keep their authority.
 8. Reports bind exact inputs and outputs; source changes require a new run. Repetition reuses no stale verdict and cleans only the run's owned directory.
 
@@ -227,6 +239,9 @@ Existing external telemetry is unchanged; these are local evaluation artifacts, 
 | 5.2 | e2e | `consumer.ts packed-version and packed-doctor` | Packed subprocess reports 0.13.0 and six questions; rejects unsupported inputs |
 | 5.3 | integration | `bin/orly gate pr` | Required receipts match final inputs; changed source invalidates old review claims |
 | 5.4 | integration | `consumer.ts submitted-hidden-repaired checks` | Packed 0.13.0 installs in the pinned consumer worktree; actual source mutations fail hidden checks, repairs pass, original source and owner files are preserved |
+| 6.1 | integration | `jev_requests_preserve_actual_native_answers_and_failures` | Real HTTP boundary retains native answers, refuses malformed replies and retains failed attempts without retry |
+| 6.2 | unit/integration | `jev_inputs_exclude_expected_labels_and_validate_consumer_receipts` | Frozen questions and actual consumer evidence are validated before upload; expected labels are absent from requests |
+| 6.3 | unit | `jev_report_grades_actual_answers_without_model_accuracy_substitution` | Green/red reflects actual reply agreement; uncertainty and missing requests stay visible and cannot qualify adoption |
 
 ## Acceptance Rubric (single scoring surface)
 
@@ -256,10 +271,10 @@ No runtime removals or renames. Every new evaluator helper must have a contribut
 
 ## Out of Scope
 
-- Live Jev/commander/comprehension calls and model-assisted labeling; native builds or another runtime.
-- Live `agentsfleet` changes or deployment: Indy performs deployment separately. Disposable repositories remain in scope.
+- Live commander/comprehension calls and model-assisted labeling; native builds or another runtime. Bounded TypeSafe Jev judgment measurements are included by the owner request below.
+- Product deployment remains outside this stream. The owner-authorized `agentsfleet` 0.13 upgrade uses a separate branch and Pull Request.
 - Dedicated 0.11-to-0.12 migration proof is excluded by Indy's item-5 decision. The intended `agentsfleet` migration is 0.10.x to 0.12; this release makes no verified claim for that migration. Existing installation/recovery controls remain required.
-- Remote execution activation, autonomous merge/publication, release tags, hosting changes or new credentials.
+- Remote execution activation, manually published releases/tags, hosting changes or new credentials.
 - Workflow/hook/gate changes, scanner suppressions and cross-repository documentation edits without explicit fresh approval.
 - Previously excluded telemetry privacy and publication lookup/recovery findings A40, A20 and A21; no repair claim.
 
@@ -288,14 +303,16 @@ No runtime removals or renames. Every new evaluator helper must have a contribut
 
 - `orly-spec-new` used to author this fresh specification. User explicitly requests a fresh tree from fetched upstream and preservation of local commits; the spec starts on that branch, leaving local main untouched.
 - Comparison revision at opening: `a09ae05042b66cde67c91c1f326fa1b7e3f5b94e` (0.12.1). Historical M10 package proof and original parked design remain unchanged.
-- Scope is deterministic offline examination. Separate semantics-specific expected answers from submitted answers; no generic probe earns unsupported semantic accuracy credit.
+- Initial scope was deterministic offline examination; Section 6 records the subsequently authorized Jev measurement. Separate semantics-specific expected answers from submitted answers; no generic probe earns unsupported semantic accuracy credit.
 - TypeScript file shape: schemas/types are passive values; validators and scoring are functions; the run owner is a class with bounded lifecycle. Test files have no production exports.
 - Surface checklist: OpenAPI no; contributor command yes; user docs yes; version yes; database no; runtime catalog no. No native build or live call required.
 - Quality ceiling: independently measured model runs could improve adoption evidence; more runtime abstractions cannot supply that evidence.
-- Offline verification and native source review are recorded in `evals/judgments/comparison/receipts/verification.md`. Consumer full-suite verification and the ready Pull Request remain incomplete; no deferral is claimed.
-
+- Verification and native review evidence: `evals/judgments/comparison/receipts/verification.md`; no deferral is claimed.
 > Indy (Oct 07, 2026; time not recorded): "Also keep it simple and deterministic" — context: fixed fixtures, explicit scoring, bounded serial task execution and no new framework.
-
 > Indy (Oct 07, 2026; time not recorded): "the test will be conducted on the agentsfleet repo and you will have to rehearse it in a separate worktree oon the 0.13 version just like you tested 0.12" — authorizes the isolated consumer rehearsal in Dimension 5.4; no live model, native build or live checkout change.
 
-The full consumer suite exceeded the current fifteen-second per-command budget in two retained attempts. The owner was asked about a separate sixty-second full-suite budget; no approval or limit change has been recorded. Individual hidden checks completed in milliseconds.
+The full consumer suite exceeded the current fifteen-second per-command budget in two retained attempts. Indy approved a separate sixty-second budget for the fixed consumer Make suite; individual task commands keep their fifteen-second budget. Individual hidden checks completed in milliseconds.
+> Indy (Oct 07, 2026; time not recorded): "Okay go ahead and make that change" — context: sixty seconds only for the full consumer design-system suite, fifteen seconds for individual task commands, with both incomplete attempts retained.
+> Indy (Oct 07, 2026; time not recorded): "I want them 0.13 version via typesafe and not a regular judgement" — context: actual bounded TypeSafe Jev evaluation and a report of model answers; deterministic checks supply independent expectations, not substitute judgments.
+> Indy (Oct 08, 2026; time not recorded): "So if CI gates are green merge, and update local agentsfleet by creating a branch to update to 0.13 version, and push the PR" — context: Continuous Integration (CI) gates must be green before either merge; babysit both Pull Requests and address consumer Greptile feedback.
+> Indy (Oct 08, 2026; time not recorded): "Ship it in 0.13." — context: remove the deleted `test_openapi_build_is_the_source` documentation, name two surviving parity tests, add regeneration verification, then update the consumer with `--no-hooks` and confirm doctor.

@@ -11,7 +11,7 @@ executable: false
 ## What it is
 
 The 0.13.0 source candidate resumes the comparison parked during 0.12 migration verification.
-Its deliverable is a deterministic offline examiner with reproducible, complete evidence.
+Its deliverable combines deterministic task controls with explicit TypeSafe Jev measurements and complete result accounting.
 The [original design](receipts/Oct_06_12_57/parked-comparison-spec.md) remains preserved.
 
 ## Why it exists
@@ -23,7 +23,7 @@ A passing offline exercise cannot establish that an actual agent performs better
 ## How it behaves
 
 The [architecture](../../docs/architecture/judgment-evaluation.md) describes commands, fixture boundaries, ownership and reporting.
-The [active specification](../../docs/v2/active/M11_001_P1_CLI_DOCS_JUDGMENT_COMPARISON_013.md) maps each required outcome to a proof.
+The [closed specification](../../docs/v2/done/M11_001_P1_CLI_DOCS_JUDGMENT_COMPARISON_013.md) maps each required outcome to a proof.
 
 | Comparison | Evidence | Decision |
 |---|---|---|
@@ -81,7 +81,8 @@ Only trusted fixture scripts may run.
 
 The 0.12.1 fixes and `.orly/` ownership remain in force.
 Earlier package and consumer migration evidence stays in the [release report](release-report.md).
-Live model calls, native builds, publication, merge and live upgrades are excluded from this work.
+Only the explicit Jev measurement command sends model requests. Native builds and live commander/comprehension runs remain outside this evaluation.
+Repository merging and consumer upgrades follow separate owner-authorized checks.
 
 ## Related pages
 

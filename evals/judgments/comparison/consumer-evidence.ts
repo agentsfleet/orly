@@ -2,16 +2,21 @@ import { lstatSync } from "node:fs";
 import { join } from "node:path";
 import { z } from "zod";
 
-import { MAX_SOURCE_BYTES } from "../../../src/judgments/constants";
+import { MAX_SOURCE_BYTES, NEWLINE } from "../../../src/judgments/constants";
 import { digest, readBounded } from "../../../src/judgments/files";
-import { CONSUMER_SCENARIOS, type ConsumerScenario } from "./consumer-checks";
+import { CONSUMER_CONFIG, CONSUMER_SCENARIOS, type ConsumerScenario } from "./consumer-checks";
 
 const MAX_PACKAGE_FILES = 1024;
 const MAX_PACKAGE_BYTES = 16 * 1024 * 1024;
 const CHECK = { clockUs: "caller-clock-en-US", clockGb: "caller-clock-en-GB", exactGb: "exact-locale-en-GB", absoluteGb: "caller-absolute-en-GB" } as const;
 const PROBE_CHECKS = ["exact-locale-en-US", CHECK.clockUs, "caller-absolute-en-US", CHECK.exactGb, CHECK.clockGb, CHECK.absoluteGb, "invalid-clock-not-a-date", "invalid-caller-not-a-date", "invalid-clock-", "invalid-caller-"];
 const SUBMITTED_CHECKS = ["output-exists"];
+const CONSUMER_GUIDE = ".orly/docs/REST_API_DESIGN_GUIDELINES.md";
 const checksSchema = z.array(z.strictObject({ name: z.string(), passed: z.boolean(), error: z.string().optional() })).max(PROBE_CHECKS.length);
+
+export function validConsumerDiff(stdout: string): boolean {
+  return stdout.trim() === [CONSUMER_GUIDE, CONSUMER_CONFIG].join(NEWLINE);
+}
 
 export function validConsumerChecks(stdout: string, hidden: boolean, scenario?: ConsumerScenario): boolean {
   try {
