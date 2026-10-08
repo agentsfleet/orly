@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.0 — 2026-10-08
+
+Retained TypeSafe Jev measurements now carry per-attempt explanations and explicit adoption limits.
+
+- **Diagnosis** — accounts for all 188 saved attempts and separates native-answer agreement from confidence withholding and grading.
+- **Evidence** — preserves original replies and labels; names uncertain fixture meanings and unavailable provider explanations.
+- **Guidance** — links contributors to the source diagnosis while keeping all five proposed checks evaluation-only.
+
 ## 0.13.0 — 2026-10-07
 
 A source-checkout examiner checks unsupported completion claims and grades actual TypeSafe Jev answers against frozen expectations.
