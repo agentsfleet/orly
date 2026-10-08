@@ -11,12 +11,12 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** Milestone 13 (M13)
 **Workstream:** 001
 **Date:** Oct 08, 2026
-**Status:** PENDING
+**Status:** IN_PROGRESS
 **Priority:** P2 — owner-requested package publication
 **Categories:** Documentation (DOCS), Infrastructure (INFRA)
 **Batch:** B1 — one sequential release workstream
-**Branch:** pending — set at CHORE(open)
-**Baseline revision:** pending — record comparison commit at CHORE(open)
+**Branch:** feat/m13-orly-014-release
+**Baseline revision:** cfc46e2d476dfbd740f2ce3d899fabad6b0f3469
 **Test Baseline:** pending — measure declared lanes before the Pull Request
 **Baseline evidence:** pending — exact revision, command and count evidence
 **Depends on:** M12_001 — merged offline diagnosis and candidate assessment
