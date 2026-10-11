@@ -184,6 +184,21 @@ Embed the code as a struct field on the logger call: `log.err("event_name", .{ .
 
 System-level failures with no domain meaning (e.g. raw `EACCES` from a syscall before we attribute it to a tenant operation) emit without `error_code`. The follow-up rule: if a syscall failure surfaces to a user, it gets attributed to a registry code at the boundary.
 
+**One record, two failures.** Some records report a decision about another
+failure: a gate that fails open, a rollback, a refused configuration. The
+record's `error_code` names the decision. The failure behind it keeps its own
+registry code in a field named for its role:
+
+| Field | Carries the code of |
+|---|---|
+| `cause_error_code` | the failure the decision answers |
+| `rollback_error_code` | a failure in the recovery that followed |
+| `config_error_code` | the configuration read that could not be used |
+
+A new role takes the same `<role>_error_code` shape. `error_code` always names
+the record's own code, so never overwrite it with the cause's code. Never
+embed a code inside a reason sentence either; the field carries it.
+
 ## §6 · PII / secret discipline
 
 > [UNENFORCED → broad principle; no scan covers every log call site in the codebase for credential-shaped values]
@@ -324,12 +339,14 @@ arguments, never positional message formatting.
 
 > [JUDGMENT → RUST-STYLE]
 
-Every `warn` or `error` that maps to a registry code supplies
-`error_code = code` per §5. Hoist field expressions into locals before the macro
-call. The log bridge duplicates field expressions, and LLVM coverage
-instrumentation scores the dead copy; locals preserve evaluation and coverage
-behavior. A trailing string message is §3's optional `msg` and is always the
-last macro argument. Prefer fields alone when they already explain the event.
+Every `warn` or `error` that maps to a registry code supplies `error_code =
+code` per §5. A record that reports a second failure adds its
+`<role>_error_code` per §5, for example `cause_error_code`. Hoist field
+expressions into locals before the macro call. The log bridge duplicates field
+expressions, and LLVM coverage instrumentation scores the dead copy; locals
+preserve evaluation and coverage behavior. A trailing string message is §3's
+optional `msg` and is always the last macro argument. Prefer fields alone when
+they already explain the event.
 
 ```rust
 let code = error_code::INTERNAL_DB_QUERY.as_str();

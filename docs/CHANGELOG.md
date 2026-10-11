@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.1 — 2026-10-11
+
+The logging standard names the field for a second failure's code.
+
+- **Role-prefixed codes** — §5 defines `cause_error_code`, `rollback_error_code` and `config_error_code`, and the `<role>_error_code` shape for new roles.
+- **Rust binding** — §8A points a record that reports a second failure at §5.
+
 ## 0.14.0 — 2026-10-08
 
 Retained TypeSafe Jev measurements now carry per-attempt explanations and explicit adoption limits.
