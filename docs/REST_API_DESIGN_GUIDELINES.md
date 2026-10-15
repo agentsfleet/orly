@@ -347,7 +347,7 @@ documentation links. Handlers supply the code and a safe human-readable detail;
 they do not duplicate the registry's response shape.
 
 <!-- oracle-packs:start product.agentsfleet -->
-The `agentsfleet` registry is `rustd/crates/afd_core/src/error_code.rs` and its
+The `agentsfleet` registry is `rustd/crates/afd_core/src/error_code/mod.rs` and its
 family modules. Its handlers use these refusal constructors:
 
 ```rust
@@ -626,12 +626,12 @@ When in doubt, mirror an existing handler:
 | Pattern | Look at |
 |---------|---------|
 | Read, edit and purge one resource | `rustd/crates/afd_api_tenant/src/handler/fleet/detail.rs` |
-| Request parsing and its refusal sentences | `rustd/crates/afd_api_tenant/src/handler/fleet/detail_request.rs` |
-| Keyset pagination | `rustd/crates/afd_api_tenant/src/handler/tenant/models.rs` |
-| Platform plane, operator-held | `rustd/crates/afd_api_operator/src/handler/admin/platform_keys.rs` |
-| Streaming (Server-Sent Events) | `rustd/crates/afd_api_tenant/src/handler/stream.rs` |
+| Request parsing and its refusal sentences | `rustd/crates/afd_api_tenant/src/handler/fleet/message_steer/mod.rs` |
+| Keyset pagination | `rustd/crates/afd_api_tenant/src/handler/tenant/models/mod.rs` |
+| Platform plane, operator-held | `rustd/crates/afd_api_operator/src/handler/admin/platform_keys/mod.rs` |
+| Streaming (Server-Sent Events) | `rustd/crates/afd_api_tenant/src/handler/stream/mod.rs` |
 | Signature-proven ingress | `rustd/crates/afd_api_ingress/src/handler/webhook/receive_route.rs` |
-| A runner speaking for itself | `rustd/crates/afd_api_runner/src/handler/runner/lease.rs` |
+| A runner speaking for itself | `rustd/crates/afd_api_runner/src/handler/runner/lease/mod.rs` |
 
 <!-- oracle-packs:end -->
 ## §8 — Handler signature rule
