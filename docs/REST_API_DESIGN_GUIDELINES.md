@@ -142,7 +142,19 @@ If the parent ID is in the path, never repeat it in the body.
 
 **PATCH idempotency guarantee** — PATCH MUST be idempotent unless the spec's "Failure Modes" section explicitly declares otherwise with a reason. Idempotent PATCH means: issuing the same body twice in succession produces identical row state and identical 200 responses. A negative test that issues the same PATCH twice and asserts equality is required (§10).
 
-**Idempotency keys for non-idempotent POSTs.** Any POST that creates a billable, externally-visible, or side-effecting resource MUST accept an `Idempotency-Key` request header (UUIDv7 from the client). The server stores `(workspace_id, key) → response` for at least 24 hours and replays the prior response on duplicate. Endpoints exempt: pure RPC reads, internal-only POSTs. List which endpoints honor the key in the OpenAPI description.
+**Idempotency keys for non-idempotent POSTs.** Any POST that creates a billable, externally-visible, or side-effecting resource MUST accept an `Idempotency-Key` request header (UUIDv7 from the client), except the conversation rules below. The server stores `(workspace_id, key) → response` for at least 24 hours and replays the prior response on duplicate. Endpoints exempt: pure RPC reads, internal-only POSTs. List which endpoints honor the key in the OpenAPI description.
+
+**Owner-approved conversation exception.** Fleet and creator-private draft
+`/messages` sends require one UUIDv7 `operation_id` in the JSON body. They MUST
+reject an `Idempotency-Key` header. Draft creation uses the same body key and
+atomically records its optional first message. Authorization and lifecycle
+checks apply before replay. The same key, normalized message and actor recover
+the accepted message; changed content or actor conflicts. Sends return
+`202 {status, sequence, replayed}` for drafts, or the fleet's accepted event
+receipt, with `Location` pointing to that conversation's messages collection.
+Pending state, answers and usage are read through messages and its authorized
+live stream. These resources create neither a public turn-status resource nor
+a generic operation. Creator-private text never appears in workspace streams.
 
 **Owner-approved workspace exception.** `POST /v1/workspaces` accepts no replay
 key. It requires a tenant-unique name and performs one tenant-scoped insert with
@@ -156,7 +168,7 @@ generalize this exception to other POST endpoints.
 
 ### Long-running operations
 
-Endpoints that can't complete inside the request window MUST follow this convention — no per-endpoint reinvention:
+Endpoints that can't complete inside the request window MUST follow this convention, except conversation acceptance described above:
 
 1. The kicking POST returns `202 Accepted` with `Location: /v1/operations/{operation_id}` and a body containing `operation_id` and `status: "pending"`.
 2. `GET /v1/operations/{operation_id}` returns:
@@ -433,6 +445,14 @@ the caller gets the registry's 500 and no internal detail.
 
 - `409` MUST include `current_state: <string>` naming the state that forbade the transition (e.g. `"current_state": "approved"` when the caller tried to approve an already-approved gate).
 - `412` MUST include `etag: <string>` carrying the resource's current ETag so the client can refetch and retry.
+
+<!-- oracle-packs:start product.agentsfleet -->
+Reviewed setup mutations in `agentsfleet` additionally return `review_digest`
+on a stale-review `409`. The daemon computes this opaque digest from the current
+effective setup and access/model resolution versions. The response also carries
+`current_state`; clients fetch the current review before submitting again.
+This extension grants no setup or runtime authority.
+<!-- oracle-packs:end -->
 
 Don't invent other extensions without amending this doc.
 

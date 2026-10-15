@@ -7,14 +7,14 @@ regenerates this file and fails on any difference. To update it, run
 | Rule document | enforced by | judged | acknowledged | classified | trigger |
 |---|---|--:|--:|--:|---|
 | `docs/LOGGING_STANDARD.md` | `LOG` → `logging.sh` | 10 | 13 | 30/30 | mechanical |
-| `docs/REST_API_DESIGN_GUIDELINES.md` | — | 0 | 0 | 0/67 | mechanical |
+| `docs/REST_API_DESIGN_GUIDELINES.md` | — | 0 | 0 | 0/69 | mechanical |
 | `docs/SCHEMA_CONVENTIONS.md` | — | 0 | 0 | 0/17 | mechanical |
 | `docs/DOCUMENTATION_RULES.md` | — | 0 | 0 | 0/22 | latent |
 | `docs/LIFECYCLE_PATTERNS.md` | — | 0 | 0 | 0/22 | mechanical |
 | `docs/CHANGELOG_VOICE.md` | — | 0 | 0 | 0/3 | latent |
 | `docs/VERIFY_TIERS.md` | — | 0 | 0 | 0/4 | uncited |
 | `docs/greptile-learnings/RULES.md` | — | 0 | 0 | 0/115 | mechanical |
-| **corpus** | | | | **30/280** | |
+| **corpus** | | | | **30/282** | |
 
 ## How to read this
 
