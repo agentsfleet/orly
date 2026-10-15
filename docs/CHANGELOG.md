@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.3 — 2026-10-15
+
+The REST API guide carries agentsfleet's conversation and reviewed-setup exceptions, and the TypeScript rules name how timestamps are labelled.
+
+- **Conversation sends** — fleet and draft `/messages` sends take one UUIDv7 `operation_id` in the body and refuse an `Idempotency-Key` header; replay, conflict and `202` answers are defined.
+- **Stale reviews** — a reviewed setup mutation refused with `409` also returns the current `review_digest` and `current_state`.
+- **Record dates** — creation timestamps are labelled **Created**; other timestamps name their event.
+
 ## 0.14.2 — 2026-10-15
 
 The release inventory reads npm 12's pack output, and the API and logging guides cite agentsfleet's current module paths.
