@@ -72,11 +72,19 @@ function inspect(path: string, packed: Set<string>, generated: Map<string, strin
   };
 }
 
+type PackEntry = { files: Array<{ path: string }> };
+
+// npm 11 and earlier print `npm pack --json` as an array of entries; npm 12
+// prints one object keyed by package name. Both carry the same entries.
+export function packEntries(json: string): PackEntry[] {
+  const parsed = JSON.parse(json) as PackEntry[] | Record<string, PackEntry>;
+  return Array.isArray(parsed) ? parsed : Object.values(parsed);
+}
+
 export function inventory() {
   const tracked = command([GIT, LS_FILES, ZERO_DELIMITED]).split(NULL_BYTE).filter(Boolean);
   const untracked = command([GIT, LS_FILES, "--others", "--exclude-standard", ZERO_DELIMITED]).split(NULL_BYTE).filter(Boolean);
-  const pack = JSON.parse(command(["npm", "pack", "--dry-run", "--json"])) as Array<{ files: Array<{ path: string }> }>;
-  const packed = new Set(pack.flatMap((entry) => entry.files.map((file) => file.path)));
+  const packed = new Set(packEntries(command(["npm", "pack", "--dry-run", "--json"])).flatMap((entry) => entry.files.map((file) => file.path)));
   const dispositions = JSON.parse(readFileSync(resolve(ROOT, DISPOSITIONS), ENCODING)) as Record<string, Disposition>;
   const registry = JSON.parse(readFileSync(resolve(ROOT, "registry.json"), ENCODING)) as { packs: Record<string, Pack>; core_documents: string[] };
   const generated = new Map<string, string>([["AGENTS.md", registry.core_documents.join(" + ") + " via bin/orly update"]]);
