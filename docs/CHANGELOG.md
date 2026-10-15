@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.2 — 2026-10-15
+
+The release inventory reads npm 12's pack output, and the API and logging guides cite agentsfleet's current module paths.
+
+- **npm 12** — `npm pack --dry-run --json` now prints one object keyed by package name instead of an array; the release inventory reads both, so `make audit` passes on npm 12.
+- **Guide citations** — the REST API and logging guides cite agentsfleet's `x/mod.rs` module paths, and request parsing points at `fleet/message_steer/mod.rs`.
+
 ## 0.14.1 — 2026-10-11
 
 The logging standard names the field for a second failure's code.

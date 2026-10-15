@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 
 import { cleanupTemporaryDirectories, git, newRepository, ROOT } from "./gates_test_support";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
-import { packEntries } from "../evals/release/inventory";
+import { inventory, packEntries } from "../evals/release/inventory";
 
 const INVENTORY = "evals/release/inventory.json";
 const REVIEWED_RECORD = "evals/release/reviewed.json";
@@ -85,3 +85,11 @@ test("npm pack output is read in both the array and the keyed-object shape", () 
   expect(packEntries(JSON.stringify([entry]))).toEqual([entry]);
   expect(packEntries(JSON.stringify({ "@agentsfleet/orly": entry }))).toEqual([entry]);
 });
+
+test("the inventory of this checkout marks the package manifest as packed", () => {
+  const result = inventory();
+  const manifest = result.files.find((file) => file.path === "package.json");
+  expect(result.totals.packed).toBeGreaterThan(0);
+  expect(manifest?.package).toBe(true);
+  expect(result.files.filter((file) => file.package).length).toBe(result.totals.packed);
+}, TEST_TIMEOUT_MS);
