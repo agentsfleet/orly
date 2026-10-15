@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 
 import { cleanupTemporaryDirectories, git, newRepository, ROOT } from "./gates_test_support";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { packEntries } from "../evals/release/inventory";
 
 const INVENTORY = "evals/release/inventory.json";
 const REVIEWED_RECORD = "evals/release/reviewed.json";
@@ -78,3 +79,9 @@ test("inventory and review records require an external snapshot binding", () => 
     expect(row.package).toBeFalse();
   }
 }, TEST_TIMEOUT_MS);
+
+test("npm pack output is read in both the array and the keyed-object shape", () => {
+  const entry = { files: [{ path: "bin/orly" }, { path: "README.md" }] };
+  expect(packEntries(JSON.stringify([entry]))).toEqual([entry]);
+  expect(packEntries(JSON.stringify({ "@agentsfleet/orly": entry }))).toEqual([entry]);
+});
