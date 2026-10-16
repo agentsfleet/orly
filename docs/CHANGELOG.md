@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.4 — 2026-10-16
+
+The milestone-ID and UI-substitution audit no longer forks per staged file. A pre-commit stage of ~1,600 files that ran over 27 minutes now finishes in about two seconds, with verdicts unchanged.
+
+- **Scan** — one `git diff` and one `awk` cover the whole staged set. Reading the line above an added line now costs at most one `git show` per file with a candidate hit, down from one fork pair per added line.
+- **Compatibility** — verdicts, hit order and exit codes match 0.14.3 byte-for-byte across staged, `--diff` and explicit-file modes, including spaced, quoted and non-ASCII filenames, renames re-scanned as whole-file additions, and absolute explicit paths.
+
 ## 0.14.3 — 2026-10-15
 
 The REST API guide carries agentsfleet's conversation and reviewed-setup exceptions, and the TypeScript rules name how timestamps are labelled.
