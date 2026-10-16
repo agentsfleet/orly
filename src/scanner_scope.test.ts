@@ -30,6 +30,10 @@ const ERROR_TYPE = "pub struct Error;\n";
 const VALUE_INIT = "pub fn init() Self { return .{}; }\n";
 const ALLOCATING_INIT = "pub fn init(a: std.mem.Allocator) !Self { const owned = try a.alloc(u8, COUNT); return .{ .owned = owned }; }\n";
 const DIFF = "--diff";
+const SPACED = "lib/has space.ts";
+const TRAILING_SPACE = "lib/trail .ts";
+const OVERRIDE = "MILESTONE ID ALLOWED per user override (reason: pin)";
+const MARKED_T = 'const t = "T' + '7";\n';
 const SCANNERS = ["ufs.sh", "logging.sh", "deinit-pairs.sh", "sql-mod.sh", "error-codes.sh", "rust-error.sh", "design-tokens.sh"];
 
 setDefaultTimeout(TEST_TIMEOUT_MS);
@@ -187,6 +191,39 @@ test("diff marker explicit files use working bytes and missing comparisons refus
   const missing = scan(project, "audits/msid-ui.sh", [DIFF], { BASE: "missing-revision" });
   expect(missing.code).toBe(2);
   expect(missing.text).toContain("comparison revision is missing: missing-revision");
+});
+
+test("diff markers survive spaced and trailing-space filenames", async () => {
+  const project = newRepository();
+  await staged(project, SPACED, MARKED);
+  await staged(project, TRAILING_SPACE, MARKED);
+  const result = scan(project, "audits/msid-ui.sh", [STAGED]);
+  expect(result.code).toBe(1);
+  expect(result.text).toContain(`MS-ID  ${SPACED}: // ${MARKER}`);
+  expect(result.text).toContain(`MS-ID  ${TRAILING_SPACE}: // ${MARKER}`);
+});
+
+test("pure rename re-scans the file as a whole-file addition", async () => {
+  const project = newRepository();
+  await staged(project, "lib/old.ts", MARKED);
+  git(project, COMMIT, "-qm", "test: seed rename");
+  git(project, "mv", "lib/old.ts", "lib/new.ts");
+  const result = scan(project, "audits/msid-ui.sh", [STAGED]);
+  expect(result.code).toBe(1);
+  expect(result.text).toContain(`MS-ID  lib/new.ts: // ${MARKER}`);
+});
+
+test("explicit absolute paths keep the caller path and read its post-image", async () => {
+  const project = newRepository();
+  const absolute = join(temporaryDirectory(), "outside.ts");
+  await Bun.write(absolute, `// ${OVERRIDE}\n${MARKED_T}`);
+  const suppressed = scan(project, "audits/msid-ui.sh", [absolute]);
+  expect(suppressed.code).toBe(0);
+  expect(suppressed.text).toContain("0 hits");
+  await Bun.write(absolute, MARKED_T);
+  const flagged = scan(project, "audits/msid-ui.sh", [absolute]);
+  expect(flagged.code).toBe(1);
+  expect(flagged.text).toContain(`MS-ID  ${absolute}: const t = "T` + `7";`);
 });
 
 test("indexed source links cannot read outside their owned snapshot", async () => {
