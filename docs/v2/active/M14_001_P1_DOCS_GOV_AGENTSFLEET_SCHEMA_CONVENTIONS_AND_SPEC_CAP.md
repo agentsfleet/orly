@@ -16,12 +16,12 @@ SPEC AUTHORING RULES (load-bearing — the one comment that survives):
 **Milestone:** M14
 **Workstream:** 001
 **Date:** Oct 17, 2026
-**Status:** PENDING
+**Status:** IN_PROGRESS
 **Priority:** P1 — agentsfleet's schema rebuild (its M229_001) is reviewed against these conventions
 **Categories:** DOCS, GOV
 **Batch:** B1 — single workstream
-**Branch:** pending — set at CHORE(open)
-**Baseline revision:** pending — record the full comparison commit at CHORE(open)
+**Branch:** feat/m14-agentsfleet-schema-conventions
+**Baseline revision:** 7b58cc20fcf01edfd03cb0048ca920a51bb8a068
 **Test Baseline:** pending — measure declared unit and integration lanes before the Pull Request
 **Baseline evidence:** pending — report path or run URL with revision, commands, passed/failed/skipped counts, and environment
 **Depends on:** none
