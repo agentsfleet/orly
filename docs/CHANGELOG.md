@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.14.7 — 2026-10-17
+
+API instants become RFC 3339 strings, and agentsfleet's schema stores them as `TIMESTAMPTZ(3)` under a clock rule that reads the time after a lock wait.
+
+- **REST guide** — `_at` fields are RFC 3339 strings in UTC, OpenAPI `format: date-time`; epoch integers no longer represent instants, and filters state their boundaries.
+- **Schema conventions** — timestamps are `TIMESTAMPTZ(3)`; lifecycle stamps come from `now()`, locking validity checks lock first and then read `clock_timestamp()`, and sweeps compare against `statement_timestamp()`.
+
 ## 0.14.6 — 2026-10-17
 
 agentsfleet's schema conventions no longer require migrate to refuse an older migrator's ledger.
