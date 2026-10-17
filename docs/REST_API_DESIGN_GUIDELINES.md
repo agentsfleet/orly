@@ -326,7 +326,7 @@ If you find yourself wanting another status code, check RFC 7231/7807 — don't 
 
 1. Responses MUST emit UTC with the `Z` designator.
 2. Requests MAY carry any valid numeric UTC offset. The server MUST normalize an accepted instant to UTC.
-3. Epoch integers MUST NOT represent an instant in a new field. Replacing an existing integer field is a type change (§9) and needs a recorded compatibility or versioning decision first.
+3. Epoch integers MUST NOT represent an instant.
 4. An invalid or out-of-range instant MUST return `400` with a field-specific `detail` (§5).
 5. Timestamp filters MUST document whether each boundary is inclusive or exclusive. An opaque pagination cursor MUST carry the complete ordering key at the database's precision.
 6. Shared validation MUST enforce the documented input range and precision.
