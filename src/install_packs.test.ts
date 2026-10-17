@@ -44,7 +44,7 @@ describe("opt-in pack selection", () => {
     const installed = await Promise.all(pages.map((path) => Bun.file(join(repo, ".orly", path)).text()));
     for (const content of installed) {
       expect(content).not.toContain("playbooks/founding/");
-      expect(content).not.toContain("schema/embed.zig");
+      expect(content).not.toContain("rustd/crates/afd_db/src/migration.rs");
       expect(content).not.toContain("src/cmd/common.zig");
       expect(content).not.toContain("build_runner.zig");
       expect(content).not.toContain("~/Projects/docs/");
@@ -73,7 +73,7 @@ describe("opt-in pack selection", () => {
     const sql = await Bun.file(join(repo, ".orly/dispatch/write_sql.md")).text();
     const zig = await Bun.file(join(repo, ".orly/dispatch/write_zig.md")).text();
     expect(sql).toContain("0.30.0");
-    expect(sql).toContain("schema/embed.zig");
+    expect(sql).toContain("rustd/crates/afd_db/src/migration.rs");
     expect(sql).toContain("**Forbidden:**");
     expect(zig).toContain("build_runner.zig");
   });
