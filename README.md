@@ -78,7 +78,7 @@ TypeSafe's Jev model supplies runtime advice through explicit `orly judge` reque
 
 See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
 The install commands below fetch the published package.
-The release workflow publishes 0.14.6 after its version change merges to `main`.
+The release workflow publishes 0.14.7 after its version change merges to `main`.
 
 ---
 
