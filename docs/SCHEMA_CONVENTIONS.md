@@ -21,7 +21,7 @@ Canonical reference for `agentsfleet` database schema patterns. All new tables *
 
 ## Migrator
 
-SQLx's `Migrator` applies the slots from the explicit list in `rustd/crates/afd_db/src/migration.rs` (`Migrator::with_migrations`; the `migrate` feature only, `macros` stays off). It keeps checksums, so an edited applied slot is refused, and records the ledger in the `audit` schema. Locking is ours: SQLx's lock is off (`set_locking(false)`) and a bounded `pg_try_advisory_lock` poll wraps the run, so a held lock fails loudly instead of hanging a deploy. Migrate refuses to start while a ledger from an older migrator exists.
+SQLx's `Migrator` applies the slots from the explicit list in `rustd/crates/afd_db/src/migration.rs` (`Migrator::with_migrations`; the `migrate` feature only, `macros` stays off). It keeps checksums, so an edited applied slot is refused, and records the ledger in the `audit` schema. Locking is ours: SQLx's lock is off (`set_locking(false)`) and a bounded `pg_try_advisory_lock` poll wraps the run, so a held lock fails loudly instead of hanging a deploy.
 
 ## Schema File Organization
 
