@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.14.5 — 2026-10-17
+
+agentsfleet's schema conventions carry the owner-signed Postgres rules, and specs may run to 500 lines.
+
+- **Schema conventions** — placement in owned schemas, key and counter naming, RULE STS in full, timestamp categories, runtime SQL in `PREPARE`-checked `.sql` files, and SQLx's `Migrator` inside a bounded lock. Entities are named `fleet.*`.
+- **Spec cap** — the spec template gate allows 500 lines, up from 320.
+- **Schema guard** — the teardown flow no longer names the retired `schema/embed.zig`.
+
 ## 0.14.4 — 2026-10-16
 
 The milestone-ID and UI-substitution audit no longer forks per staged file. A pre-commit stage of ~1,600 files that ran over 27 minutes now finishes in about two seconds, with verdicts unchanged.
