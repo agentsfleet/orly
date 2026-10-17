@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.14.6 — 2026-10-17
+
+agentsfleet's schema conventions no longer require migrate to refuse an older migrator's ledger.
+
+- **Schema conventions** — agentsfleet's databases start empty under SQLx's `Migrator`, so no earlier ledger exists to refuse.
+
 ## 0.14.5 — 2026-10-17
 
 agentsfleet's schema conventions carry the owner-signed Postgres rules, and specs may run to 500 lines.
