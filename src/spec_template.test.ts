@@ -104,6 +104,13 @@ describe("spec content readiness", () => {
   });
 
   test("oversize specs report their measured size against the cap", () => {
-    expect(validateSpec(`${VALID}\n${"line\n".repeat(320)}`, COMMANDS, EXISTS).join("\n")).toMatch(/spec has \d+ lines; cap 320/);
+    expect(validateSpec(`${VALID}\n${"line\n".repeat(500)}`, COMMANDS, EXISTS).join("\n")).toMatch(/spec has \d+ lines; cap 500/);
+  });
+
+  test("a spec at the cap passes and one line over fails", () => {
+    const base = VALID.trimEnd();
+    const padded = (lines: number) => `${base}\n${Array(lines - base.split(/\r?\n/).length).fill("line").join("\n")}`;
+    expect(validateSpec(padded(500), COMMANDS, EXISTS).join("\n")).not.toMatch(/cap 500/);
+    expect(validateSpec(padded(501), COMMANDS, EXISTS)).toContain("spec has 501 lines; cap 500");
   });
 });
