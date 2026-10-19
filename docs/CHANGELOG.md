@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.15.0 (2026-10-19)
+
+Documentation now requires an editing pass that cuts filler and repeated facts
+while keeping required actions clear.
+
+- **Changelog** — Default to five bullets and 120 prose words; keep necessary
+  upgrade and safety instructions even when they exceed that budget.
+- **Language gate** — `orly gate verify` and `orly gate pr` reject mechanical
+  language errors in changed Markdown and Markdown JSX (MDX) prose.
+- **Scope** — Checks include complete edited paragraphs and new pages.
+  Unchanged history and installed snapshots stay outside the check.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.15.0 update --no-hooks`
+  to keep your repository's custom hooks.
+
 ## 0.14.7 — 2026-10-17
 
 API instants become RFC 3339 strings, and agentsfleet's schema stores them as `TIMESTAMPTZ(3)` under a clock rule that reads the time after a lock wait.
