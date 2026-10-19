@@ -48,7 +48,7 @@ export async function planFiles(model: RulesModel, packs: string[], commands: Re
       if (entry.target.includes(SKILLS_SEGMENT)) {
         const body = await Bun.file(path).text();
         const frontmatter = body.match(/^---\n[\s\S]*?\n---/u)?.[0] ?? "";
-        const stub = `${frontmatter}\n\nRead and follow \`${target}\` from the repository root before acting.\n`;
+        const stub = `${frontmatter}\n\n# Skill instructions\n\nRead and follow \`${target}\` from the repository root before acting.\n`;
         planned.set(entry.target, { target: entry.target, content: new TextEncoder().encode(stub), mode: MODE_REGULAR });
       }
     }
