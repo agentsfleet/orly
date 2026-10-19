@@ -85,12 +85,11 @@ export async function installLoaders(targetRoot: string, layout: Layout, obsolet
 function pointerBlock(orlyFile: string): string {
   return [
     POINTER_OPEN,
-    `**Engineering harness:** read [\`${orlyFile}\`](${orlyFile}) as well — it carries the safety rules,`,
-    "the dispatch router that names which rule page to read before which edit, and the lifecycle",
-    "this repository gates on. Where the two disagree, this file wins.",
+    `**Engineering harness:** read [\`${orlyFile}\`](${orlyFile}) for safety rules, required reading, and lifecycle gates.`,
+    "This repository's own rules take precedence.",
     "",
-    "The line below is an import, not decoration: a runtime that resolves it loads those rules",
-    "with this file, and one that does not still has the link above.",
+    "The import below loads those rules in runtimes that support imports.",
+    "Other runtimes can follow the link above.",
     "",
     `@${orlyFile}`,
     POINTER_CLOSE,
@@ -162,6 +161,10 @@ async function upsertClaudeLoader(targetRoot: string, host: string): Promise<Ver
   }
   const current = await Bun.file(path).text();
   if (current === content) return CURRENT;
+  if ([host, PREVIOUS_AGENTS_FILENAME].some((entry) => current === compactClaudeLoader(entry))) {
+    await Bun.write(path, content);
+    return WRITTEN;
+  }
   const start = current.indexOf(POINTER_OPEN);
   const end = current.indexOf(POINTER_CLOSE);
   if (start >= 0 && end > start) {
@@ -176,6 +179,10 @@ async function upsertClaudeLoader(targetRoot: string, host: string): Promise<Ver
 }
 
 function claudeLoader(host: string): string {
+  return [GENERATED_BANNER, "", "# Repository instructions", "", claudeBlock(host), ""].join(NEWLINE);
+}
+
+function compactClaudeLoader(host: string): string {
   return [GENERATED_BANNER, claudeBlock(host), ""].join(NEWLINE);
 }
 
