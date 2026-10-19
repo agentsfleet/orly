@@ -8,7 +8,7 @@ import {
   openQuestions, productClarity, specBaseline, specDeferrals, specDimensions,
   specGate, specMoved, specOrdering,
 } from "./criteria_spec";
-import { documentationSurfaces, scanSurfaces } from "./doc_rules";
+import { scanChangedDocuments } from "./doc_changes";
 import { isObject, JsonObject, objectValue, OrlyError, RulesModel } from "./model";
 import { readConfigSync, RepoConfig } from "./config";
 import { classifyBranch, SurfaceReport } from "./surfaces";
@@ -26,6 +26,7 @@ const REV_PARSE = "rev-parse";
 const HEAD = "HEAD";
 const UPSTREAM = "@{upstream}";
 const NEWLINE = "\n";
+const DETAIL_SEPARATOR = "; ";
 const ABBREV_REF = "--abbrev-ref";
 const WORKTREE_LIST = ["worktree", "list", "--porcelain"];
 const WORKTREE_PREFIX = "worktree ";
@@ -97,7 +98,7 @@ function repositoryConfig(): Criterion {
       const config = readConfigSync(context.root);
       if (!config) return { ok: false, detail: UNINSTALLED };
       const errors = commandSetupErrors(config.commands);
-      return { ok: errors.length === 0, detail: errors.length > 0 ? errors.join("; ") : `${Object.keys(config.commands).length} command(s) declared` };
+      return { ok: errors.length === 0, detail: errors.length > 0 ? errors.join(DETAIL_SEPARATOR) : `${Object.keys(config.commands).length} command(s) declared` };
     } catch (error) {
       return { ok: false, detail: error instanceof Error ? error.message : String(error) };
     }
@@ -133,31 +134,17 @@ function docsUpdated(): Criterion {
   });
 }
 
-// docs/DOCUMENTATION_RULES.md, read back against the pages orly renders here.
-// The scope rule is the document's own: any documentation orly writes or
-// renders, README.md included.
-//
-// REPORTING ONLY, and deliberately so. The rule document landed against a
-// corpus that predates it, and the corpus does not obey it yet: this
-// repository alone carries hundreds of pre-existing findings. A red gate on
-// day one would be switched off by the end of the week, and grandfathering
-// them into a baseline file would be a list of chores wearing a gate's badge.
-// So the check reports what it found and leaves the verdict green until a
-// human has decided how the debt gets paid. Partial mechanization stated
-// honestly beats a red that means nothing (the same call audits/doc-read.sh
-// makes when its record is missing). Flipping this to a gate is a one-line
-// change: return ok on `findings.length === 0`.
 function docsLanguage(): Criterion {
   return criterion(DOCS_LANGUAGE, (context) => {
-    const surfaces = documentationSurfaces(context.root);
-    if (surfaces.length === 0) return { ok: true, detail: "no documentation surface here" };
-    const findings = scanSurfaces(context.root, surfaces);
-    if (findings.length === 0) return { ok: true, detail: `${surfaces.length} page(s) clean` };
-    const named = findings.slice(0, NAMED_FINDINGS).map((finding) => `${finding.file}:${finding.line} ${finding.code}`);
-    return {
-      ok: true,
-      detail: `${findings.length} finding(s) across ${surfaces.length} page(s), reporting only: ${named.join(", ")}`,
-    };
+    try {
+      const findings = scanChangedDocuments(context.root);
+      if (findings.length === 0) return { ok: true, detail: "changed documentation prose is clean" };
+      const named = findings.slice(0, NAMED_FINDINGS).map((finding) =>
+        `${finding.file}:${finding.line} ${finding.code}: ${finding.message}`);
+      return { ok: false, detail: `${findings.length} finding(s): ${named.join(DETAIL_SEPARATOR)}` };
+    } catch (error) {
+      return { ok: false, detail: error instanceof Error ? error.message : String(error) };
+    }
   });
 }
 

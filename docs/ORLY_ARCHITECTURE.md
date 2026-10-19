@@ -84,6 +84,13 @@ Every criterion is mechanical — it reads an exit code or a file. Claims that
 cannot be proven that way stay prose and are graded by the spec's rubric; they
 never become fake criteria.
 
+The `docs.language` criterion rejects mechanical language findings in changed
+Markdown and Markdown JSX (MDX) prose, including new pages and uncommitted edits.
+It checks complete edited paragraphs while leaving unchanged history alone.
+
+Installed `.orly/` snapshots are generated inputs; `doctor` checks their integrity.
+Readability and factual accuracy remain review judgments under DOC-43.
+
 Filename-scoped staged audits copy Git's index before selecting relevant paths.
 An empty selection skips the repository checkout; matching paths still trigger
 a private checkout, dependency reads and indexed-link checks. Each audit owns

@@ -107,10 +107,11 @@ describe("the rendered rules match the machine", () => {
     expect(withoutPersona).not.toContain("🤠 Indy");
   });
 
-  test("SOUL does not claim the language criterion enforces anything", async () => {
+  test("SOUL names the blocking language criterion and its changed-prose scope", async () => {
     const soul = await Bun.file(resolve(ROOT, "SOUL.md")).text();
 
-    expect(soul).toContain("REPORTS it");
-    expect(soul).not.toContain("`orly gate verify` enforces it");
+    expect(soul.replace(/\s+/g, " ")).toContain("`docs.language` criterion rejects mechanical language findings in changed prose");
+    expect(soul).toContain("`orly gate verify` and `orly gate pr`");
+    expect(soul).not.toContain("stays green");
   });
 });
