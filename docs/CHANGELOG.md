@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.17.0 (2026-10-21)
+
+Review a complete spec before implementation with `orly judge spec <SPEC> --refresh`.
+
+- **Readiness** — Six questions cover outcomes, scope, setup order, failures, evidence and consistency; the lowest yes probability determines the score.
+- **Decisions** — The default minimum is 90 percent; results are `READY`, `REVIEW` or `INCOMPLETE` with distinct exit codes.
+- **Replay** — Omit `--refresh` to reuse exact saved answers without uploading source; changed inputs require a fresh review.
+- **Spec structure** — Native Markdown checks validate required sections, references, test mappings and declared commands before judgment.
+- **Install** — Run `bunx --bun @agentsfleet/orly@0.17.0 judge spec <SPEC> --help`; live review requires `gitleaks` and `TYPESAFE_API_KEY`.
+
 ## 0.15.0 (2026-10-19)
 
 Documentation now requires an editing pass that cuts filler and repeated facts

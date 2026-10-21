@@ -1,8 +1,8 @@
 ---
 type: reference
 audience: contributor
-verified: 2026-10-07
-product_version: 0.13.0
+verified: 2026-10-21
+product_version: 0.17.0
 executable: false
 ---
 
@@ -10,7 +10,9 @@ executable: false
 
 ## Synopsis
 
-The 0.13.0 candidate retains the six questions shipped in 0.11.0.
+The stage commands retain the six questions shipped in 0.11.0.
+Version 0.17.0 adds an explicit whole-spec readiness review through `orly judge spec`.
+
 The contributor [comparison examiner](architecture/judgment-evaluation.md) tests five evaluation-only additions with offline controls and explicitly requested TypeSafe Jev measurements.
 Its results establish examiner behavior; model quality and autonomous agent improvement remain unmeasured.
 
@@ -21,6 +23,8 @@ Its answer suggests an inspection or a fixed next action.
 ```text
 orly judge <plan|verify|review|document> --input <manifest>
   [--project <root>] [--refresh] [--json]
+orly judge spec <SPEC> [--project <ROOT>] [--min-score <PERCENT>]
+  [--refresh] [--json]
 ```
 
 Jev is TypeSafe's System One model.
@@ -33,6 +37,54 @@ Existing deterministic checks and owner decisions still apply.
 Hooks do not request advice or upload source.
 
 ## Example with output
+
+### Whole-spec readiness
+
+`orly judge spec` first applies the existing structural spec checks.
+It then asks six fixed questions about the complete spec, including every required Dimension.
+It reads declared project commands but never runs the spec's steps or verification commands.
+
+Supply `TYPESAFE_API_KEY` through your environment and install `gitleaks` before using `--refresh`.
+This measured example reviews the first production launch spec in `~/Projects/agentsfleet`:
+
+```bash
+bunx --bun @agentsfleet/orly@0.17.0 judge spec docs/v2/pending/M224_001_P0_DOCS_INFRA_FIRST_PRODUCTION_LAUNCH.md --project ~/Projects/agentsfleet --refresh
+```
+
+The first retained measurement produced this abbreviated output:
+
+```text
+REVIEW: 27.0000% (minimum 90%)
+Structure: passed; 6 Dimensions included.
+  Clear outcome: 70.0000% yes — review
+  Complete scope: 39.0000% yes — review
+  Setup and ordering: 27.0000% yes — review
+  Failure behavior: 79.0000% yes — review
+  Evidence for DONE: 49.0000% yes — review
+  Consistent instructions: 35.0000% yes — review
+```
+
+Live answers can vary.
+The score is `100 × min(probability_yes)` across all six questions, compared before display rounding.
+A confident “no” lowers readiness; high scores on other questions cannot compensate.
+
+`READY` means every question meets your minimum and structural checks pass.
+It recommends proceeding with the existing workflow; it does not establish DONE or approve a release.
+The score is a review policy, not a measured probability that implementation will succeed.
+
+The launch trial changed one paragraph to publish before required hostname and credential setup.
+Both versions passed structural checks; the changed version scored 11 percent and returned `REVIEW`.
+The original also failed readiness, so this trial provides no accepted real-spec example.
+
+The original ordering answer disagreed with the predeclared expectation.
+Jev supplies probabilities, so the report gives fixed inspection guidance without inventing an explanation for each answer.
+The [frozen case and raw results](https://github.com/agentsfleet/orly/tree/v0.17.0/docs/evidence/spec-readiness) retain that mismatch.
+
+Repeat the command without `--refresh` for exact offline replay.
+No provider requests occur; changed spec bytes, project configuration or question definitions require an explicit refresh.
+Changing only `--min-score` reuses the same probabilities and applies your new policy locally.
+
+### Selected evidence advice
 
 Save a manifest describing the required result and its evidence:
 
@@ -76,6 +128,31 @@ The report includes typed answers, selected source references, request counts, e
 The report excludes selected source text and credentials.
 
 ## Options
+
+For `orly judge spec`:
+
+| Option | Meaning |
+|---|---|
+| `<SPEC>` | Required complete spec file; relative paths resolve from the project root; explicit absolute paths are allowed |
+| `--project` | Repository supplying `.orly/orly.json`, read-first reference checks and replay storage; defaults to the current directory |
+| `--min-score` | Minimum percentage for every yes probability; default 90; greater than 0 and at most 100 |
+| `--refresh` | Explicitly permits up to six sequential scanned requests; default is offline replay; no automatic retries |
+| `--json` | Prints raw typed answers, source and configuration hashes, rubric hash, threshold, request counts, tokens and timing |
+| `--help` | Prints spec-specific usage and exit meanings |
+
+The complete spec and command state must fit within 24 kibibytes (24,576 bytes).
+Larger specs are refused without truncation or upload.
+Each request has the same 15-second deadline and 64-kibibyte response cap as stage advice.
+
+All inputs and scans must pass before the first upload.
+A provider failure stops remaining requests, retains earlier valid answers and assigns no passing score.
+Spec and project facts are checked again before reporting readiness.
+
+The review uses the supplied spec and declared commands; it does not read the contents of linked architecture pages or inspect deployment state.
+Source text and credentials stay out of saved answer records.
+The project owns `.orly/judgments/`; deleting those local records removes replay availability until the next explicit refresh.
+
+For the existing stage commands:
 
 | Option | Meaning |
 |---|---|
@@ -142,7 +219,10 @@ Replay remains advisory and cannot prove independent model accuracy.
 
 | Result | Meaning and next step |
 |---|---|
-| Exit `0` | Every item has valid advice; concerns and uncertainty still require inspection |
+| Spec exit `0` | `READY`: structure passes and all six raw yes probabilities meet the chosen minimum |
+| Spec exit `1` | `REVIEW`: structural findings or a question below the minimum; inspect the findings and revise the spec |
+| Spec exit `2` | `INCOMPLETE`: missing, invalid, oversized, changed or unavailable input or answer; no passing score |
+| Stage exit `0` | Every item has valid advice; concerns and uncertainty still require inspection |
 | Exit `2` | An item or manifest is incomplete; inspect the reported reason |
 | No exact replay | Use unchanged inputs or explicitly request refresh |
 | Missing credential | Supply the provider key through the environment |

@@ -20,6 +20,8 @@ Gates (read-only; no PR without every criterion green or a recorded override):
   Exceeding either limit fails the check and prints the saved output path.
 
 Advice (explicit; hooks stay offline):
+  orly judge spec <SPEC> [--min-score 90] [--refresh] [--json]
+                                    whole-spec readiness; replay by default
   orly judge <plan|verify|review|document> --input <MANIFEST>
                                     exact replay of bounded Jev advice
   orly judge --help                 input selectors, questions and refresh
