@@ -48,17 +48,20 @@ Before finalizing a spec, attack the proposed design using the applicable rows b
 
 | Surface | What the author must resolve |
 |---|---|
-| Real execution path | Trace actual producers, readers, side effects, backgrounds and cleanup. Separate an implemented caller from a comment, fixture or proposed feature; verify critical claims regardless of who wrote the review. |
+| Outcome and value | Name the affected user, the observable problem and the result that makes the work useful. Support the problem with inspected or observed evidence; distinguish a worthwhile outcome from readiness to implement it. |
+| Real execution path | Trace actual producers, readers, side effects, backgrounds and cleanup from the current supported entry point. Separate an implemented caller from a comment, fixture or proposed feature; a fixture or historical runbook does not establish the current setup path. State the starting condition (first installation, existing system or rebuild) and select its supported runbook; summarize prerequisite outputs before dependent actions. Verify critical claims regardless of who wrote the review. |
 | Safety and authority | Name one authority per invariant, the guarded state change, commit/release point and retry behavior. Attack lost replies, concurrent calls, owner failover and snapshot rollback separately; an acknowledgment is not automatically durable failover proof. Preserve intentional idempotent response retries. |
 | Identity and history | State identity scope across tenants/streams, ordering and cursor tie-breaks, nulls, deletion and expiry. Trace all conflict writers and downstream consumers such as billing enforcement. Separate pre-existing defects from new risks; name irrecoverable history and a bounded disposition instead of an impossible backfill. |
 | Schema and privileges | Follow the current shipped-migration policy. For populated changes, cover fresh bootstrap, incremental upgrade, interrupted rerun and old/new build compatibility. Test successful operations under the actual role, including SELECT needed by UPDATE, as well as forbidden writes. |
 | Client, server and platform | Check pinned client routing/reconnect/push behavior against the server and managed service. Probe advertised nodes, TLS, required commands and real access-control-list grants. Local source inspection and successful seed connection are not managed-service evidence. |
 | Deployment and recovery | Identify the actual deployment graph, secret staging, writer fence, restart/autostart paths, import authorization and empty/nonempty deploy shape. Prove pre-mutation refusal, abort/forward recovery and later ordinary deploys; inventory ephemeral auth and provider deliveries during the fence too. |
 | Performance and scope | Budget the whole request path: transaction/commit rate, fan-out, sequential round trips, connection pools, write-ahead log, memory, backlog/drain and cost. Prefer the existing layout unless measurements require partitioning, batching or another subsystem. Name each comparison reference and prove workload/resource equivalence; distinguish planning inputs from measured thresholds. |
-| Evidence and proof tier | Bind raw output to revision, parameters, resources and run identity; include lockfile/resolved production dependency closure for bench-only baselines. Distinguish inspected, proposed, NOT RUN and observed results. Unit stubs do not prove deployments; local tests do not prove Cloud. |
-| Decisions and prerequisites | Record agent defaults, measured outputs and required user decisions separately. Attribute only real quotes and explicit overrides; do not infer risk acceptance from reviewer advice. Name the first executable slice and the boundary each unresolved prerequisite blocks. |
+| Evidence and proof tier | Bind raw output to revision, environment, parameters, resources and run identity; include lockfile/resolved production dependency closure for bench-only baselines. Check the delivered user result, including a plausible incorrect result the check must reject. Label inherited evidence with its source and environment; keep new and inherited proof counts consistent across goal, Sections and rubric. Distinguish inspected, proposed, NOT RUN and observed results. Unit stubs do not prove deployments; local tests do not prove Cloud. |
+| Decisions and prerequisites | Record agent defaults, measured outputs and required user decisions separately. For each required input, permission, credential or dependency, name its source or executable resolution step and what it unlocks. Put human actions and readiness checks before dependent actions. Attribute only real quotes and explicit overrides; do not infer risk acceptance from reviewer advice. Name the first executable slice and the boundary each unresolved prerequisite blocks. |
 
 After editing, run a separate adversarial pass: search for stale/superseded requirements and circular dependencies; try to violate each critical invariant while obeying the text. Report remaining blockers by boundary (start, dependent integration, load or rollout), with a named resolving action. Do not promise that document checks prove runtime readiness.
+
+When using a model review, save its exact questions, model, supplied text and results. A linked file is not supplied evidence unless its relevant content is included. The model's probability is not a completion measure or proof of delivery; assess its usefulness against observed outcomes.
 
 ## Hierarchy & terminology
 
@@ -142,7 +145,9 @@ mechanism; keep spec defaults and acceptance tests consistent with it. -->
 **Problem:** {{fill:observable symptoms, in user-facing terms}}
 **Solution summary:** {{fill:one paragraph — what changes, at what layer, what the user-visible outcome is}}
 
-<!-- tpl: Goal — bad: "Implement streaming." Good: "Server-Sent Events (SSE)
+<!-- tpl: State who benefits and what observed problem this outcome resolves;
+do not invent evidence of demand or treat implementation readiness as value.
+Goal — bad: "Implement streaming." Good: "Server-Sent Events (SSE)
 handler streams Redis pubsub messages as text/event-stream with stable ordering
 and reconnection, p95 latency under 200ms." Problem — symptoms ("operators can't
 see the agent's tool calls in real time"), never implementation language ("we
@@ -166,7 +171,9 @@ preserved without pseudocode: point at code/docs to read BEFORE touching any
 file. Greenfield (no existing pattern)? Say so explicitly and point at the
 docs/architecture/ doc that defines the shape. Every pointer must resolve
 in THIS repository (`test -f` each) or be a URL — a pack this repository
-never selected materialised nothing here. -->
+never selected materialised nothing here. State correctness-critical requirements
+briefly in the relevant spec section as well as citing their source; a reader
+or model given only the spec cannot inspect the linked file's contents. -->
 
 ## Files Changed (blast radius)
 
@@ -250,6 +257,11 @@ defined in docs/architecture/{{fill:doc}}.md." -->
 measured preparation output, or required human decision. A preparation Section
 may establish budgets or fixtures needed by later Sections; name its completion
 condition and what missing evidence blocks; prerequisites must be acyclic.
+For required inputs, credentials, permissions and connections, name the actual
+source or the action that resolves them before use; never include secret values.
+Distinguish configuration accepted, setup pending, runtime active and the final
+user result where those are separate states. Preserve required human actions.
+Pin release/version inputs to the selected revision and say when to recheck them.
 Each Section names the delivered behavior, required mechanism and proof, without
 coding recipes. For prototypes, name setup, fault, pass/fail evidence and the
 selected safe design or bounded decision rule before dependent integration.
@@ -287,7 +299,9 @@ malformed input, auth failure, network blip, race, replay, exceeded quota,
 dependency unavailable where applicable. For stateful work, distinguish timeout
 from rollback, acknowledgment from durable recovery, and automatic failover
 from operator restore. State which protected response or side effect remains
-closed on uncertainty; name recovery instead of promising to resolve it later. -->
+closed on uncertainty; name recovery instead of promising to resolve it later.
+For partial setup or delivery, state what is retained, which action resumes it,
+how a retry avoids duplicate effects and which dependent action stays blocked. -->
 
 ## Invariants
 
@@ -339,6 +353,11 @@ Human acceptance uses tier manual, with its procedure, required person, and
 durable evidence. An agent cannot manufacture human sign-off. Label stubbed
 workflow decisions as unit proofs, local multi-node behavior as integration,
 and actual deploy/managed-failover results at their operational boundary.
+For each promised result, try a plausible false pass: a processed event without
+the promised reply, for example, must fail the reply check. Record the observable
+result and correlate it with the triggering input; a status or link alone may
+not prove the outcome. Use the same target and success condition in the Dimension,
+test and rubric; a response from the wrong resource or environment must fail. Label inherited proofs with their source and environment.
 For state replacement, include concurrency, ambiguous commit, expiry/deletion,
 identity collisions and fresh/populated upgrade where relevant. N/A applies
 only to demonstrably unnecessary assertions, never an unrun base behavior.
