@@ -1,0 +1,767 @@
+{
+  "live": {
+    "original": {
+      "command": "spec",
+      "advisory": true,
+      "status": "REVIEW",
+      "score": 27,
+      "minScore": 90,
+      "model": "jev-1.13.0",
+      "rubricDigest": "1f74377c8794ab9c88ca1a64a77518cbcc27272d2f2b0e091d4b72524e631422",
+      "source": {
+        "path": "/Users/kishore/Projects/agentsfleet/docs/v2/pending/M224_001_P0_DOCS_INFRA_FIRST_PRODUCTION_LAUNCH.md",
+        "digest": "13120930b3b4379801a5753ebf08992ebb3e3ca390776e6cb3186d1c0c08d15d",
+        "configDigest": "112dc8047d615a2f8a7005cdffbbe7d99a9dda9b60811d8b1ed5600950e116f5",
+        "dimensions": [
+          "1.1",
+          "2.1",
+          "2.2",
+          "3.1",
+          "3.2",
+          "3.3"
+        ]
+      },
+      "structural": {
+        "passed": true,
+        "findings": []
+      },
+      "reason": null,
+      "mode": "live",
+      "requests": 6,
+      "elapsedMs": 4420.794791,
+      "checks": [
+        {
+          "id": "outcome",
+          "status": "complete",
+          "identity": "6f1a421b624d7fc422cab76c87998f8a70e83aa8534211ce8e0f947118f5ce4b",
+          "probabilityYes": 0.7,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.7
+              }
+            },
+            "usage": {
+              "input_tokens": 5062,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 459.80750000000035,
+          "usage": {
+            "input_tokens": 5062,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "scope",
+          "status": "complete",
+          "identity": "7844d77c90858c66271e4b3d0f74719e6fd824434fe024ae5546db746d7e31ce",
+          "probabilityYes": 0.39,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.39
+              }
+            },
+            "usage": {
+              "input_tokens": 5066,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 356.9718750000002,
+          "usage": {
+            "input_tokens": 5066,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "ordering",
+          "status": "complete",
+          "identity": "20bd338b25e741ddb90c44eb679c7fb89b32e4c7b59354b4a35ff31833c1a448",
+          "probabilityYes": 0.27,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.27
+              }
+            },
+            "usage": {
+              "input_tokens": 5095,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 380.5377090000002,
+          "usage": {
+            "input_tokens": 5095,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "failures",
+          "status": "complete",
+          "identity": "7f19e0abf78bf5a87cbdd0eb2134699908e806599d71e8c28d3c3bc7ea5f80eb",
+          "probabilityYes": 0.79,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.79
+              }
+            },
+            "usage": {
+              "input_tokens": 5073,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 320.87616700000035,
+          "usage": {
+            "input_tokens": 5073,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "evidence",
+          "status": "complete",
+          "identity": "dad1d375fe1746292d8d3440fdf058c9e3442862098bec1139bceafc4db214b8",
+          "probabilityYes": 0.49,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.49
+              }
+            },
+            "usage": {
+              "input_tokens": 5075,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 627.2242079999996,
+          "usage": {
+            "input_tokens": 5075,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "consistency",
+          "status": "complete",
+          "identity": "d3b84df8a38738307df67d3968a1654b9afd97bcd4381bf8e6a78fdc2cf86ebf",
+          "probabilityYes": 0.35,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.35
+              }
+            },
+            "usage": {
+              "input_tokens": 5077,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 428.7887499999997,
+          "usage": {
+            "input_tokens": 5077,
+            "output_tokens": 20
+          }
+        }
+      ],
+      "blocked": [
+        "outcome",
+        "scope",
+        "ordering",
+        "failures",
+        "evidence",
+        "consistency"
+      ]
+    },
+    "changed": {
+      "command": "spec",
+      "advisory": true,
+      "status": "REVIEW",
+      "score": 11,
+      "minScore": 90,
+      "model": "jev-1.13.0",
+      "rubricDigest": "1f74377c8794ab9c88ca1a64a77518cbcc27272d2f2b0e091d4b72524e631422",
+      "source": {
+        "path": "/Users/kishore/Projects/orly/.orly/judgments/spec-trial/release-before-setup.md",
+        "digest": "a1bd3eeb9561bb2121015b200f36421cfb8deccae9666ad37b6628292c1c348c",
+        "configDigest": "112dc8047d615a2f8a7005cdffbbe7d99a9dda9b60811d8b1ed5600950e116f5",
+        "dimensions": [
+          "1.1",
+          "2.1",
+          "2.2",
+          "3.1",
+          "3.2",
+          "3.3"
+        ]
+      },
+      "structural": {
+        "passed": true,
+        "findings": []
+      },
+      "reason": null,
+      "mode": "live",
+      "requests": 6,
+      "elapsedMs": 3803.747625,
+      "checks": [
+        {
+          "id": "outcome",
+          "status": "complete",
+          "identity": "edda09376ebec844841f944717d8bdd8e53e957fefaefbb0d6180012d7734578",
+          "probabilityYes": 0.66,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.66
+              }
+            },
+            "usage": {
+              "input_tokens": 5062,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 398.06854099999987,
+          "usage": {
+            "input_tokens": 5062,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "scope",
+          "status": "complete",
+          "identity": "3333dd09a5fe49d571748e36634c21b717d87ca4fb10ec54a22fac1668ef0e5f",
+          "probabilityYes": 0.36,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.36
+              }
+            },
+            "usage": {
+              "input_tokens": 5066,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 333.6125830000001,
+          "usage": {
+            "input_tokens": 5066,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "ordering",
+          "status": "complete",
+          "identity": "9840d9b01ae8b75d9c36dc98ef109007c89ec46c5015fd964a9c8257f512efeb",
+          "probabilityYes": 0.11,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.11
+              }
+            },
+            "usage": {
+              "input_tokens": 5095,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 455.4055410000001,
+          "usage": {
+            "input_tokens": 5095,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "failures",
+          "status": "complete",
+          "identity": "6f6db0706edfdd1076ce86260093aec575803b33e4e8b38249c2395422cf059f",
+          "probabilityYes": 0.77,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.77
+              }
+            },
+            "usage": {
+              "input_tokens": 5073,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 349.3075410000001,
+          "usage": {
+            "input_tokens": 5073,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "evidence",
+          "status": "complete",
+          "identity": "531a8092560da91fd06ac30062cd8b791a59a4eee73061496e4ac1b2d383b893",
+          "probabilityYes": 0.45,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.45
+              }
+            },
+            "usage": {
+              "input_tokens": 5075,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 337.278417,
+          "usage": {
+            "input_tokens": 5075,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "consistency",
+          "status": "complete",
+          "identity": "e1d4ea9ffde89b71b282a3c717a617cd438f8916e4131c9b09d04b3f48af5872",
+          "probabilityYes": 0.23,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.23
+              }
+            },
+            "usage": {
+              "input_tokens": 5077,
+              "output_tokens": 20
+            }
+          },
+          "requests": 1,
+          "elapsedMs": 331.1874579999999,
+          "usage": {
+            "input_tokens": 5077,
+            "output_tokens": 20
+          }
+        }
+      ],
+      "blocked": [
+        "outcome",
+        "scope",
+        "ordering",
+        "failures",
+        "evidence",
+        "consistency"
+      ]
+    }
+  },
+  "replay": {
+    "original": {
+      "command": "spec",
+      "advisory": true,
+      "status": "REVIEW",
+      "score": 27,
+      "minScore": 90,
+      "model": "jev-1.13.0",
+      "rubricDigest": "1f74377c8794ab9c88ca1a64a77518cbcc27272d2f2b0e091d4b72524e631422",
+      "source": {
+        "path": "/Users/kishore/Projects/agentsfleet/docs/v2/pending/M224_001_P0_DOCS_INFRA_FIRST_PRODUCTION_LAUNCH.md",
+        "digest": "13120930b3b4379801a5753ebf08992ebb3e3ca390776e6cb3186d1c0c08d15d",
+        "configDigest": "112dc8047d615a2f8a7005cdffbbe7d99a9dda9b60811d8b1ed5600950e116f5",
+        "dimensions": [
+          "1.1",
+          "2.1",
+          "2.2",
+          "3.1",
+          "3.2",
+          "3.3"
+        ]
+      },
+      "structural": {
+        "passed": true,
+        "findings": []
+      },
+      "reason": null,
+      "mode": "replay",
+      "requests": 0,
+      "elapsedMs": 11.858292000000002,
+      "checks": [
+        {
+          "id": "outcome",
+          "status": "complete",
+          "identity": "6f1a421b624d7fc422cab76c87998f8a70e83aa8534211ce8e0f947118f5ce4b",
+          "probabilityYes": 0.7,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.7
+              }
+            },
+            "usage": {
+              "input_tokens": 5062,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 459.80750000000035,
+          "usage": {
+            "input_tokens": 5062,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "scope",
+          "status": "complete",
+          "identity": "7844d77c90858c66271e4b3d0f74719e6fd824434fe024ae5546db746d7e31ce",
+          "probabilityYes": 0.39,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.39
+              }
+            },
+            "usage": {
+              "input_tokens": 5066,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 356.9718750000002,
+          "usage": {
+            "input_tokens": 5066,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "ordering",
+          "status": "complete",
+          "identity": "20bd338b25e741ddb90c44eb679c7fb89b32e4c7b59354b4a35ff31833c1a448",
+          "probabilityYes": 0.27,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.27
+              }
+            },
+            "usage": {
+              "input_tokens": 5095,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 380.5377090000002,
+          "usage": {
+            "input_tokens": 5095,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "failures",
+          "status": "complete",
+          "identity": "7f19e0abf78bf5a87cbdd0eb2134699908e806599d71e8c28d3c3bc7ea5f80eb",
+          "probabilityYes": 0.79,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.79
+              }
+            },
+            "usage": {
+              "input_tokens": 5073,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 320.87616700000035,
+          "usage": {
+            "input_tokens": 5073,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "evidence",
+          "status": "complete",
+          "identity": "dad1d375fe1746292d8d3440fdf058c9e3442862098bec1139bceafc4db214b8",
+          "probabilityYes": 0.49,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.49
+              }
+            },
+            "usage": {
+              "input_tokens": 5075,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 627.2242079999996,
+          "usage": {
+            "input_tokens": 5075,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "consistency",
+          "status": "complete",
+          "identity": "d3b84df8a38738307df67d3968a1654b9afd97bcd4381bf8e6a78fdc2cf86ebf",
+          "probabilityYes": 0.35,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.35
+              }
+            },
+            "usage": {
+              "input_tokens": 5077,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 428.7887499999997,
+          "usage": {
+            "input_tokens": 5077,
+            "output_tokens": 20
+          }
+        }
+      ],
+      "blocked": [
+        "outcome",
+        "scope",
+        "ordering",
+        "failures",
+        "evidence",
+        "consistency"
+      ]
+    },
+    "changed": {
+      "command": "spec",
+      "advisory": true,
+      "status": "REVIEW",
+      "score": 11,
+      "minScore": 90,
+      "model": "jev-1.13.0",
+      "rubricDigest": "1f74377c8794ab9c88ca1a64a77518cbcc27272d2f2b0e091d4b72524e631422",
+      "source": {
+        "path": "/Users/kishore/Projects/orly/.orly/judgments/spec-trial/release-before-setup.md",
+        "digest": "a1bd3eeb9561bb2121015b200f36421cfb8deccae9666ad37b6628292c1c348c",
+        "configDigest": "112dc8047d615a2f8a7005cdffbbe7d99a9dda9b60811d8b1ed5600950e116f5",
+        "dimensions": [
+          "1.1",
+          "2.1",
+          "2.2",
+          "3.1",
+          "3.2",
+          "3.3"
+        ]
+      },
+      "structural": {
+        "passed": true,
+        "findings": []
+      },
+      "reason": null,
+      "mode": "replay",
+      "requests": 0,
+      "elapsedMs": 10.40775,
+      "checks": [
+        {
+          "id": "outcome",
+          "status": "complete",
+          "identity": "edda09376ebec844841f944717d8bdd8e53e957fefaefbb0d6180012d7734578",
+          "probabilityYes": 0.66,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.66
+              }
+            },
+            "usage": {
+              "input_tokens": 5062,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 398.06854099999987,
+          "usage": {
+            "input_tokens": 5062,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "scope",
+          "status": "complete",
+          "identity": "3333dd09a5fe49d571748e36634c21b717d87ca4fb10ec54a22fac1668ef0e5f",
+          "probabilityYes": 0.36,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.36
+              }
+            },
+            "usage": {
+              "input_tokens": 5066,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 333.6125830000001,
+          "usage": {
+            "input_tokens": 5066,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "ordering",
+          "status": "complete",
+          "identity": "9840d9b01ae8b75d9c36dc98ef109007c89ec46c5015fd964a9c8257f512efeb",
+          "probabilityYes": 0.11,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.11
+              }
+            },
+            "usage": {
+              "input_tokens": 5095,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 455.4055410000001,
+          "usage": {
+            "input_tokens": 5095,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "failures",
+          "status": "complete",
+          "identity": "6f6db0706edfdd1076ce86260093aec575803b33e4e8b38249c2395422cf059f",
+          "probabilityYes": 0.77,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.77
+              }
+            },
+            "usage": {
+              "input_tokens": 5073,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 349.3075410000001,
+          "usage": {
+            "input_tokens": 5073,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "evidence",
+          "status": "complete",
+          "identity": "531a8092560da91fd06ac30062cd8b791a59a4eee73061496e4ac1b2d383b893",
+          "probabilityYes": 0.45,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.45
+              }
+            },
+            "usage": {
+              "input_tokens": 5075,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 337.278417,
+          "usage": {
+            "input_tokens": 5075,
+            "output_tokens": 20
+          }
+        },
+        {
+          "id": "consistency",
+          "status": "complete",
+          "identity": "e1d4ea9ffde89b71b282a3c717a617cd438f8916e4131c9b09d04b3f48af5872",
+          "probabilityYes": 0.23,
+          "reply": {
+            "model": "jev-1.13.0",
+            "answers": {
+              "decision": {
+                "type": "noul",
+                "noul": 0.23
+              }
+            },
+            "usage": {
+              "input_tokens": 5077,
+              "output_tokens": 20
+            }
+          },
+          "requests": 0,
+          "elapsedMs": 331.1874579999999,
+          "usage": {
+            "input_tokens": 5077,
+            "output_tokens": 20
+          }
+        }
+      ],
+      "blocked": [
+        "outcome",
+        "scope",
+        "ordering",
+        "failures",
+        "evidence",
+        "consistency"
+      ]
+    }
+  },
+  "interpretation": "Both complete specs require review. Original ordering yes was expected but not observed; changed ordering no was observed. This pair proves no accepted real-spec example or calibrated threshold."
+}

@@ -42,6 +42,24 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
+## 0.17: review a spec before starting
+
+`orly judge spec` reviews a complete spec for clear outcomes, scope, setup order, failure behavior, evidence and consistency.
+Its readiness score uses the lowest yes probability; the default minimum is 90 percent.
+
+Install `gitleaks` and supply `TYPESAFE_API_KEY` through your environment.
+Replace `<SPEC>` with your spec's path, relative to the current repository:
+
+```bash
+bunx --bun @agentsfleet/orly@0.17.0 judge spec <SPEC> --refresh
+```
+
+Output reports `READY`, `REVIEW` or `INCOMPLETE`, with each question's score.
+Omit `--refresh` to replay unchanged inputs without uploading source.
+
+The command reviews readiness; implementation and completion still require their existing checks.
+See [spec judgment usage and measured limits](docs/JUDGMENTS.md#whole-spec-readiness).
+
 ## 0.14: retained Jev answers explained
 
 The [offline diagnosis](https://github.com/agentsfleet/orly/blob/main/evals/judgments/comparison/diagnosis/report.md) explains all 188 retained TypeSafe Jev attempts.
@@ -78,7 +96,7 @@ TypeSafe's Jev model supplies runtime advice through explicit `orly judge` reque
 
 See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
 The install commands below fetch the published package.
-The release workflow publishes 0.15.0 after its version change merges to `main`.
+The release workflow publishes 0.17.0 after its version change merges to `main` or an explicit release run.
 
 ---
 

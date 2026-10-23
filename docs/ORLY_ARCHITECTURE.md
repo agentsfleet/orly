@@ -84,6 +84,11 @@ Every criterion is mechanical — it reads an exit code or a file. Claims that
 cannot be proven that way stay prose and are graded by the spec's rubric; they
 never become fake criteria.
 
+The `spec.gate` criterion calls the native validator in `audits/spec-template.ts`
+directly. The script entry point selects files and snapshots staged content
+before calling the same validator. Prohibited patterns and structural checks
+have one implementation.
+
 The `docs.language` criterion rejects mechanical language findings in changed
 Markdown and Markdown JSX (MDX) prose, including new pages and uncommitted edits.
 It checks complete edited paragraphs while leaving unchanged history alone.
@@ -201,10 +206,31 @@ Indy canceled the native rewrite and its Milestone 07 plans on Oct 04, 2026.
 | Commit, push and PR | Existing deterministic facts and command results | Existing checks only | Model advice cannot change gate outcomes |
 
 Questions and possible next actions live in a fixed catalog. Noul supplies a
-probability for one property. Choice selects an assertion category. There is
-no overall quality score, model-written command or automatic owner decision.
+probability for one property. Choice selects an assertion category.
+
+The stage commands do not combine answers into an overall quality score.
+Neither stage advice nor spec readiness supplies model-written commands or automatic owner decisions.
+
 The agent invokes advice explicitly. Skill instructions explain optional timing;
 hooks never upload source and never request a model answer.
+
+### Whole-spec readiness trial
+
+`orly judge spec` adds a separate, explicit readiness review without extending the stage catalog or changing any gate.
+It reuses the structural spec validator before asking six questions about the complete spec and declared commands.
+The questions cover outcomes, scope, setup ordering, failures, completion evidence and consistency.
+
+Code compares the lowest raw yes probability with `--min-score`, which defaults to 90 percent.
+Structural findings produce `REVIEW`; missing or invalid input and answers produce `INCOMPLETE` without a passing score.
+`READY` recommends starting the existing workflow and grants no owner permission or completion proof.
+
+The existing scanner, bounded transport and private replay storage also serve this command.
+Identity additionally binds the complete spec, project configuration and whole-spec rubric.
+Source and project facts are rechecked before the result; changed inputs cannot retain a passing score.
+
+The [launch-spec trial](https://github.com/agentsfleet/orly/tree/v0.17.0/docs/evidence/spec-readiness) retains its frozen expectations and raw answers.
+Both original and deliberately misordered versions needed review; the original ordering answer missed the predeclared expectation.
+One pair does not calibrate the threshold or establish model accuracy.
 
 ### Evidence and upload
 

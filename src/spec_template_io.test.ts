@@ -2,14 +2,18 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { join } from "node:path";
 
 import { auditSpec } from "../audits/spec-template";
+import { specGate } from "./criteria_spec";
+import { runGate } from "./gates";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
-import { cleanupTemporaryDirectories, git, modelFor, newSpecRepository, ROOT, SPEC_RELATIVE, specFixture } from "./gates_test_support";
+import { cleanupTemporaryDirectories, git, modelFor, newRepository, newSpecRepository, ROOT, SPEC_RELATIVE, specFixture } from "./gates_test_support";
+import { RulesModel } from "./model";
 
 const CONFIG_PATH = ".orly/orly.json";
 const STAGED = "--staged";
 const FILE = "--file";
 const RESIDUE = "path/to/file.ext";
 const GOOD = specFixture();
+const SPEC_GATE = "spec.gate";
 const VALID_CONFIG = { commands: { conform: [["true"]], "verify.unit": [["true"]] } };
 
 afterEach(cleanupTemporaryDirectories);
@@ -22,6 +26,35 @@ function run(project: string, ...args: string[]) {
 }
 
 describe("spec audit through real Git and file boundaries", () => {
+  test("the native criterion validates content without installed audit scripts", async () => {
+    const project = newRepository();
+    const model = await modelFor(project);
+    const path = join(project, SPEC_RELATIVE);
+    await Bun.write(path, GOOD);
+    expect(runGate(model, project, "pr", true).results.find((result) => result.name === SPEC_GATE)?.ok).toBeTrue();
+    await Bun.write(path, `${GOOD}\n## Estimated effort\n`);
+    const result = runGate(model, project, "pr", true).results.find((result) => result.name === SPEC_GATE);
+    expect(result?.ok).toBeFalse();
+    expect(result?.detail).toContain("Estimated effort section heading");
+  });
+
+  test("missing native criterion configuration fails explicitly", async () => {
+    const project = newRepository();
+    const model = await RulesModel.load(ROOT);
+    const result = specGate().evaluate({ root: project, model, specPath: SPEC_RELATIVE, specText: GOOD, acceptDirty: true });
+    expect(result.ok).toBeFalse();
+    expect(result.detail).toContain("cannot read spec configuration");
+  });
+
+  test.each(["{", "{}", '{"schema_version":1,"packs":[],"commands":{}}'])("the native criterion refuses unavailable commands: %s", async (config) => {
+    const project = newRepository();
+    const model = await modelFor(project);
+    await Bun.write(join(project, CONFIG_PATH), config);
+    const result = specGate().evaluate({ root: project, model, specPath: SPEC_RELATIVE, specText: GOOD, acceptDirty: true });
+    expect(result.ok).toBeFalse();
+    expect(result.detail).toContain("configuration");
+  });
+
   test.each(["v1", "v0.9.2"])("an invalid %s index fails even when its working copy was repaired", async (version) => {
     const project = newSpecRepository();
     const path = SPEC_RELATIVE.replace("v1", version);

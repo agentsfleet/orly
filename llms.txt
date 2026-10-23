@@ -183,6 +183,15 @@ never with a placeholder reason.
 | `orly override <criterion> --reason <why>` | record a gate exception (user-authorised only) |
 | `orly doctor` | check installed files and required command configuration |
 
+`orly judge spec <SPEC> [--project <ROOT>] [--min-score 90] [--refresh] [--json]`
+reviews a complete spec before implementation.
+It checks structure, then outcomes, scope, setup ordering, failures, evidence and consistency.
+The lowest yes probability owns the score; default mode replays exact inputs offline.
+Exit 0 means READY, 1 means REVIEW and 2 means INCOMPLETE.
+Live refresh requires `gitleaks` and `TYPESAFE_API_KEY` and permits six requests without automatic retries.
+This review does not approve work, prove completion or replace any gate.
+See `docs/JUDGMENTS.md` for the measured trial and limits.
+
 ---
 
 ## 9. Packs

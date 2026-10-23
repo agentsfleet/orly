@@ -1,7 +1,8 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { readSpecCommands, validateSpec } from "../audits/spec-template";
 import { readConfigSync } from "./config";
-import { Criterion, CriterionContext, criterion, gitOutput, runCommand, Verdict } from "./criteria_support";
+import { type Criterion, type CriterionContext, criterion, gitOutput, type Verdict } from "./criteria_support";
 import { branchDiff, classifyBranch, defaultMergeBase } from "./surfaces";
 import { specDimensionsOf, unacknowledgedObligations } from "./spec_obligations";
 
@@ -17,7 +18,6 @@ const OPEN_QUESTION = "[?]";
 const PRODUCT_CLARITY_HEADING = "## Product Clarity";
 const DONE_MARKER = "DONE";
 const ITEM_SEPARATOR = ", ";
-const SPEC_GATE_SCRIPT = "audits/spec-template.sh";
 const NO_SPEC_SKIP = "skipped — no active spec (quality gates still apply)";
 
 const SPEC_GATE = "spec.gate";
@@ -40,7 +40,14 @@ function specCriterion(name: string, evaluate: (context: CriterionContext) => Ve
 }
 
 export function specGate(): Criterion {
-  return specCriterion(SPEC_GATE, (context) => runCommand(context.root, ["bash", context.root === context.model.root ? SPEC_GATE_SCRIPT : `.orly/${SPEC_GATE_SCRIPT}`, "--file", context.specPath ?? ""]));
+  return specCriterion(SPEC_GATE, (context) => {
+    try {
+      const errors = validateSpec(context.specText ?? "", readSpecCommands(false, context.root), (path) => existsSync(resolve(context.root, path)));
+      return { ok: errors.length === 0, detail: errors.length ? errors.join("\n") : "spec structure and prohibited patterns checked" };
+    } catch (error) {
+      return { ok: false, detail: `cannot read spec configuration: ${error instanceof Error ? error.message : String(error)}` };
+    }
+  });
 }
 
 export function openQuestions(): Criterion {

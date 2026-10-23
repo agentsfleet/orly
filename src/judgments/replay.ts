@@ -1,4 +1,4 @@
-import type { Prepared } from "./types";
+import type { ProviderInput } from "./types";
 
 import { closeSync, existsSync, lstatSync, mkdirSync, openSync, realpathSync, renameSync, unlinkSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -10,6 +10,7 @@ import { digest, readBounded } from "./files";
 import { parseReply, type Reply } from "./wire";
 
 const identity = z.string().regex(/^[a-f0-9]{64}$/);
+type ReplayInput = ProviderInput & { identity: string };
 const replaySchema = z.strictObject({ identity, reply: z.unknown(), checksum: identity, elapsedMs: z.number().finite().nonnegative() });
 
 export function replayDirectory(root: string, create: boolean): string {
@@ -26,7 +27,7 @@ export function replayDirectory(root: string, create: boolean): string {
   return directory;
 }
 
-export async function readReplay(root: string, prepared: Prepared): Promise<{ reply: Reply; elapsedMs: number }> {
+export async function readReplay(root: string, prepared: ReplayInput): Promise<{ reply: Reply; elapsedMs: number }> {
   const path = replayPath(replayDirectory(root, false), prepared);
   if (!existsSync(path)) throw new OrlyError("No exact replay for these inputs. Use --refresh to permit scanned source upload.");
   const raw = await readBounded(path, MAX_REPLAY_BYTES);
@@ -39,7 +40,7 @@ export async function readReplay(root: string, prepared: Prepared): Promise<{ re
   return { reply: parseReply(record.reply, prepared), elapsedMs: record.elapsedMs };
 }
 
-export async function writeReplay(root: string, prepared: Prepared, reply: Reply, elapsedMs: number): Promise<void> {
+export async function writeReplay(root: string, prepared: ReplayInput, reply: Reply, elapsedMs: number): Promise<void> {
   const path = replayDestination(root, prepared);
   const temporary = join(dirname(path), `.pending-${Bun.randomUUIDv7()}`);
   const descriptor = openSync(temporary, "wx", PRIVATE_FILE_MODE);
@@ -52,7 +53,7 @@ export async function writeReplay(root: string, prepared: Prepared, reply: Reply
   }
 }
 
-export function replayDestination(root: string, prepared: Prepared): string {
+export function replayDestination(root: string, prepared: ReplayInput): string {
   const path = replayPath(replayDirectory(root, true), prepared);
   const status = lstatSync(path, { throwIfNoEntry: false });
   if (status?.isSymbolicLink()) throw new OrlyError("Replay file must not be a symlink.");
@@ -60,7 +61,7 @@ export function replayDestination(root: string, prepared: Prepared): string {
   return path;
 }
 
-function replayPath(directory: string, prepared: Prepared): string {
+function replayPath(directory: string, prepared: ReplayInput): string {
   if (!identity.safeParse(prepared.identity).success) throw new OrlyError("Replay identity is invalid.");
   return join(directory, `${prepared.identity}.json`);
 }

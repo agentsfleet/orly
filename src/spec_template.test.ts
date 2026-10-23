@@ -16,6 +16,38 @@ describe("spec content readiness", () => {
   });
 
   test.each([
+    ["## Estimated effort", "Estimated effort section heading"],
+    ["## Complexity", "Effort/Complexity/Sizing section heading"],
+    ["## Scale estimate", "Scale estimate section heading"],
+    ["- ~2 h survey", "Tilde-bulleted hour estimate"],
+    ["* ~5 days setup", "Tilde-bulleted time estimate"],
+    ["**Effort:** medium", "Effort/Estimate label row"],
+    ["**Owner:** Alice", "Owner label row"],
+    ["**Assigned to:** Alice", "Assigned-to label row"],
+    ["**Due:** 2026-10-20", "Date-bound deadline label"],
+    ["- 40% complete", "Percentage-complete metric"],
+    ["This takes 2–4 h", "Hour-range estimate in effort context"],
+    ["low/effort", "Effort/complexity rating"],
+  ])("rejects prohibited authoring content: %s", (content, finding) => {
+    expect(validateSpec(`${VALID}\n${content}`, COMMANDS, EXISTS).join("\n")).toContain(finding);
+  });
+
+  test.each([
+    "**Date:** Oct 20, 2026",
+    "Tokens expire after 7 days.",
+    "<!-- low/effort -->",
+    'Example input "2 h" takes 2-4 h',
+  ])("accepts allowed dates, durations, and examples: %s", (content) => {
+    expect(validateSpec(`${VALID}\n${content}`, COMMANDS, EXISTS)).toEqual([]);
+  });
+
+  test("prohibited findings retain their source line", () => {
+    const text = `${VALID.trimEnd()}\n## Estimated effort\n`;
+    const line = text.trimEnd().split("\n").length;
+    expect(validateSpec(text, COMMANDS, EXISTS).join("\n")).toContain(`line ${line} — Estimated effort section heading`);
+  });
+
+  test.each([
     ["empty section", "Fixture content for Overview.", "", "empty required section"],
     ["missing reference", REFERENCE, "No references.", "read-first section needs"],
     ["absolute reference", REFERENCE, "1. `/etc/hosts` — outside the repository.", "repository file"],
