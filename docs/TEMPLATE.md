@@ -60,6 +60,10 @@ Before finalizing a spec, attack the proposed design using the applicable rows b
 
 After editing, run a separate adversarial pass: search for stale/superseded requirements and circular dependencies; try to violate each critical invariant while obeying the text. Report remaining blockers by boundary (start, dependent integration, load or rollout), with a named resolving action. Do not promise that document checks prove runtime readiness.
 
+Before sending model inputs, redact secrets and private data from supplied
+material. Before retaining a model review record, redact secrets and private data
+from every recorded field. Record the model identifier and version when available.
+
 ## Hierarchy & terminology
 
 ```
