@@ -63,6 +63,10 @@ After editing, run a separate adversarial pass: search for stale/superseded requ
 
 When using a model review, save its exact questions, model, supplied text and results. A linked file is not supplied evidence unless its relevant content is included. The model's probability is not a completion measure or proof of delivery; assess its usefulness against observed outcomes.
 
+Before sending model inputs, redact secrets and private data from supplied
+material. Before retaining a model review record, redact secrets and private data
+from every recorded field. Record the model identifier and version when available.
+
 ## Hierarchy & terminology
 
 ```
