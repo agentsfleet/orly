@@ -2,7 +2,7 @@
 type: reference
 audience: contributor
 verified: 2026-10-21
-product_version: 0.17.0
+product_version: 0.25.0
 executable: false
 ---
 
@@ -11,7 +11,7 @@ executable: false
 ## Synopsis
 
 The stage commands retain the six questions shipped in 0.11.0.
-Version 0.17.0 adds an explicit whole-spec readiness review through `orly judge spec`.
+Version 0.25.0 adds an explicit whole-spec readiness review through `orly judge spec`.
 
 The contributor [comparison examiner](architecture/judgment-evaluation.md) tests five evaluation-only additions with offline controls and explicitly requested TypeSafe Jev measurements.
 Its results establish examiner behavior; model quality and autonomous agent improvement remain unmeasured.
@@ -48,7 +48,7 @@ Supply `TYPESAFE_API_KEY` through your environment and install `gitleaks` before
 This measured example reviews the first production launch spec in `~/Projects/agentsfleet`:
 
 ```bash
-bunx --bun @agentsfleet/orly@0.17.0 judge spec docs/v2/pending/M224_001_P0_DOCS_INFRA_FIRST_PRODUCTION_LAUNCH.md --project ~/Projects/agentsfleet --refresh
+bunx --bun @agentsfleet/orly@0.25.0 judge spec docs/v2/pending/M224_001_P0_DOCS_INFRA_FIRST_PRODUCTION_LAUNCH.md --project ~/Projects/agentsfleet --refresh
 ```
 
 The first retained measurement produced this abbreviated output:
@@ -78,7 +78,7 @@ The original also failed readiness, so this trial provides no accepted real-spec
 
 The original ordering answer disagreed with the predeclared expectation.
 Jev supplies probabilities, so the report gives fixed inspection guidance without inventing an explanation for each answer.
-The [frozen case and raw results](https://github.com/agentsfleet/orly/tree/v0.17.0/docs/evidence/spec-readiness) retain that mismatch.
+The [frozen case and raw results](https://github.com/agentsfleet/orly/tree/v0.25.0/docs/evidence/spec-readiness) retain that mismatch.
 
 Repeat the command without `--refresh` for exact offline replay.
 No provider requests occur; changed spec bytes, project configuration or question definitions require an explicit refresh.

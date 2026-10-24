@@ -51,7 +51,7 @@ Install `gitleaks` and supply `TYPESAFE_API_KEY` through your environment.
 Replace `<SPEC>` with your spec's path, relative to the current repository:
 
 ```bash
-bunx --bun @agentsfleet/orly@0.17.0 judge spec <SPEC> --refresh
+bunx --bun @agentsfleet/orly@0.25.0 judge spec <SPEC> --refresh
 ```
 
 Output reports `READY`, `REVIEW` or `INCOMPLETE`, with each question's score.
@@ -96,7 +96,7 @@ TypeSafe's Jev model supplies runtime advice through explicit `orly judge` reque
 
 See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
 The install commands below fetch the published package.
-The release workflow publishes 0.17.0 after its version change merges to `main` or an explicit release run.
+The release workflow publishes 0.25.0 after its version change merges to `main` or an explicit release run.
 
 ---
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.17.0 (2026-10-21)
+## 0.25.0 (2026-10-24)
 
 Review a complete spec before implementation with `orly judge spec <SPEC> --refresh`.
 
@@ -8,7 +8,7 @@ Review a complete spec before implementation with `orly judge spec <SPEC> --refr
 - **Decisions** — The default minimum is 90 percent; results are `READY`, `REVIEW` or `INCOMPLETE` with distinct exit codes.
 - **Replay** — Omit `--refresh` to reuse exact saved answers without uploading source; changed inputs require a fresh review.
 - **Spec structure** — Native Markdown checks validate required sections, references, test mappings and declared commands before judgment.
-- **Install** — Run `bunx --bun @agentsfleet/orly@0.17.0 judge spec <SPEC> --help`; live review requires `gitleaks` and `TYPESAFE_API_KEY`.
+- **Install** — Run `bunx --bun @agentsfleet/orly@0.25.0 judge spec <SPEC> --help`; live review requires `gitleaks` and `TYPESAFE_API_KEY`.
 
 ## 0.15.0 (2026-10-19)
 

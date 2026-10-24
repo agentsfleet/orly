@@ -228,7 +228,7 @@ The existing scanner, bounded transport and private replay storage also serve th
 Identity additionally binds the complete spec, project configuration and whole-spec rubric.
 Source and project facts are rechecked before the result; changed inputs cannot retain a passing score.
 
-The [launch-spec trial](https://github.com/agentsfleet/orly/tree/v0.17.0/docs/evidence/spec-readiness) retains its frozen expectations and raw answers.
+The [launch-spec trial](https://github.com/agentsfleet/orly/tree/v0.25.0/docs/evidence/spec-readiness) retains its frozen expectations and raw answers.
 Both original and deliberately misordered versions needed review; the original ordering answer missed the predeclared expectation.
 One pair does not calibrate the threshold or establish model accuracy.
 
