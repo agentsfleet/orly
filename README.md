@@ -5,7 +5,7 @@
 # orly
 
 [![npm](https://img.shields.io/npm/v/@agentsfleet/orly?logo=npm&logoColor=white)](https://www.npmjs.com/package/@agentsfleet/orly)
-[![bun ≥1.4](https://img.shields.io/badge/bun-%E2%89%A51.4-FBF0DF?logo=bun&logoColor=black&labelColor=FBF0DF)](https://bun.sh)
+[![bun ≥1.4.4](https://img.shields.io/badge/bun-%E2%89%A51.4.4-FBF0DF?logo=bun&logoColor=black&labelColor=FBF0DF)](https://bun.sh)
 [![coverage](https://img.shields.io/codecov/c/github/agentsfleet/orly?logo=codecov&logoColor=white)](https://codecov.io/gh/agentsfleet/orly)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -41,6 +41,24 @@ Where you disagree, your own `AGENTS.md` wins.
 Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
+
+## 0.25: review a spec before starting
+
+`orly judge spec` reviews a complete spec for clear outcomes, scope, setup order, failure behavior, evidence and consistency.
+Its readiness score uses the lowest yes probability; the default minimum is 90 percent.
+
+Install `gitleaks` and supply `TYPESAFE_API_KEY` through your environment.
+Replace `<SPEC>` with your spec's path, relative to the current repository:
+
+```bash
+bunx --bun @agentsfleet/orly@0.25.0 judge spec <SPEC> --refresh
+```
+
+Output reports `READY`, `REVIEW` or `INCOMPLETE`, with each question's score.
+Omit `--refresh` to replay unchanged inputs without uploading source.
+
+The command reviews readiness; implementation and completion still require their existing checks.
+See [spec judgment usage and measured limits](docs/JUDGMENTS.md#whole-spec-readiness).
 
 ## 0.14: retained Jev answers explained
 
@@ -78,7 +96,7 @@ TypeSafe's Jev model supplies runtime advice through explicit `orly judge` reque
 
 See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
 The install commands below fetch the published package.
-The release workflow publishes 0.15.0 after its version change merges to `main`.
+The release workflow publishes 0.25.0 after its version change merges to `main` or an explicit release run.
 
 ---
 
@@ -86,7 +104,7 @@ The release workflow publishes 0.15.0 after its version change merges to `main`.
 
 | You need | Why | Version |
 |---|---|---|
-| [bun](https://bun.sh) | runs orly; `bunx` fetches it | ≥ 1.4.0 |
+| [bun](https://bun.sh) | runs orly; `bunx` fetches it | ≥ 1.4.4 |
 | git | orly writes the hooks; `orly gate` reads the branch | any |
 | a coding agent | something has to read the rules | Claude Code, Codex, OpenCode, or Amp |
 | your own check commands | `orly gate` runs whatever `.orly/orly.json` names | whatever your repository already runs |
@@ -395,7 +413,7 @@ For working on orly itself. Pull requests are welcome.
 
 | You need | Version |
 |---|---|
-| bun | ≥ 1.4.0 |
+| bun | ≥ 1.4.4 |
 | git | any |
 | make | any |
 

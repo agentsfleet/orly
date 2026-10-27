@@ -1,3 +1,5 @@
+import { DEFAULT_MIN_SCORE } from "./judgments/spec_rubric";
+
 const TELEMETRY_CONFIG_KEY = "telemetry";
 const ANONYMOUS_TELEMETRY_CONFIG = JSON.stringify({ [TELEMETRY_CONFIG_KEY]: "anonymous" });
 const OFF_TELEMETRY_CONFIG = JSON.stringify({ [TELEMETRY_CONFIG_KEY]: "off" });
@@ -20,6 +22,8 @@ Gates (read-only; no PR without every criterion green or a recorded override):
   Exceeding either limit fails the check and prints the saved output path.
 
 Advice (explicit; hooks stay offline):
+  orly judge spec <SPEC> [--min-score ${DEFAULT_MIN_SCORE}] [--refresh] [--json]
+                                    whole-spec readiness; replay by default
   orly judge <plan|verify|review|document> --input <MANIFEST>
                                     exact replay of bounded Jev advice
   orly judge --help                 input selectors, questions and refresh

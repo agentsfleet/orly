@@ -1,16 +1,16 @@
 import { afterEach, expect, setDefaultTimeout, test } from "bun:test";
-import { statSync, symlinkSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { readdirSync, symlinkSync } from "node:fs";
+import { join } from "node:path";
 
 import { cleanupTemporaryDirectories, git, newRepository, ROOT, temporaryDirectory } from "./gates_test_support";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { scan, SCANNER_TIMEOUT_MS, STAGED, staged } from "./scanner_test_support";
 
-const TEST_TIMEOUT_MS = 30_000;
-const PRIVATE_DIRECTORY_MODE = 0o700;
-const PERMISSION_BITS = 0o777;
-const CONCURRENT_RECEIPTS = 2;
+const CONCURRENT_RUNS = 2;
+// write_any.sh delegates to three leaf helpers for one TypeScript file.
+const HELPERS_PER_RUN = 3;
+const RECEIPT_PREFIX = "orly-dispatch.";
 const SECONDS_PER_MINUTE = 60;
-const STAGED = "--staged";
 const ALL = "--all";
 const ADD = "add";
 const COMMIT = "commit";
@@ -36,21 +36,8 @@ const OVERRIDE = "MILESTONE ID ALLOWED per user override (reason: pin)";
 const MARKED_T = 'const t = "T' + '7";\n';
 const SCANNERS = ["ufs.sh", "logging.sh", "deinit-pairs.sh", "sql-mod.sh", "error-codes.sh", "rust-error.sh", "design-tokens.sh"];
 
-setDefaultTimeout(TEST_TIMEOUT_MS);
+setDefaultTimeout(SCANNER_TIMEOUT_MS);
 afterEach(cleanupTemporaryDirectories);
-
-function scan(project: string, script: string, args: string[], env: Record<string, string> = {}) {
-  const result = Bun.spawnSync(["bash", join(ROOT, script), ...args], {
-    cwd: project, env: { ...UNSCOPED_ENVIRONMENT, TMPDIR: temporaryDirectory(), ...env },
-    stdout: "pipe", stderr: "pipe", timeout: TEST_TIMEOUT_MS,
-  });
-  return { code: result.exitCode, text: result.stdout.toString() + result.stderr.toString() };
-}
-
-async function staged(project: string, path: string, content: string) {
-  await Bun.write(join(project, path), content);
-  git(project, ADD, path);
-}
 
 test.each([true, false])("staged literal checks grade index bytes with staged violation %s", async (badIndex) => {
   const project = newRepository();
@@ -70,18 +57,16 @@ test("explicit dispatch checks working bytes and forwards only the named file", 
   const result = scan(project, "dispatch/write_any.sh", [SOURCE]);
   expect(result.code).toBe(1);
   expect(result.text).toContain(`ANY DISPATCH — 1 file(s)`);
-  const receipt = result.text.match(/UFS.*see (.+receipt\.log)/)?.[1];
-  expect(receipt).toBeDefined();
-  const details = await Bun.file(receipt ?? "").text();
-  expect(details).toContain(`numeric-suspect ${SOURCE}:1 ${SECONDS_PER_MINUTE}`);
-  expect(details).not.toContain("unrelated.ts");
+  expect(result.text).toMatch(/UFS .* — fail \(audits\/ufs\.sh explicit\)/);
+  expect(result.text).toContain(`numeric-suspect ${SOURCE}:1 ${SECONDS_PER_MINUTE}`);
+  expect(result.text).not.toContain("unrelated.ts");
 });
 
-test("successful concurrent dispatch receipts have distinct readable private owners", async () => {
+test("concurrent dispatch runs print every helper log and leave no receipt directories", async () => {
   const project = newRepository();
   await staged(project, SOURCE, CLEAN);
   const receiptsRoot = temporaryDirectory();
-  const commands = Array.from({ length: CONCURRENT_RECEIPTS }, () => Bun.spawn(["bash", join(ROOT, "dispatch/write_any.sh"), SOURCE], {
+  const commands = Array.from({ length: CONCURRENT_RUNS }, () => Bun.spawn(["bash", join(ROOT, "dispatch/write_any.sh"), SOURCE], {
     cwd: project, env: { ...UNSCOPED_ENVIRONMENT, TMPDIR: receiptsRoot }, stdout: "pipe", stderr: "pipe",
   }));
   const outputs = await Promise.all(commands.map(async (command) => {
@@ -90,14 +75,11 @@ test("successful concurrent dispatch receipts have distinct readable private own
     expect(await command.exited).toBe(0);
     return output + error;
   }));
-  const receipts = outputs.flatMap((output) => Array.from(output.matchAll(/receipt: (.+receipt\.log)/g), (match) => match[1] ?? ""));
-  expect(receipts).toHaveLength(6);
-  expect(new Set(receipts).size).toBe(receipts.length);
-  for (const path of receipts) {
-    expect(await Bun.file(path).exists()).toBe(true);
-    expect(await Bun.file(path).text()).toMatch(/OK:/);
-    expect(statSync(dirname(path)).mode & PERMISSION_BITS).toBe(PRIVATE_DIRECTORY_MODE);
+  for (const output of outputs) {
+    expect(output.match(/ — pass \(audits\//g) ?? []).toHaveLength(HELPERS_PER_RUN);
+    expect(output).toContain("OK:");
   }
+  expect(readdirSync(receiptsRoot).filter((name) => name.startsWith(RECEIPT_PREFIX))).toEqual([]);
 });
 
 test.each([true, false])("staged Rust aliases come from the same index with alias present %s", async (hasAlias) => {

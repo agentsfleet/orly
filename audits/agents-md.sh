@@ -26,15 +26,14 @@ SEEN_LABELS=()
 
 # Colours — disable when stdout is not a TTY (e.g. piped, hook).
 if [[ -t 1 ]]; then
-  C_GREEN=$'\033[32m'; C_RED=$'\033[31m'; C_YELLOW=$'\033[33m'
+  C_GREEN=$'\033[32m'; C_RED=$'\033[31m'
   C_BLUE=$'\033[34m'; C_BOLD=$'\033[1m';  C_RESET=$'\033[0m'
 else
-  C_GREEN=''; C_RED=''; C_YELLOW=''; C_BLUE=''; C_BOLD=''; C_RESET=''
+  C_GREEN=''; C_RED=''; C_BLUE=''; C_BOLD=''; C_RESET=''
 fi
 
 fail() { printf '%s🔴 FAIL%s: %s\n' "$C_RED" "$C_RESET" "$*" >&2; FAIL=1; SEEN_LABELS+=("$*"); }
 pass() { printf '%s🟢 PASS%s: %s\n' "$C_GREEN" "$C_RESET" "$*";       SEEN_LABELS+=("$*"); }
-warn() { printf '%s🟡 WARN%s: %s\n' "$C_YELLOW" "$C_RESET" "$*" >&2; }
 info() { printf '%s🔆 %s%s\n' "$C_BLUE" "$*" "$C_RESET"; }
 
 info "Auditing $AGENTS"
@@ -148,10 +147,10 @@ if [[ -f "$FIXTURES/dirty.diff" && -f "$FIXTURES/clean.diff" ]]; then
 
   # Pin exact expected counts — protects against false-positive "smoke ok"
   # where a rigged dirty.diff produces ≥1 hit on an unrelated token.
-  if [[ $dirty_hits -eq 4 ]]; then
-    pass "audit fixture: dirty diff flagged exactly 4 hits"
+  if [[ $dirty_hits -eq 5 ]]; then
+    pass "audit fixture: dirty diff flagged exactly 5 hits"
   else
-    fail "audit fixture: dirty diff flagged $dirty_hits hits (expected 4)"
+    fail "audit fixture: dirty diff flagged $dirty_hits hits (expected 5)"
   fi
   if [[ $clean_hits -eq 0 ]]; then
     pass "audit fixture: clean diff produced 0 hits"

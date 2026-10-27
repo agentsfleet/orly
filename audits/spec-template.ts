@@ -1,10 +1,11 @@
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, join, normalize, resolve } from "node:path";
 
 type MarkdownElement = { type?: unknown; props: { children?: MarkdownNode[] } };
 type MarkdownNode = string | MarkdownElement;
 type Section = { title: string; nodes: MarkdownNode[] };
 type Commands = Record<string, string[][]>;
+export type SpecTest = { dimension: string; name: string; tier: string };
 
 const CONFIG_PATH = ".orly/orly.json";
 const SPEC_LINE_LIMIT = 500;
@@ -23,7 +24,28 @@ const REQUIRED = [
 ];
 const RESIDUE = /<!--\s*tpl:|\{\{fill:|\{unresolved_[^}]+\}|path\/to\/file\.ext|path\/to\/spec_or_doc\.md|test_<short_name>|\{one-line reason\}|\{Slice title\}|\{smallest verifiable behaviour\}|\{one-line behavioural claim\}/;
 const STAGED_MODES = new Set(["--staged", "staged"]);
+const BULK_MODES = new Set(["--all", "all", "--include-done", "include-done"]);
 const EXPECTED_COLUMN = "Expected";
+const DIMENSION_COLUMN = "Dimension";
+const TEST_COLUMN = "Test";
+const TIER_COLUMN = "Tier";
+const TEXT_ENCODING = "utf8";
+const SAFE_PROHIBITION_LINE = /<!--|"[0-9]+\s*(h|hour|day|min)"/;
+const PROHIBITED: Array<[RegExp, string]> = [
+  [/^#+ .*Estimated [Ee]ffort/, "Estimated effort section heading"],
+  [/^#+ .*\b(Effort|Complexity|Sizing|Cost)\b\s*$/, "Effort/Complexity/Sizing section heading"],
+  [/^#+ .*\bScale\b.*estimate/, "Scale estimate section heading"],
+  [/^[-*]\s*~\s*[0-9]+\s*h\b/, 'Tilde-bulleted hour estimate (e.g. "- ~2 h")'],
+  [/^[-*]\s*~\s*[0-9]+\s*(hours?|days?|min(utes?)?)\b/, "Tilde-bulleted time estimate"],
+  [/^\s*\*\*\s*(Effort|Estimate|Sizing|Complexity|Cost)\s*(:\s*\*\*|\*\*\s*[:|])/, "Effort/Estimate label row"],
+  [/^\s*\*\*\s*Owner\s*(:\s*\*\*|\*\*\s*[:|])/, "Owner label row"],
+  [/^\s*\*\*\s*Assigned to\s*(:\s*\*\*|\*\*\s*[:|])/, "Assigned-to label row"],
+  [/^\s*\*\*\s*(Due|Deadline)\s*(:\s*\*\*|\*\*\s*[:|])\s*[0-9]/, "Date-bound deadline label"],
+  // Two `\s*` runs around optional stars backtrack quadratically on a long blank line.
+  [/^[-*|]?\s*(?:\*\*?\s*)?[0-9]+\s*%\s*complete/, "Percentage-complete metric"],
+  [/\b(effort|estimate|takes?|spend)\b[^.]{0,40}\b[0-9]+\s*[-–]\s*[0-9]+\s*h\b/, "Hour-range estimate in effort context"],
+  [/\b(low|medium|high|small|large)\s*[/|-]\s*(effort|complexity)\b/, "Effort/complexity rating"],
+];
 
 function sectionsOf(text: string): Section[] {
   const sections: Section[] = [];
@@ -53,14 +75,23 @@ function textOf(node: MarkdownNode): string {
   return node.type === "code" ? `${BACKTICK}${text}${BACKTICK}` : text;
 }
 
+// Rows of every table in the section, each read through its own header and laid
+// out in the first table's column order. A second table with its columns in
+// another order was read with the first table's positions.
 function table(nodes: MarkdownNode[]): { columns: string[]; rows: string[][] } {
-  const groups = elements(nodes, "table").flatMap(children);
-  const headers = elements(groups, "thead").flatMap(children);
-  const bodies = elements(groups, "tbody").flatMap(children);
-  return {
-    columns: elements(headers, TABLE_ROW).flatMap(children).map((node) => textOf(node).trim()),
-    rows: elements(bodies, TABLE_ROW).map((row) => children(row).map((node) => textOf(node).trim())),
-  };
+  let columns: string[] = [];
+  const rows: string[][] = [];
+  for (const group of elements(nodes, "table")) {
+    const parts = children(group);
+    const header = elements(elements(parts, "thead").flatMap(children), TABLE_ROW)[0];
+    const own = header ? children(header).map((node) => textOf(node).trim()) : [];
+    if (!columns.length) columns = own;
+    for (const row of elements(elements(parts, "tbody").flatMap(children), TABLE_ROW)) {
+      const cells = children(row).map((node) => textOf(node).trim());
+      rows.push(columns.map((column) => cells[own.indexOf(column)] ?? EMPTY));
+    }
+  }
+  return { columns, rows };
 }
 
 function testMappings(sections: Section[]): string[] {
@@ -72,10 +103,10 @@ function testMappings(sections: Section[]): string[] {
   const ids = dimensions.map((match) => match[1]);
   if (new Set(ids).size !== ids.length) errors.push("Dimension identifiers must be unique");
   const tests = table(section(sections, TEST_HEADING));
-  const tier = tests.columns.indexOf("Tier");
-  const name = tests.columns.indexOf("Test");
+  const tier = tests.columns.indexOf(TIER_COLUMN);
+  const name = tests.columns.indexOf(TEST_COLUMN);
   const assertion = tests.columns.findIndex((column) => column.startsWith("Asserts"));
-  const id = tests.columns.indexOf("Dimension");
+  const id = tests.columns.indexOf(DIMENSION_COLUMN);
   if ([tier, name, assertion, id].some((index) => index < 0)) return [...errors, "Test Specification needs Dimension, Tier, Test, and Asserts columns"];
   for (const dimension of dimensions) {
     if (!tests.rows.some((row) => row[id] === dimension[1] && row[name]?.replaceAll(BACKTICK, EMPTY) === dimension[2] && row[tier] && row[assertion])) {
@@ -86,6 +117,21 @@ function testMappings(sections: Section[]): string[] {
     if (row[id] && !ids.includes(row[id])) errors.push(`test row references unknown Dimension ${row[id]}`);
   }
   return errors;
+}
+
+// The Test Specification rows that name a test. spec.tests searches tracked
+// files for each name; testMappings above checks the same rows against the
+// Dimensions, so a table missing its columns yields nothing here.
+export function specTestsOf(text: string): SpecTest[] {
+  const tests = table(section(sectionsOf(text), TEST_HEADING));
+  const id = tests.columns.indexOf(DIMENSION_COLUMN);
+  const name = tests.columns.indexOf(TEST_COLUMN);
+  const tier = tests.columns.indexOf(TIER_COLUMN);
+  if ([id, name, tier].some((index) => index < 0)) return [];
+  return tests.rows.flatMap((row) => {
+    const test = row[name]?.replaceAll(BACKTICK, EMPTY).trim();
+    return test ? [{ dimension: row[id] ?? EMPTY, name: test, tier: row[tier]?.replaceAll(BACKTICK, EMPTY).trim() ?? EMPTY }] : [];
+  });
 }
 
 function readFirst(sections: Section[], exists: (path: string) => boolean): string[] {
@@ -111,8 +157,9 @@ function git(argv: string[], root: string): { ok: boolean; text: string } {
   return { ok: result.exitCode === 0, text: result.stdout.toString() };
 }
 
-async function commands(staged: boolean, root: string): Promise<Commands> {
-  const text = staged ? git(["show", `:${CONFIG_PATH}`], root) : { ok: true, text: await Bun.file(join(root, CONFIG_PATH)).text() };
+// Gate criteria are synchronous; standalone audits share the same command reader.
+export function readSpecCommands(staged: boolean, root: string): Commands {
+  const text = staged ? git(["show", `:${CONFIG_PATH}`], root) : { ok: true, text: readFileSync(join(root, CONFIG_PATH), TEXT_ENCODING) };
   if (!text.ok) throw new Error(`cannot read ${CONFIG_PATH} from the index`);
   const config: unknown = JSON.parse(text.text);
   if (!object(config) || !object(config.commands)) throw new Error(`${CONFIG_PATH} needs declared commands`);
@@ -154,9 +201,22 @@ function rubricCommands(sections: Section[], declared: Commands): string[] {
   return errors;
 }
 
+export function validateSpecProhibitions(text: string): string[] {
+  const errors: string[] = [];
+  const lines = text.split("\n");
+  for (const [pattern, description] of PROHIBITED) {
+    for (const [index, line] of lines.entries()) {
+      if (pattern.test(line) && !SAFE_PROHIBITION_LINE.test(line)) {
+        errors.push(`line ${index + 1} — ${description}\n        > ${line.replace(/\r$/, EMPTY)}`);
+      }
+    }
+  }
+  return errors;
+}
+
 export function validateSpec(text: string, declared: Commands, exists: (path: string) => boolean): string[] {
   const sections = sectionsOf(text);
-  const errors: string[] = [];
+  const errors = validateSpecProhibitions(text);
   const count = text.trimEnd().split(/\r?\n/).length;
   if (count > SPEC_LINE_LIMIT) errors.push(`spec has ${count} lines; cap ${SPEC_LINE_LIMIT}`);
   for (const heading of REQUIRED) {
@@ -170,9 +230,11 @@ export function validateSpec(text: string, declared: Commands, exists: (path: st
 export async function auditSpec(args: string[], root: string): Promise<string[]> {
   const [spec, path, mode] = args;
   if (!spec || !path || !mode) throw new Error("expected spec path, content path, and audit mode");
+  const text = await Bun.file(resolve(root, path)).text();
+  if (BULK_MODES.has(mode)) return validateSpecProhibitions(text);
   const staged = STAGED_MODES.has(mode);
   const exists = (reference: string) => staged ? git(["cat-file", "-e", `:${reference}`], root).ok : existsSync(join(root, reference));
-  return validateSpec(await Bun.file(resolve(root, path)).text(), await commands(staged, root), exists);
+  return validateSpec(text, readSpecCommands(staged, root), exists);
 }
 
 if (import.meta.main) {
@@ -184,7 +246,7 @@ if (import.meta.main) {
     }
     if (errors.length) process.exitCode = 1;
     // logging: report structural checks without claiming semantic readiness.
-    else console.log(`OK: ${Bun.argv[2]} — sections, references, test mappings, and declared commands checked`);
+    else console.log(`OK: ${Bun.argv[2]} — ${BULK_MODES.has(Bun.argv[4] ?? EMPTY) ? "no prohibited patterns" : "sections, references, test mappings, and declared commands checked"}`);
   } catch (error) {
     // logging: unavailable audit inputs must fail, never silently skip checks.
     console.error(`FAIL: spec readiness check — ${error instanceof Error ? error.message : String(error)}`);

@@ -6,6 +6,8 @@ import { HELP_FLAGS, INCOMPLETE_EXIT, INPUT_FLAG, JSON_FLAG, JSON_INDENT, MAX_MA
 import { readBounded } from "./files";
 import { validateManifest } from "./questions";
 import { judge } from "./runner";
+import { specCommand } from "./spec_command";
+import { DEFAULT_MIN_SCORE, SPEC_COMMAND } from "./spec_rubric";
 import { manifestSchema, type Report, type Stage } from "./types";
 
 type Options = { stage: Stage; input: string; project: string; refresh: boolean; json: boolean };
@@ -14,6 +16,7 @@ const EXAMPLE_MANIFEST = { stage: "verify", items: [{ id: "locale", question: "v
   { role: ROLE.test, path: "src/label.test.ts", selector: { kind: SELECTOR_KIND.test, name: "label respects locale" } },
 ] }] };
 const HELP = `orly judge <plan|verify|review|document> --input <manifest> [--project <root>] [--refresh] [--json]
+orly judge spec <SPEC> [--project <root>] [--min-score ${DEFAULT_MIN_SCORE}] [--refresh] [--json]
 
 Default: exact offline replay. Missing or changed input returns exit 2.
 --refresh: explicitly permit scanned source upload and one live request per item.
@@ -25,6 +28,7 @@ Runtime: Bun. Live refresh requires gitleaks and TYPESAFE_API_KEY.
 Reference: docs/JUDGMENTS.md`;
 
 export async function judgmentCommand(args: string[]): Promise<number> {
+  if (args[0] === SPEC_COMMAND) return specCommand(args.slice(1));
   if (args.some((argument) => HELP_FLAGS.some((flag) => flag === argument))) {
     // logging: command help is the program interface.
     console.log(HELP);

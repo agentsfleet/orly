@@ -52,9 +52,9 @@ Determinism starts here. Before copying the template:
 
 - **Testable goal** — one sentence that could be a test name. "Implement streaming" is not a goal; "SSE handler streams pubsub as `text/event-stream`, p95 < 200ms" is.
 - **PR title + intent** — what the merged PR is called (imperative, ≤72 chars) and the one-sentence user-facing *why*.
-- **Comprehension handshake** — restate the intent in my own words and list `ASSUMPTIONS I'M MAKING: …`. If my restatement and the requester's ask diverge, STOP and reconcile before drafting.
+- **Authoring handshake** — restate the intent in my own words and list `ASSUMPTIONS I'M MAKING: …` in the template's Authoring handshake slot. If my restatement and the requester's ask diverge, STOP and reconcile before drafting. The Implementer handshake line stays as the template writes it: the implementing agent records its own restatement in the Pull Request Session Notes at PLAN.
 - **Golden-path walk** — trace the concrete end-to-end (every lookup, data source, secret store). Any `[?]` left in the walk blocks the spec from leaving `pending/`.
-- **Product Clarity — Indy's ten product questions, answered in order** (successful user moment · preserved user behaviour · optimal-way check · rebuild-vs-iterate · what we build · what we do NOT build · fit with existing features · surface order · dashboard restraint · confused-user next step). They are answered BEFORE any implementation section is drafted; internal-only work may answer 8–10 as "N/A — no user surface" with the reason.
+- **Product Clarity** — the ten questions in the template's Product Clarity section, answered in order BEFORE any implementation section is drafted. Internal-only work may answer 8–10 as "N/A: no user surface" with the reason.
 
 → Fills the template's **PR Intent & comprehension handshake**, **Overview**, and **Product Clarity (authoring record)**.
 
@@ -71,7 +71,7 @@ This is the step that prevents greptile findings — the spec becomes a pre-comm
 
 - **Applicable Rules** — name the *specific* `docs/greptile-learnings/RULES.md` rule IDs the diff will trip (e.g. NDC, NLR, NLG, UFS), plus the per-surface dispatch façades / rule files: `dispatch/write_zig.md` (`*.zig`), `docs/REST_API_DESIGN_GUIDELINES.md` (`src/http/handlers/**`), `docs/SCHEMA_CONVENTIONS.md` (`schema/*`), `dispatch/write_ts_adhere_bun.md`, `docs/LOGGING_STANDARD.md`, `docs/LIFECYCLE_PATTERNS.md`. Generic "follow RULES.md" earns a greptile finding; named IDs the implementer obeys by construction do not. Cite rule docs by their repo-local `docs/…` paths — the selected packs materialise them into every repository; cite only files that exist here (`test -f` each).
 - **Applicable Gates** — which Action-Triggered Guards fire (ZIG, PUB, LENGTH, UFS, UI, DESIGN TOKEN, LOGGING, LIFECYCLE, SCHEMA, ERROR REGISTRY) and the satisfaction strategy for each. Rules ≠ gates: rules are knowledge to read; gates fire on edits.
-- **Prior-Art / Reference Implementations** — the reference codebase to mirror (CLI → the "7 Pillars" of CLI DX in `docs/TEMPLATE.md` Prior-Art; API → REST guide + nearest handler). No reinventing what a known-good pattern already solves.
+- **Prior-Art / Reference Implementations** — the reference codebase to mirror (CLI → the template's six command-line practices; API → REST guide + nearest handler). No reinventing what a known-good pattern already solves.
 
 → Fills **Applicable Rules**, **Applicable Gates**, **Prior-Art / Reference Implementations**.
 
@@ -83,7 +83,7 @@ This is the step that prevents greptile findings — the spec becomes a pre-comm
 - **Rubric = 5–12 outcome rows** — one per Section outcome, failure class, or hygiene gate (never per Dimension); each with a copy-paste Verify command and a mechanically checkable Expected (exit code / literal substring / match count). Standard rows come pre-filled in the template — prune to the touched surface.
 - **Stage-owned values** — keep branch and baseline measurement pending at authoring. Opening records the full comparison commit; unit and integration measurement is due before the Pull Request. The lifecycle dispatch owns command timing and hydration.
 - **Decision ownership** — identify agent choices, preparation outputs, and required human decisions. Human acceptance uses tier `manual` with a procedure and durable evidence; never invent the person's sign-off.
-- **Reporting spine** — **Discovery (consult log)** carries consults, skill-chain outcomes, and Indy-acked deferral quotes; the **Acceptance Rubric's Graded column** carries the VERIFY verdicts (✅/❌ + one decisive output line each). Both empty at creation, populated as work proceeds.
+- **Reporting spine** — **Discovery (consult log)** carries consults, skill-chain outcomes, and the owner quotes behind deferrals and transfers. The **Acceptance Rubric's Graded column** carries the VERIFY verdicts (✅/❌ + one decisive output line each). Both start empty and fill as work proceeds.
 
 → Fills **Sections (+ Dimensions)**, **Metrics & Observability**, **Failure Modes**, **Invariants**, **Test Specification (tiered)**, **Acceptance Rubric**, **Discovery**.
 
@@ -96,15 +96,22 @@ Now the file. Pick the ID and copy the template:
 ls docs/v*/pending/ docs/v*/active/ docs/v*/done/ 2>/dev/null \
   | grep -oE 'M[0-9]+_[0-9]+' | sort -u | tail -5
 sed -n '/^# Spec Body — Copy Everything Below This Line/,$p' docs/TEMPLATE.md \
-  | sed '1d' > docs/v{N}/pending/M{N}_{WS}_P{P}_{CATEGORIES}_{NAME}.md
+  | sed '1d' > docs/v{P}/pending/M{N}_{WS}_P{priority}_{CATEGORIES}_{NAME}.md
 ```
 
 
 **Fill grammar** — the template body is ordered for the *executing* agent (execution read order), not for authoring; fill sections in the order of Steps 1–3 above, not top-to-bottom. Replace every `{{fill:description}}` authoring slot with instance content, then **delete every `<!-- tpl: … -->` guidance comment** — the SPEC TEMPLATE GATE BLOCKs any survivor, unfilled slot sentinels, and missing required sections. The SPEC AUTHORING RULES banner is the one comment that stays.
 
-**Inputs** — Milestone `M{N}` (next free, sortable) · Workstream `{WS}` zero-padded (`001`…) · Priority (**P0** blocking · **P1** customer/operator-facing · **P2** tooling · **P3** deferrable) · Category set alphabetised (`API` Zig/Go · `CLI` agentsfleet/Node · `UI` Next.js · `OBS` Grafana · `SKILL` SKILL.md · `INFRA` Terraform) · Name UPPER_SNAKE_CASE ≤6 words describing the outcome (`BUN_VENDOR_UTILITIES`, not `BUMP_BUN_DEPS`) · Prototype tag (`v1.0.0`, `v2.0.0` — drives `docs/v1/` vs `docs/v2/`).
+**Inputs:**
 
-**File naming:** `docs/v{N}/{pending|active|done}/M{Milestone}_{Workstream}_P{Priority}_{CATEGORIES}_{NAME}.md` (e.g. `docs/v2/pending/M52_001_P2_API_BUN_VENDOR_UTILITIES.md`). Do NOT rename existing legacy-form files under `docs/v1/` or `docs/v2/done/`.
+- Milestone `M{N}`: next free, sortable.
+- Workstream `{WS}`: zero-padded (`001`…).
+- Priority: **P0** blocking · **P1** customer/operator-facing · **P2** tooling · **P3** deferrable.
+- Categories: one or more codes from the template's Categories table, alphabetised.
+- Name: UPPER_SNAKE_CASE, at most six words, naming the outcome (`BUN_VENDOR_UTILITIES`, not `BUMP_BUN_DEPS`).
+- Prototype tag (`v1.0.0`, `v2.0.0`): its major version `{P}` picks `docs/v1/` or `docs/v2/`.
+
+**File naming:** the template's Guardrails give the form, `docs/v{P}/{pending|active|done}/M{N}_{WS}_P{priority}_{CATEGORIES}_{NAME}.md`, such as `docs/v2/pending/M52_001_P2_API_BUN_VENDOR_UTILITIES.md`. `{P}` is the Prototype's major version and `{N}` the Milestone number; they are independent. Do NOT rename existing legacy-form files under `docs/v1/` or `docs/v2/done/`.
 
 **Terminology — binding for everything that lands in a file** (conversational replies are exempt):
 
@@ -143,7 +150,7 @@ do not infer the default branch name.
 - Never move the active stream's uncommitted work to the default branch.
 
 ```bash
-git add docs/v{N}/pending/M{N}_{WS}_*_{NAME}.md
+git add docs/v{P}/pending/M{N}_{WS}_*_{NAME}.md
 git commit -m "docs(m{N}): add spec — {short title}"
 ```
 

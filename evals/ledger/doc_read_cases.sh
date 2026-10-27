@@ -76,14 +76,16 @@ else
 fi
 
 # Dimension 4.3 — the wiring itself. A check nothing invokes is a check nobody
-# runs, so the hook's guarded call is part of the deliverable.
+# runs, so the hook's call is part of the deliverable. The check resolves the
+# façade scopes itself, so the hook calls it at top level on every commit: a
+# second trigger list in the hook once skipped *.mdx commits. ORLY_INDEX_FILE
+# hands it the index that `git commit -a` and `git commit <path>` stage into.
 hook="$ROOT/.githooks/pre-commit"
-if grep -q 'audits/doc-read.sh check' "$hook" \
-   && grep -q 'SOURCE_PATTERN' "$hook" \
-   && grep -q 'diff --cached --name-only' "$hook"; then
-  ok "ledger_precommit_wiring — pre-commit calls check behind a staged-source guard"
+if grep -qE '^bash audits/doc-read\.sh check$' "$hook" \
+   && grep -q 'export ORLY_INDEX_FILE' "$hook"; then
+  ok "ledger_precommit_wiring — pre-commit calls check on every commit, through the commit's index"
 else
-  bad "ledger_precommit_wiring" "no guarded doc-read.sh invocation in .githooks/pre-commit"
+  bad "ledger_precommit_wiring" "pre-commit must call audits/doc-read.sh check at top level and export ORLY_INDEX_FILE"
 fi
 
 # Dimension 5.1 — the pilot. LOGGING_STANDARD is the doc whose 2-of-34 ratio

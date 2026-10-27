@@ -69,8 +69,17 @@
 set -euo pipefail
 
 MODE="${1:---staged}"
+# Sourced before the `cd` below: a relative script path names the caller's directory.
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scope.sh"
 ROOT="$(git rev-parse --show-toplevel)"
+# Explicit files are named from the caller's directory; rebase them below.
+PREFIX="$(git rev-parse --show-prefix)"
+CALLER_DIR="$PWD"
 cd "$ROOT"
+# The index `git commit -a` and `git commit <path>` stage into, when the calling
+# hook handed one over for this repository (audit_commit_index, scope.sh).
+COMMIT_INDEX="$(audit_commit_index)" || exit 2
+[ -z "$COMMIT_INDEX" ] || export GIT_INDEX_FILE="$COMMIT_INDEX"
 
 EXPLICIT=()
 case "$MODE" in
@@ -95,8 +104,12 @@ case "$MODE" in
   *)
     for path in "$@"; do
       case "$path" in -*) printf 'unknown audit option: %s\n' "$path" >&2; exit 2 ;; esac
+      case "$path" in /*) resolved="$path" ;; *) resolved="$CALLER_DIR/$path" ;; esac
+      # A missing name used to be skipped and the run reported clean.
+      [ -f "$resolved" ] || { printf 'audit target is not a file: %s\n' "$path" >&2; exit 2; }
+      case "$path" in /*) EXPLICIT+=("$path") ;; *) EXPLICIT+=("$PREFIX$path") ;; esac
     done
-    EXPLICIT=("$@"); POST_REF=""; LABEL="explicit files" ;;
+    POST_REF=""; LABEL="explicit files" ;;
 esac
 
 # --staged/--diff: one git diff piped into one awk — the scan itself costs

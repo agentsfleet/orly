@@ -10,7 +10,9 @@ const PIPE = "pipe";
 const OWNER_FILE = "owner.txt";
 const OWNER_CONTENT = "caller-owned bytes\n";
 const LEDGER_LIBRARY = "evals/ledger/lib.sh";
-const TEST_TIMEOUT_MS = 20_000;
+// evals/ledger/run.sh alone measured 16.0–20.2 s on an 8-core laptop (Oct 27,
+// 2026); `make audit` runs it beside the unit suite, so 20 s failed under load.
+const TEST_TIMEOUT_MS = 60_000;
 const INTERRUPTED_EXIT = 143;
 const FAILURE_EXIT = 7;
 

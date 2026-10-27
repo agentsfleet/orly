@@ -181,9 +181,9 @@ read -r -d '' AWK_PROG <<'AWKEOF' || true
 /^\+\+\+ b\// { f=$2; sub("^b/","",f); next }
 /^\+/ {
   if (f ~ /\.(zig|sql|ts|tsx|js|jsx|py|rs|go|sh|toml|yaml|json)$/ && f !~ /^(docs|node_modules|vendor|third_party)\//) {
-    if (match($0, /M[0-9]+_[0-9]+|§[0-9]+(\.[0-9]+)+|\bT[0-9]+\b|\bdim [0-9]+\.[0-9]+\b/)) print "MS-ID:" f
+    if (match($0, /M[0-9]+_[0-9]+|§[0-9]+(\.[0-9]+)+|(^|[^A-Za-z0-9_])T[0-9]+([^A-Za-z0-9_]|$)|(^|[^A-Za-z0-9_])dim [0-9]+\.[0-9]+([^A-Za-z0-9_]|$)/)) print "MS-ID:" f
   }
   if (f ~ /\.zig$/ && $0 ~ /^\+(pub | *pub fn | *[A-Z][a-zA-Z]+,$)/) print "PUB:" f
-  if (f ~ /^ui\/packages\/app\/.*\.(tsx|jsx)$/ && $0 ~ /<(section|button|input|dialog|article|nav|header|form)\b/) print "UI:" f
+  if (f ~ /^ui\/packages\/app\/.*\.(tsx|jsx)$/ && $0 ~ /<(section|button|input|dialog|article|nav|header|form)([[:space:]>]|\/|$)/) print "UI:" f
 }
 AWKEOF

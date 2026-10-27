@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { validateSpec } from "../audits/spec-template";
+import { specTestsOf, validateSpec } from "../audits/spec-template";
 import { specFixture } from "./gates_test_support";
 
 const COMMANDS = { conform: [["true"]], "verify.unit": [["true"]] };
@@ -13,6 +13,38 @@ const EXISTS = () => true;
 describe("spec content readiness", () => {
   test("a filled spec passes without product-specific commands or paths", () => {
     expect(validateSpec(VALID, COMMANDS, EXISTS)).toEqual([]);
+  });
+
+  test.each([
+    ["## Estimated effort", "Estimated effort section heading"],
+    ["## Complexity", "Effort/Complexity/Sizing section heading"],
+    ["## Scale estimate", "Scale estimate section heading"],
+    ["- ~2 h survey", "Tilde-bulleted hour estimate"],
+    ["* ~5 days setup", "Tilde-bulleted time estimate"],
+    ["**Effort:** medium", "Effort/Estimate label row"],
+    ["**Owner:** Alice", "Owner label row"],
+    ["**Assigned to:** Alice", "Assigned-to label row"],
+    ["**Due:** 2026-10-20", "Date-bound deadline label"],
+    ["- 40% complete", "Percentage-complete metric"],
+    ["This takes 2–4 h", "Hour-range estimate in effort context"],
+    ["low/effort", "Effort/complexity rating"],
+  ])("rejects prohibited authoring content: %s", (content, finding) => {
+    expect(validateSpec(`${VALID}\n${content}`, COMMANDS, EXISTS).join("\n")).toContain(finding);
+  });
+
+  test.each([
+    "**Date:** Oct 20, 2026",
+    "Tokens expire after 7 days.",
+    "<!-- low/effort -->",
+    'Example input "2 h" takes 2-4 h',
+  ])("accepts allowed dates, durations, and examples: %s", (content) => {
+    expect(validateSpec(`${VALID}\n${content}`, COMMANDS, EXISTS)).toEqual([]);
+  });
+
+  test("prohibited findings retain their source line", () => {
+    const text = `${VALID.trimEnd()}\n## Estimated effort\n`;
+    const line = text.trimEnd().split("\n").length;
+    expect(validateSpec(text, COMMANDS, EXISTS).join("\n")).toContain(`line ${line} — Estimated effort section heading`);
   });
 
   test.each([
@@ -113,4 +145,11 @@ describe("spec content readiness", () => {
     expect(validateSpec(padded(500), COMMANDS, EXISTS).join("\n")).not.toMatch(/cap 500/);
     expect(validateSpec(padded(501), COMMANDS, EXISTS)).toContain("spec has 501 lines; cap 500");
   });
+});
+
+test("a second Test Specification table is read through its own header", () => {
+  const first = "| Dimension | Tier | Test | Asserts |\n|---|---|---|---|\n| 1.1 | unit | `first_test` | a |\n";
+  const second = "| Dimension | Test | Tier | Asserts |\n|---|---|---|---|\n| 1.2 | `second_test` | integration | b |\n";
+  const rows = specTestsOf(`## Test Specification (tiered)\n\n${first}\n${second}`);
+  expect(rows.map((row) => [row.name, row.tier])).toEqual([["first_test", "unit"], ["second_test", "integration"]]);
 });

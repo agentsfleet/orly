@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.25.0 (2026-10-27)
+
+`orly judge spec` reviews a whole spec before implementation, and `orly gate pr` checks that the tests a spec names exist.
+
+- **Upgrade** — Requires Bun 1.4.4 or later. Run `bunx --bun @agentsfleet/orly@0.25.0 update` to refresh the template, skills and generated hooks; add `--no-hooks` to keep your own hooks.
+- **Readiness review** — `orly judge spec <SPEC> --refresh` asks six questions and reports `READY`, `REVIEW` or `INCOMPLETE`. Omit `--refresh` to replay saved answers; live review needs `gitleaks` and `TYPESAFE_API_KEY`.
+- **Named tests** — `spec.tests` fails when a test that a DONE Dimension names, outside tier `manual`, appears in no tracked test source. Copy each Test cell from the code; the failure names the closest match.
+- **Owner quotes** — A deferral or a `MOVED to` rubric row needs an owner quote in Discovery, `> Owner (<name>, <date>)`; the older `> Indy (` form still works.
+- **Commit checks** — Staged audits and the doc-read check now see files committed with `git commit -a` or `git commit <path>`.
+
 ## 0.15.0 (2026-10-19)
 
 Documentation now requires an editing pass that cuts filler and repeated facts

@@ -3,6 +3,7 @@ import * as fileSystem from "node:fs";
 import { join } from "node:path";
 
 import { EvaluationRun, EXECUTION_ERROR, sourceIdentity } from "../evals/judgments/comparison/execution";
+import { COMMAND_FILES } from "./command_process";
 import { cleanupTemporaryDirectories, temporaryDirectory } from "./gates_test_support";
 import { createOwnership, OWNER_ERROR, recoverStaleOwnership } from "../evals/judgments/comparison/recovery";
 
@@ -18,6 +19,8 @@ const DEADLINE_LIMITS = { timeout_ms: 150, output_bytes: SUCCESS_LIMITS.output_b
 const OUTPUT_LIMITS = { timeout_ms: SUCCESS_LIMITS.timeout_ms, output_bytes: 128 };
 const TEST_TIMEOUT_MS = 10_000;
 const READY_POLL_MS = 10;
+const READY_OUTPUT = "ready\n";
+const UTF8 = "utf8";
 const { existsSync } = fileSystem;
 const START_SENTINEL = "child-started.txt";
 const SENTINEL_COMMAND = `await Bun.write('${START_SENTINEL}','started')`;
@@ -69,19 +72,31 @@ test("offline_tasks_bound_and_clean_owned_work", async () => {
   }
 }, TEST_TIMEOUT_MS);
 
+// The supervisor installs its signal handlers after it starts the child
+// (src/command_process.ts), so a cancel on a fixed timer can arrive first and
+// end it without a result. Cancel once the child's captured output is visible.
+async function abortWhenReady(receipts: string, controller: AbortController): Promise<void> {
+  const deadline = Date.now() + SUCCESS_LIMITS.timeout_ms;
+  const ready = () => fileSystem.readdirSync(receipts).some((entry) => {
+    const stdout = join(receipts, entry, COMMAND_FILES.stdout);
+    return existsSync(stdout) && fileSystem.readFileSync(stdout, UTF8).includes(READY_OUTPUT);
+  });
+  while (Date.now() < deadline && !ready()) await Bun.sleep(READY_POLL_MS);
+  controller.abort();
+}
+
 test("handled_interruption_captures_failure_and_removes_owned_directories", async () => {
   const run = await EvaluationRun.create();
   const owned = run.ownership;
   const controller = new AbortController();
-  let timer: ReturnType<typeof setTimeout> | undefined;
   try {
-    timer = setTimeout(() => controller.abort(), DEADLINE_LIMITS.timeout_ms);
+    const cancelled = abortWhenReady(owned.receipts, controller);
     const receipt = await run.execute([process.execPath, BUN_EVAL, COMMAND_WAIT], [], SUCCESS_LIMITS, controller.signal);
+    await cancelled;
     expect(receipt.result.failure).toBe("supervisor received SIGTERM");
-    expect(receipt.stdout).toBe("ready\n");
+    expect(receipt.stdout).toBe(READY_OUTPUT);
     if (receipt.child_pid !== null) expect(() => process.kill(receipt.child_pid ?? 0, 0)).toThrow();
   } finally {
-    if (timer !== undefined) clearTimeout(timer);
     await run.close();
   }
   expect(existsSync(owned.workspace)).toBe(false);

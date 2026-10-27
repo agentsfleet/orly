@@ -5,9 +5,19 @@ type Dimension = { id: string; done: boolean };
 const DIMENSION = /^Dimension (\d+\.\d+)\s*[—-]\s*/;
 const COMPLETED = /^DONE(?:\s*[—-]|$)/;
 const CLAIM = /\bdeferr(ed|al|als)\b|\bMOVED\s+to\s+M\d+_\d+|\btransferred\b/i;
-const ACK = /^Indy \([^\n()]+\): "([^"\n]+)"\s*[—-]\s*context:\s*\S/;
+// `Owner (<name>, <date>)` names who decided and when (docs/TEMPLATE.md, Owner
+// quote). `Indy (<date>)` is the form specs written before it already carry.
+// Angle brackets are the template's unfilled placeholders, never a name or date.
+const ACK = /^(?:Owner \([^\s(),<>][^\n(),<>]*,\s*[^\s()<>][^\n()<>]*\)|Indy \([^\n()<>]+\)): "([^"\n]+)"\s*[—-]\s*context:\s*\S/;
+const UNNAMED = /\bdeferred\s+(to|until|for)\b|\bMOVED\s+to\s+M\d+_\d+/i;
+const ROW_ID = /\b[RS]\d+\b/g;
+const P0_CELL = /(?:^| \| )P0(?= \| |$)/;
+const DEFERRAL = /\bdeferr(ed|al|als)\b/i;
+const TRANSFER = /\bMOVED\s+to\s+M\d+_\d+/i;
 const BLOCKQUOTE = "blockquote";
 const LIST_ITEM = "li";
+const TABLE_ROW = "tr";
+const CELL_SEPARATOR = " | ";
 
 function isElement(node: Node): node is Exclude<Node, string> { return typeof node !== "string"; }
 function children(node: Node): Node[] { return isElement(node) ? node.props?.children ?? [] : []; }
@@ -25,7 +35,10 @@ function sectionsOf(source: string): Section[] {
 function prose(nodes: Node[], kind: string): string[] {
   return nodes.flatMap((node) => {
     if (!isElement(node) || ["pre", "code", BLOCKQUOTE].includes(String(node.type))) return [];
-    return node.type === kind ? [text(node)] : prose(children(node), kind);
+    if (node.type !== kind) return prose(children(node), kind);
+    // Bare-joined cells fuse a Priority "P0" with a Graded "MOVED to …" into one
+    // word, and the claim pattern's word boundary then never matches.
+    return [kind === TABLE_ROW ? children(node).map(text).join(CELL_SEPARATOR) : text(node)];
   });
 }
 
@@ -53,12 +66,24 @@ export function unacknowledgedObligations(source: string): string[] {
   const discovery = sections.find((entry) => /^Discovery\b/.test(entry.title));
   const quotes = (discovery?.nodes ?? []).filter((node) => isElement(node) && node.type === BLOCKQUOTE)
     .flatMap((node) => { const match = ACK.exec(text(node)); return match ? [match[1]!] : []; });
-  const claims = sections.flatMap((section) => [...prose(section.nodes, LIST_ITEM), ...prose(section.nodes, "p"), ...prose(section.nodes, "tr")])
-    .filter((line) => CLAIM.test(line));
-  const unacknowledged = claims.flatMap((claim) => {
-    const items = obligations(claim);
-    if (!items.length && /\bdeferred\s+(to|until|for)\b|\bMOVED\s+to\s+M\d+_\d+/i.test(claim)) return [`unnamed obligation: ${claim}`];
+  const owed = (claim: string, items: string[]) => {
+    if (!items.length && UNNAMED.test(claim)) return [`unnamed obligation: ${claim}`];
     return items.filter((item) => !quotes.some((quote) => binds(quote, item)));
-  });
+  };
+  const lines = sections.flatMap((section) => [...prose(section.nodes, LIST_ITEM), ...prose(section.nodes, "p")]).filter((line) => CLAIM.test(line));
+  const rows = sections.flatMap((section) => prose(section.nodes, TABLE_ROW)).filter((row) => CLAIM.test(row));
+  const unacknowledged = [
+    ...lines.flatMap((claim) => owed(claim, obligations(claim))),
+    // A rubric row owes its own id and, for a transfer, the successor's row; the
+    // Section its Criterion cites is a pointer. A P0 row cannot be deferred at
+    // all (dispatch/lifecycle.md, Rubric grading and transfers).
+    ...rows.flatMap((row) => {
+      const ids = [...row.matchAll(ROW_ID)].map((match) => match[0]);
+      if (P0_CELL.test(row) && DEFERRAL.test(row) && !TRANSFER.test(row)) {
+        return [`${ids[0] ?? row} is P0 and cannot be deferred: MOVE it or return to EXECUTE`];
+      }
+      return owed(row, ids.length ? ids : obligations(row));
+    }),
+  ];
   return [...new Set(unacknowledged)];
 }

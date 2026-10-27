@@ -61,7 +61,6 @@ audit_index_snapshot '*.zig' '*.ts' '*.tsx' '*.js' '*.jsx' '*.rs' '*.go'
 # pre-commit lens — it narrows the per-file checks to `git diff --cached`. The
 # retired `--diff` (BASE...HEAD) mode stays rejected; `--staged` reads the index
 # and so is not blind to staged-but-uncommitted fixes (M70's concern).
-MODE="$AUDIT_MODE"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
@@ -96,8 +95,8 @@ is_source() {
   local f="$1"
   case "$f" in
     vendor/*|third_party/*|.zig-cache/*|*/node_modules/*|evals/dispatch/fixtures/*|*.tsbuildinfo) return 1 ;;
-    *_test.zig|*.test.ts|*.test.tsx|*.test.js|*.test.jsx|*.unit.test.js|*.spec.ts|*_test.go) ;; # tests in scope
   esac
+  # Test files (*_test.zig, *.test.ts, *.spec.ts, *_test.go …) stay in scope.
   case "$f" in
     *.zig|*.ts|*.tsx|*.js|*.jsx|*.rs|*.go) return 0 ;;
     *) return 1 ;;
@@ -231,14 +230,16 @@ if [ -n "$rust_codes" ]; then
     [ -n "$line" ] || continue
     name=$(printf '%s' "$line" | grep -oE 'ERR_[A-Z][A-Z0-9_]+' | head -1)
     code=$(printf '%s' "$line" | sed -E 's/^[^=]*=[[:space:]]*"([^"]+)".*/\1/')
-    echo "$rust_codes" | grep -qxF -- "$code" || record "cross-runtime-orphan $name ($code) absent-in-daemon"
+    # Here-string, not a pipe: past the pipe buffer the producer takes SIGPIPE
+    # when grep matches early, and `pipefail` reports that match as a miss.
+    grep -qxF -- "$code" <<<"$rust_codes" || record "cross-runtime-orphan $name ($code) absent-in-daemon"
   done <<<"$client_decls"
 elif [ -z "$zig_err" ]; then
   ok "audit-ufs: cross-runtime parity skipped — no Rust registry and no Zig ERR_* declared, so this repository has no source of truth to compare against"
 else
   # Every client-side ERR_* must exist in Zig.
   for c in $client_err; do
-    if ! echo "$zig_err" | grep -qx "$c"; then
+    if ! grep -qx -- "$c" <<<"$zig_err"; then
       record "cross-runtime-orphan $c absent-in-zig"
     fi
   done

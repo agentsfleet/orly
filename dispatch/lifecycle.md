@@ -238,15 +238,60 @@ spec-vs-rules conflict (amend spec).
 
 ## Deferral discipline — expansion
 
-Any claim that a spec Section/Dimension was "deferred to follow-up" — in
-`HANDOFF.md`, PR description, Session Notes, or chat — requires an
-**user-acked verbatim quote** in PR Session Notes (or spec Discovery). Format:
-`> Indy (YYYY-MM-DD HH:MM): "<verbatim ack>" — context: <which item, why>`.
+Any claim that a spec Section/Dimension was "deferred to follow-up" needs a
+**user-acked verbatim quote** in the owner's own words. The claim may appear in
+`HANDOFF.md`, a PR description, Session Notes or chat; the quote goes in PR
+Session Notes or the spec's Discovery.
+
+Format: `> Owner (<name>, <MMM DD, YYYY HH:MM>): "<verbatim quote>" — context: <which item, why>`.
+The quote names each item it covers, such as `Dimension 2.1` or `R3`. The older
+`> Indy (<date>)` form is still accepted.
+
 Agent-unilateral deferral = incomplete scope, not deferral; CHORE(close) blocks
 until the item lands or the quote is captured. **HANDOFF.md is a faithful state
-report** — a pickup agent reading a HANDOFF claiming items were deferred without
-ack-quotes must treat them as in-scope and surface the contradiction to the user
-before continuing.
+report**. A pickup agent reading deferred items without ack-quotes must treat
+them as in-scope and surface the contradiction to the user first.
+
+## Rubric grading and transfers
+
+The Acceptance Rubric is the spec's single scoring surface. R rows grade the
+spec's own outcomes; S rows are the repository checks every spec carries.
+
+**Grading.** At VERIFY, run each R row's Verify command verbatim and fill Graded
+with ✅ or ❌ plus one decisive output line. Missing evidence counts as ❌.
+
+S rows are graded from the final `orly gate pr` run at CHORE(close). Each S
+row's Graded cell points to that run's result in the Pull Request Session Notes.
+Recording it needs no extra commit or suite run.
+
+**Ship rule.** The Pull Request is ready only when every row clears:
+
+| Priority | A ❌ ships only when |
+|---|---|
+| P0 | Never. The row returns to EXECUTE unless it is `MOVED` under the three conditions below. |
+| P1 | Discovery holds an owner quote naming the row, in the deferral form above. |
+| P2, P3 | Discovery records a disposition: the row, why it failed and what happens next. A disposition that defers work is a deferral and needs the owner quote too. |
+
+**Deferral or transfer.** A deferral leaves work unowned inside a closed spec,
+which is why a P0 cannot be deferred. A transfer moves the criterion whole to a
+successor spec that carries it as its own P0.
+
+The move covers the criterion's Dimensions, its verification and its rubric
+row. Mark such a row `MOVED to M<N>_<NNN> R<n>`. It is not ❌ when all three
+conditions hold:
+
+1. The successor spec exists and carries the criterion as a rubric row of its
+   own. A successor without the row makes this a deferral under a new name, and
+   the P0 rule applies.
+2. Both specs record the mapping: the closing spec names where each Dimension
+   went, and the successor names what it inherited. A one-sided claim is not a
+   transfer.
+3. Discovery carries the owner's verbatim quote authorising the transfer, in the
+   deferral form. An agent-written transfer is agent-written scope reduction.
+
+A `MOVED` row is never ✅: the criterion is still unmet, and the rubric names its
+new owner. `spec.deferrals` checks condition 3, because a `MOVED to` row is a
+claim that needs a quote naming it. Conditions 1 and 2 need review.
 
 ## Pre-PR gates
 
@@ -257,26 +302,38 @@ version-sync check passes where defined; branch contains `origin/main` HEAD
 (rebase pre-push / merge post-push — never force-push an open PR branch).
 
 **`orly gate pr` follows the spec through the close.** A spec moved to `done/`
-on this branch is still discovered — its `Branch:` header names the branch —
-and every spec criterion runs against it; skip-pass is only for genuinely
-spec-less branches. Branch and fold headers accept a plain token or an inline-code
-token. Active specs explicitly naming another branch do not displace the current
-branch's owner; an active spec without a branch declaration remains in scope.
-A deliberately folded spec retains the exact branch header
-and adds `**Folded-into:** \`M178_001\`` naming the owning spec. Discovery
-validates that relation and gates the sole non-folded owner; two non-folded
-specs on one branch remain a hard error. **The same relation holds in
-`active/`, from the moment the fold is decided.** A second workstream may sit
-beside an open stream while it names that stream through `Folded-into`, and the
-gates run against the owner — a fold is not a second stream, and it was decided
-when the scope was, not when the spec moved. Extra `active/` specs without the
-header are still the hard error they were: one stream per worktree. Mechanical criteria: `spec.moved`
-(`Status: DONE` ⇒ the spec sits under `done/` and was moved on this branch) · `spec.baseline`
-(`Test Baseline:` recorded) · `spec.ordering` (the branch's first commit
-carries the spec — no code before CHORE(open)) · `spec.deferrals` (a deferral
-claim needs the `> Indy (` ack quote in the spec). An Indy-acked deferral that
-leaves a Dimension open ships via `orly override spec.dimensions --reason
-"<the ack>"` — visible in the PR, dead after the merge.
+on this branch is still discovered, because its `Branch:` header names the
+branch. Every spec criterion runs against it; skip-pass is only for genuinely
+spec-less branches.
+
+Branch and fold headers accept a plain token or an inline-code token. Active
+specs explicitly naming another branch do not displace the current branch's
+owner. An active spec without a branch declaration remains in scope.
+
+A deliberately folded spec retains the exact branch header and adds
+`**Folded-into:** \`M178_001\`` naming the owning spec. Discovery validates that
+relation and gates the sole non-folded owner. Two non-folded specs on one branch
+remain a hard error.
+
+**The same relation holds in `active/`, from the moment the fold is decided**. A
+second workstream may sit beside an open stream while it names that stream
+through `Folded-into`, and the gates run against the owner. A fold is not a
+second stream: it was decided when the scope was, not when the spec moved.
+
+Extra `active/` specs without the header are still the hard error they were:
+one stream per worktree.
+
+Mechanical criteria:
+
+- `spec.moved`: `Status: DONE` ⇒ the spec sits under `done/` and was moved on this branch.
+- `spec.baseline`: `Test Baseline:` recorded.
+- `spec.ordering`: the branch's first commit carries the spec, so no code lands before CHORE(open).
+- `spec.deferrals`: a deferral or `MOVED` claim needs an owner quote in Discovery naming the item. A P0 rubric row marked deferred is red whatever the quote says.
+- `spec.tests`: each test a DONE Dimension names outside tier `manual` appears in a tracked test source; the declared verify commands prove it passes.
+
+An owner-acked deferral that leaves a Dimension open ships via `orly override
+spec.dimensions --reason "<the quote>"`. The override is visible in the PR and
+dead after the merge.
 
 **Babysit detail:** `orly-babysit-prs` covers all three surfaces — CI check
 runs (fix every failure your diff caused), greptile inline comments, and the

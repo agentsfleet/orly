@@ -1,9 +1,11 @@
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { readSpecCommands, specTestsOf, validateSpec } from "../audits/spec-template";
 import { readConfigSync } from "./config";
-import { Criterion, CriterionContext, criterion, gitOutput, runCommand, Verdict } from "./criteria_support";
+import { type Criterion, type CriterionContext, criterion, gitOutput, type Verdict } from "./criteria_support";
 import { branchDiff, classifyBranch, defaultMergeBase } from "./surfaces";
 import { specDimensionsOf, unacknowledgedObligations } from "./spec_obligations";
+import { searchTestSources } from "./spec_test_search";
 
 const BASELINE_HEADER = "Test Baseline";
 const REVISION_HEADER = "Baseline revision";
@@ -17,7 +19,6 @@ const OPEN_QUESTION = "[?]";
 const PRODUCT_CLARITY_HEADING = "## Product Clarity";
 const DONE_MARKER = "DONE";
 const ITEM_SEPARATOR = ", ";
-const SPEC_GATE_SCRIPT = "audits/spec-template.sh";
 const NO_SPEC_SKIP = "skipped — no active spec (quality gates still apply)";
 
 const SPEC_GATE = "spec.gate";
@@ -28,7 +29,9 @@ const SPEC_MOVED = "spec.moved";
 const SPEC_BASELINE = "spec.baseline";
 const SPEC_ORDERING = "spec.ordering";
 const SPEC_DEFERRALS = "spec.deferrals";
+const SPEC_TESTS = "spec.tests";
 const SPEC_TREE_FILE = /^docs\/v[^/]+\/.+\.md$/;
+const MANUAL_TIER = "manual";
 
 // Wrap a spec-reading criterion: no active spec → skip-pass with the reason
 // printed, so quality gates still run on spec-less (ad-hoc) branches.
@@ -40,7 +43,14 @@ function specCriterion(name: string, evaluate: (context: CriterionContext) => Ve
 }
 
 export function specGate(): Criterion {
-  return specCriterion(SPEC_GATE, (context) => runCommand(context.root, ["bash", context.root === context.model.root ? SPEC_GATE_SCRIPT : `.orly/${SPEC_GATE_SCRIPT}`, "--file", context.specPath ?? ""]));
+  return specCriterion(SPEC_GATE, (context) => {
+    try {
+      const errors = validateSpec(context.specText ?? "", readSpecCommands(false, context.root), (path) => existsSync(resolve(context.root, path)));
+      return { ok: errors.length === 0, detail: errors.length ? errors.join("\n") : "spec structure and prohibited patterns checked" };
+    } catch (error) {
+      return { ok: false, detail: `cannot read spec configuration: ${error instanceof Error ? error.message : String(error)}` };
+    }
+  });
 }
 
 export function openQuestions(): Criterion {
@@ -128,14 +138,41 @@ export function specOrdering(): Criterion {
   });
 }
 
-// A "deferred to follow-up" claim requires the Indy-acked verbatim quote in
-// the spec; agent-unilateral deferral is incomplete scope, not deferral.
+// A "deferred to follow-up" claim requires the owner's verbatim quote in the
+// spec; agent-unilateral deferral is incomplete scope, not deferral.
 export function specDeferrals(): Criterion {
   return specCriterion(SPEC_DEFERRALS, (context) => {
     const missing = unacknowledgedObligations(context.specText ?? "");
     return missing.length === 0
       ? { ok: true, detail: "named deferrals and transfers have item-bound owner quotes in Discovery; quote provenance and scope require review" }
-      : { ok: false, detail: `${missing.join(ITEM_SEPARATOR)} has no item-bound Indy acknowledgement in Discovery — agent-unilateral deferral is incomplete scope` };
+      : { ok: false, detail: `${missing.join(ITEM_SEPARATOR)} has no item-bound owner quote in Discovery — agent-unilateral deferral is incomplete scope` };
+  });
+}
+
+// A test a DONE Dimension names must exist in a tracked test source before its
+// result can mean anything. Whether it ran and passed is the declared verify
+// commands' job. An open Dimension is spec.dimensions' to report, so an
+// owner-acked deferral needs one override, and manual rows carry recorded human
+// evidence instead of code.
+export function specTests(): Criterion {
+  return specCriterion(SPEC_TESTS, (context) => {
+    const text = context.specText ?? "";
+    const done = new Set(specDimensionsOf(text).filter((dimension) => dimension.done).map((dimension) => dimension.id));
+    const dimensions = new Map<string, string[]>();
+    for (const entry of specTestsOf(text)) {
+      if (entry.tier.toLowerCase() === MANUAL_TIER || !done.has(entry.dimension)) continue;
+      dimensions.set(entry.name, [...dimensions.get(entry.name) ?? [], entry.dimension]);
+    }
+    if (!dimensions.size) return { ok: true, detail: `no test named for a ${DONE_MARKER} Dimension outside tier ${MANUAL_TIER}` };
+    const search = searchTestSources(context.root, [...dimensions.keys()]);
+    if (!search) return { ok: false, detail: "cannot search tracked test sources for named tests" };
+    const missing = [...dimensions].filter(([name]) => !search.found.has(name)).map(([name, owners]) => {
+      const closest = search.closest.get(name);
+      return `${name} (Dimension ${owners.join(ITEM_SEPARATOR)}${closest ? `; closest: ${closest}` : ""})`;
+    });
+    return missing.length === 0
+      ? { ok: true, detail: `${dimensions.size} named test(s) found in tracked test sources; the verify commands prove they pass` }
+      : { ok: false, detail: `no tracked test source names: ${missing.join(ITEM_SEPARATOR)}` };
   });
 }
 

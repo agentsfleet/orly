@@ -50,14 +50,12 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scope.sh"
 audit_scope_init --all "$@"
 audit_index_snapshot '*.zig'
 
-MODE="${1:-${SCOPE:-all}}"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
 FAIL=0
 fail() { printf "FAIL: %s\n" "$*" >&2; FAIL=1; }
 ok()   { printf "OK:   %s\n" "$*"; }
-note() { printf "NOTE: %s\n" "$*"; }
 
 # ---------------------------------------------------------------------------
 # 1. Gather Zig files in scope. Tests INCLUDED — same lifecycle rules apply.
@@ -67,8 +65,6 @@ FILES=()
 while IFS= read -r -d '' f; do
   [ ! -f "$f" ] || FILES+=("$f")
 done < <(audit_scope_paths '*.zig')
-STAGED=0
-[ "$MODE" != --staged ] || STAGED=1
 
 if [[ ${#FILES[@]} -eq 0 ]]; then
   ok "no zig source files in scope ($MODE)"
@@ -79,8 +75,6 @@ fi
 # Helper regexes.
 # ---------------------------------------------------------------------------
 CLEANUP_RE='pub fn (deinit|close|release|destroy|shutdown|dispose|free)\('
-# Heap-pointer return on init signature: `) *T` or `) !*T` or returning *Self.
-HEAP_RETURN_RE='\)[[:space:]]*!?\*([A-Z@]|Self\b)'
 # Allocation patterns inside init body.
 ALLOC_RE='\.(alloc|create|dupe|dupeZ|initCapacity|allocPrint|allocSentinel|reAlloc|realloc)\(|std\.fs\.(File|cwd\(\))\.(open|create)|Thread\.spawn|\.allocator\(\)|ArrayList(Unmanaged)?\(.*\)\.init|HashMap(Unmanaged)?\(.*\)\.init|StringHashMap(Unmanaged)?\(.*\)\.init'
 

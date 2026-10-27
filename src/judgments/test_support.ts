@@ -1,16 +1,21 @@
 import type { Item, Manifest, Prepared } from "./types";
 import type { Reply } from "./wire";
 
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import { CONFIG_PATH } from "../config";
+import { specFixture } from "../gates_test_support";
 import { CHOICE, MODEL, REPLY_KEY, ROLE, SELECTOR_KIND } from "./constants";
 import { prepareItem } from "./evidence";
 
 export const SOURCE_FILE = "label.ts";
 export const TEST_FILE = "label.test.ts";
 export const TEST_NAME = "label respects locale";
+export const SPEC_FILE = "spec.md";
+const TRUE_COMMAND = "true";
+export const SPEC_CONFIG = { schema_version: 1, packs: [], commands: { conform: [[TRUE_COMMAND]], "verify.unit": [[TRUE_COMMAND]] } };
 export const REQUIREMENT = "label returns the requested locale's year, month and day from Intl.DateTimeFormat, rather than merely a nonempty string.";
 export const SOURCE = `export function label(value: string, locale: string): string {
   return new Intl.DateTimeFormat(locale, { year: "numeric", month: "short", day: "2-digit" }).format(new Date(value));
@@ -32,6 +37,14 @@ export class TestProject {
   get root(): string { return this.#root; }
 
   write(path: string, text: string): void { writeFileSync(join(this.#root, path), text); }
+
+  spec(text = specFixture()): string {
+    mkdirSync(join(this.#root, ".orly"), { recursive: true });
+    this.write(CONFIG_PATH, JSON.stringify(SPEC_CONFIG));
+    this.write("README.md", "Fixture reference.");
+    this.write(SPEC_FILE, text);
+    return SPEC_FILE;
+  }
 
   item(): Item {
     return {

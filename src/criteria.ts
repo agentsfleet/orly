@@ -6,7 +6,7 @@ import {
 } from "./criteria_support";
 import {
   openQuestions, productClarity, specBaseline, specDeferrals, specDimensions,
-  specGate, specMoved, specOrdering,
+  specGate, specMoved, specOrdering, specTests,
 } from "./criteria_spec";
 import { scanChangedDocuments } from "./doc_changes";
 import { isObject, JsonObject, objectValue, OrlyError, RulesModel } from "./model";
@@ -55,7 +55,7 @@ export function criteriaFor(gate: string, context: CriterionContext): Criterion[
   if (gate === "pr") {
     return [
       gitBranch(), gitTree(), gitPushed(), specGate(), openQuestions(), productClarity(), specDimensions(),
-      specMoved(), specBaseline(), specOrdering(), specDeferrals(),
+      specMoved(), specBaseline(), specOrdering(), specDeferrals(), specTests(),
       repositoryConfig(), docsLanguage(), docsUpdated(), ...commandCriteria(context, ALL_TIER),
     ];
   }

@@ -27,7 +27,6 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/scope.sh"
 audit_scope_init --all "$@"
 audit_index_snapshot '*.zig'
 
-MODE="${1:-${SCOPE:---all}}"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 

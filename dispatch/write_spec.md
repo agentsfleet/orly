@@ -8,9 +8,9 @@ fills it; the audit checks structural consistency. None proves design quality.
 
 | Stage | Required content |
 |---|---|
-| Authoring | Goal, scope, verified source references, enforcement mechanisms and failure assumptions, decisions and acyclic prerequisites, Dimensions with test mappings, failures, interfaces, and acceptance checks |
+| Authoring | Goal, the authoring handshake, scope, verified source references, enforcement mechanisms and failure assumptions, decisions and acyclic prerequisites, Dimensions with test mappings, failures, interfaces, and acceptance checks |
 | CHORE(open) | Active status, branch, full comparison revision, baseline measurement pending |
-| PLAN | Implementer's comprehension handshake; resolved scope and decisions needed by the next Section |
+| PLAN | Implementer handshake in the Pull Request Session Notes, matching the spec's Intent; resolved scope and decisions needed by the next Section |
 | Before Pull Request | Declared unit/integration baseline counts, comparison revision, and evidence reference |
 | Completion | Passing behavior proofs, final repository checks, and any required human evidence |
 
@@ -20,9 +20,12 @@ and who may decide it. A required human sign-off remains a human dependency.
 
 ## Mechanical checks
 
-`audits/spec-template.sh` is the entry point; its Bun helper
-`audits/spec-template.ts` reads headings, lists, and tables from the runtime's
-parsed Markdown tree. Code examples and quoted headings cannot supply sections.
+`orly gate pr` calls the native validator in `audits/spec-template.ts` through
+`spec.gate`. The validator reads headings, lists, and tables from Bun's parsed
+Markdown tree. Code examples and quoted headings cannot supply sections.
+
+`audits/spec-template.sh` selects files and snapshots staged content before
+calling the same validator.
 
 - Prohibited authoring estimates, ownership labels, and completion percentages.
 - Required sections with content, known placeholder residue, and the spec length cap.
@@ -35,12 +38,22 @@ parsed Markdown tree. Code examples and quoted headings cannot supply sections.
   decides their applicability from the actual branch diff. Additional
   spec-specific commands and explicitly named manual checks remain valid.
 
+`orly gate pr` also runs `spec.tests`. Each Test Specification row of a DONE
+Dimension, outside tier `manual`, names a test a tracked test source must
+contain as whole words.
+
+Test sources follow the usual naming (`*.test.*`,
+`*.spec.*`, `*_test.*`, `test_*.py`, `tests/`, `test/`, `__tests__/`) plus Rust
+and Zig files. It proves a test source names the test, not that the test passes.
+
 ## Scope
 
 `--staged` reads spec contents, configuration, and local references from the Git
-index. `--file <path>` checks the working copy. Missing runtime or configuration
-fails these readiness checks. Bulk `--all` and `--include-done` scans retain
-prohibited-pattern checks only; they do not retrofit historical documents.
+index. `--file <path>` checks the working copy. All script modes require Bun;
+staged and file checks also require repository configuration.
+
+Bulk `--all` and `--include-done` scans retain prohibited-pattern checks only;
+they do not retrofit historical documents.
 
 ## Author review
 
@@ -49,17 +62,10 @@ are tested, and the acceptance checks prove the goal. A structural pass does not
 mean the feature is implemented. Use `manual` for a human proof; record its
 procedure, required person, and durable evidence without inventing sign-off.
 
-Apply docs/TEMPLATE.md's Implementation readiness review to the relevant surfaces.
-Pin versions, constraints, privileges and ordering when changing them could
-invalidate a proof; omit routine coding recipes. Verify actual client/server
-behavior and distinguish source inspection from runtime evidence.
-For state replacement, name the authority, commit/release boundary, retry rules,
-expiry/deletion behavior and fresh/populated upgrade path. Read the real migrator
-and deployment release command before calling an image rollback a safe abort.
-Budget the complete request path against an identified comparable reference.
-Record direct user decisions separately from reviewer suggestions; a platform
-risk needs an explicit disposition, not inferred acceptance. Attack the amended
-spec for counterexamples and stale requirements before reporting readiness.
+Apply the Implementation readiness review in `docs/TEMPLATE.md` to every surface
+the change touches, then run its adversarial pass. The template's table is the
+one copy, and its stateful rows appear only where their packs are selected.
+Record the results in the spec's existing sections.
 
 Use `{{fill:description}}` for authoring slots. Delete them and all `tpl:`
 guidance before staging. Runtime parameters such as `/items/{id}` are allowed
@@ -90,4 +96,5 @@ Incident-derived rules the deterministic half can't check — apply while writin
 
 - `docs/TEMPLATE.md` — canonical Prohibited section + required sections.
 - `orly-spec-new` skill — creates specs from the template; inserts the banner.
-- `audits/spec-template.sh` — structural and prohibited-section checks; `orly gate pr` invokes it through `spec.gate`.
+- `audits/spec-template.ts` — native structural and prohibited-section validator, called directly by `spec.gate`.
+- `audits/spec-template.sh` — file selection and staged snapshots for script callers of the same validator.
