@@ -23,6 +23,22 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT"
 
+# The index `git commit -a` and `git commit <path>` stage into, when the calling
+# hook handed one over for this repository. Same rule as audit_commit_index in
+# audits/scope.sh, which this pack does not install: an index outside this
+# repository's git directory is ignored, and a missing one here refuses.
+if [ -n "${ORLY_INDEX_FILE:-}" ]; then
+  GIT_DIRECTORY="$(cd "$(git rev-parse --absolute-git-dir)" && pwd -P)"
+  INDEX_DIRECTORY="$(cd "$(dirname "$ORLY_INDEX_FILE")" 2>/dev/null && pwd -P)" || INDEX_DIRECTORY=""
+  case "$INDEX_DIRECTORY" in
+    "$GIT_DIRECTORY"|"$GIT_DIRECTORY"/*)
+      COMMIT_INDEX="$INDEX_DIRECTORY/$(basename "$ORLY_INDEX_FILE")"
+      [[ -f "$COMMIT_INDEX" ]] || { printf 'FAIL: commit index is missing: %s\n' "$COMMIT_INDEX" >&2; exit 2; }
+      # The Bun validator's staged reads inherit it too.
+      export GIT_INDEX_FILE="$COMMIT_INDEX" ;;
+  esac
+fi
+
 FAIL=0
 fail() { printf "FAIL: %s\n" "$*" >&2; FAIL=1; }
 ok()   { printf "OK:   %s\n" "$*"; }

@@ -40,7 +40,8 @@
 # runtime with no hook support — `check` warns and exits 0. Partial
 # mechanization stated honestly beats a red that means nothing.
 #
-# Exit: 0 clean or unenforceable · 1 unread trigger · 2 usage error.
+# Exit: 0 clean or unenforceable · 1 unread trigger (check) or a read that was
+# not recorded (log) · 2 usage error, missing Bun, or an unreadable commit index.
 set -uo pipefail
 
 # A hook exports GIT_DIR/GIT_INDEX_FILE at the repository it fired in. This
@@ -49,6 +50,8 @@ unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_COMMON_DIR GIT_PREFIX \
       GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# audit_commit_index: the commit's own index, shared with the staged scanners.
+source "$HERE/scope.sh"
 # shellcheck source=audits/rule-ledger-lib.sh
 source "$HERE/rule-ledger-lib.sh"
 
@@ -65,8 +68,8 @@ BULK_ASSERTION_THRESHOLD=3
 if [[ -t 1 ]]; then G=$'\033[32m'; R=$'\033[31m'; Y=$'\033[33m'; X=$'\033[0m'
 else G=''; R=''; Y=''; X=''; fi
 
-# Where the record lives for this working copy. Empty when the caller is not
-# inside a repository at all, which only `log` tolerates.
+# Where the record lives for this working copy. Fails outside a repository:
+# `log` then refuses, and `check` warns that nothing can be enforced.
 read_log_path() {
   local git_dir
   git_dir="$(git -C "$LEDGER_ROOT" rev-parse --absolute-git-dir 2>/dev/null)" || return 1
@@ -76,12 +79,36 @@ read_log_path() {
 # Repo-relative form of a path, or nothing when it sits outside the tree — an
 # agent reading its own notes elsewhere on disk is not a doc read.
 repo_relative() {
-  local path="$1"
-  case "$path" in
-    "$LEDGER_ROOT"/*) printf '%s' "${path#"$LEDGER_ROOT"/}" ;;
-    /*) return 1 ;;
-    *) [ -e "$LEDGER_ROOT/$path" ] && printf '%s' "$path" ;;
+  local path="$1" root resolved
+  # /var and /private/var name the same file on macOS. git reports the
+  # physical root, but ORLY_ROOT may carry either spelling, so both sides of
+  # the comparison are resolved to their physical form.
+  root="$(cd "$LEDGER_ROOT" 2>/dev/null && pwd -P)" || return 1
+  if [ "${path#/}" = "$path" ]; then
+    # A relative path names a file from where the caller stands. When that
+    # reading lands outside the tree, the caller stands elsewhere and named a
+    # root-relative path, so the root-relative reading is the fallback.
+    if [ -e "$path" ] && resolved="$(physical_path "$PWD/$path")" && [ "${resolved#"$root"/}" != "$resolved" ]; then
+      printf '%s' "${resolved#"$root"/}"
+      return 0
+    fi
+    [ -e "$LEDGER_ROOT/$path" ] || return 1
+    resolved="$(physical_path "$LEDGER_ROOT/$path")" || return 1
+  else
+    resolved="$(physical_path "$path")" || return 1
+  fi
+  case "$resolved" in
+    "$root"/*) printf '%s' "${resolved#"$root"/}" ;;
+    *) return 1 ;;
   esac
+}
+
+# An existing path with its directory resolved physically, or failure when the
+# directory does not exist.
+physical_path() {
+  local directory
+  directory="$(cd "$(dirname "$1")" 2>/dev/null && pwd -P)" || return 1
+  printf '%s/%s' "$directory" "$(basename "$1")"
 }
 
 # One JSON Lines row per call, appended. Append-only with a single write per
@@ -89,15 +116,16 @@ repo_relative() {
 # order rows land in does not change which paths the set contains.
 run_log() {
   local path="$1" section="${2:-}" relative log blob
-  relative="$(repo_relative "$path")" || return 0
+  # Outside the tree is not a doc read; say so rather than exit as if recorded.
+  relative="$(repo_relative "$path")" || { printf 'doc-read: not recorded — %s is outside %s\n' "$path" "$LEDGER_ROOT" >&2; return 0; }
   [ -n "$relative" ] || return 0
-  log="$(read_log_path)" || return 0
-  mkdir -p "$(dirname "$log")" 2>/dev/null || return 0
+  log="$(read_log_path)" || { printf 'doc-read: not recorded — no git directory for %s\n' "$LEDGER_ROOT" >&2; return 1; }
+  mkdir -p "$(dirname "$log")" 2>/dev/null || { printf 'doc-read: not recorded — cannot create %s\n' "$(dirname "$log")" >&2; return 1; }
   blob="$(content_hash "$relative")"
   # A hash we could not compute proves nothing was read at a known version.
   # Recording it would let two failures compare equal and validate a read of a
   # file that is no longer there.
-  [ -n "$blob" ] || return 0
+  [ -n "$blob" ] || { printf 'doc-read: not recorded — cannot hash %s\n' "$relative" >&2; return 1; }
   # The section rides the SAME row rather than a second file: a citation that
   # could be written without a read beside it would be a third assertion to
   # reconcile, and the pair is what carries meaning.
@@ -147,6 +175,13 @@ current_reads() {
   bun "$HERE/doc-reads.ts" current "$1" "$LEDGER_ROOT"
 }
 
+# Rows whose path field equals the escaped page exactly. A fixed-string search
+# for "<page><TAB>" also matched recorded paths that merely end with <page>.
+# ENVIRON, not `awk -v`: -v rewrites the backslashes JSON escaping produces.
+recorded_rows() {
+  DOC_READ_PAGE="$1" awk -F'\t' '$1 == ENVIRON["DOC_READ_PAGE"]' "$2"
+}
+
 # Timestamps carrying BULK_ASSERTION_THRESHOLD or more distinct façades, one
 # `ts<TAB>count` row each. See the header: reported, never blocking.
 bulk_seconds() {
@@ -169,7 +204,15 @@ run_check() {
   STAGED_FILE="$(mktemp)"; EXPECTED_FILE="$(mktemp)"; RECORDED_FILE="$(mktemp)"
   staged="$STAGED_FILE"; expected="$EXPECTED_FILE"; recorded="$RECORDED_FILE"
   trap cleanup_temporaries EXIT
-  git -C "$LEDGER_ROOT" diff --cached --name-only --diff-filter=ACMRT > "$staged" 2>/dev/null
+  # The index `git commit -a` and `git commit <path>` stage into, when the
+  # calling hook handed one over for this repository (audit_commit_index).
+  local index
+  index="$(cd "$LEDGER_ROOT" && audit_commit_index)" || {
+    printf '  %s🔴%s DOC READ: cannot read the commit index\n' "$R" "$X"; return 2; }
+  if ! env ${index:+"GIT_INDEX_FILE=$index"} \
+    git -C "$LEDGER_ROOT" -c core.quotePath=false diff --cached --name-only --diff-filter=ACMRT > "$staged" 2>/dev/null; then
+    printf '  %s🔴%s DOC READ: cannot list staged files\n' "$R" "$X"; return 2
+  fi
   expected_facade_pages "$staged" | sort -u > "$expected"
 
   if [ ! -s "$expected" ]; then
@@ -189,7 +232,7 @@ run_check() {
   current_reads "$log" | sort -u > "$recorded"
 
   while IFS= read -r page; do
-    grep -qF "$(printf '%s\t' "$(json_escape "$page")")" "$recorded" && continue
+    [ -n "$(recorded_rows "$(json_escape "$page")" "$recorded")" ] && continue
     printf '  %s🔴%s DOC READ: %s triggered by the staged diff, not read at its current content\n' "$R" "$X" "$page"
     unread=1
   done < "$expected"
@@ -206,7 +249,7 @@ report_citations() {
   local expected="$1" recorded="$2" page total=0 cited=0 section
   while IFS= read -r page; do
     total=$((total + 1))
-    section="$(grep -F "$(printf '%s\t' "$(json_escape "$page")")" "$recorded" | cut -f3 | grep -c '[^[:space:]]')"
+    section="$(recorded_rows "$(json_escape "$page")" "$recorded" | cut -f3 | grep -c '[^[:space:]]')"
     [ "$section" -gt 0 ] && cited=$((cited + 1))
   done < "$expected"
   [ "$total" -eq 0 ] && return 0
@@ -229,6 +272,12 @@ report_bulk() {
     printf '     assertion, not %s reads; log each at the moment it is read\n' "$count"
   done < <(bulk_seconds "$recorded")
 }
+
+# Both modes hand records to Bun; without it `log` appends nothing and `check`
+# reports every read as missing, so stop with the cause instead.
+if [ "${1:-}" = "$MODE_LOG" ] || [ "${1:-}" = "$MODE_CHECK" ]; then
+  command -v bun >/dev/null 2>&1 || { printf 'doc-read: bun is required on PATH\n' >&2; exit 2; }
+fi
 
 case "${1:-}" in
   "$MODE_LOG")

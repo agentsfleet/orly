@@ -7,11 +7,25 @@ set -uo pipefail
 # evals/dispatch/run.sh `git add -A` in a temp sandbox staged fixture paths into
 # the real index, and a linked worktree (whose .git is a file) broke outright.
 # The scope dies here, before anything is run.
+#
+# The index is the one exception worth keeping: `git commit -a` and
+# `git commit <path>` stage into a temporary index named only by
+# GIT_INDEX_FILE, so a reader of the default index sees nothing staged. Its
+# absolute path survives as ORLY_INDEX_FILE, used only for this repository.
+case "${GIT_INDEX_FILE:-}" in
+  "") ORLY_INDEX_FILE="" ;;
+  /*) ORLY_INDEX_FILE="$GIT_INDEX_FILE" ;;
+  *) ORLY_INDEX_FILE="$PWD/$GIT_INDEX_FILE" ;;
+esac
+export ORLY_INDEX_FILE
 unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_COMMON_DIR GIT_PREFIX \
       GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
 
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT" || exit 1
+# Read once into a variable: piping into `grep -q` lets grep exit on the first
+# match, the producer takes SIGPIPE, and `pipefail` turns that into a miss.
+staged="$(env ${ORLY_INDEX_FILE:+"GIT_INDEX_FILE=$ORLY_INDEX_FILE"} git -c core.quotePath=false diff --cached --name-only)"
 
 # `make audit` runs the whole orly suite plus every eval sandbox. It moved to
 # pre-push on Indy's call (Aug 16, 2026): the audit proves the rule corpus, and
@@ -23,24 +37,23 @@ cd "$ROOT" || exit 1
 # proof now happens. Announcing, not gating: the gate is pre-push.
 GOVERNANCE_PATTERN='^(AGENTS\.md|README\.md|Makefile|package\.json|bun\.lock|tsconfig\.json|(core|packs|schemas|src)/|registry\.json|fixtures/|dispatch/|audits/|evals/|docs/(EXECUTE_DOC_READS|ORLY_ARCHITECTURE|HARNESS_VERIFY_OUTPUT)\.md|\.githooks/)'
 
-if git diff --cached --name-only | grep -qE "$GOVERNANCE_PATTERN"; then
+if grep -qE "$GOVERNANCE_PATTERN" <<<"$staged"; then
   echo "pre-commit: governance staged — make audit runs at push (.githooks/pre-push)" >&2
 fi
 
 # The doc-read check is the opposite kind of cost — one grep over the staged
 # list and one read of a local record — so it stays here, where the session
-# that did or did not read the façade is still the session committing.
-SOURCE_PATTERN='\.(zig|ts|tsx|js|jsx|py|rs|go|sh|sql)$'
-
-# Governance paths join the source list here: dispatch/edit_rules.sh declares
-# the corpus scope, so a staged rule edit now has a façade to have read. The
-# check itself stays the arbiter — a path outside every leaf's globs still
-# reports "nothing staged triggers a façade" and costs one grep.
-if git diff --cached --name-only | grep -qE "$SOURCE_PATTERN|$GOVERNANCE_PATTERN"; then
-  if ! bash audits/doc-read.sh check; then
-    echo "pre-commit: a triggered façade went unread — read it, or record why" >&2
-    exit 1
-  fi
+# that did or did not read the façade is still the session committing. It runs
+# on every commit: the façade scopes it resolves are the only list of triggers,
+# and a path outside all of them reports "nothing staged triggers a façade".
+bash audits/doc-read.sh check
+doc_read=$?
+if [ "$doc_read" -eq 1 ]; then
+  echo "pre-commit: a triggered façade went unread — read it, or record why" >&2
+  exit 1
+elif [ "$doc_read" -ne 0 ]; then
+  echo "pre-commit: the doc-read check could not run (exit $doc_read); see its message above" >&2
+  exit 1
 fi
 
 exit 0

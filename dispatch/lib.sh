@@ -143,9 +143,10 @@ dispatch_resolve_files() {
       DISPATCH_FILES+=("$f")
     done < <(audit_scope_paths "${pathspecs[@]}")
     rm -f -- "$managed_file"
-  elif [ "$#" -ge 1 ]; then
+  elif [ "${#AUDIT_TARGETS[@]}" -ge 1 ]; then
+    # audit_scope_init rebased these onto the root and refused missing files.
     local f matched
-    for f in "$@"; do
+    for f in "${AUDIT_TARGETS[@]}"; do
       matched=0
       for e in "${DISPATCH_EXTS[@]}"; do
         case "$f" in ${e}) matched=1 ;; esac
@@ -223,18 +224,22 @@ dispatch_run_helper() {
     DISPATCH_RC=1
     return 1
   fi
-  local receipt_dir log args=()
+  local receipt_dir log label=explicit args=()
   receipt_dir="$(mktemp -d "${TMPDIR:-/tmp}/orly-dispatch.XXXXXX")" || return 1
   log="$receipt_dir/receipt.log"
-  if [ "$DISPATCH_STAGED" -eq 1 ]; then [ -z "$mode" ] || args+=("$mode")
+  if [ "$DISPATCH_STAGED" -eq 1 ]; then label="${mode:-staged}"; [ -z "$mode" ] || args+=("$mode")
   else args=("${DISPATCH_FILES[@]}"); fi
-  if (umask 077; bash "$DISPATCH_SCRIPTS/$script" ${args[@]+"${args[@]}"} >"$log" 2>&1); then
-    printf '  %-8s 🟢 %s — pass (audits/%s); receipt: %s\n' "$code" "$g" "$script" "$log"
-    cat "$log"
+  # Root-relative targets: the helper resolves them from the repository root.
+  if (umask 077; cd "$TARGET_ROOT" && bash "$DISPATCH_SCRIPTS/$script" ${args[@]+"${args[@]}"} >"$log" 2>&1); then
+    printf '  %-8s 🟢 %s — pass (audits/%s %s)\n' "$code" "$g" "$script" "$label"
   else
-    printf '  %-8s 🔴 %s — fail (audits/%s %s) — see %s\n' "$code" "$g" "$script" "$mode" "$log"
+    printf '  %-8s 🔴 %s — fail (audits/%s %s)\n' "$code" "$g" "$script" "$label"
     DISPATCH_RC=1
   fi
+  # The printed log is the record, pass or fail: a kept directory per helper
+  # per run piled up in TMPDIR, and a CI runner's copy left with the runner.
+  cat "$log"
+  rm -rf -- "$receipt_dir"
 }
 
 # A gate that can only run inside the project repo (not dotfiles). Print, don't run.
