@@ -1,4 +1,22 @@
 # Extracted intact; the owning shell scanner supplies the filename scope.
+
+# Whether a block comment is open after `s`, starting from `open` (1 when the
+# line starts inside one). A quote opens a string only in code, and a comment
+# marker counts only outside strings: a "/api/*" route glob cannot open a
+# comment, and an apostrophe inside one cannot pair with a later string.
+function comment_open_after(s, open,    i, c, n, quote) {
+  n = length(s); quote = ""
+  for (i = 1; i <= n; i++) {
+    c = substr(s, i, 1)
+    if (open) { if (c == "*" && substr(s, i + 1, 1) == "/") { open = 0; i++ }; continue }
+    if (quote != "") { if (c == "\\") i++; else if (c == quote) quote = ""; continue }
+    if (c == "\"" || c == "'" || c == "`") { quote = c; continue }
+    if (c == "/" && substr(s, i + 1, 1) == "/") return 0
+    if (c == "/" && substr(s, i + 1, 1) == "*") { open = 1; i++ }
+  }
+  return open
+}
+
   FNR == 1 {
     prev_file = FILENAME
     # Language lane. Each lane below carves out what its syntax makes
@@ -32,10 +50,10 @@
     line = $0
     # Block-comment exclusion (TS/JS/Zig non-applicable): skip lines inside /* ... */
     if (in_block_comment) {
-      if (line ~ /\*\//) in_block_comment = 0
+      in_block_comment = comment_open_after(line, 1)
       next
     }
-    if (line ~ /\/\*/ && line !~ /\*\//) {
+    if (comment_open_after(line, 0)) {
       in_block_comment = 1
       next
     }

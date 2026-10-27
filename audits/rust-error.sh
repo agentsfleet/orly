@@ -119,9 +119,21 @@ signals="$(awk -v maxlines="$MAX_CLOSURE_LINES" -v errtype="$ERROR_TYPE_PATTERN"
 
   # A #[cfg(test)] module is fixture code. The attribute precedes the item, so
   # arm on the attribute and start counting braces at the item that follows.
-  !collecting && /#\[cfg\(test\)\]/ { pending = 1; next }
+  # The item can share the attribute line: `#[cfg(test)] mod tests;` ends there,
+  # and `#[cfg(test)] mod tests {` opens its block there.
+  !collecting && /#\[cfg\(test\)\]/ {
+    rest = $0; sub(/^.*#\[cfg\(test\)\][[:space:]]*/, "", rest)
+    if (index(rest, "{") > 0) {
+      intest = 1; tmp = rest
+      testdepth = gsub(/\{/, "{", tmp) - gsub(/\}/, "}", tmp)
+      if (testdepth <= 0) intest = 0
+    } else if (rest !~ /;[[:space:]]*$/) pending = 1
+    next
+  }
   pending {
     if (index($0, "{") > 0) { pending = 0; intest = 1; testdepth = 0 }
+    # `#[cfg(test)] mod tests;` ends at its semicolon; the next item is production.
+    else if ($0 ~ /;[[:space:]]*$/) { pending = 0; next }
     else next
   }
   intest {

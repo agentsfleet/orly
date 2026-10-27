@@ -154,6 +154,8 @@ used_codes=$(awk -v prefix="$PREFIX" '
   # that same file. Same brace-depth shape as audits/ufs.sh.
   FILENAME ~ /\.rs$/ {
     if (in_rs_test) {
+      # `#[cfg(test)] mod tests;` ends at its semicolon; the next item is production.
+      if (!rs_open && index($0, "{") == 0 && $0 ~ /;[[:space:]]*$/) { in_rs_test = 0; next }
       tmp = $0
       rs_depth += gsub(/\{/, "{", tmp) - gsub(/\}/, "}", tmp)
       if (!rs_open && index($0, "{") > 0) rs_open = 1
@@ -163,6 +165,14 @@ used_codes=$(awk -v prefix="$PREFIX" '
     if ($0 ~ /^[[:space:]]*#\[cfg\(test\)\]/ ||
         $0 ~ /^[[:space:]]*#\[[A-Za-z_:]*test\]/) {
       in_rs_test = 1; rs_open = 0; rs_depth = 0
+      # The item can share the attribute line: `#[cfg(test)] mod tests;` ends
+      # there, and `#[cfg(test)] mod tests {` opens its block there.
+      rest = $0; sub(/^[[:space:]]*#\[[A-Za-z_:()]*\][[:space:]]*/, "", rest)
+      if (index(rest, "{") > 0) {
+        rs_open = 1; tmp = rest
+        rs_depth = gsub(/\{/, "{", tmp) - gsub(/\}/, "}", tmp)
+        if (rs_depth <= 0) in_rs_test = 0
+      } else if (rest ~ /;[[:space:]]*$/) in_rs_test = 0
       next
     }
   }
@@ -247,6 +257,8 @@ raw_leaks=$(awk -v prefix="$PREFIX" '
   # that same file. Same brace-depth shape as audits/ufs.sh.
   FILENAME ~ /\.rs$/ {
     if (in_rs_test) {
+      # `#[cfg(test)] mod tests;` ends at its semicolon; the next item is production.
+      if (!rs_open && index($0, "{") == 0 && $0 ~ /;[[:space:]]*$/) { in_rs_test = 0; next }
       tmp = $0
       rs_depth += gsub(/\{/, "{", tmp) - gsub(/\}/, "}", tmp)
       if (!rs_open && index($0, "{") > 0) rs_open = 1
@@ -256,6 +268,14 @@ raw_leaks=$(awk -v prefix="$PREFIX" '
     if ($0 ~ /^[[:space:]]*#\[cfg\(test\)\]/ ||
         $0 ~ /^[[:space:]]*#\[[A-Za-z_:]*test\]/) {
       in_rs_test = 1; rs_open = 0; rs_depth = 0
+      # The item can share the attribute line: `#[cfg(test)] mod tests;` ends
+      # there, and `#[cfg(test)] mod tests {` opens its block there.
+      rest = $0; sub(/^[[:space:]]*#\[[A-Za-z_:()]*\][[:space:]]*/, "", rest)
+      if (index(rest, "{") > 0) {
+        rs_open = 1; tmp = rest
+        rs_depth = gsub(/\{/, "{", tmp) - gsub(/\}/, "}", tmp)
+        if (rs_depth <= 0) in_rs_test = 0
+      } else if (rest ~ /;[[:space:]]*$/) in_rs_test = 0
       next
     }
   }
