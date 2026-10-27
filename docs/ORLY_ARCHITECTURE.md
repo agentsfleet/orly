@@ -89,6 +89,10 @@ directly. The script entry point selects files and snapshots staged content
 before calling the same validator. Prohibited patterns and structural checks
 have one implementation.
 
+The `spec.tests` criterion searches tracked test sources once for every test a
+DONE Dimension names. It proves a test source names each one; the declared
+verify commands prove they pass.
+
 The `docs.language` criterion rejects mechanical language findings in changed
 Markdown and Markdown JSX (MDX) prose, including new pages and uncommitted edits.
 It checks complete edited paragraphs while leaving unchanged history alone.
@@ -250,8 +254,8 @@ Requests are sequential and receive no automatic retries.
 
 Evidence selection uses Babel's JavaScript parser in a bounded Bun worker.
 The installed command runs TypeScript source through Bun, with the same `bunx`
-installation as 0.10.x. TypeScript 7 supplies development checks. The shipped
-runtime has no native compiler dependency or compiler installation step.
+installation as 0.10.x. Development type checks use the pinned `tsrs`
+compiler, and the shipped runtime needs no compiler.
 
 ### Replay and proof
 

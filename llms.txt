@@ -35,7 +35,7 @@ user rather than working around it.
 
 | Check | Command | Required |
 |---|---|---|
-| bun present | `bun --version` | ≥ 1.4.0 |
+| bun present | `bun --version` | ≥ 1.4.4 |
 | git present | `git --version` | any |
 | inside a repository | `git rev-parse --show-toplevel` | must succeed |
 | working tree clean | `git status --porcelain` | should be empty |

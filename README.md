@@ -5,7 +5,7 @@
 # orly
 
 [![npm](https://img.shields.io/npm/v/@agentsfleet/orly?logo=npm&logoColor=white)](https://www.npmjs.com/package/@agentsfleet/orly)
-[![bun ≥1.4](https://img.shields.io/badge/bun-%E2%89%A51.4-FBF0DF?logo=bun&logoColor=black&labelColor=FBF0DF)](https://bun.sh)
+[![bun ≥1.4.4](https://img.shields.io/badge/bun-%E2%89%A51.4.4-FBF0DF?logo=bun&logoColor=black&labelColor=FBF0DF)](https://bun.sh)
 [![coverage](https://img.shields.io/codecov/c/github/agentsfleet/orly?logo=codecov&logoColor=white)](https://codecov.io/gh/agentsfleet/orly)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -42,7 +42,7 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
-## 0.17: review a spec before starting
+## 0.25: review a spec before starting
 
 `orly judge spec` reviews a complete spec for clear outcomes, scope, setup order, failure behavior, evidence and consistency.
 Its readiness score uses the lowest yes probability; the default minimum is 90 percent.
@@ -104,7 +104,7 @@ The release workflow publishes 0.25.0 after its version change merges to `main` 
 
 | You need | Why | Version |
 |---|---|---|
-| [bun](https://bun.sh) | runs orly; `bunx` fetches it | ≥ 1.4.0 |
+| [bun](https://bun.sh) | runs orly; `bunx` fetches it | ≥ 1.4.4 |
 | git | orly writes the hooks; `orly gate` reads the branch | any |
 | a coding agent | something has to read the rules | Claude Code, Codex, OpenCode, or Amp |
 | your own check commands | `orly gate` runs whatever `.orly/orly.json` names | whatever your repository already runs |
@@ -413,7 +413,7 @@ For working on orly itself. Pull requests are welcome.
 
 | You need | Version |
 |---|---|
-| bun | ≥ 1.4.0 |
+| bun | ≥ 1.4.4 |
 | git | any |
 | make | any |
 

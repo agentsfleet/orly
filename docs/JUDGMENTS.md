@@ -28,9 +28,8 @@ orly judge spec <SPEC> [--project <ROOT>] [--min-score <PERCENT>]
 ```
 
 Jev is TypeSafe's System One model.
-The command pins `jev-1.13.0` and runs TypeScript source with Bun.
-Use the same `bunx` installation as 0.10.x.
-TypeScript 7 is development tooling; evidence selection uses a JavaScript parser.
+The command pins `jev-1.13.0` and runs TypeScript source with Bun, installed through the same `bunx` path as 0.10.x.
+Evidence selection uses a JavaScript parser, and development type checks use the pinned `tsrs` compiler.
 
 Advice cannot approve work, change a gate result or run a suggested command.
 Existing deterministic checks and owner decisions still apply.
@@ -134,7 +133,7 @@ For `orly judge spec`:
 | Option | Meaning |
 |---|---|
 | `<SPEC>` | Required complete spec file; relative paths resolve from the project root; explicit absolute paths are allowed |
-| `--project` | Repository supplying `.orly/orly.json`, read-first reference checks and replay storage; defaults to the current directory |
+| `--project` | Repository supplying `.orly/orly.json`, read-first reference checks and replay storage; defaults to the repository root, or the current directory outside a repository |
 | `--min-score` | Minimum percentage for every yes probability; default 90; greater than 0 and at most 100 |
 | `--refresh` | Explicitly permits up to six sequential scanned requests; default is offline replay; no automatic retries |
 | `--json` | Prints raw typed answers, source and configuration hashes, rubric hash, threshold, request counts, tokens and timing |

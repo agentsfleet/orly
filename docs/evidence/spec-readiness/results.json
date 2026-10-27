@@ -9,7 +9,7 @@
       "model": "jev-1.13.0",
       "rubricDigest": "1f74377c8794ab9c88ca1a64a77518cbcc27272d2f2b0e091d4b72524e631422",
       "source": {
-        "path": "/Users/kishore/Projects/agentsfleet/docs/v2/pending/M224_001_P0_DOCS_INFRA_FIRST_PRODUCTION_LAUNCH.md",
+        "path": "~/Projects/agentsfleet/docs/v2/pending/M224_001_P0_DOCS_INFRA_FIRST_PRODUCTION_LAUNCH.md",
         "digest": "13120930b3b4379801a5753ebf08992ebb3e3ca390776e6cb3186d1c0c08d15d",
         "configDigest": "112dc8047d615a2f8a7005cdffbbe7d99a9dda9b60811d8b1ed5600950e116f5",
         "dimensions": [
@@ -199,7 +199,7 @@
       "model": "jev-1.13.0",
       "rubricDigest": "1f74377c8794ab9c88ca1a64a77518cbcc27272d2f2b0e091d4b72524e631422",
       "source": {
-        "path": "/Users/kishore/Projects/orly/.orly/judgments/spec-trial/release-before-setup.md",
+        "path": "~/Projects/orly/.orly/judgments/spec-trial/release-before-setup.md",
         "digest": "a1bd3eeb9561bb2121015b200f36421cfb8deccae9666ad37b6628292c1c348c",
         "configDigest": "112dc8047d615a2f8a7005cdffbbe7d99a9dda9b60811d8b1ed5600950e116f5",
         "dimensions": [
@@ -391,7 +391,7 @@
       "model": "jev-1.13.0",
       "rubricDigest": "1f74377c8794ab9c88ca1a64a77518cbcc27272d2f2b0e091d4b72524e631422",
       "source": {
-        "path": "/Users/kishore/Projects/agentsfleet/docs/v2/pending/M224_001_P0_DOCS_INFRA_FIRST_PRODUCTION_LAUNCH.md",
+        "path": "~/Projects/agentsfleet/docs/v2/pending/M224_001_P0_DOCS_INFRA_FIRST_PRODUCTION_LAUNCH.md",
         "digest": "13120930b3b4379801a5753ebf08992ebb3e3ca390776e6cb3186d1c0c08d15d",
         "configDigest": "112dc8047d615a2f8a7005cdffbbe7d99a9dda9b60811d8b1ed5600950e116f5",
         "dimensions": [
@@ -581,7 +581,7 @@
       "model": "jev-1.13.0",
       "rubricDigest": "1f74377c8794ab9c88ca1a64a77518cbcc27272d2f2b0e091d4b72524e631422",
       "source": {
-        "path": "/Users/kishore/Projects/orly/.orly/judgments/spec-trial/release-before-setup.md",
+        "path": "~/Projects/orly/.orly/judgments/spec-trial/release-before-setup.md",
         "digest": "a1bd3eeb9561bb2121015b200f36421cfb8deccae9666ad37b6628292c1c348c",
         "configDigest": "112dc8047d615a2f8a7005cdffbbe7d99a9dda9b60811d8b1ed5600950e116f5",
         "dimensions": [
