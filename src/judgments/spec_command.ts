@@ -1,6 +1,7 @@
 import { realpathSync } from "node:fs";
 import { resolve } from "node:path";
 
+import { UNSCOPED_ENVIRONMENT } from "../git_env";
 import { OrlyError } from "../model";
 import { HELP_FLAGS, INCOMPLETE_EXIT, JSON_FLAG, JSON_INDENT, NEWLINE, PROJECT_FLAG, REFRESH_FLAG, RESULT_STATUS } from "./constants";
 import { judgeSpec, type SpecReport } from "./spec_runner";
@@ -17,7 +18,7 @@ Score: 100 x lowest yes probability. Default minimum: ${DEFAULT_MIN_SCORE}; vali
 READY means the review policy passed; it does not approve work or prove DONE.
 Exit 0: READY. Exit 1: REVIEW. Exit 2: INCOMPLETE (never a passing score).
 Default: exact offline replay; --refresh permits six scanned, bounded Jev requests.
-Spec paths resolve from --project (current directory by default); absolute paths work.
+Spec paths resolve from --project (the repository root by default) and must stay inside it.
 Live refresh requires gitleaks and TYPESAFE_API_KEY. No automatic retries.
 Reference: docs/JUDGMENTS.md`;
 
@@ -64,7 +65,15 @@ export function parseSpecOptions(args: string[]): Options {
   if (rawScore !== undefined && !/^\d+(?:\.\d+)?$/.test(rawScore)) throw new OrlyError(MIN_SCORE_REASON);
   const minimum = minScoreSchema.safeParse(rawScore === undefined ? DEFAULT_MIN_SCORE : Number(rawScore));
   if (!minimum.success) throw new OrlyError(MIN_SCORE_REASON);
-  return { path, root: realpathSync(resolve(values.get(PROJECT_FLAG) ?? process.cwd())), minScore: minimum.data, refresh: flags.has(REFRESH_FLAG), json: flags.has(JSON_FLAG) };
+  return { path, root: realpathSync(resolve(values.get(PROJECT_FLAG) ?? repositoryRoot())), minScore: minimum.data, refresh: flags.has(REFRESH_FLAG), json: flags.has(JSON_FLAG) };
+}
+
+// The repository the caller stands in, so a spec path still resolves, and
+// .orly/orly.json is still found, from a subdirectory. Outside a repository it
+// is the current directory.
+function repositoryRoot(): string {
+  const result = Bun.spawnSync(["git", "rev-parse", "--show-toplevel"], { env: UNSCOPED_ENVIRONMENT, stdout: "pipe", stderr: "ignore" });
+  return result.exitCode === 0 ? result.stdout.toString().trim() : process.cwd();
 }
 
 export function formatSpecReport(report: SpecReport): string {
@@ -75,7 +84,7 @@ export function formatSpecReport(report: SpecReport): string {
   for (const finding of report.structural.findings) lines.push(`  ${finding}`);
   for (const check of report.checks) {
     const rubric = SPEC_RUBRIC.find((entry) => entry.id === check.id);
-    if (check.status === RESULT_STATUS.incomplete) lines.push(`  ${check.id}: incomplete — ${check.reason}`);
+    if (check.status === RESULT_STATUS.incomplete) lines.push(`  ${rubric?.label ?? check.id}: incomplete — ${check.reason}`);
     else {
       lines.push(`  ${rubric?.label ?? check.id}: ${(check.probabilityYes * PERCENT).toFixed(4)}% yes${report.blocked.includes(check.id) ? " — review" : ""}`);
       if (report.blocked.includes(check.id) && rubric) lines.push(`    ${rubric.action}`);

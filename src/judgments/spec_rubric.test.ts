@@ -37,3 +37,8 @@ test.each([NaN, Infinity, -0.1, 1.1])("invalid yes probability %s cannot pass", 
 test.each([0, -1, 101, NaN, Infinity])("invalid threshold %s cannot pass", (minimum) => {
   expect(() => scoreSpec(answers(), minimum)).toThrow();
 });
+
+test.each([[57, 0.57], [95.7, 0.957], [29, 0.29], [90, 0.9]])("the status agrees with the printed score at minimum %d", (minimum, probabilityYes) => {
+  const result = scoreSpec(SPEC_RUBRIC.map(({ id }) => ({ id, probabilityYes })), minimum);
+  expect(result.status === SPEC_STATUS.ready).toBe(result.score >= minimum);
+});

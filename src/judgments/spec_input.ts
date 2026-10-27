@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 
 import { validateSpec } from "../../audits/spec-template";
 import { CONFIG_PATH, parseConfig } from "../config";
-import { isObject, OrlyError } from "../model";
+import { isBelow, isObject, OrlyError } from "../model";
 import { specDimensionsOf } from "../spec_obligations";
 import { MAX_MANIFEST_BYTES, MAX_REQUEST_BYTES, MAX_SOURCE_BYTES, MAX_STATE_BYTES, MODEL, REPLY_KEY } from "./constants";
 import { byteLength, digest, readBounded } from "./files";
@@ -21,6 +21,9 @@ export async function prepareSpec(root: string, path: string): Promise<PreparedS
   const project = realpathSync(root);
   const inputPath = resolve(project, path);
   const actual = realpathSync(inputPath);
+  // Refresh uploads the spec beside this project's commands, so a path or link
+  // may name a spec only inside the project.
+  if (!isBelow(actual, project)) throw new OrlyError("The spec must be inside the project; nothing was read or uploaded.");
   const source = await readBounded(actual, MAX_SOURCE_BYTES);
   const config = await readBounded(join(project, CONFIG_PATH), MAX_MANIFEST_BYTES);
   let value: unknown;

@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, symlinkSync } from "node:fs";
 import { join } from "node:path";
 
 import { specFixture } from "../gates_test_support";
@@ -131,4 +131,23 @@ test("changes during live requests prevent a stale passing score", async () => {
   const cached = await judgeSpec(project.root, SPEC_FILE, false, DEFAULT_MIN_SCORE, options(success));
   expect(cached.status).toBe(SPEC_STATUS.incomplete);
   expect(cached.requests).toBe(0);
+});
+
+test("a spec changed after scoring returns INCOMPLETE with no blocked questions", async () => {
+  using project = new TestProject();
+  project.spec();
+  let call = 0;
+  const report = await judgeSpec(project.root, SPEC_FILE, true, DEFAULT_MIN_SCORE, options(async () => {
+    if (++call === SPEC_RUBRIC.length) project.write(SPEC_FILE, `${specFixture()}\nChanged.`);
+    return Response.json(noulReply(call === 3 ? 0.03 : PASS));
+  }));
+  expect(report).toMatchObject({ status: SPEC_STATUS.incomplete, score: null, blocked: [] });
+});
+
+test("a spec linked from outside the project is refused before anything is read", async () => {
+  using project = new TestProject();
+  using outside = new TestProject();
+  outside.spec();
+  symlinkSync(join(outside.root, SPEC_FILE), join(project.root, "linked.md"));
+  await expect(judgeSpec(project.root, "linked.md", false)).rejects.toThrow("inside the project");
 });

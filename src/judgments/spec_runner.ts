@@ -1,11 +1,13 @@
 import type { Reply } from "./wire";
 
+import { relative } from "node:path";
+
 import { OrlyError } from "../model";
 import { ANSWER_KIND, JUDGMENT_MODE, MODEL, REPLY_KEY, RESULT_STATUS } from "./constants";
 import { readReplay, replayDestination, writeReplay } from "./replay";
 import { scanUpload } from "./scan";
 import { assertSpecUnchanged, prepareSpec, type SpecPreparedCheck } from "./spec_input";
-import { DEFAULT_MIN_SCORE, minScoreSchema, scoreSpec, SPEC_COMMAND, SPEC_STATUS, type SpecCheckId } from "./spec_rubric";
+import { DEFAULT_MIN_SCORE, minScoreSchema, scoreSpec, SPEC_COMMAND, SPEC_STATUS, type SpecCheckId, type SpecScore } from "./spec_rubric";
 import { requestAdvice, type Fetch } from "./transport";
 
 type Dependencies = { fetch: Fetch; scan: (request: string) => Promise<void>; credential: string | undefined };
@@ -30,10 +32,12 @@ export async function judgeSpec(root: string, path: string, refresh: boolean, mi
   const report: SpecReport = {
     command: SPEC_COMMAND, advisory: true, status: SPEC_STATUS.incomplete, score: null, minScore, model: MODEL,
     rubricDigest: prepared.rubricDigest,
-    source: { path: prepared.path, digest: prepared.digest, configDigest: prepared.configDigest, dimensions: prepared.dimensions },
+    // Project-relative: the report is shared and published, the home directory is not.
+    source: { path: relative(prepared.root, prepared.path), digest: prepared.digest, configDigest: prepared.configDigest, dimensions: prepared.dimensions },
     structural: { passed: !prepared.findings.length, findings: prepared.findings }, reason: null,
     mode: refresh ? JUDGMENT_MODE.live : JUDGMENT_MODE.replay, requests: 0, elapsedMs: 0, checks: [], blocked: [],
   };
+  let scored: SpecScore | undefined;
   try {
     if (prepared.findings.length) report.status = SPEC_STATUS.review;
     else {
@@ -45,13 +49,16 @@ export async function judgeSpec(root: string, path: string, refresh: boolean, mi
         if (result.status === RESULT_STATUS.incomplete) break;
       }
       const complete = report.checks.filter((check) => check.status === RESULT_STATUS.complete);
-      if (complete.length === prepared.checks.length) Object.assign(report, scoreSpec(complete.map(({ id, probabilityYes }) => ({ id, probabilityYes })), minScore));
+      if (complete.length === prepared.checks.length) scored = scoreSpec(complete.map(({ id, probabilityYes }) => ({ id, probabilityYes })), minScore);
       else report.reason = "Readiness is incomplete; no passing score was assigned.";
     }
     await assertSpecUnchanged(prepared);
+    // A score belongs to the inputs it graded, so it lands only after the recheck.
+    if (scored) { report.status = scored.status; report.score = scored.score; report.blocked = scored.blocked; }
   } catch (error) {
     report.status = SPEC_STATUS.incomplete;
     report.score = null;
+    report.blocked = [];
     report.reason = safeReason(error);
   }
   report.elapsedMs = performance.now() - started;

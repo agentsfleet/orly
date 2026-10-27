@@ -40,11 +40,13 @@ export function specQuestion(check: SpecRubric): ProviderQuestion {
 }
 
 export function scoreSpec(value: unknown, minScore: number): SpecScore {
-  const threshold = minScoreSchema.parse(minScore) / PERCENT;
+  // Compared in the percent the report prints: 0.57 against 57/100 disagreed
+  // with the printed 56.99999999999999 in floating point.
+  const threshold = minScoreSchema.parse(minScore);
   const answers = z.array(answerSchema).length(SPEC_RUBRIC.length).parse(value);
   const probabilities = new Map(answers.map((answer) => [answer.id, answer.probabilityYes]));
   if (probabilities.size !== SPEC_RUBRIC.length) throw new OrlyError("Readiness requires every fixed question exactly once.");
-  const blocked = SPEC_RUBRIC.filter((check) => (probabilities.get(check.id) ?? 0) < threshold).map((check) => check.id);
+  const blocked = SPEC_RUBRIC.filter((check) => PERCENT * (probabilities.get(check.id) ?? 0) < threshold).map((check) => check.id);
   const score = PERCENT * Math.min(...answers.map((answer) => answer.probabilityYes));
   return { status: blocked.length ? SPEC_STATUS.review : SPEC_STATUS.ready, score, blocked };
 }

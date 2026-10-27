@@ -7,7 +7,7 @@ import { readBounded } from "./files";
 import { validateManifest } from "./questions";
 import { judge } from "./runner";
 import { specCommand } from "./spec_command";
-import { SPEC_COMMAND } from "./spec_rubric";
+import { DEFAULT_MIN_SCORE, SPEC_COMMAND } from "./spec_rubric";
 import { manifestSchema, type Report, type Stage } from "./types";
 
 type Options = { stage: Stage; input: string; project: string; refresh: boolean; json: boolean };
@@ -16,7 +16,7 @@ const EXAMPLE_MANIFEST = { stage: "verify", items: [{ id: "locale", question: "v
   { role: ROLE.test, path: "src/label.test.ts", selector: { kind: SELECTOR_KIND.test, name: "label respects locale" } },
 ] }] };
 const HELP = `orly judge <plan|verify|review|document> --input <manifest> [--project <root>] [--refresh] [--json]
-orly judge spec <SPEC> [--project <root>] [--min-score 90] [--refresh] [--json]
+orly judge spec <SPEC> [--project <root>] [--min-score ${DEFAULT_MIN_SCORE}] [--refresh] [--json]
 
 Default: exact offline replay. Missing or changed input returns exit 2.
 --refresh: explicitly permit scanned source upload and one live request per item.
