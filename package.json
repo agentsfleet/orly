@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "test": "bun test src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "bun run --bun tsrs --noEmit"
   },
   "bin": {
     "orly": "bin/orly"
@@ -31,7 +31,7 @@
     "amp"
   ],
   "engines": {
-    "bun": ">=1.4.0"
+    "bun": ">=1.4.4"
   },
   "files": [
     "bin/orly",
@@ -58,12 +58,12 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/bun": "1.4.0",
-    "typescript": "7.0.2"
+    "@types/bun": "1.4.4",
+    "tsrs": "0.20.0-ts7.1.0-beta"
   },
   "dependencies": {
-    "@babel/parser": "7.29.9",
-    "@babel/types": "7.29.8",
-    "zod": "4.6.5"
+    "@babel/parser": "8.0.8",
+    "@babel/types": "8.0.8",
+    "zod": "4.6.7"
   }
 }
