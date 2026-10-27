@@ -298,7 +298,7 @@ describe("closed-spec follow-through", () => {
     expect(ordering?.detail).toContain("carries no spec file");
   });
 
-  test("a deferral claim needs the Indy ack quote", async () => {
+  test("a deferral claim needs an owner quote", async () => {
     const bare = closedSpecRepository("feat/defer", ["- Dimension 1.2 was deferred to follow-up"]);
     const bareModel = await modelFor(bare);
     const red = runGate(bareModel, bare, "pr").results.find((result) => result.name === "spec.deferrals");
@@ -307,7 +307,7 @@ describe("closed-spec follow-through", () => {
 
     const acked = closedSpecRepository("feat/defer", [
       "- Dimension 1.2 was deferred to follow-up",
-      '## Discovery\n\n> Indy (2026-08-11 09:00): "defer 1.2, ship the rest" — context: fixture',
+      '## Discovery\n\n> Owner (Kishore, Aug 11, 2026 09:00): "defer 1.2, ship the rest" — context: fixture',
     ]);
     const ackedModel = await modelFor(acked);
     expect(runGate(ackedModel, acked, "pr").results.find((result) => result.name === "spec.deferrals")?.ok).toBeTrue();

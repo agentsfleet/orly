@@ -2,7 +2,7 @@
 // Extracted per dispatch/write_any.md §Splitting conventions: inline test
 // support is the first cut on an over-long file, because coverage instruments
 // count harness code written inline as product.
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -23,14 +23,11 @@ const PIPE_OUTPUT = "pipe";
 const TRUE_COMMAND = "true";
 const ACCEPTANCE_RUBRIC_HEADING = "Acceptance Rubric";
 const FIXTURE = "fixture";
-const AUDITS_DIR = ".orly/audits";
-const SPEC_GATE_SCRIPT = `${AUDITS_DIR}/spec-template.sh`;
-const SPEC_GATE_CONTENT = `${AUDITS_DIR}/spec-template.ts`;
-const SOURCE_SPEC_GATE = "audits/spec-template.sh";
-const SOURCE_SPEC_CONTENT = "audits/spec-template.ts";
 
 export const ROOT = resolve(import.meta.dir, "..");
 export const SPEC_RELATIVE = "docs/v1/active/M99_001_P2_CLI_FIXTURE.md";
+export const FIXTURE_TEST = "fixture_test";
+const FIXTURE_TEST_FILE = "tests/fixture.test.ts";
 export const FIXTURE_CONFIG = { schema_version: 1, packs: [], commands: { conform: [[TRUE_COMMAND]], "verify.unit": [[TRUE_COMMAND]] } };
 
 const temporaryDirectories: string[] = [];
@@ -110,32 +107,35 @@ export function closedSpecRepository(branch: string, extraLines: string[] = []):
   const project = newRepository();
   git(project, "checkout", QUIET, "-b", branch);
   mkdirSync(join(project, "docs/v1/done"), { recursive: true });
-  mkdirSync(join(project, AUDITS_DIR), { recursive: true });
-  copyFileSync(join(ROOT, SOURCE_SPEC_GATE), join(project, SPEC_GATE_SCRIPT));
-  copyFileSync(join(ROOT, SOURCE_SPEC_CONTENT), join(project, SPEC_GATE_CONTENT));
   Bun.write(join(project, "docs/v1/done/M99_001_P2_CLI_FIXTURE.md"), specFixture("DONE", branch, [
     `**Baseline revision:** ${gitOutput(project, REV_PARSE, HEAD)}`, BASELINE_EVIDENCE, ...extraLines,
   ]));
+  writeFixtureTest(project);
   git(project, ADD, ".");
   git(project, COMMIT, QUIET, MESSAGE, "chore: close the fixture spec");
   return project;
 }
 
+// spec.tests needs a tracked file defining the test the fixture spec names.
+// The fixture's commands are `true`, so this file is found but never run.
+function writeFixtureTest(project: string): void {
+  mkdirSync(join(project, "tests"), { recursive: true });
+  writeFileSync(join(project, FIXTURE_TEST_FILE), `test("${FIXTURE_TEST}", () => {});\n`);
+}
+
 export function newSpecRepository(): string {
   const project = newRepository();
   mkdirSync(join(project, "docs/v1/active"), { recursive: true });
-  mkdirSync(join(project, AUDITS_DIR), { recursive: true });
-  copyFileSync(join(ROOT, SOURCE_SPEC_GATE), join(project, SPEC_GATE_SCRIPT));
-  copyFileSync(join(ROOT, SOURCE_SPEC_CONTENT), join(project, SPEC_GATE_CONTENT));
   Bun.write(join(project, SPEC_RELATIVE), specFixture(IN_PROGRESS, undefined, [
     `**Baseline revision:** ${gitOutput(project, REV_PARSE, HEAD)}`, BASELINE_EVIDENCE,
   ]));
+  writeFixtureTest(project);
   git(project, ADD, ".");
   git(project, COMMIT, QUIET, MESSAGE, "test: add fixture spec");
   return project;
 }
 
-// A spec carrying every section audits/spec-template.sh requires, with all
+// A spec carrying every section validateSpec (audits/spec-template.ts) requires, with all
 // Dimensions already DONE so the gates' own criteria are what is under test.
 export function specFixture(status = IN_PROGRESS, branch?: string, extraLines: string[] = []): string {
   const sections = [
@@ -159,13 +159,13 @@ export function specFixture(status = IN_PROGRESS, branch?: string, extraLines: s
     "Discovery (consult log)",
   ].map((heading) =>
     // The Acceptance Rubric must quote the declared conform + verify.unit
-    // commands verbatim (declared-command parity, audits/spec-template.sh
-    // Family 2b) — the fixture models a compliant spec, so its rubric carries
+    // commands verbatim (declared-command parity, rubricCommands in
+    // audits/spec-template.ts) — the fixture models a compliant spec, so its rubric carries
     // them the way a real spec's S-rows do.
     heading === ACCEPTANCE_RUBRIC_HEADING
       ? `## ${heading}\n\n| # | Criterion | Verify | Expected | Priority | Graded |\n|---|---|---|---|---|---|\n| S1 | Declared checks | \`${TRUE_COMMAND}\` | exit 0 | P0 | |\n`
       : heading.startsWith("Implementing agent") ? `## ${heading}\n\n1. \`README.md\` — fixture reference.\n`
-      : heading.startsWith("Test Specification") ? `## ${heading}\n\n| Dimension | Tier | Test | Asserts |\n|---|---|---|---|\n| 1.1 | unit | \`fixture_test\` | Valid input is accepted. |\n`
+      : heading.startsWith("Test Specification") ? `## ${heading}\n\n| Dimension | Tier | Test | Asserts |\n|---|---|---|---|\n| 1.1 | unit | \`${FIXTURE_TEST}\` | Valid input is accepted. |\n`
       : `## ${heading}\n\nFixture content for ${heading}.\n`,
   );
   return [
@@ -181,7 +181,7 @@ export function specFixture(status = IN_PROGRESS, branch?: string, extraLines: s
     "",
     "### §1 — Fixture slice",
     "",
-    "- **Dimension 1.1** — DONE — fixture behaviour → Test `fixture_test`",
+    `- **Dimension 1.1** — DONE — fixture behaviour → Test \`${FIXTURE_TEST}\``,
     "",
     ...sections,
   ].join("\n");

@@ -5,6 +5,7 @@ type MarkdownElement = { type?: unknown; props: { children?: MarkdownNode[] } };
 type MarkdownNode = string | MarkdownElement;
 type Section = { title: string; nodes: MarkdownNode[] };
 type Commands = Record<string, string[][]>;
+export type SpecTest = { dimension: string; name: string; tier: string };
 
 const CONFIG_PATH = ".orly/orly.json";
 const SPEC_LINE_LIMIT = 500;
@@ -25,6 +26,9 @@ const RESIDUE = /<!--\s*tpl:|\{\{fill:|\{unresolved_[^}]+\}|path\/to\/file\.ext|
 const STAGED_MODES = new Set(["--staged", "staged"]);
 const BULK_MODES = new Set(["--all", "all", "--include-done", "include-done"]);
 const EXPECTED_COLUMN = "Expected";
+const DIMENSION_COLUMN = "Dimension";
+const TEST_COLUMN = "Test";
+const TIER_COLUMN = "Tier";
 const TEXT_ENCODING = "utf8";
 const SAFE_PROHIBITION_LINE = /<!--|"[0-9]+\s*(h|hour|day|min)"/;
 const PROHIBITED: Array<[RegExp, string]> = [
@@ -37,7 +41,8 @@ const PROHIBITED: Array<[RegExp, string]> = [
   [/^\s*\*\*\s*Owner\s*(:\s*\*\*|\*\*\s*[:|])/, "Owner label row"],
   [/^\s*\*\*\s*Assigned to\s*(:\s*\*\*|\*\*\s*[:|])/, "Assigned-to label row"],
   [/^\s*\*\*\s*(Due|Deadline)\s*(:\s*\*\*|\*\*\s*[:|])\s*[0-9]/, "Date-bound deadline label"],
-  [/^[-*|]?\s*\*?\*?\s*[0-9]+\s*%\s*complete/, "Percentage-complete metric"],
+  // Two `\s*` runs around optional stars backtrack quadratically on a long blank line.
+  [/^[-*|]?\s*(?:\*\*?\s*)?[0-9]+\s*%\s*complete/, "Percentage-complete metric"],
   [/\b(effort|estimate|takes?|spend)\b[^.]{0,40}\b[0-9]+\s*[-–]\s*[0-9]+\s*h\b/, "Hour-range estimate in effort context"],
   [/\b(low|medium|high|small|large)\s*[/|-]\s*(effort|complexity)\b/, "Effort/complexity rating"],
 ];
@@ -70,14 +75,23 @@ function textOf(node: MarkdownNode): string {
   return node.type === "code" ? `${BACKTICK}${text}${BACKTICK}` : text;
 }
 
+// Rows of every table in the section, each read through its own header and laid
+// out in the first table's column order. A second table with its columns in
+// another order was read with the first table's positions.
 function table(nodes: MarkdownNode[]): { columns: string[]; rows: string[][] } {
-  const groups = elements(nodes, "table").flatMap(children);
-  const headers = elements(groups, "thead").flatMap(children);
-  const bodies = elements(groups, "tbody").flatMap(children);
-  return {
-    columns: elements(headers, TABLE_ROW).flatMap(children).map((node) => textOf(node).trim()),
-    rows: elements(bodies, TABLE_ROW).map((row) => children(row).map((node) => textOf(node).trim())),
-  };
+  let columns: string[] = [];
+  const rows: string[][] = [];
+  for (const group of elements(nodes, "table")) {
+    const parts = children(group);
+    const header = elements(elements(parts, "thead").flatMap(children), TABLE_ROW)[0];
+    const own = header ? children(header).map((node) => textOf(node).trim()) : [];
+    if (!columns.length) columns = own;
+    for (const row of elements(elements(parts, "tbody").flatMap(children), TABLE_ROW)) {
+      const cells = children(row).map((node) => textOf(node).trim());
+      rows.push(columns.map((column) => cells[own.indexOf(column)] ?? EMPTY));
+    }
+  }
+  return { columns, rows };
 }
 
 function testMappings(sections: Section[]): string[] {
@@ -89,10 +103,10 @@ function testMappings(sections: Section[]): string[] {
   const ids = dimensions.map((match) => match[1]);
   if (new Set(ids).size !== ids.length) errors.push("Dimension identifiers must be unique");
   const tests = table(section(sections, TEST_HEADING));
-  const tier = tests.columns.indexOf("Tier");
-  const name = tests.columns.indexOf("Test");
+  const tier = tests.columns.indexOf(TIER_COLUMN);
+  const name = tests.columns.indexOf(TEST_COLUMN);
   const assertion = tests.columns.findIndex((column) => column.startsWith("Asserts"));
-  const id = tests.columns.indexOf("Dimension");
+  const id = tests.columns.indexOf(DIMENSION_COLUMN);
   if ([tier, name, assertion, id].some((index) => index < 0)) return [...errors, "Test Specification needs Dimension, Tier, Test, and Asserts columns"];
   for (const dimension of dimensions) {
     if (!tests.rows.some((row) => row[id] === dimension[1] && row[name]?.replaceAll(BACKTICK, EMPTY) === dimension[2] && row[tier] && row[assertion])) {
@@ -103,6 +117,21 @@ function testMappings(sections: Section[]): string[] {
     if (row[id] && !ids.includes(row[id])) errors.push(`test row references unknown Dimension ${row[id]}`);
   }
   return errors;
+}
+
+// The Test Specification rows that name a test. spec.tests searches tracked
+// files for each name; testMappings above checks the same rows against the
+// Dimensions, so a table missing its columns yields nothing here.
+export function specTestsOf(text: string): SpecTest[] {
+  const tests = table(section(sectionsOf(text), TEST_HEADING));
+  const id = tests.columns.indexOf(DIMENSION_COLUMN);
+  const name = tests.columns.indexOf(TEST_COLUMN);
+  const tier = tests.columns.indexOf(TIER_COLUMN);
+  if ([id, name, tier].some((index) => index < 0)) return [];
+  return tests.rows.flatMap((row) => {
+    const test = row[name]?.replaceAll(BACKTICK, EMPTY).trim();
+    return test ? [{ dimension: row[id] ?? EMPTY, name: test, tier: row[tier]?.replaceAll(BACKTICK, EMPTY).trim() ?? EMPTY }] : [];
+  });
 }
 
 function readFirst(sections: Section[], exists: (path: string) => boolean): string[] {

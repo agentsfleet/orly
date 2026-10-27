@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { validateSpec } from "../audits/spec-template";
+import { specTestsOf, validateSpec } from "../audits/spec-template";
 import { specFixture } from "./gates_test_support";
 
 const COMMANDS = { conform: [["true"]], "verify.unit": [["true"]] };
@@ -145,4 +145,11 @@ describe("spec content readiness", () => {
     expect(validateSpec(padded(500), COMMANDS, EXISTS).join("\n")).not.toMatch(/cap 500/);
     expect(validateSpec(padded(501), COMMANDS, EXISTS)).toContain("spec has 501 lines; cap 500");
   });
+});
+
+test("a second Test Specification table is read through its own header", () => {
+  const first = "| Dimension | Tier | Test | Asserts |\n|---|---|---|---|\n| 1.1 | unit | `first_test` | a |\n";
+  const second = "| Dimension | Test | Tier | Asserts |\n|---|---|---|---|\n| 1.2 | `second_test` | integration | b |\n";
+  const rows = specTestsOf(`## Test Specification (tiered)\n\n${first}\n${second}`);
+  expect(rows.map((row) => [row.name, row.tier])).toEqual([["first_test", "unit"], ["second_test", "integration"]]);
 });
