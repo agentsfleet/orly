@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.26.1 (2026-10-28)
+
+The standards reviewer reads where a repository keeps its files, and `orly-ship` pushes before it gates.
+
+- **Reviewer** — `orly-standards-reviewer` reads the repository's own instructions and matches **Applies to** through them. A repository that keeps its schema in `schema/*.sql` now gets the SQL rules scoped to `**/migrations/*.sql`.
+- **Ship order** — `orly-ship` pushes the branch before `orly gate pr`, which needs `HEAD` to be the pushed revision. The `verify.*` commands run once, inside the gate.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.26.1 update`.
+
 ## 0.26.0 (2026-10-28)
 
 Rules now ship as standards, applied by three skills and a reviewer agent; `orly gate pr` checks code and Git only.
