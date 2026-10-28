@@ -79,6 +79,17 @@ describe("helper pins", () => {
     expect(helperDrift(pins(egmCommit), { home, codexHome })).toEqual([]);
   });
 
+  test("an unreadable plugin record reads as drift, not a crash", async () => {
+    const home = temporaryDirectory();
+    await writeVersion(join(home, ".claude", "skills", "gstack"), GSTACK_VERSION);
+    await Bun.write(join(home, ".claude", "plugins", "installed_plugins.json"), "{ not json");
+
+    const findings = helperDrift(pins(STALE_COMMIT), { home, codexHome: join(home, ".codex") });
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toContain("EGM for Claude Code is unreadable");
+  });
+
   test("a machine with no agent runtime has no helper findings", () => {
     const home = temporaryDirectory();
     expect(helperDrift(pins(STALE_COMMIT), { home, codexHome: join(home, ".codex") })).toEqual([]);

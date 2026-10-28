@@ -44,7 +44,10 @@ describe("opt-in pack selection", () => {
         expect({ page, productPath, leaked: content.includes(productPath) }).toEqual({ page, productPath, leaked: false });
       }
     }
-    expect(installed[1]).toContain("owner's approval");
+    expect(installed[1]).toContain("need the owner's approval for that change");
+    expect(installed[2]).toContain("the design system's primitive");
+    expect(installed[6]).toContain("The repository's OpenAPI document");
+    expect(installed[7]).toContain("the repository's logger");
   });
 
   // An opt-in pack may cite a file another opt-in pack owns, and every such

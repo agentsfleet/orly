@@ -4,7 +4,7 @@
 
 Rules now ship as standards, applied by three skills and a reviewer agent; `orly gate pr` checks code and Git only.
 
-- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.26.0 update`. Remove calls to `.orly/audits/` or `.orly/dispatch/` first: those files are retired, and an edited copy stops the update.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.26.0 update`. Remove calls to `.orly/audits/` or `.orly/dispatch/`, and `language.zig` from `.orly/orly.json`, first. An edited retired file stops the update.
 - **Standards** — Rules live in `.orly/standards/` as Applies to, Checked by, Bad, Good and Why. The always-on `AGENTS.md` stays under 16 KiB.
 - **Skills** — `orly-spec`, `orly-build` and `orly-ship` replace the four earlier skills; `orly-standards-reviewer` checks a diff against the standards.
 - **Gate** — Spec criteria, `orly judge` and the audit scripts are gone. A repository may declare no `conform` command.

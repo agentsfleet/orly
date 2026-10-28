@@ -22,6 +22,7 @@ const CODEX_HOME = "CODEX_HOME";
 const CLAUDE_PLUGIN_RECORD = ["plugins", "installed_plugins.json"];
 const CLAUDE_EGM_MARKETPLACE = ["plugins", "marketplaces", "egm"];
 const CODEX_EGM_CACHE = ["plugins", "cache", "egm", "egm"];
+const UNREADABLE = "unreadable";
 const GITHUB_REPOSITORY = /github\.com[/:]([^/]+\/[^/.]+?)(?:\.git)?$/;
 
 export type HelperPins = {
@@ -103,14 +104,20 @@ function commitDrift(runtime: string, commits: string[], pins: HelperPins, fix: 
   const pinned = `orly pins ${pins.egm.commit.slice(0, 8)}`;
   if (commits.length === 0) return [`EGM is not installed for ${runtime}; ${pinned}: ${fix}`];
   const other = commits.find((commit) => commit !== pins.egm.commit);
-  return other === undefined ? [] : [`EGM for ${runtime} is ${other.slice(0, 8)}; ${pinned}: ${fix}`];
+  return other === undefined ? [] : [`EGM for ${runtime} is ${other ? other.slice(0, 8) : UNREADABLE}; ${pinned}: ${fix}`];
 }
 
 // Claude Code records each installed plugin's commit; its cached copy is not a
 // Git checkout.
 function claudePluginCommits(record: string): string[] {
   if (!existsSync(record)) return [];
-  const parsed: unknown = JSON.parse(readFileSync(record, UTF8));
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(record, UTF8));
+  } catch {
+    // A record that does not parse cannot prove the pin; it reads as drift.
+    return [""];
+  }
   const plugins = isObject(parsed) && isObject(parsed.plugins) ? parsed.plugins : {};
   const installs = plugins[EGM_PLUGIN];
   if (!Array.isArray(installs)) return [];
