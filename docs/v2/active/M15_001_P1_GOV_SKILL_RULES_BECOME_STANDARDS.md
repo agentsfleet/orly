@@ -21,7 +21,7 @@ SPEC AUTHORING RULES (load-bearing; the one comment that survives):
 
 **Date:** Oct 28, 2026
 
-**Status:** PENDING
+**Status:** IN_PROGRESS
 
 **Priority:** P1, every consumer's agent reads its rules through what this Workstream ships
 
@@ -29,11 +29,11 @@ SPEC AUTHORING RULES (load-bearing; the one comment that survives):
 
 **Batch:** B1; M15_002 is the one follow-up Pull Request; the gate's language is M16
 
-**Branch:** pending, set at CHORE(open)
+**Branch:** `feat/m15-standards`
 
-**Baseline revision:** pending, set to the full comparison commit at CHORE(open)
+**Baseline revision:** `bbfeecfcd397559fe2c6a42b235a0bf11a0af155`
 
-**Test Baseline:** pending, measured before the Pull Request
+**Test Baseline:** pending — measured before the Pull Request
 
 **Baseline evidence:** pending, set to a report path or run URL before the Pull Request
 
