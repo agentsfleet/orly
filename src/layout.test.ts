@@ -7,7 +7,7 @@ import { cleanupTemporaryDirectories, newRepository, ROOT } from "./gates_test_s
 import { install } from "./install";
 import { RulesModel } from "./model";
 
-const ENGINE_VERSION = "0.26.0";
+const ENGINE_VERSION = "0.26.1";
 const SKILLS = ["orly-spec", "orly-build", "orly-ship"];
 const FRONT_MATTER = /^---\n([\s\S]*?)\n---/;
 const MAX_DESCRIPTION = 1_024;
