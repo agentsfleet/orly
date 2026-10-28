@@ -33,9 +33,9 @@ SPEC AUTHORING RULES (load-bearing; the one comment that survives):
 
 **Baseline revision:** `bbfeecfcd397559fe2c6a42b235a0bf11a0af155`
 
-**Test Baseline:** pending — measured before the Pull Request
+**Test Baseline:** unit 784 pass, 0 fail at `bbfeecf` (73 files); branch 346 pass, 0 fail (33 files); integration not declared
 
-**Baseline evidence:** pending, set to a report path or run URL before the Pull Request
+**Baseline evidence:** `bun test src` on `git archive bbfeecf` and on `2127134`, Oct 28, 2026; recorded in Discovery under Test delta
 
 **Depends on:** none
 
@@ -170,7 +170,7 @@ Packs select standards through their existing `managed_files`, and the render in
 - **Dimension 3.1** — DONE — each skill's `name` equals its directory and its description names its trigger → Test `skill front matter names its directory`
 - **Dimension 3.2** — DONE — `--with language.rust` installs `languages/rust.md` and no other language standard → Test `install writes only selected standards`
 - **Dimension 3.3** — DONE — updating a 0.25.0 install retires unmodified pages and scripts and stops on an edited one → Test `update retires pages and stops on edits`
-- **Dimension 3.4** — on PR #70's diff, the reviewer reports only findings tied to a rule ID → Test `reviewer ties every finding to a rule`
+- **Dimension 3.4** — DONE — on PR #70's diff, the reviewer reports only findings tied to a rule ID → Test `reviewer ties every finding to a rule`
 - **Dimension 3.5** — Claude Code and Codex each load the three skills from the installed layout → Test `each runtime loads the three skills`
 
 ### §4 — Retire the hand-built delivery and every script
@@ -368,7 +368,10 @@ No product or operator signal changes. §6 records managed files, always-on byte
 - **Helper parity today** — read Oct 28, 2026 on the owner's Mac: gstack is 1.91.271.0 at `584e9c15` for Claude, Codex and `~/.agents` (`cat …/VERSION`; `git -C ~/.claude/skills/gstack rev-parse HEAD`), a commit that exists upstream, 20 behind `main`. EGM differs between runtimes: Claude's marketplace clone is `3d0b348`, Codex's install is `a8380ab`, and Claude's is 89 commits behind (`gh api repos/google/elephant-goldfish-model/compare/a8380ab…3d0b348` → `behind_by: 89`). The first pins are gstack `584e9c15352de1f1c42d237dd3c268d6284bfdee` and EGM `a8380ab5f0aba392c97e31c79f9a6666b3f09f14`. `codex plugin marketplace add` takes `owner/repo[@ref]` and `--ref` (`codex plugin marketplace add --help`, codex-cli 0.165.0); gstack's setup takes `--host codex` and `--no-browser` (gstack `README.md:39-42,71`).
 - **Open blockers** — (0) unverified: whether Codex supports project subagents; Dimension 3.5 settles it, and the inline fallback in §3 covers a no. (1) The owner approves any edit to `agentsfleet`'s `.github/workflows/governance.yml` in its migration.
 - **Metrics review** — no signal changes.
-- **Skill-chain outcomes** — pending until VERIFY and REVIEW.
+- **Reviewer replay (Dimension 3.4)** — Oct 28, 2026, `agents/orly-standards-reviewer.md` on PR #70's diff (`/tmp/m15-pr70.diff`): `23 findings across 15 files against 141 rules`, every finding opens with a rule ID (TEST-GITENV, TEST-RACE, TCF, TS-ENV, TS-TIMEOUT, TEST-DIFF, TEST-ERROR, DOC-19, DOC-04, DOC-14, TS-ALIAS, TS-ORDER), and `untied: 6` considered findings were dropped for lacking one.
+- **Test delta** — unit 784 → 346 (−438) against `bbfeecf`. The drop is the deletion this Workstream exists for: 42 test files removed with the scripts, judgments, spec criteria and scanners they covered (`git diff --name-status bbfeecf..HEAD | grep -cE '^D.*\.test\.ts$'` → 42); 3 added (`helpers.test.ts`, `layout.test.ts`, `standards_catalogue.test.ts`).
+- **Skill-chain outcomes** — gstack `/review`: core pass and gate-integrity pass ran; one defect (doctor crashed on a corrupt `installed_plugins.json`) fixed in `2127134` with a test. Not run: the specialist and adversarial passes, and 52 of 95 hunks were not scanned; rerun before merge.
+- **Open at Pull Request** (owner chose "Open PR now", D8, Oct 28, 2026) — Dimensions 3.5, 6.1 and 7.3 need the pushed branch or another machine, so the spec stays in `active/` and they close before merge.
 - **Deferrals and transfers** — from PR #70, quoted below: the doc-read path coverage dissolves because §4 deletes `audits/doc-read.sh`; the pre-push range coverage moves to M15_002, because `.githooks/pre-push` keeps choosing from the pushed range whether to run `make audit`.
 
 > Owner (Kishore, Oct 28, 2026, time not recorded): "can you be adversarial and think on doing the same thing using skills, obviously we need to get rid of scripts, md files and so on." — context: the direction behind this milestone.
