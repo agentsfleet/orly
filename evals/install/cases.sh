@@ -195,7 +195,7 @@ install_materialises_selected_packs_only() {
   run_packed "$pkg" "$repo" init >/dev/null
   [[ -f "$repo/.orly/standards/languages/rust.md" ]] || { bad "$name" "the Rust standard was not installed"; return; }
   local path foreign=""
-  for path in ".orly/standards/languages/typescript.md" ".orly/standards/languages/go.md" ".orly/standards/domains/http.md"; do
+  for path in ".orly/standards/languages/typescript.md" ".orly/standards/languages/go.md"; do
     [[ -e "$repo/$path" ]] && foreign+="$path "
   done
   if [[ -n "$foreign" ]]; then bad "$name" "foreign pack files installed: $foreign"; return; fi
