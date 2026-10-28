@@ -57,6 +57,7 @@ describe("install", () => {
     const retired = await install(model, { targetRoot: repo, force: false, installHooks: false, orlyVersion: ENGINE_VERSION });
     expect(retired.ok).toBe(true);
     expect(existsSync(join(repo, RETIRED_PAGE))).toBe(false);
+    expect(existsSync(join(repo, ".orly/dispatch"))).toBe(false);
 
     await recordRetiredPage(repo, RETIRED_BODY);
     await Bun.write(join(repo, RETIRED_PAGE), "an owner's edit\n");

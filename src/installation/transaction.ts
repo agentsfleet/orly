@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync, lstatSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmdirSync, unlinkSync, writeFileSync, lstatSync } from "node:fs";
 import { dirname, join, isAbsolute } from "node:path";
 import { z } from "zod";
 import { assertWritableInside, applyMode, OrlyError, MODE_REGULAR, MODE_EXECUTABLE } from "../model";
@@ -100,7 +100,20 @@ export class InstallTransaction {
       if (current !== null) unlinkSync(join(this.#root, file.path));
       this.#checkpoint?.("delete", index);
     }
+    removeEmptiedDirectories(this.#root, data.deletes.map((file) => file.path));
     unlinkSync(join(this.#root, JOURNAL));
+  }
+}
+
+// A retired page often leaves its directory empty. Git tracks no empty
+// directory, so one left behind is clutter only this machine sees.
+function removeEmptiedDirectories(root: string, paths: string[]): void {
+  for (const path of paths) {
+    for (let directory = dirname(path); directory !== "." && directory !== "/"; directory = dirname(directory)) {
+      const absolute = join(root, directory);
+      if (!existsSync(absolute) || readdirSync(absolute).length > 0) break;
+      rmdirSync(absolute);
+    }
   }
 }
 

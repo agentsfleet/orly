@@ -61,11 +61,11 @@ A `grep` that matches nothing exits 1, so one that may legitimately find nothing
 ### SH-COLON — A variable followed by a colon is braced, and a heredoc that carries code quotes its delimiter.
 - **Applies to:** `**/*.sh`, `**/*.zsh`, and commands an agent runs in zsh
 - **Checked by:** review
-- **Bad:** `git show "$base:audits/x.sh"`, or a script body under `<<EOF`
-- **Good:** `git show "${base}:audits/x.sh"`, and `<<'EOF'`
+- **Bad:** `git show "$base:app/run.sh"`, or a script body under `<<EOF`
+- **Good:** `git show "${base}:app/run.sh"`, and `<<'EOF'`
 - **Why:** zsh reads `:a`, `:h` and `:t` after a bare name as modifiers, and an unquoted heredoc expands `$` inside the code.
 
-With `base=main`, zsh expands `"$base:audits/x.sh"` to the absolute path of `main` followed by `udits/x.sh`.
+With `base=main`, zsh expands `"$base:app/run.sh"` to the absolute path of `main` followed by `pp/run.sh`.
 
 ### SH-ZSHSPLIT — A command an agent runs in zsh never relies on word-splitting `$VAR` or on `PIPESTATUS`, and multi-step logic runs in `bash -c` or a bash script.
 - **Applies to:** commands an agent runs in zsh
