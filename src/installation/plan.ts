@@ -8,11 +8,15 @@ import { Renderer } from "../render";
 const REGISTRY_PACKS_LABEL = "registry packs";
 const MARKDOWN_EXTENSION = ".md";
 const SKILLS_SEGMENT = "/skills/";
+const CLAUDE_AGENTS = ".claude/agents/";
 const MODE_REGULAR = "0644";
 export type PlannedFile = { target: string; content: Uint8Array; mode: string };
 
 export function installedPath(target: string): string {
   if (target.startsWith(".orly/")) return target;
+  // A runtime reads an agent definition where it is declared, so it is never
+  // a stub pointing at a copy.
+  if (target.startsWith(CLAUDE_AGENTS)) return target;
   if (target.includes(SKILLS_SEGMENT)) return `.orly/skills/${target.split(SKILLS_SEGMENT)[1]}`;
   return `.orly/${target}`;
 }
@@ -20,8 +24,8 @@ export function installedPath(target: string): string {
 function installedReferences(text: string, paths: Set<string>): string {
   return text.replaceAll("`../.orly/AGENTS.md`", "`../AGENTS.md`").replaceAll("](../.orly/AGENTS.md)", "](../AGENTS.md)")
     .replaceAll("](.orly/AGENTS.md)", "](AGENTS.md)")
-    .replace(/(?<![\w./-])(dispatch|audits)\//g, ".orly/$1/")
-    .replace(/(?<![\w./-])docs\/(?:greptile-learnings\/[^\s`)'"]+|[A-Z][A-Z_0-9.]+\.md)/g, (path) => paths.has(path) ? `.orly/${path}` : path);
+    .replace(/(?<![\w./-])standards\//g, ".orly/standards/")
+    .replace(/(?<![\w./-])docs\/[A-Z][A-Z_0-9.]+\.md/g, (path) => paths.has(path) ? `.orly/${path}` : path);
 }
 
 // One entry per target, so two packs naming the same file collapse instead of

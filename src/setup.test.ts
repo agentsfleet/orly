@@ -14,10 +14,20 @@ const TRUE = [["true"]];
 const CONFIG_CRITERION = "repo.config";
 const GUIDE = "guide";
 const LANGUAGE_CASES = [
-  ["rs", "rust"], ["zig", "zig"], ["py", "python"], ["ts", "typescript"], ["go", "go"],
+  ["rs", "rust"], ["py", "python"], ["ts", "typescript"], ["go", "go"],
 ] as const;
 
 afterEach(cleanupTemporaryDirectories);
+
+// `orly doctor` also checks the gstack and EGM installs under the user's home.
+// An empty home has no agent runtime, so the verdict is the repository's alone
+// and does not depend on what the machine running the suite has installed.
+function doctor(root: string): { code: number; output: string } {
+  const home = temporaryDirectory();
+  const env = { ...UNSCOPED_ENVIRONMENT, HOME: home, CODEX_HOME: join(home, ".codex") };
+  const result = Bun.spawnSync(["bun", join(ROOT, "src/cli.ts"), "--root", ROOT, "doctor"], { cwd: root, env, stdout: "pipe", stderr: "pipe" });
+  return { code: result.exitCode, output: `${result.stdout.toString()}${result.stderr.toString()}` };
+}
 
 describe("setup completeness", () => {
   for (const [extension, language] of LANGUAGE_CASES) {
@@ -28,12 +38,13 @@ describe("setup completeness", () => {
       expect(installed.code).toBe(0);
       const result = JSON.parse(installed.output);
       expect(result.packs).toContain(`language.${language}`);
-      expect(result.setupErrors).toHaveLength(2);
-      expect(result.setupErrors.join(" ")).toContain(CONFORM);
+      // `conform` is optional, so the one missing role is a verify.* lane.
+      expect(result.setupErrors).toHaveLength(1);
+      expect(result.setupErrors.join(" ")).not.toContain(CONFORM);
       expect(result.setupErrors.join(" ")).toContain("verify.*");
-      const doctor = orly(root, ROOT, "doctor");
-      expect(doctor.code).toBe(1);
-      expect(doctor.output).toContain("setup incomplete");
+      const checked = doctor(root);
+      expect(checked.code).toBe(1);
+      expect(checked.output).toContain("setup incomplete");
     });
   }
 
@@ -44,7 +55,7 @@ describe("setup completeness", () => {
     expect(installed.output).toContain("orly doctor");
   });
 
-  for (const commands of [{}, { build: TRUE }, { [CONFORM]: TRUE }, { [VERIFY_DOCS]: TRUE }, { [CONFORM]: TRUE, "verify.": TRUE }]) {
+  for (const commands of [{}, { build: TRUE }, { [CONFORM]: TRUE }, { [CONFORM]: TRUE, "verify.": TRUE }]) {
     test(`gates reject incomplete command roles: ${Object.keys(commands).join(", ") || "empty"}`, async () => {
       const root = newRepository();
       await Bun.write(join(root, CONFIG_PATH), JSON.stringify({ schema_version: 1, commands }));
@@ -56,6 +67,16 @@ describe("setup completeness", () => {
       }
     });
   }
+
+  test("gates accept a verify.* command without conform", async () => {
+    const root = newRepository();
+    await Bun.write(join(root, CONFIG_PATH), JSON.stringify({ schema_version: 1, commands: { [VERIFY_DOCS]: TRUE } }));
+    const model = await RulesModel.load(ROOT);
+    for (const gate of ["work", "verify", "pr"] as const) {
+      const result = runGate(model, root, gate).results.find((entry) => entry.name === CONFIG_CRITERION);
+      expect(result?.ok).toBe(true);
+    }
+  });
 });
 
 describe("documentation repositories", () => {
@@ -74,7 +95,7 @@ describe("documentation repositories", () => {
       expect(result.packs).toContain("domain.documentation");
       expect(result.packs.includes("language.mdx")).toBe(extension === "mdx");
       expect((await readConfig(root))?.commands).toEqual(commands);
-      expect(orly(root, ROOT, "doctor").code).toBe(0);
+      expect(doctor(root)).toEqual({ code: 0, output: expect.stringContaining("no agent runtime on this machine") });
 
       // Use a fresh executable directory, as a global package installation would.
       const binaries = temporaryDirectory();

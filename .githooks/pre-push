@@ -4,7 +4,7 @@ set -uo pipefail
 # git exports its repository scope to every hook. Anything we invoke below —
 # make audit, the eval sandboxes, the orly suite — spawns its own git against
 # OTHER directories, and an inherited GIT_DIR/GIT_INDEX_FILE silently redirects
-# those calls at THIS repository: evals/dispatch/run.sh `git add -A` in a temp
+# those calls at THIS repository: a sandbox `git add -A` in a temp
 # sandbox staged fixture paths into the real index, and a linked worktree (whose
 # .git is a file) broke outright. The scope dies here, before anything is run.
 unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_COMMON_DIR GIT_PREFIX \
@@ -36,7 +36,7 @@ else
   exit 1
 fi
 
-GOVERNANCE_PATTERN='^((core|packs|schemas|src)/|(registry|repositories)\.json|AGENTS\.md|SOUL\.md|dispatch/|audits/|docs/(EXECUTE_DOC_READS|ORLY_ARCHITECTURE|HARNESS_VERIFY_OUTPUT|DOCUMENTATION_RULES|TEMPLATE)\.md|evals/|fixtures/|\.githooks/|Makefile|README\.md|package\.json|bun\.lock|tsconfig\.json)'
+GOVERNANCE_PATTERN='^((core|standards|skills|agents|schemas|src)/|(registry|repositories)\.json|AGENTS\.md|SOUL\.md|docs/ORLY_ARCHITECTURE\.md|evals/|fixtures/|\.githooks/|Makefile|README\.md|package\.json|bun\.lock|tsconfig\.json)'
 
 governance_change=0
 while read -r local_ref local_sha remote_ref remote_sha; do

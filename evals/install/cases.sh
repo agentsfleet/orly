@@ -16,7 +16,7 @@ install_package_allowlist_excludes_personal_files() {
   # Only the skills the workflow.skills pack materialises may ship; any other
   # skills/ entry is this laptop's, not the product's.
   local straySkills
-  straySkills="$(printf '%s\n' "$paths" | grep -E '^skills/' | grep -vE '^skills/(orly-write-unit-test|orly-write-integration-test|orly-spec-new|orly-babysit-prs)/' || true)"
+  straySkills="$(printf '%s\n' "$paths" | grep -E '^skills/' | grep -vE '^skills/(orly-spec|orly-build|orly-ship)/' || true)"
   if [[ -n "$straySkills" ]]; then
     bad "$name" "personal skills in payload: $(printf '%s' "$straySkills" | tr '\n' ' ')"; return
   fi
@@ -28,7 +28,7 @@ install_package_allowlist_excludes_personal_files() {
   fi
 
   local required missing=""
-  for required in "bin/orly" "registry.json" "dispatch/lib.sh" "audits/ufs.sh" ".githooks/pre-commit"; do
+  for required in "bin/orly" "registry.json" "standards/code.md" "agents/orly-standards-reviewer.md" ".githooks/pre-commit"; do
     printf '%s\n' "$paths" | grep -qxF "$required" || missing+="$required "
   done
   if [[ -n "$missing" ]]; then bad "$name" "engine paths absent from payload: $missing"; return; fi
@@ -154,7 +154,7 @@ install_materialises_a_fresh_repository() {
   if [[ "$out" != *"written"* ]]; then bad "$name" "init did not report success: $out"; return; fi
 
   local required missing=""
-  for required in ".orly/AGENTS.md" "AGENTS.md" ".orly/orly.json" ".orly/dispatch/write_rust.md" ".orly/audits/ufs.sh" ".orly/hooks/pre-commit"; do
+  for required in ".orly/AGENTS.md" "AGENTS.md" ".orly/orly.json" ".orly/standards/languages/rust.md" ".claude/agents/orly-standards-reviewer.md" ".orly/hooks/pre-commit"; do
     [[ -f "$repo/$required" ]] || missing+="$required "
   done
   if [[ -n "$missing" ]]; then bad "$name" "not materialised: $missing"; return; fi
@@ -185,28 +185,28 @@ install_is_idempotent() {
   ok "$name"
 }
 
-# A repository receives its own packs and nothing else. A Rust crate holding a Zig
-# or UI gate is the defect this milestone found already shipped.
+# A repository receives its own packs and nothing else. A Rust crate holding
+# another language's standard is the defect this case guards.
 install_materialises_selected_packs_only() {
-  local name="a Rust repository receives no Zig façade and no foreign gate"
+  local name="a Rust repository receives no foreign language standard"
   local pkg repo; pkg="$(packed_root)"; repo="$(mk_repo)"
   if [[ -z "$pkg" ]]; then bad "$name" "npm pack or extract failed"; return; fi
 
   run_packed "$pkg" "$repo" init >/dev/null
-  [[ -f "$repo/.orly/dispatch/write_rust.md" ]] || { bad "$name" "the Rust façade was not installed"; return; }
+  [[ -f "$repo/.orly/standards/languages/rust.md" ]] || { bad "$name" "the Rust standard was not installed"; return; }
   local path foreign=""
-  for path in ".orly/dispatch/write_zig.md" ".orly/dispatch/write_ts_adhere_bun.md" ".orly/audits/design-tokens.sh" ".orly/audits/deinit-pairs.sh"; do
+  for path in ".orly/standards/languages/typescript.md" ".orly/standards/languages/go.md"; do
     [[ -e "$repo/$path" ]] && foreign+="$path "
   done
   if [[ -n "$foreign" ]]; then bad "$name" "foreign pack files installed: $foreign"; return; fi
 
-  # Every dispatch path the installed rules cite must itself be installed.
+  # Every standard the installed rules cite must itself be installed.
   local cited dangling=""
   while read -r cited; do
     [[ -z "$cited" ]] && continue
     [[ -e "$repo/$cited" ]] || dangling+="$cited "
-  done < <(cited_dispatch_paths "$repo")
-  if [[ -n "$dangling" ]]; then bad "$name" "installed rules cite absent façades: $dangling"; return; fi
+  done < <(cited_standard_paths "$repo")
+  if [[ -n "$dangling" ]]; then bad "$name" "installed rules cite absent standards: $dangling"; return; fi
   ok "$name"
 }
 
@@ -238,19 +238,19 @@ install_doctor_reports_drift_and_init_refuses() {
   if [[ -z "$pkg" ]]; then bad "$name" "npm pack or extract failed"; return; fi
 
   run_packed "$pkg" "$repo" init >/dev/null
-  printf '\n# tampered\n' >> "$repo/.orly/dispatch/write_rust.md"
+  printf '\n# tampered\n' >> "$repo/.orly/standards/languages/rust.md"
 
   local out code
   out="$(run_packed "$pkg" "$repo" doctor)"; code=$?
   if [[ "$code" -eq 0 || "$out" != *"edited after"* ]]; then bad "$name" "doctor missed the edited content: $out"; return; fi
   out="$(run_packed "$pkg" "$repo" update)"; code=$?
   if [[ "$code" -eq 0 ]]; then bad "$name" "update accepted edited content"; return; fi
-  if ! grep -q "tampered" "$repo/.orly/dispatch/write_rust.md"; then bad "$name" "refused update discarded the edit"; return; fi
+  if ! grep -q "tampered" "$repo/.orly/standards/languages/rust.md"; then bad "$name" "refused update discarded the edit"; return; fi
   out="$(run_packed "$pkg" "$repo" update --force)"; code=$?
-  if [[ "$code" -ne 0 ]] || grep -q "tampered" "$repo/.orly/dispatch/write_rust.md"; then bad "$name" "explicit replacement failed: $out"; return; fi
+  if [[ "$code" -ne 0 ]] || grep -q "tampered" "$repo/.orly/standards/languages/rust.md"; then bad "$name" "explicit replacement failed: $out"; return; fi
 
   # Deleting one IS drift — only orly can restore what only orly wrote.
-  rm "$repo/.orly/dispatch/write_rust.md"
+  rm "$repo/.orly/standards/languages/rust.md"
   out="$(run_packed "$pkg" "$repo" doctor)"
   if [[ "$out" != *"missing"* ]]; then bad "$name" "doctor missed a deleted managed file: $out"; return; fi
 
@@ -274,7 +274,7 @@ install_doctor_reports_drift_on_deletion() {
   if [[ -z "$pkg" ]]; then bad "$name" "npm pack or extract failed"; return; fi
 
   run_packed "$pkg" "$repo" init >/dev/null
-  rm -f "$repo/.orly/audits/ufs.sh"
+  rm -f "$repo/.orly/standards/code.md"
   local out; out="$(run_packed "$pkg" "$repo" doctor)"
   if [[ "$out" != *"missing"* ]]; then bad "$name" "doctor did not report the deletion: $out"; return; fi
   ok "$name"

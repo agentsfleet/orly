@@ -72,11 +72,10 @@ If a human reports that gates are not firing, this is the first thing to check.
 | Path | Contents | Owner |
 |---|---|---|
 | `AGENTS.md` | your host auto-loads this | the user — never rewrite it |
-| `.orly/AGENTS.md` | generated rules: safety, dispatch router, lifecycle | orly — rewritten on update |
-| `.orly/dispatch/*.md` | one rule page per kind of work | orly |
-| `.orly/audits/*.sh` | the deterministic gates | orly |
-| `.orly/docs/*.md` | the standards those rules cite | orly |
+| `.orly/AGENTS.md` | always-on rules and the standards index | orly — rewritten on update |
+| `.orly/standards/*.md` | the rules, one page per language or domain | orly |
 | `.claude/skills/`, `.agents/skills/`, `.opencode/skills/` | skills materialised per host | orly |
+| `.claude/agents/orly-standards-reviewer.md` | the reviewer that checks a diff against the standards | orly |
 | `.orly/hooks/` | pre-commit and pre-push, wired to pinned `orly gate` | orly |
 | `.orly/orly.json` | packs, gate commands, install record | shared — edit the commands |
 
@@ -99,9 +98,8 @@ Empty old directories may remain, but contain no tracked managed files.
 ## 4. Read order before you edit anything
 
 1. `AGENTS.md` — the user's own rules. **These win on any conflict.**
-2. `.orly/AGENTS.md` — the generated rules and the dispatch router.
-3. The `.orly/dispatch/*.md` page that matches the kind of file you are about to edit.
-4. Any `.orly/docs/*.md` standard those pages cite.
+2. `.orly/AGENTS.md` — the always-on rules and the standards index.
+3. The `.orly/standards/*.md` pages for the files you are about to edit.
 
 Re-read step 3 for each new file kind you touch in the same task.
 
@@ -126,7 +124,7 @@ docs/v1/done/      orly gate pr green → Pull Request opens
 
 Rules for you:
 
-- Invoke `orly-spec-new` before any code exists; it uses the canonical template body.
+- Invoke `orly-spec` before any code exists; build with `orly-build`, ship with `orly-ship`.
 - Do not write code before `CHORE(open)` has committed.
 - Do not skip a stage. The hooks run gates on every commit and push.
 - A red gate returns you to EXECUTE. Fix the cause; do not retry unchanged.
@@ -183,15 +181,6 @@ never with a placeholder reason.
 | `orly override <criterion> --reason <why>` | record a gate exception (user-authorised only) |
 | `orly doctor` | check installed files and required command configuration |
 
-`orly judge spec <SPEC> [--project <ROOT>] [--min-score 90] [--refresh] [--json]`
-reviews a complete spec before implementation.
-It checks structure, then outcomes, scope, setup ordering, failures, evidence and consistency.
-The lowest yes probability owns the score; default mode replays exact inputs offline.
-Exit 0 means READY, 1 means REVIEW and 2 means INCOMPLETE.
-Live refresh requires `gitleaks` and `TYPESAFE_API_KEY` and permits six requests without automatic retries.
-This review does not approve work, prove completion or replace any gate.
-See `docs/JUDGMENTS.md` for the measured trial and limits.
-
 ---
 
 ## 9. Packs
@@ -200,7 +189,7 @@ Language and SQL packs are selected from file extensions in the user's source.
 orly scans four directories deep and skips `node_modules`, `target`, `.venv`,
 and other dependency trees.
 
-`.zig` → `language.zig` · `.ts`/`.tsx` → `language.typescript` ·
+`.ts`/`.tsx` → `language.typescript` ·
 `.js`/`.jsx` → `language.javascript` · `.rs` → `language.rust` ·
 `.go` → `language.go` · `.py` → `language.python` · `.sh` → `language.shell` ·
 `.mdx` → `language.mdx` · `.sql` → `domain.sql`
@@ -210,13 +199,13 @@ Seven install in every repository: `universal.authoring`, `domain.http`,
 `workflow.specifications`, `workflow.skills`.
 
 Three install only when `.orly/orly.json` names them: `workflow.governance`
-(editing orly's own rules), `product.agentsfleet` (audits and docs for
-`agentsfleet`), `persona.indy` (tone and address handles only, no files).
+(editing orly's own rules), `product.agentsfleet` (marks an `agentsfleet`
+repository, no files), `persona.indy` (tone and address handles only, no files).
 
-Skills provided by `workflow.skills`, per repository: `orly-spec-new`,
-`orly-babysit-prs`, `orly-write-unit-test`, `orly-write-integration-test`.
-General-purpose skills come from gstack, per agent host — orly neither installs
-nor manages gstack.
+Skills provided by `workflow.skills`, per repository: `orly-spec`, `orly-build`,
+`orly-ship`, plus the `orly-standards-reviewer` agent. gstack and the
+Elephant-Goldfish Model (EGM) install per agent host at the versions orly pins;
+`orly doctor` checks them.
 
 ---
 

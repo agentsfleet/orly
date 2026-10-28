@@ -16,12 +16,12 @@ const SHORT_COPY_WORDS = 300;
 const LONG_PAGE_DASHES = 2;
 const EM_DASH = "—";
 // The em-dash budget is calibrated for prose a first-day reader skims. The
-// rule corpus is not that: dispatch pages, the operating model, and skill
-// bodies are dense reference text where the dash separates a claim from its
+// rule corpus is not that: standards, the operating model, skill bodies and
+// reviewer personas are dense reference text where the dash separates a claim from its
 // consequence, and a comma or a period there reads worse. Measured across the
 // corpus the budget flagged 36 of 39 pages, which is a rule mis-fit rather
 // than 36 defects. These pages keep every other rule.
-const RULE_PAGE_DIRECTORIES = ["dispatch/", "core/", "audits/", "skills/"];
+const RULE_PAGE_DIRECTORIES = ["core/", "skills/", "standards/", "agents/"];
 const RULE_PAGE_FILES = ["AGENTS.md", "AGENTS.orly.md", "SOUL.md", "RULES.md"];
 
 function isRulePage(file: string): boolean {

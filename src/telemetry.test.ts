@@ -76,7 +76,7 @@ describe("telemetry consent", () => {
     await beginTelemetry(["gate"], { env: { [STATE_ENV]: root, ORLY_INVOCATION: "hook" }, stdinIsTty: true, stdoutIsTty: true, ask });
     await beginTelemetry(["gate"], { env: { [STATE_ENV]: root, CI: "true" }, stdinIsTty: true, stdoutIsTty: true, ask });
     await beginTelemetry(["gate"], { env: { [STATE_ENV]: root }, stdinIsTty: false, stdoutIsTty: false, ask });
-    await beginTelemetry(["skill-event", "orly-spec-new"], { env: { [STATE_ENV]: root, ORLY_INVOCATION: "skill" }, stdinIsTty: true, stdoutIsTty: true, ask });
+    await beginTelemetry(["skill-event", "orly-spec"], { env: { [STATE_ENV]: root, ORLY_INVOCATION: "skill" }, stdinIsTty: true, stdoutIsTty: true, ask });
     expect(prompts).toBe(0);
   });
 
@@ -125,7 +125,7 @@ describe("telemetry events", () => {
 
   test("packaged_skill_uses_the_command_spool", async () => {
     const root = temporaryRoot();
-    const session = await beginTelemetry(["skill-event", "orly-write-unit-test"], {
+    const session = await beginTelemetry(["skill-event", "orly-build"], {
       env: { [STATE_ENV]: root, [ANONYMOUS_ENV]: "anonymous", ORLY_INVOCATION: "skill" },
       stdinIsTty: true, stdoutIsTty: true, randomId: idSequence(30, 31),
     });
@@ -134,7 +134,7 @@ describe("telemetry events", () => {
     });
     const events = await readTelemetrySpool(join(root, "orly"), FIXED_TIME);
     expect(events).toHaveLength(1);
-    expect(events[0]).toMatchObject({ command: "skill", skill: "orly-write-unit-test", invocation: "skill" });
+    expect(events[0]).toMatchObject({ command: "skill", skill: "orly-build", invocation: "skill" });
     expect(parseTelemetryEvent(JSON.stringify({ ...events[0], skill: "unknown-skill" }))).toBeUndefined();
   });
 
@@ -234,14 +234,14 @@ describe("telemetry synchronization", () => {
   test("sync_names_skill_events_separately", async () => {
     const root = temporaryRoot();
     const stateRoot = join(root, "orly");
-    await replaceTelemetrySpool(stateRoot, [{ ...event(400), command: "skill", skill: "orly-spec-new", invocation: "skill" }], FIXED_TIME);
+    await replaceTelemetrySpool(stateRoot, [{ ...event(400), command: "skill", skill: "orly-spec", invocation: "skill" }], FIXED_TIME);
     const bodies: unknown[] = [];
     await syncTelemetry({
       env: { [STATE_ENV]: root, [ANONYMOUS_ENV]: "anonymous" }, now: () => FIXED_TIME, fetchImpl: captureFetch(bodies),
     });
     const sent = postHogBatch(bodies[0]);
     expect(isRecord(sent[0]) ? sent[0].event : undefined).toBe("orly_skill_run");
-    expect(postHogProperties(sent[0]).skill).toBe("orly-spec-new");
+    expect(postHogProperties(sent[0]).skill).toBe("orly-spec");
   });
 });
 

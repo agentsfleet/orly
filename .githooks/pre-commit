@@ -4,8 +4,8 @@ set -uo pipefail
 # git exports its repository scope to every hook. Anything we invoke below
 # spawns its own git against OTHER directories, and an inherited
 # GIT_DIR/GIT_INDEX_FILE silently redirects those calls at THIS repository:
-# evals/dispatch/run.sh `git add -A` in a temp sandbox staged fixture paths into
-# the real index, and a linked worktree (whose .git is a file) broke outright.
+# a sandbox `git add -A` once staged fixture paths into the real index, and a
+# linked worktree (whose .git is a file) broke outright.
 # The scope dies here, before anything is run.
 #
 # The index is the one exception worth keeping: `git commit -a` and
@@ -32,28 +32,13 @@ staged="$(env ${ORLY_INDEX_FILE:+"GIT_INDEX_FILE=$ORLY_INDEX_FILE"} git -c core.
 # a corpus cannot reach anyone else until it is pushed. Committing stays cheap;
 # pushing still cannot skip it.
 #
-# The trigger surface stays named here — AGENTS.md, dispatch/, audits/, evals/ —
+# The trigger surface stays named here — AGENTS.md, standards/, skills/, src/ —
 # so this hook still says out loud which layer a change touches, and where the
 # proof now happens. Announcing, not gating: the gate is pre-push.
-GOVERNANCE_PATTERN='^(AGENTS\.md|README\.md|Makefile|package\.json|bun\.lock|tsconfig\.json|(core|packs|schemas|src)/|registry\.json|fixtures/|dispatch/|audits/|evals/|docs/(EXECUTE_DOC_READS|ORLY_ARCHITECTURE|HARNESS_VERIFY_OUTPUT)\.md|\.githooks/)'
+GOVERNANCE_PATTERN='^(AGENTS\.md|SOUL\.md|README\.md|Makefile|package\.json|bun\.lock|tsconfig\.json|(core|standards|skills|agents|schemas|src)/|registry\.json|fixtures/|evals/|docs/ORLY_ARCHITECTURE\.md|\.githooks/)'
 
 if grep -qE "$GOVERNANCE_PATTERN" <<<"$staged"; then
   echo "pre-commit: governance staged — make audit runs at push (.githooks/pre-push)" >&2
-fi
-
-# The doc-read check is the opposite kind of cost — one grep over the staged
-# list and one read of a local record — so it stays here, where the session
-# that did or did not read the façade is still the session committing. It runs
-# on every commit: the façade scopes it resolves are the only list of triggers,
-# and a path outside all of them reports "nothing staged triggers a façade".
-bash audits/doc-read.sh check
-doc_read=$?
-if [ "$doc_read" -eq 1 ]; then
-  echo "pre-commit: a triggered façade went unread — read it, or record why" >&2
-  exit 1
-elif [ "$doc_read" -ne 0 ]; then
-  echo "pre-commit: the doc-read check could not run (exit $doc_read); see its message above" >&2
-  exit 1
 fi
 
 exit 0

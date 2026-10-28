@@ -1,14 +1,13 @@
 # Orly architecture
 
 Orly does two jobs. It renders one rules file, and it proves the boundary
-before a Pull Request (PR) opens. What it stores where is the one thing that
-has changed shape since this document was first written — see "Why it's
-materialised" below; the gates section after it is unaffected.
+before a Pull Request (PR) opens. Where it stores things changed after this
+document was first written; "Why it's materialised" explains it.
 
 ## Topology
 
 ```text
-core/operating-model.md   packs/**   registry.json
+core/operating-model.md   standards/**   skills/**   registry.json
                               │
                          bin/orly
                               │
@@ -23,47 +22,41 @@ core/operating-model.md   packs/**   registry.json
    opencode, amp       ─┘                  exit 0 or 1
 ```
 
-One generated artifact on this machine: the root `AGENTS.md`. Every agent home
+On this machine one file is generated: the root `AGENTS.md`. Every agent home
 here links to it, so a rule edit is one commit and reaches every session in
-this checkout at once — that property is local to Kishore's own machine and
-unaffected by anything below.
+this checkout at once. That property is local to Kishore's own machine.
 
-Every other repository gets its rules a different way: `orly init` materialises
-the packs its own sources select — rendered `AGENTS.md`, the rule docs, the gate
-scripts, the hooks that run them — into that repository, and writes
-`.orly/orly.json` recording the engine version and every file it wrote,
-alongside the repository's own packs, commands, and surfaces. `orly update` re-materialises against the currently installed engine
-version; `orly doctor` reports drift between the lock and disk instead of
-silently tolerating it. A materialised repository needs no checkout of this
-one, on any machine, to read its own rules or run its own gates.
+Every other repository gets its rules a different way. `orly init` materialises
+the packs its own sources select into that repository: the rendered `AGENTS.md`,
+the standards, the skills, the reviewer agent and the hooks. It writes
+`.orly/orly.json` with the engine version, every file it wrote, and the
+repository's own packs, commands and surfaces.
+
+`orly update` re-materialises against the installed engine version, and
+`orly doctor` reports drift between the lock and disk. A materialised
+repository needs no checkout of this one to read its rules or run its gates.
 
 ## Why it's materialised
 
-An earlier model (M01) rejected storing per-repository copies: it had cost a
-re-baseline commit on every edit, a SHA-256 manifest that invalidated whenever
-the tool itself changed, and drift nobody caught — three of four consumer
-repositories were stale anyway. The fix at the time was to derive instead of
-store: one rendered `AGENTS.md`, symlinked into every agent home, with gate
-scripts resolved live from this checkout via `$ORLY_ROOT`.
+An earlier model (M01) refused per-repository copies. They had cost a
+re-baseline commit per edit and a manifest that broke when the tool
+changed. Drift went unseen: three of four consumers were stale.
 
-That traded the storage cost for a distribution cost undiscovered until a
-second engineer tried to install the harness without this checkout present —
-the symlink and `$ORLY_ROOT` both require a copy of the governance checkout at
-a known absolute path, which is exactly what a fresh machine, a Continuous Integration
-(CI) runner, or a remote fleet container does not have. `orly init` (M03)
-restores storage, but not the failure mode that got it removed: `orly update`
-turns a rule change into one command per repository instead of the manual
-sync M01 rejected, and the lock makes staleness a reported condition —
-`orly doctor` — instead of a silent one. cache-kit.rs is the evidence for both
-failure modes in the same repository: its `.orly/` snapshot from the
-pre-thin model sat frozen for four weeks with no update path, and its
-generated `AGENTS.md` told a Rust crate its project name was `agentsfleet` —
-a persona/product leak M03 also closes, by fencing both behind opt-in packs a
-a repository without those sources never selects.
+M01 derived instead: one rendered `AGENTS.md`, symlinked into every agent
+home, with gate scripts read live through `$ORLY_ROOT`. That needs this
+checkout at a known path, which a fresh machine, a Continuous Integration (CI)
+runner or a remote fleet container does not have.
 
-`orly verify --all` still re-renders each pack set twice and compares, then
-compares the committed root `AGENTS.md` against a fresh render — that
-determinism proof is unchanged by any of this.
+`orly init` (M03) restored storage without the old failure. `orly update`
+turns a rule change into one command per repository, and the lock makes
+staleness a reported condition (`orly doctor`) instead of a silent one.
+
+cache-kit.rs showed both failures in one repository. Its `.orly/` snapshot sat
+frozen for four weeks with no update path. Its generated `AGENTS.md` named a
+Rust crate `agentsfleet`, a product leak M03 closed with opt-in packs.
+
+`orly verify --all` still renders each pack set twice and compares them. It
+then compares the committed root `AGENTS.md` against a fresh render.
 
 ## Gates
 
@@ -73,25 +66,21 @@ determinism proof is unchanged by any of this.
 |---|---|
 | `work` | repository configuration and the declared `conform` command over the staged change |
 | `verify` | documentation checks and non-test `verify.*` commands; unfinished Sections may be pushed |
-| `pr` | exact pushed revision, branch/spec criteria, docs surface, and every declared `verify.*` command |
+| `pr` | branch, clean tree, exact pushed revision, docs surface, and every declared `verify.*` command |
 
-The authoritative sequence is `dispatch/lifecycle.md`. Full unit, integration,
-and memory suites run at the PR boundary. No stored verification cache or
+The `orly-build` and `orly-ship` skills carry the sequence. Full unit, integration,
+and memory suites run at the PR boundary.
+
+No stored verification cache or
 assumption about a custom pre-push hook can remove them. Baselines name an
 immutable comparison revision and are measured before the Pull Request.
 
-Every criterion is mechanical — it reads an exit code or a file. Claims that
+Every criterion is mechanical: it reads an exit code or a file. Claims that
 cannot be proven that way stay prose and are graded by the spec's rubric; they
 never become fake criteria.
 
-The `spec.gate` criterion calls the native validator in `audits/spec-template.ts`
-directly. The script entry point selects files and snapshots staged content
-before calling the same validator. Prohibited patterns and structural checks
-have one implementation.
-
-The `spec.tests` criterion searches tracked test sources once for every test a
-DONE Dimension names. It proves a test source names each one; the declared
-verify commands prove they pass.
+The gate reads no spec. A spec is reviewed while it is written, by an
+Elephant-Goldfish Model (EGM) review, and the gate checks code and Git only.
 
 The `docs.language` criterion rejects mechanical language findings in changed
 Markdown and Markdown JSX (MDX) prose, including new pages and uncommitted edits.
@@ -100,24 +89,8 @@ It checks complete edited paragraphs while leaving unchanged history alone.
 Installed `.orly/` snapshots are generated inputs; `doctor` checks their integrity.
 Readability and factual accuracy remain review judgments under DOC-43.
 
-Filename-scoped staged audits copy Git's index before selecting relevant paths.
-An empty selection skips the repository checkout; matching paths still trigger
-a private checkout, dependency reads and indexed-link checks. Each audit owns
-its temporary files and cleanup. Audits with unconditional registry checks
-retain a complete checkout. Separate relevant audits retain separate snapshots;
-this optimization does not introduce a shared snapshot cache.
+Three behaviours worth knowing:
 
-Four behaviours worth knowing:
-
-- **No spec, no problem — but closing is not escaping.** Spec criteria skip
-  with a printed reason, so an ad-hoc bug fix meets the quality gates without
-  being told to write a spec. A spec moved to `done/` on the branch is still
-  discovered through its `Branch:` header and gates the PR — CHORE(close)
-  never skip-passes the criteria it exists to satisfy. Headers accept a plain
-  token or an inline-code token. Active specs explicitly owned by other branches
-  do not displace this branch's spec; active specs without a branch remain gated.
-  Multiple specs may fold into one owner through `Folded-into`; two independent
-  owners on the current branch remain an error.
 - **A worktree is its repository.** `repositories.json` registers primary
   checkouts only; a linked worktree resolves through the set of checkouts git
   reports for the shared object store. Streams stay ephemeral and unregistered,
@@ -193,81 +166,52 @@ the Fleet is an analysis consumer and never the public ingestion boundary.
 into `.orly/evidence.json` (git-ignored). Pre-push writes it when the pushed
 range touches governance paths.
 
-## TypeScript judgment experiment
+## Standards, skills and the reviewer
 
-The 0.11.0 experiment keeps the Bun command line and installed `.orly/`
-layout. `orly judge` accompanies the deterministic gates with explicit advice.
-Indy canceled the native rewrite and its Milestone 07 plans on Oct 04, 2026.
+Rules live in `standards/`. Each standard is a page of rule blocks: an
+identifier, one statement, and the fields Applies to, Checked by, Bad, Good and
+Why. Packs select standards through `registry.json`, and install copies them to
+`.orly/standards/`.
 
-### Timing and authority
+Steps live in three skills. `orly-spec` turns an idea into a reviewed spec,
+`orly-build` opens the stream and builds it, and `orly-ship` reviews, closes,
+gates and lands it. They call gstack and EGM where those already do the job.
 
-| Stage | Input | Bounded decision | Follow-up |
-|---|---|---|---|
-| PLAN | One spec requirement and its selected section | Are prerequisites explicit? Is the result observable? | Clarify setup or expected results before implementation |
-| VERIFY | Required behavior, complete implementation and linked test | Does the assertion discriminate correct behavior from the supplied incorrect behavior? | Add an exact assertion before accepting test evidence |
-| REVIEW | One failure path or one rule with selected code | Is the failure handled? Does this rule apply? | Inspect the named path or rule before disposing of the finding |
-| DOCUMENT | One claim and selected implementation or measured output | Does supplied evidence support this claim? | Narrow the claim or gather the missing proof |
-| Commit, push and PR | Existing deterministic facts and command results | Existing checks only | Model advice cannot change gate outcomes |
+`orly-standards-reviewer` judges a diff against the standards with no session
+history. It reports only findings it can tie to a rule and a changed line.
 
-Questions and possible next actions live in a fixed catalog. Noul supplies a
-probability for one property. Choice selects an assertion category.
+The rendered `AGENTS.md` carries only what applies on every turn, plus an
+index of the selected standards. A render test caps it at 16 KiB.
 
-The stage commands do not combine answers into an overall quality score.
-Neither stage advice nor spec readiness supplies model-written commands or automatic owner decisions.
+## Changing a standard
 
-The agent invokes advice explicitly. Skill instructions explain optional timing;
-hooks never upload source and never request a model answer.
+A rule change edits its standard and keeps the five fields. A new rule takes a
+new identifier; a removed one leaves the catalogue fixture with its reason.
+`bun test src/standards_catalogue.test.ts` proves every identifier has one home.
 
-### Whole-spec readiness trial
+Run `make audit` before pushing. It renders the rules, typechecks and runs the
+suite, including the always-on size cap and the Hard Safety text.
 
-`orly judge spec` adds a separate, explicit readiness review without extending the stage catalog or changing any gate.
-It reuses the structural spec validator before asking six questions about the complete spec and declared commands.
-The questions cover outcomes, scope, setup ordering, failures, completion evidence and consistency.
+## Helper parity
 
-Code compares the lowest raw yes probability with `--min-score`, which defaults to 90 percent.
-Structural findings produce `REVIEW`; missing or invalid input and answers produce `INCOMPLETE` without a passing score.
-`READY` recommends starting the existing workflow and grants no owner permission or completion proof.
+Every session runs the same orly, gstack and EGM, on the owner's Mac or in a
+Codex cloud task. `registry.json` pins gstack by version and commit and EGM by
+commit, and each orly release moves the pins only after running with them.
 
-The existing scanner, bounded transport and private replay storage also serve this command.
-Identity additionally binds the complete spec, project configuration and whole-spec rubric.
-Source and project facts are rechecked before the result; changed inputs cannot retain a passing score.
+`orly doctor` checks every agent runtime present on the machine. It reads
+gstack's `VERSION` and EGM's recorded commit, and a mismatch prints the pinned
+install command. A machine with no agent runtime, such as a CI runner, skips the check.
 
-The [launch-spec trial](https://github.com/agentsfleet/orly/tree/v0.25.0/docs/evidence/spec-readiness) retains its frozen expectations and raw answers.
-Both original and deliberately misordered versions needed review; the original ordering answer missed the predeclared expectation.
-One pair does not calibrate the threshold or establish model accuracy.
+## Codex cloud environment
 
-### Evidence and upload
+A cloud task sees repository skills only, so the environment installs the rest.
+Its install script installs orly at the repository's pin and gitleaks. It
+checks out gstack at the pinned commit and runs `./setup --host codex --no-browser`.
 
-A stage-specific manifest names the required behavior and role-labeled source
-references. Each reference selects a complete file, TypeScript function, named
-test, or Markdown section. Missing, ambiguous, escaping and oversized inputs
-are refused before inference. Evidence remains data even when it contains
-instructions. Necessary unchanged context must be named by the manifest.
+The same script adds EGM with `codex plugin marketplace add
+google/elephant-goldfish-model --ref <commit>` and `codex plugin add egm@egm`. It
+sets `core.hooksPath`, and the start skill ends with `orly doctor`.
 
-The shipped command uses the official TypeSafe System One API and pins
-`jev-1.13.0`. Only `--refresh` permits a live request. The provider key comes
-from `TYPESAFE_API_KEY` at runtime. A passing secret scan is required for the
-entire selected state before any request. Source and credentials stay out of
-reports and error messages. Limits cover source, state, request and response
-bytes, item count, subprocess duration, fetch and body-reading duration.
-Requests are sequential and receive no automatic retries.
-
-Evidence selection uses Babel's JavaScript parser in a bounded Bun worker.
-The installed command runs TypeScript source through Bun, with the same `bunx`
-installation as 0.10.x. Development type checks use the pinned `tsrs`
-compiler, and the shipped runtime needs no compiler.
-
-### Replay and proof
-
-Default mode reads a local exact-input replay. Identity binds project root,
-model, catalog definitions, requirements, selectors and selected source bytes.
-A changed input or invalid record is incomplete. Replay files include typed
-answers and integrity metadata, without source text. Local replay is editable
-by the repository owner and is advisory evidence, never approval or a gate.
-
-A consumer experiment uses a new `agentsfleet` worktree and the locally packed,
-unpublished 0.11.0 package. The controls compare the same incorrect locale code
-with a weak assertion and an exact assertion, plus healthy exact behavior.
-Repeated live observations report successes, misses, uncertainty, latency and
-token usage. The trial proves bounded usefulness only; broader accuracy and
-runtime superiority require different evidence.
+A cloud task pushes nothing. The skills run `orly gate work` and
+`orly gate verify` themselves and stop before `orly gate pr`; CI runs the
+heavy lanes on the Pull Request.

@@ -20,7 +20,7 @@ install_refuses_outside_a_repository() {
 
 # A stranger's repository is the common case: nothing to register, no name to
 # pass. Pack selection reads the repository's own sources, so the Rust crate in
-# the fixture receives the Rust façade and never the Zig one.
+# the fixture receives the Rust standard and never the Go one.
 # The ruleset-authoring verbs operate on the engine's own sources; sync also
 # repoints this machine's agent homes at the render. From a published payload
 # that render sits in a package cache, so the links would resolve into a
@@ -52,8 +52,8 @@ install_selects_packs_from_repository_sources() {
 
   local out; out="$(run_packed "$pkg" "$repo" init)"
   if [[ "$out" != *"written"* ]]; then bad "$name" "init did not report a materialisation: $out"; return; fi
-  [[ -f "$repo/.orly/dispatch/write_rust.md" ]] || { bad "$name" "the Rust source did not select the Rust façade"; return; }
-  [[ -f "$repo/.orly/dispatch/write_zig.md" ]] && { bad "$name" "a Zig façade was installed into a repository with no Zig"; return; }
+  [[ -f "$repo/.orly/standards/languages/rust.md" ]] || { bad "$name" "the Rust source did not select the Rust standard"; return; }
+  [[ -f "$repo/.orly/standards/languages/go.md" ]] && { bad "$name" "a Go standard was installed into a repository with no Go"; return; }
   [[ -f "$repo/.orly/orly.json" ]] || { bad "$name" "init did not seed .orly/orly.json"; return; }
   ok "$name"
 }
@@ -86,7 +86,7 @@ retired_command_references() {
   # their removal. Active source and documentation still belong to the scan.
   git -C "$1" grep -nE 'orly"? (sync|render|validate)([^a-z-]|$)' -- . \
     ':!docs/v1/done/*' ':!docs/v1/active/*' ':!evals/install/*' \
-    ':!evals/release/receipts/*' ':!SOUL_LOG.md' ':!audits/agents-md.md' 2>/dev/null || true
+    ':!evals/release/receipts/*' ':!SOUL_LOG.md' 2>/dev/null || true
 }
 
 install_retired_reference_scope_preserves_archived_receipts() {
@@ -143,14 +143,14 @@ data = json.load(open(path))
 data["version"] = "0.4.1-test"
 json.dump(data, open(path, "w"))
 PY
-  printf '\n<!-- eval: newer engine content -->\n' >> "$pkg/packs/language/rust/rules.md"
+  printf '\n<!-- eval: newer engine content -->\n' >> "$pkg/standards/languages/rust.md"
 
   local out; out="$(run_packed "$pkg" "$repo" update)"
   local after; after="$(python3 -c "import json;print(json.load(open('$repo/.orly/orly.json'))['orly_version'])")"
 
   if [[ "$before" == "$after" ]]; then bad "$name" "lock still pinned to $before after update"; return; fi
   if [[ "$after" != "0.4.1-test" ]]; then bad "$name" "lock repinned to '$after', not the newer engine"; return; fi
-  if ! grep -q "eval: newer engine content" "$repo/.orly/dispatch/write_rust.md"; then
+  if ! grep -q "eval: newer engine content" "$repo/.orly/standards/languages/rust.md"; then
     bad "$name" "update did not propagate the changed file"; return
   fi
   if [[ "$out" != *"written"* ]]; then bad "$name" "update did not report what changed: $out"; return; fi
@@ -228,7 +228,7 @@ install_every_language_selection_installs_cleanly() {
   if [[ -z "$pkg" ]]; then bad "$name" "npm pack or extract failed"; return; fi
 
   local sample broken=""
-  for sample in "src/lib.rs" "src/main.zig" "src/app.ts" "src/app.tsx" "src/app.js" "src/app.jsx" "src/app.py" "tool.sh" "docs/page.mdx" "schema/init.sql"; do
+  for sample in "src/lib.rs" "src/main.go" "src/app.ts" "src/app.tsx" "src/app.js" "src/app.jsx" "src/app.py" "tool.sh" "docs/page.mdx" "schema/init.sql"; do
     local repo; repo="$(mk_repo)"
     local out code
     mkdir -p "$repo/$(dirname "$sample")"
@@ -240,7 +240,7 @@ install_every_language_selection_installs_cleanly() {
     while read -r cited; do
       [[ -z "$cited" ]] && continue
       [[ -e "$repo/$cited" ]] || dangling+="$cited "
-    done < <(cited_dispatch_paths "$repo")
+    done < <(cited_standard_paths "$repo")
     [[ -n "$dangling" ]] && broken+="$sample(dangling:$dangling) "
   done
   if [[ -n "$broken" ]]; then bad "$name" "broken selections: $broken"; return; fi

@@ -42,61 +42,22 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
-## 0.25: review a spec before starting
+## 0.26: rules become standards
 
-`orly judge spec` reviews a complete spec for clear outcomes, scope, setup order, failure behavior, evidence and consistency.
-Its readiness score uses the lowest yes probability; the default minimum is 90 percent.
+Rules now live in standards: short pages of rule blocks with Applies to, Checked by, Bad, Good and Why.
+Three skills carry the steps: `orly-spec`, `orly-build` and `orly-ship`.
+The `orly-standards-reviewer` agent checks a diff against the standards before the Pull Request.
 
-Install `gitleaks` and supply `TYPESAFE_API_KEY` through your environment.
-Replace `<SPEC>` with your spec's path, relative to the current repository:
+The always-on `AGENTS.md` is under 16 KiB, down from 37 KB.
+The dispatch pages, the audit scripts, the read-logging gate and `orly judge` are gone.
+`orly gate pr` checks code and Git only; a spec is reviewed while it is written.
 
-```bash
-bunx --bun @agentsfleet/orly@0.25.0 judge spec <SPEC> --refresh
-```
-
-Output reports `READY`, `REVIEW` or `INCOMPLETE`, with each question's score.
-Omit `--refresh` to replay unchanged inputs without uploading source.
-
-The command reviews readiness; implementation and completion still require their existing checks.
-See [spec judgment usage and measured limits](docs/JUDGMENTS.md#whole-spec-readiness).
-
-## 0.14: retained Jev answers explained
-
-The [offline diagnosis](https://github.com/agentsfleet/orly/blob/main/evals/judgments/comparison/diagnosis/report.md) explains all 188 retained TypeSafe Jev attempts.
-It separates native-answer agreement, confidence withholding, grading disagreements and unavailable replies.
-Each attempt links to its saved inputs and a bounded explanation; unknown provider causes stay unknown.
-
-The diagnosis uses existing receipts and sends no new provider requests.
-All five proposed checks remain evaluation-only while fixture meanings and independent adoption evidence need review.
-These contributor records live in the source checkout; installed packages link to the same published source.
-
-## Measured judgment comparison
-
-The source-checkout examiner checks unsupported completion claims.
-It freezes the six runtime questions and evaluates five proposed checks separately.
-Those checks cover obligations, evidence, production wiring, failure tests and finding resolution.
-
-From a source checkout, run `bun evals/judgments/comparison/run.ts --check` to validate the frozen inputs.
-Expected output is JSON with six baseline questions, five candidates and `passed: true`.
-Run `bun evals/judgments/comparison/run.ts --offline` for whole-task exercises with hidden behavioral checks.
-A successful run reports `passed: true`; seeded false completions remain failed task outcomes.
-
-A separate explicit `jev-run.ts --live` command measures TypeSafe Jev answers against the frozen expectations.
-Its retained report lists every measured answer, grading match, disagreement and unavailable response.
-The saved replay reproduced every result with zero new requests at historical source revision [`751ee303`](https://github.com/agentsfleet/orly/tree/751ee303d0c97a403863f12f33adf8fbc20ff433).
-Replay requires that revision's unchanged source inventory; changed bytes fail admission.
-Autonomous agent improvement remains unmeasured.
-All five candidates remain evaluation-only; uncertain and failed replies stay in the report.
-An additional rehearsal uses the packed candidate and actual `agentsfleet` source in an isolated worktree.
-See the [evaluation design](docs/architecture/judgment-evaluation.md) for commands, evidence and limits.
-
-The `.orly/` layout, six runtime questions and 0.12.1 audit and check-diagnostic fixes remain unchanged.
-The [0.12 report](evals/release/release-report.md) retains the earlier package and consumer migration evidence.
-TypeSafe's Jev model supplies runtime advice through explicit `orly judge` requests; contributor measurement uses the separate live evaluator.
+`orly doctor` now checks that every agent runtime runs the gstack and Elephant-Goldfish Model (EGM) versions orly pins.
+A Codex cloud task gets the same setup; see [the architecture page](docs/ORLY_ARCHITECTURE.md#codex-cloud-environment).
 
 See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
 The install commands below fetch the published package.
-The release workflow publishes 0.25.0 after its version change merges to `main` or an explicit release run.
+The release workflow publishes 0.26.0 after its version change merges to `main` or an explicit release run.
 
 ---
 
@@ -174,9 +135,10 @@ bunx --bun @agentsfleet/orly update --no-hooks
 Expected: managed files move under `.orly/`; owner hooks remain unchanged. Conflicting owner edits stop the update and name the affected path.
 Use the installed candidate executable for an unpublished release trial; the command above fetches the published version.
 
-Update repository-owned callers that still read `.oracle/orly.json`, root `dispatch/`, or managed root audit paths.
-Their replacements are `.orly/orly.json`, `.orly/dispatch/`, and `.orly/audits/`.
+Update repository-owned callers that still read `.oracle/orly.json`, `.orly/dispatch/` or `.orly/audits/`.
+Rules now live in `.orly/standards/`; the audit scripts have no replacement, so drop those calls.
 Repository-owned audit scripts and project documents retain their existing locations.
+
 Review existing hooks before choosing an update without `--no-hooks`.
 
 ```bash
@@ -195,15 +157,14 @@ An empty old directory can remain after its files move. Git does not track empty
 your-repo/
 │
 ├── AGENTS.md ─────────────── yours. untouched, except one delimited pointer block
-├── .orly/AGENTS.md ────────── the generated rules: safety, dispatch router, lifecycle
+├── .orly/AGENTS.md ────────── the always-on rules and the standards index
 │
 ├── CLAUDE.md ─────────────── one import line; the only file Claude Code loads itself
 ├── opencode.json ─────────── names both rule files; opencode loads nothing by default
 │
-├── .orly/dispatch/*.md ───── one rule page per kind of work
-├── .orly/audits/ ─────────── the deterministic gates
-├── .orly/docs/*.md ───────── the standards those rules cite
+├── .orly/standards/ ──────── the rules, one page per language or domain
 ├── .orly/skills/ ─────────── full skill instructions
+├── .claude/agents/ ───────── the standards reviewer
 │
 ├── .claude/skills/ ───────── thin discovery entries per agent host
 ├── .agents/skills/
@@ -351,7 +312,6 @@ orly scans four directories deep. It skips `node_modules`, `target`, `.venv`, an
 
 | Pack | Selected when your source has |
 |---|---|
-| <img src="https://raw.githubusercontent.com/agentsfleet/orly/main/branding/lang-zig.svg" width="14" alt=""> `language.zig` | `.zig` |
 | <img src="https://raw.githubusercontent.com/agentsfleet/orly/main/branding/lang-typescript.svg" width="14" alt=""> `language.typescript` | `.ts`, `.tsx` |
 | <img src="https://raw.githubusercontent.com/agentsfleet/orly/main/branding/lang-javascript.svg" width="14" alt=""> `language.javascript` | `.js`, `.jsx` |
 | <img src="https://raw.githubusercontent.com/agentsfleet/orly/main/branding/lang-rust.svg" width="14" alt=""> `language.rust` | `.rs` |
@@ -365,43 +325,35 @@ orly scans four directories deep. It skips `node_modules`, `target`, `.venv`, an
 
 | Pack | What it carries |
 |---|---|
-| `universal.authoring` | file length, logging, named constants, no dead code, the lifecycle runbook |
-| `domain.http` | REST API design rules |
-| `domain.auth` | auth-flow invariants |
-| `domain.documentation` | `DOCUMENTATION_RULES.md`, the voice standard for published pages |
-| `domain.changelog` | changelog voice, and what never gets rewritten |
-| `workflow.specifications` | the spec template and the gate that checks its shape |
-| `workflow.skills` | four skills, written once for all four agents |
+| `universal.authoring` | the code, tests, Pull Request, logging and architecture standards |
+| `domain.http` | the HTTP API standards |
+| `domain.auth` | the auth standard |
+| `domain.documentation` | the docs standards for published pages |
+| `domain.changelog` | the changelog standard |
+| `workflow.specifications` | the spec standard and template |
+| `workflow.skills` | three skills for every agent host, and the standards reviewer |
 
 ### Opt-in, only when `.orly/orly.json` names them
 
 | Pack | What it adds | Why it is opt-in |
 |---|---|---|
-| 🦉 `workflow.governance` | the rules for editing rules, their questionnaire, and orly's architecture | only useful if you edit orly itself |
-| `product.agentsfleet` | two audit scripts, the verify dispatch page, three `agentsfleet` docs | a product surface that means nothing in another checkout |
+| 🦉 `workflow.governance` | orly's architecture page | only useful if you edit orly itself |
+| `product.agentsfleet` | no files; it marks a repository as part of the `agentsfleet` product | a product surface that means nothing in another checkout |
 | 🤠 `persona.indy` | no files; it rewrites the address handles and tone in the generated rules | one maintainer's name and voice |
 
 ---
 
-## gstack is optional
+## gstack and EGM are pinned
 
-orly does not require [gstack](https://github.com/garrytan/gstack) to install or run.
+orly's skills call [gstack](https://github.com/garrytan/gstack) for code review and the [Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model) (EGM) for spec review.
+Each orly release pins the versions it was tested with, in `registry.json`.
 
-| gstack installed? | What happens at the review stage |
-|---|---|
-| yes | `/review` is detected and runs automatically |
-| no | orly records the skipped review in the Pull Request notes, to be rerun before merge |
-
-If you do want it:
-
-```bash
-cd ~/.local/share/gstack && ./setup --host auto
-```
-
-`--host auto` covers every agent host gstack finds. Name one to target it alone: `claude`, `codex`, `kiro`, `factory`, `opencode`, `openclaw`, `hermes`, `gbrain`, or `auto`.
+`orly doctor` checks every agent runtime on the machine against those pins.
+A missing or different version turns it red and prints the install command; the skills stop until it is green.
+A machine with no agent runtime, such as a CI runner, skips the check.
 
 > [!NOTE]
-> The four governance skills (`orly-spec-new`, `orly-babysit-prs`, `orly-write-unit-test`, `orly-write-integration-test`) come from orly's `workflow.skills` pack, per repository. The general-purpose skills come from gstack, per agent host. orly neither installs nor manages gstack.
+> The three orly skills (`orly-spec`, `orly-build`, `orly-ship`) and the reviewer come from orly's `workflow.skills` pack, per repository. gstack and EGM install per agent host.
 
 ---
 

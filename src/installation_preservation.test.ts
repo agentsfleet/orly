@@ -13,7 +13,7 @@ test("strong_assertion_exposes_real_defect", async () => {
   const options = { targetRoot: repo, force: false, installHooks: false, orlyVersion: "0.12.0" };
   expect((await install(model, options)).ok).toBe(true);
   const config = await readConfig(repo);
-  const target = config!.managed.find((path) => path.endsWith("dispatch/write_any.md"))!;
+  const target = config!.managed.find((path) => path.endsWith("standards/code.md"))!;
   const edited = "Owner correction that must survive an ordinary update.\n";
   await Bun.write(join(repo, target), edited);
   const result = await install(model, options);

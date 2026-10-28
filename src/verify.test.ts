@@ -9,7 +9,7 @@ import { packSourceErrors, verifyRenders, writeEvidence } from "./verify";
 const ROOT = resolve(import.meta.dir, "..");
 const PACK = "language.demo";
 const SOURCE = "packs/demo/rules.md";
-const TARGET = "dispatch/write_demo.md";
+const TARGET = "standards/languages/demo.md";
 const BODY = "# Demo\n\nOne rule, stated once.\n";
 const EVIDENCE = "evidence.json";
 const OWNER_BYTES = "owner evidence must survive\n";
@@ -36,7 +36,7 @@ function sandbox(target?: string): { model: RulesModel; root: string } {
   mkdirSync(join(root, "packs/demo"), { recursive: true });
   writeFileSync(join(root, SOURCE), BODY);
   if (target !== undefined) {
-    mkdirSync(join(root, "dispatch"), { recursive: true });
+    mkdirSync(join(root, "standards/languages"), { recursive: true });
     writeFileSync(join(root, TARGET), target);
   }
   const registry = { packs: { [PACK]: { extensions: [], managed_files: [{ source: SOURCE, target: TARGET }] } } };

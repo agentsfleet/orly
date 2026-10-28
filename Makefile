@@ -1,13 +1,12 @@
 # The audit recipe uses bash arrays and a here-string; /bin/sh has neither.
 SHELL := /bin/bash
 
-.PHONY: conform audit test-audit llmevals ledger install-evals \
-        dispatch-coverage dispatch-evals dispatch-parity dispatch-parity-evals ledger-evals
+.PHONY: conform audit install-evals
 
 # Run the deterministic audit chain (all green):
 #   1. Registry and profile validation.
 #   2. Oracle rules unit tests and byte-stable rendering.
-#   3. AGENTS.md invariance and dispatch checks.
+#   3. The standards catalogue (inside the test suite).
 #
 # The steps do not touch each other: each reads the tree or works inside its own
 # mktemp sandbox, and none writes back into the repository. So they run at once
@@ -24,17 +23,15 @@ SHELL := /bin/bash
 #
 # CONFORM_STEPS is what this repository declares as `conform`, and CONFORM is a
 # lifecycle stage that runs after every EXECUTE — so `orly gate work` runs it at
-# every commit and it has to cost seconds. These four are the deterministic rule
-# gates: the render is current and every pack file matches its source, no magic
-# string went unnamed, the generated rules still hold the line, and the
-# enforcement ledger matches the tree. Together, about two seconds.
-CONFORM_STEPS := bin/orly verify%bash audits/ufs.sh --all%bash audits/agents-md.sh%bash audits/rule-ledger.sh --check
+# every commit and it has to cost seconds: the render is current and every pack
+# file matches its source.
+CONFORM_STEPS := bin/orly verify
 # Everything the rule corpus must survive before it can reach anyone else:
 # CONFORM plus the type and test suite and every eval sandbox. This is what
 # .githooks/pre-push runs, and what Continuous Integration (CI) runs. It used to
 # BE the declared conform, which meant `orly gate` ran `bun test src` twice —
 # once inside the audit chain and once as the declared verify.unit.
-AUDIT_STEPS := $(CONFORM_STEPS)%bun run typecheck && bun test src%bash evals/dispatch/coverage.sh%bash evals/dispatch/run.sh%bash evals/dispatch/parity.sh%bash evals/ledger/run.sh%bash audits/rule-ledger.sh --census
+AUDIT_STEPS := $(CONFORM_STEPS)%bun run typecheck && bun test src
 
 conform: STEPS := $(CONFORM_STEPS)
 audit:   STEPS := $(AUDIT_STEPS)
@@ -65,53 +62,3 @@ conform audit:
 # proving itself against a scratch HOME with no dotfiles checkout in reach.
 install-evals:
 	@bash evals/install/run.sh
-
-# What each rule document actually enforces: one row per registered doc,
-# clause census by enforcement class. Reports; never gates on counts.
-ledger:
-	@bash audits/rule-ledger.sh --census
-
-# Ledger behaviour in isolation — fixture-pinned census and scoreboard cases.
-ledger-evals:
-	@bash evals/ledger/run.sh
-
-# Dispatch façade-pair coherence in isolation (tags ↔ checks ↔ fixtures ↔
-# probes ↔ leaf-helpers ↔ canonical gloss legend).
-dispatch-coverage:
-	@bash evals/dispatch/coverage.sh
-
-# Deterministic dispatch evals in isolation — pass+fail fixture per code.
-dispatch-evals:
-	@bash evals/dispatch/run.sh
-
-# Cross-runtime ERR_* parity in isolation. Every case asserts what the check
-# FOUND, not just its exit code — a vacuous pass and a real pass look identical
-# from the outside, which is how a glob aimed at a dead path went unnoticed.
-dispatch-parity-evals:
-	@bash evals/dispatch/parity.sh
-
-# Negative-test the audit itself — prove every check still FAILS on a bad
-# tree (conformance + determinism). Run whenever agents-md.sh changes.
-test-audit:
-	@bash evals/test-agents-md.sh
-
-# Dispatch-parity proof — runs audits/parity-dispatch.sh against a model-B
-# sandbox (docs/gates/ empty, AGENTS.md dispatch table, 10 entries) and asserts
-# it goes green AND bites. agents-md.sh now sources the same check (check 9b);
-# this isolates + proves it against synthetic regressions.
-dispatch-parity:
-	@bash evals/test-dispatch-parity.sh
-
-# Cross-agent Large Language Model (LLM) evaluation (Scenario 23): each
-# installed agent (claude/codex/amp/opencode) answers frozen fixtures; verdicts
-# are graded by exact match. Live calls cost tokens on every agent. The full run
-# is resumable through a machine-local journal.
-#
-# One entry point. The live run validates fixtures + reports availability as a
-# mandatory preamble (run.sh:188) before any spend. For the zero-token
-# dry path pass CHECK=1. The manual smoke path uses one fixture per agent:
-#   make llmevals          — full live graded run
-#   make llmevals SMOKE=1  — one live fixture per installed agent
-#   make llmevals CHECK=1  — validate all fixtures, no live calls
-llmevals:
-	@bash evals/llms/run.sh $(if $(CHECK),--check,$(if $(SMOKE),--smoke))

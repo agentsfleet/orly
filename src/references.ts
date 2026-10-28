@@ -8,7 +8,7 @@ const PACK_START = /^[ \t]*<!--[ \t]*oracle-packs:start ([^>]+)[ \t]*-->[ \t]*$/
 const PACK_END = /^[ \t]*<!--[ \t]*oracle-packs:end[ \t]*-->[ \t]*$/;
 const CODE_FENCE = /^[ \t]*(?:```|~~~)/;
 const MARKDOWN_LINK = /\[[^\]]*\]\(([^)]+)\)/g;
-const DISPATCH_REFERENCE = /(?:\.orly\/)?dispatch\/[A-Za-z0-9_.-]+\.md/g;
+const STANDARD_REFERENCE = /(?:\.orly\/)?standards\/[A-Za-z0-9_./-]+\.md/g;
 const COMMENT_OPEN = "<!--";
 const COMMENT_CLOSE = "-->";
 const NEWLINE = "\n";
@@ -102,8 +102,8 @@ export async function referenceClosureErrors(
       if (inFence) continue;
       const commented = inComment;
       inComment = commentStateAfter(line, inComment);
-      // A path inside an HTML comment is authoring guidance — `docs/TEMPLATE.md`
-      // lists a per-surface menu of dispatch façades a spec author might cite.
+      // A path inside an HTML comment is authoring guidance — the spec template
+      // lists a per-surface menu of standards a spec author might cite.
       // Grading those as live citations would force every repository to carry
       // every language pack just to satisfy a comment naming the alternatives.
       if (commented || inComment) continue;
@@ -115,9 +115,9 @@ export async function referenceClosureErrors(
         if (!isBelow(resolved, root)) errors.add(`snapshot reference escapes repository: ${relativeSource}:${lineNumber} -> ${rawTarget}`);
         else if (!present(resolved)) errors.add(`missing snapshot reference: ${relativeSource}:${lineNumber} -> ${rawTarget}`);
       }
-      for (const target of line.matchAll(DISPATCH_REFERENCE)) {
+      for (const target of line.matchAll(STANDARD_REFERENCE)) {
         const path = target[0];
-        if (!present(join(outputRoot, path))) errors.add(`missing dispatch reference: ${relativeSource}:${lineNumber} -> ${path}`);
+        if (!present(join(outputRoot, path))) errors.add(`missing standard reference: ${relativeSource}:${lineNumber} -> ${path}`);
       }
     }
     // Failing open here would skip every citation after the stray fence and

@@ -1,5 +1,3 @@
-import { DEFAULT_MIN_SCORE } from "./judgments/spec_rubric";
-
 const TELEMETRY_CONFIG_KEY = "telemetry";
 const ANONYMOUS_TELEMETRY_CONFIG = JSON.stringify({ [TELEMETRY_CONFIG_KEY]: "anonymous" });
 const OFF_TELEMETRY_CONFIG = JSON.stringify({ [TELEMETRY_CONFIG_KEY]: "off" });
@@ -13,7 +11,7 @@ Gates (read-only; no PR without every criterion green or a recorded override):
               state, so a commit hook's own dirty tree never blocks it
       verify  does the work hold up? configuration, docs language, and the
               non-test verify.* set; unfinished Sections may be pushed
-      pr      can this ship? branch, tree, pushed, every spec criterion, and
+      pr      can this ship? branch, tree, pushed, configuration, docs, and
               every declared verify.* command
   orly override <CRITERION> --reason <REASON>
                                     empty commit with an Orly-Override trailer
@@ -21,12 +19,7 @@ Gates (read-only; no PR without every criterion green or a recorded override):
   Set limits.<command>.timeout_ms and output_bytes in .orly/orly.json to override.
   Exceeding either limit fails the check and prints the saved output path.
 
-Advice (explicit; hooks stay offline):
-  orly judge spec <SPEC> [--min-score ${DEFAULT_MIN_SCORE}] [--refresh] [--json]
-                                    whole-spec readiness; replay by default
-  orly judge <plan|verify|review|document> --input <MANIFEST>
-                                    exact replay of bounded Jev advice
-  orly judge --help                 input selectors, questions and refresh
+Inspect:
   orly lifecycle [--json]           inspect stages, declared local checks and
                                     resource ownership; remote adapter disabled
 
@@ -49,7 +42,10 @@ Install (the repository is the unit — no checkout of this package required):
   --dry-run                         show what would be written; change nothing
 
   orly doctor                       check this repository's installed rules
-                                    against what orly would write today
+                                    against what orly would write today, and
+                                    each agent runtime's gstack and Elephant-
+                                    Goldfish Model (EGM) against the versions
+                                    this orly pins
   orly --version                    the installed package version
 
 Usage telemetry (off by default):
