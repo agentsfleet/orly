@@ -18,9 +18,8 @@ function unscopedEnvironment(): Record<string, string | undefined> {
   const environment: Record<string, string | undefined> = { ...process.env };
   // `git commit -a` and `git commit <path>` name the commit's temporary index
   // only in GIT_INDEX_FILE. A hook of the repository's own that runs `orly gate
-  // work` never exports the handoff, so it is made here, before the scrub. The
-  // staged audits use it only inside its own repository (audit_commit_index in
-  // audits/scope.sh); a nested sandbox ignores it.
+  // work` never exports the handoff, so it is made here, before the scrub. Only
+  // this repository reads it; a nested sandbox ignores it.
   if (environment.GIT_INDEX_FILE && !environment[COMMIT_INDEX_VARIABLE]) {
     environment[COMMIT_INDEX_VARIABLE] = resolve(process.cwd(), environment.GIT_INDEX_FILE);
   }

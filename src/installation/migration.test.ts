@@ -11,13 +11,13 @@ import type { FileWrite } from "./transaction";
 import { UNSCOPED_ENVIRONMENT } from "../git_env";
 import { chmodSync } from "node:fs";
 
-const OLD_RULE = "dispatch/check.md";
+const OLD_RULE = "standards/check.md";
 const OLD_AGENTS = "AGENTS.orly.md";
 const OWNER_RULES = "# Owner rules\nKeep this instruction.\n";
 const OLD_BODY = "old managed content\n";
 const OWNER_NOTE = ".oracle/owner-note";
 const UNOWNED_BODY = "unowned state\n";
-const CURRENT_RULE = ".orly/dispatch/check.md";
+const CURRENT_RULE = ".orly/standards/check.md";
 const CONTENT_ENCODING = "base64";
 const VERSION = "0.12.0";
 const JOURNAL = ".orly/install-journal.json";

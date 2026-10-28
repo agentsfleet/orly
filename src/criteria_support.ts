@@ -11,13 +11,6 @@ export type CriterionResult = Verdict & { name: string };
 
 export type CriterionContext = {
   root: string;
-  // Absent when the branch has no spec at all: spec criteria then skip-pass —
-  // an ad-hoc bug fix meets quality gates, never a demand to write a spec.
-  // A spec closed to done/ on this branch is still discovered (Branch: match)
-  // and gates with specClosed set — closing never skips the criteria.
-  specPath?: string;
-  specText?: string;
-  specClosed?: boolean;
   model: RulesModel;
   acceptDirty: boolean;
   surfaces?: SurfaceReport;

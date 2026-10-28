@@ -4,10 +4,6 @@ import { resolve } from "node:path";
 import {
   Criterion, CriterionContext, CriterionResult, criterion, gitOutput, runCommand, Verdict,
 } from "./criteria_support";
-import {
-  openQuestions, productClarity, specBaseline, specDeferrals, specDimensions,
-  specGate, specMoved, specOrdering, specTests,
-} from "./criteria_spec";
 import { scanChangedDocuments } from "./doc_changes";
 import { isObject, JsonObject, objectValue, OrlyError, RulesModel } from "./model";
 import { readConfigSync, RepoConfig } from "./config";
@@ -49,13 +45,14 @@ const NAMED_FINDINGS = 3;
 // Commit checks read the index. Push checks permit in-flight Sections and omit
 // the boundary test suites. The final gate runs all declared verification
 // itself, including checks a custom repository hook may not have invoked.
+// A spec is reviewed while it is written (an EGM review), so the gate checks
+// code and Git only.
 export function criteriaFor(gate: string, context: CriterionContext): Criterion[] {
   if (gate === "work") return [repositoryConfig(), ...commandCriteria(context, CONFORM_TIER)];
   if (gate === "verify") return [repositoryConfig(), docsLanguage(), ...commandCriteria(context, FAST_TIER)];
   if (gate === "pr") {
     return [
-      gitBranch(), gitTree(), gitPushed(), specGate(), openQuestions(), productClarity(), specDimensions(),
-      specMoved(), specBaseline(), specOrdering(), specDeferrals(), specTests(),
+      gitBranch(), gitTree(), gitPushed(),
       repositoryConfig(), docsLanguage(), docsUpdated(), ...commandCriteria(context, ALL_TIER),
     ];
   }

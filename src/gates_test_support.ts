@@ -1,5 +1,5 @@
 // Test harness for the gate suites (gates.test.ts, gates_spec.test.ts).
-// Extracted per dispatch/write_any.md §Splitting conventions: inline test
+// Extracted per the code standard's length rule (FLL): inline test
 // support is the first cut on an over-long file, because coverage instruments
 // count harness code written inline as product.
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
@@ -135,8 +135,8 @@ export function newSpecRepository(): string {
   return project;
 }
 
-// A spec carrying every section validateSpec (audits/spec-template.ts) requires, with all
-// Dimensions already DONE so the gates' own criteria are what is under test.
+// A realistic spec on the branch: the gate no longer reads specs, and these
+// fixtures prove it checks code and Git only even when one is present.
 export function specFixture(status = IN_PROGRESS, branch?: string, extraLines: string[] = []): string {
   const sections = [
     "PR Intent & comprehension handshake",
@@ -158,10 +158,7 @@ export function specFixture(status = IN_PROGRESS, branch?: string, extraLines: s
     "Decomposition & alternatives",
     "Discovery (consult log)",
   ].map((heading) =>
-    // The Acceptance Rubric must quote the declared conform + verify.unit
-    // commands verbatim (declared-command parity, rubricCommands in
-    // audits/spec-template.ts) — the fixture models a compliant spec, so its rubric carries
-    // them the way a real spec's S-rows do.
+    // The rubric quotes the declared commands, the way a real spec's S-rows do.
     heading === ACCEPTANCE_RUBRIC_HEADING
       ? `## ${heading}\n\n| # | Criterion | Verify | Expected | Priority | Graded |\n|---|---|---|---|---|---|\n| S1 | Declared checks | \`${TRUE_COMMAND}\` | exit 0 | P0 | |\n`
       : heading.startsWith("Implementing agent") ? `## ${heading}\n\n1. \`README.md\` — fixture reference.\n`

@@ -6,6 +6,7 @@ import { printHelp } from "./cli_help";
 import { selectPacks } from "./config_discovery";
 import { CONFIG_PATH, managedDrift, readConfig, RepoConfig, staleVersion, writeConfig } from "./config";
 import { GateReport, isGateName, recordOverride, runGate, runGates } from "./gates";
+import { agentRuntimes, defaultHomes, helperDrift, helperPins } from "./helpers";
 import { readInstallConfig } from "./installation/migration";
 import { install, InstallResult } from "./install";
 import { isString, OrlyError, readJsonObject, RulesModel } from "./model";
@@ -75,10 +76,6 @@ async function run(model: RulesModel, args: string[]): Promise<CliResult> {
   if (command === "init") return cliResult(await materialise(model, rest, true));
   if (command === "update") return cliResult(await materialise(model, rest, false));
   if (command === VERIFY_COMMAND) return cliResult(await verify(model, rest));
-  if (command === "judge") {
-    const { judgmentCommand } = await import("./judgments/command");
-    return cliResult(await judgmentCommand(rest));
-  }
   if (command === "lifecycle") {
     if (rest.some((argument) => argument !== JSON_FLAG)) throw new OrlyError("usage: orly lifecycle [--json]");
     const { lifecyclePlan } = await import("./execution/plan");
@@ -189,11 +186,17 @@ function projectRoot(): string {
 }
 
 async function doctorGlobal(model: RulesModel): Promise<number> {
-  const errors = await doctorInstall(model);
+  const homes = defaultHomes();
+  const pins = helperPins(model.registry);
+  const errors = [...await doctorInstall(model), ...helperDrift(pins, homes)];
   if (errors.length > 0) {
     for (const error of errors) console.log(`${FAIL_GLYPH} ${error}`);
     return 1;
   }
+  const runtimes = agentRuntimes(homes);
+  console.log(runtimes.length === 0
+    ? `${PASS_GLYPH} no agent runtime on this machine; helper pins not checked`
+    : `${PASS_GLYPH} gstack ${pins.gstack.version} and EGM ${pins.egm.commit.slice(0, 8)} match orly's pins for ${runtimes.join(" and ")}`);
   const config = await readConfig(projectRoot());
   if (!config) {
     console.log(`${FAIL_GLYPH} no ${CONFIG_PATH} here — run \`orly init\` first`);

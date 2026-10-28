@@ -6,7 +6,8 @@
     "schema_version": {"const": 1},
     "core_documents": {"type": "array", "items": {"type": "string"}},
     "packs": {"type": "object"},
-    "rules": {"type": "array"}
+    "rules": {"type": "array"},
+    "helpers": {"type": "object", "required": ["gstack", "egm"]}
   },
   "additionalProperties": false
 }

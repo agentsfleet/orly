@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "orly_version": "0.25.0",
+  "orly_version": "0.26.0",
   "packs": [
     "domain.auth",
     "domain.changelog",
@@ -14,7 +14,6 @@
     "language.rust",
     "language.shell",
     "language.typescript",
-    "language.zig",
     "persona.indy",
     "product.agentsfleet",
     "universal.authoring",
@@ -50,6 +49,6 @@
     "AGENTS.md"
   ],
   "digests": {
-    "AGENTS.md": "sha256:8080efb57112324a6fafdb7089d780348e051379006264fc35f526ec54c0db95"
+    "AGENTS.md": "sha256:381587c622e8d6c3ea9b9386388a4e8f3536b128121a02042b0f912e4994f15b"
   }
 }

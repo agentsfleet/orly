@@ -47,7 +47,8 @@ export function validateCommands(label: string, value: unknown, errors: string[]
 
 export function commandSetupErrors(commands: Record<string, string[][]>): string[] {
   const errors: string[] = [];
-  if (!commands.conform?.length) errors.push("declare conform in .orly/orly.json for work checks");
+  // `conform` is optional: a repository whose pre-commit hook already runs its
+  // own fast checks declares none, and `orly gate work` checks configuration.
   if (!Object.keys(commands).some((name) => /^verify\..+/.test(name) && commands[name]?.length)) {
     errors.push("declare at least one verify.* command in .orly/orly.json (for example, verify.unit or verify.docs)");
   }

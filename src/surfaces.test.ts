@@ -24,7 +24,7 @@ describe("user surface", () => {
 
 describe("docs surface", () => {
   test("docs pages and README count; the spec tree never does", () => {
-    expect(isDocs("docs/REST_API_DESIGN_GUIDELINES.md", DOCS_PREFIXES)).toBeTrue();
+    expect(isDocs("docs/API_GUIDE.md", DOCS_PREFIXES)).toBeTrue();
     expect(isDocs("README.md", DOCS_PREFIXES)).toBeTrue();
     expect(isDocs("docs/v1/active/M01_001_P2_CLI_DOCS_PROCESS_AS_CODE.md", DOCS_PREFIXES)).toBeFalse();
     expect(isDocs("docs/v2/pending/M52_001_P2_API_X.md", DOCS_PREFIXES)).toBeFalse();
@@ -39,7 +39,7 @@ describe("code classification", () => {
     expect(isCode("src/lifecycle.ts")).toBeTrue();
     expect(isCode("src/agentsfleetd/tests.zig")).toBeTrue();
     expect(isCode("ui/packages/app/tests/fleet.spec.ts")).toBeTrue();
-    expect(isCode("docs/VERIFY_TIERS.md")).toBeFalse();
+    expect(isCode("docs/RUNBOOK.md")).toBeFalse();
     expect(isCode("SOUL.md")).toBeFalse();
   });
 });

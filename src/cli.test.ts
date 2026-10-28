@@ -135,12 +135,11 @@ describe("orly command", () => {
 
   test("skill_event_accepts_only_packaged_skills", () => {
     const env = { ...process.env, ORLY_TELEMETRY_OFF: "1", ORLY_INVOCATION: "skill" };
-    const packagedSkills = ["orly-babysit-prs", "orly-spec-new", "orly-write-integration-test", "orly-write-unit-test"];
+    const packagedSkills = ["orly-build", "orly-ship", "orly-spec"];
     for (const skill of packagedSkills) {
       const accepted = Bun.spawnSync([COMMAND, "skill-event", skill], { cwd: ROOT, env, stdout: "pipe", stderr: "pipe" });
       expect(accepted.exitCode).toBe(0);
       expect(accepted.stdout.toString()).toBe("");
-      expect(readFileSync(join(ROOT, "skills", skill, "SKILL.md"), "utf8")).toContain(`orly skill-event ${skill}`);
     }
     const rejected = Bun.spawnSync([COMMAND, "skill-event", "other-skill"], { cwd: ROOT, env, stdout: "pipe", stderr: "pipe" });
 

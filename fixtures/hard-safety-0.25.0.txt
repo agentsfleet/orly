@@ -1,0 +1,15 @@
+- **Skip hooks/signing.** Never `--no-verify`/`--no-gpg-sign`/`-c commit.gpgsign=false`. Hook fails → fix cause.
+- **Plaintext secrets in entity tables.** Store vault `key_name` ref, resolve via `crypto_store.load()`.
+- **Static strings in SQL schema.** No `DEFAULT 'value'`/`CHECK (col IN ('a','b'))`. Enforce in app via named constants.
+- **Resolving/printing credentials.** `op read 'op://...'` at runtime — never paste/log. Vault names come from the environment, never from a rules file.
+- **Force-push default branch** (`main`/`master`).
+- **Install-process launches in core paths.** Native SDKs. Exception: personal dev tools (`op`/`gh`/`glab`/`oracle`).
+- Destructive git: `reset --hard`, `clean -fd`, `checkout --`, `restore --source`, `branch -D`, `worktree remove --force`, broad `rm`.
+- Merging/closing/ready-from-draft of another user's PR; force-push (`--force`/`--force-with-lease`); rebase+force-push published branch; `commit --amend` on published.
+- Releases: `gh release create`, `git push --tags`. `/ultrareview` (billed). CI/CD edits (`.github/workflows/**`, deploy configs).
+- Edits outside active spec's Files-Changed scope (no opportunistic cleanup bundling).
+- Cross-repo writes to `~/Projects/docs/` — own-branch flow per Operational defaults.
+- **Patching a harness/gate/hook to silence its hit.** When a gate script, gitleaks, or a pre-commit/pre-push hook fires, the default is to **fix the violating code** — restructure, split, or use the gate's override comment. Editing the harness evades the rule it enforces; only on explicit per-session user direction naming the harness + reason. Handoff-doc "prior approvals" don't carry forward.
+- **New secret-scanner suppressions.** A `gitleaks:allow` or `.gitleaksignore` entry needs the user's explicit in-session approval — never the agent's call, since it can hide a live credential. Default: restructure so the scanner passes unassisted (derive the value at runtime, move it out of the repo). Removing a suppression needs no approval.
+- Reverting changes the agent did not create. Branch mutation outside lifecycle transitions. Cross-worktree edits.
+- Unexpected changes in files you're editing → stop and ask; don't overwrite as stale.

@@ -101,12 +101,14 @@ SPEC AUTHORING RULES (load-bearing; the one comment that survives):
 | `registry.json`, `schemas/`, `.orly/orly.json` | EDIT | packs list standards; `language.zig` and `product.agentsfleet` removed |
 | `src/criteria_spec.ts`, `src/spec_obligations.ts`, `src/spec_test_search.ts`, `src/judgments/`, `src/spec_completion.test.ts`, `src/spec_template_io.test.ts`, `src/spec_template.test.ts`, `src/spec_baseline.test.ts`, `src/spec_rehearsal.test.ts`, `src/gates_spec.test.ts`, the `src/judgment_*.test.ts` files | DELETE | spec criteria, the parser's callers and `orly judge` |
 | `src/criteria.ts`, `src/gates.ts`, `src/validation.ts`, `src/cli.ts`, `src/cli_help.ts`, `src/doc_rules.ts`, `src/git_env.ts`, `src/install.ts`, `src/installation/plan.ts`, `src/loaders.ts`, `src/render.ts`, `src/model.ts`, `src/references.ts` | EDIT | no spec criteria; `conform` optional; no `judge`; rule pages are `standards/`; install standards and the agent |
-| `src/standards_catalogue.test.ts` | CREATE | §1 catalogue rules |
+| `src/standards.ts`, `src/standards_catalogue.test.ts`, `fixtures/standards-rule-ids.json`, `fixtures/hard-safety-0.25.0.txt` | CREATE | §1 rule-block parser and catalogue rules; §2 Hard Safety fixture |
 | `src/helpers.ts`, `src/helpers.test.ts` | CREATE | §7: read the helper pins from `registry.json`, find each runtime's installed gstack and EGM, report drift with the install command |
 | `src/gates.test.ts`, `src/criteria.test.ts`, `src/scanner_index.test.ts`, `src/install.test.ts`, `src/install_packs.test.ts`, `src/render.test.ts`, `src/references.test.ts`, `src/gates_test_support.ts` | EDIT | the new gate list and standards |
 | `audits/` (23 files and `fixtures/`), `dispatch/` (19 pages, 7 scripts), `packs/language/*/rules.md` (5) | DELETE | content in standards; checks in linters or review |
 | `docs/CHANGELOG_VOICE.md`, `DOCUMENTATION_RULES.md`, `EXECUTE_DOC_READS.md`, `HARNESS_VERIFY_OUTPUT.md`, `LIFECYCLE_PATTERNS.md`, `LOGGING_STANDARD.md`, `RELEASE_TEMPLATE.md`, `REST_API_DESIGN_GUIDELINES.md`, `SCHEMA_CONVENTIONS.md`, `VERIFY_TIERS.md`, `TEMPLATE.md`, `DISPATCH_ARCHITECTURE.md`, `DISPATCH_REVIEW_DISPOSITION.md`, `RULE_ENFORCEMENT.md`, `JUDGMENTS.md`, `docs/greptile-learnings/` | DELETE | content in standards, or the retired dispatch, judge and harness systems |
-| `evals/dispatch/`, `evals/ledger/`, `evals/llms/`, `evals/judgments/`, `evals/test-agents-md.sh`, `evals/test-dispatch-parity.sh` | DELETE | evaluations of retired systems |
+| `evals/dispatch/`, `evals/ledger/`, `evals/llms/`, `evals/judgments/`, `evals/test-agents-md.sh`, `evals/test-dispatch-parity.sh`, `docs/architecture/judgment-evaluation.md` | DELETE | evaluations of retired systems |
+| `evals/install/cases.sh`, `evals/install/release_cases.sh`, `evals/install/run.sh` | EDIT | install proofs check standards and the reviewer instead of dispatch pages |
+| `llms.txt`, `src/telemetry.ts`, the remaining `src/*.test.ts` that named retired paths | EDIT | new layout and skill names |
 | `Makefile`, `.githooks/pre-commit`, `.githooks/pre-push` | EDIT | drop deleted steps, the read-logging check, and deleted paths from the governance pattern |
 | `docs/ORLY_ARCHITECTURE.md`, `README.md`, `docs/CHANGELOG.md`, `package.json` | EDIT | the new architecture; "Changing a standard"; version 0.26.0 |
 | `docs/v2/pending/M15_001_P1_GOV_SKILL_RULES_BECOME_STANDARDS.md` | CREATE | this spec |
@@ -140,18 +142,18 @@ SPEC AUTHORING RULES (load-bearing; the one comment that survives):
 
 Each standard is Markdown with one block per rule: `### <ID> — <statement>`, then **Applies to** (globs), **Checked by** (`review`, `gate: <criterion>` or `linter: <tool> <rule>`), **Bad**, **Good** and **Why**. No step lists. A standard over 400 lines splits into `<name>-<topic>.md`. Sources: the pages under Files Changed and the promoted learnings in Discovery. Removed by owner decision: RULE UFS, every Zig rule, Redis wording (Dragonfly where a datastore is named), and the template's readiness table, which EGM's implementation-readiness reviewer replaces.
 
-- **Dimension 1.1** — every rule block carries all five fields → Test `every rule declares its five fields`
-- **Dimension 1.2** — every identifier in 0.25.0's pages appears in exactly one standard or in the removed-by-decision list → Test `every rule identifier has one home`
-- **Dimension 1.3** — no standard mentions Zig, Redis or UFS → Test `standards name no retired stack`
-- **Dimension 1.4** — every standard is at most 400 lines and every relative link resolves → Test `standards stay short and links resolve`
+- **Dimension 1.1** — DONE — every rule block carries all five fields → Test `every rule declares its five fields`
+- **Dimension 1.2** — DONE — every identifier in 0.25.0's pages appears in exactly one standard or in the removed-by-decision list → Test `every rule identifier has one home`
+- **Dimension 1.3** — DONE — no standard mentions Zig, Redis or UFS → Test `standards name no retired stack`
+- **Dimension 1.4** — DONE — every standard is at most 400 lines and every relative link resolves → Test `standards stay short and links resolve`
 
 ### §2 — The always-on file
 
 `core/operating-model.md` and `SOUL.md` keep what applies every turn: names, banned vocabulary, acronyms, the evidence invariant, the self-repair boundary, Hard Safety word for word, auto-mode, the gate's anchor invariant, reply shape, and one new line: gstack `/learn` is not used; durable knowledge goes to a standard, `.orly/LOCAL.md` or architecture docs. `SOUL.md:63-64` becomes "skills are config, not code: one `SKILL.md` whose description is its trigger; rules live in standards; no YAML allowlists in skills". Three promoted learnings join them: challenge the owner's premise and name edge cases before agreeing; prefer the smallest deterministic, testable design and add no configurable engine unasked; a delegated agent gets one question or one directory of diff, and a fork sharing the worktree runs no Git. The reference-checkout line (`core/operating-model.md:94`) names only paths that exist: `oss/js/supabase`, `oss/js/cli`, `oss/rs/arrow-rs`, `oss/rs/builder`, `oss/rs/codex`, `oss/ocaml/mirage` and `agentsfleet/rustd/`; `oss/supabase`, `oss/cli`, `oss/rs/exonum` and `oss/ghostty` are gone (`ls ~/Projects/oss`). The renderer appends one index line per selected skill and standard.
 
-- **Dimension 2.1** — the rendered `AGENTS.md` for the full pack set is at most 16,384 bytes → Test `rendered agents file fits sixteen kibibytes`
-- **Dimension 2.2** — every Hard Safety bullet in the 0.25.0 render appears unchanged → Test `hard safety survives verbatim`
-- **Dimension 2.3** — the render says gstack `/learn` is not used → Test `always-on file disallows gstack learn`
+- **Dimension 2.1** — DONE — the rendered `AGENTS.md` for the full pack set is at most 16,384 bytes → Test `rendered agents file fits sixteen kibibytes`
+- **Dimension 2.2** — DONE — every Hard Safety bullet in the 0.25.0 render appears unchanged → Test `hard safety survives verbatim`
+- **Dimension 2.3** — DONE — the render says gstack `/learn` is not used → Test `always-on file disallows gstack learn`
 
 ### §3 — Three skills and one reviewer
 
@@ -162,11 +164,11 @@ Each standard is Markdown with one block per rule: `### <ID> — <statement>`, t
 | `orly-ship` | review, fix, move the spec to `done/`, `orly gate pr`, PR body, babysit CI and greptile until two quiet polls, then after your merge pull and prune | gstack `/review`, `orly-standards-reviewer`, `standards/pr.md`, `standards/changelog.md` |
 | `orly-standards-reviewer` | sees the diff, the spec and the matching standards only; reports `{rule ID, file:line, fix}`; nothing it cannot tie to a rule | read-only tools |
 
-Packs select standards (`"standards": [...]` beside `extensions`). Install writes `.orly/standards/`, the skills to `.orly/skills/` with runtime stubs as today, and the agent to `.claude/agents/`. **Implementation default:** where a runtime has no subagent support, `orly-ship` runs the reviewer's instructions inline.
+Packs select standards through their existing `managed_files`, and the render index lists every selected file that holds rule blocks. Install writes `.orly/standards/`, the skills to `.orly/skills/` with runtime stubs as today, and the agent to `.claude/agents/`. **Implementation default:** where a runtime has no subagent support, `orly-ship` runs the reviewer's instructions inline.
 
-- **Dimension 3.1** — each skill's `name` equals its directory and its description names its trigger → Test `skill front matter names its directory`
-- **Dimension 3.2** — `--with language.rust` installs `languages/rust.md` and no other language standard → Test `install writes only selected standards`
-- **Dimension 3.3** — updating a 0.25.0 install retires unmodified pages and scripts and stops on an edited one → Test `update retires pages and stops on edits`
+- **Dimension 3.1** — DONE — each skill's `name` equals its directory and its description names its trigger → Test `skill front matter names its directory`
+- **Dimension 3.2** — DONE — `--with language.rust` installs `languages/rust.md` and no other language standard → Test `install writes only selected standards`
+- **Dimension 3.3** — DONE — updating a 0.25.0 install retires unmodified pages and scripts and stops on an edited one → Test `update retires pages and stops on edits`
 - **Dimension 3.4** — on PR #70's diff, the reviewer reports only findings tied to a rule ID → Test `reviewer ties every finding to a rule`
 - **Dimension 3.5** — Claude Code and Codex each load the three skills from the installed layout → Test `each runtime loads the three skills`
 
@@ -174,16 +176,16 @@ Packs select standards (`"standards": [...]` beside `extensions`). Install write
 
 Delete everything under `audits/` and `dispatch/`, the 16 pages and `docs/greptile-learnings/`, the four evaluation suites and the two `evals/test-*.sh` files. `make conform` keeps `bin/orly verify` only; `make audit` adds `bun test src/standards_catalogue.test.ts`; `.githooks/pre-commit` drops its `audits/doc-read.sh` call. `src/doc_rules.ts` treats `standards/` as rule pages in place of `dispatch/` and `audits/` (line 24). `docs/ORLY_ARCHITECTURE.md` gains "Changing a standard".
 
-- **Dimension 4.1** — no tracked file references a deleted path → Test `no reference to a retired file`
-- **Dimension 4.2** — `make conform` and `make audit` pass with no `audits/` or `dispatch/` → Test `make audit passes without scripts`
+- **Dimension 4.1** — DONE — no tracked file references a deleted path → Test `no reference to a retired file`
+- **Dimension 4.2** — DONE — `make conform` and `make audit` pass with no `audits/` or `dispatch/` → Test `make audit passes without scripts`
 
 ### §5 — The gate checks code and Git only
 
 `orly gate pr` runs `git.branch`, `git.tree`, `git.pushed`, `repo.config`, `docs.language`, `docs.updated` and the declared `verify.*` commands. Every `spec.*` criterion, the spec parser and `orly judge` (which imports the parser, `src/judgments/spec_input.ts:6`) are removed; spec quality is EGM's review at authoring. A repository may declare no `conform`; `orly gate work` then runs `repo.config` alone (today `src/validation.ts:50` requires one). Overrides keep working for every remaining criterion.
 
-- **Dimension 5.1** — `orly gate pr` on a branch with an active spec runs no criterion named `spec.*` → Test `pr gate runs no spec criterion`
-- **Dimension 5.2** — a configuration with no `conform` passes `repo.config` and `orly gate work` → Test `work gate passes without conform`
-- **Dimension 5.3** — `orly judge` is an unknown command → Test `judge is not a command`
+- **Dimension 5.1** — DONE — `orly gate pr` on a branch with an active spec runs no criterion named `spec.*` → Test `pr gate runs no spec criterion`
+- **Dimension 5.2** — DONE — a configuration with no `conform` passes `repo.config` and `orly gate work` → Test `work gate passes without conform`
+- **Dimension 5.3** — DONE — `orly judge` is an unknown command → Test `judge is not a command`
 
 ### §6 — Consumer proof on `agentsfleet`
 
@@ -195,8 +197,8 @@ On a copy of `agentsfleet` (orly 0.17.0, `jq -r .orly_version .orly/orly.json`; 
 
 Every session, on the owner's Mac or in a Codex cloud task, runs the same orly, gstack and EGM. Each orly release pins the helper versions it was tested with in `registry.json` under `helpers` (gstack by `VERSION` and commit, EGM by commit), and `orly doctor` compares what is installed for each runtime on the machine with those pins: gstack's `VERSION` under `~/.claude/skills/gstack`, `${CODEX_HOME:-~/.codex}/skills/gstack` and `~/.agents/skills/gstack`; EGM's Git commit under `~/.claude/plugins/marketplaces/egm` and `${CODEX_HOME:-~/.codex}/plugins/cache/egm/egm/<version>`. A missing or drifted helper is red, and the line prints the exact install command for the pin. The skills have no fallback: when `orly doctor` is red, they stop and print its lines. Codex cloud tasks see only what the environment installs, because "Personal skills from your local computer aren't synced to cloud environments" (`https://learn.chatgpt.com/docs/environments/cloud-environments`); the environment therefore installs orly at the repository's pin, gstack at the pinned commit with `./setup --host codex --no-browser`, and EGM with `codex plugin marketplace add google/elephant-goldfish-model --ref <commit>` then `codex plugin add egm@egm`, and its start skill ends with `orly doctor`. A cloud container pushes nothing and runs Git hooks only when `core.hooksPath` is set, so `orly-build` and `orly-ship` run `orly gate work` and `orly gate verify` themselves and stop before `orly gate pr`; on the Pull Request, CI runs `orly gate work` (`agentsfleet` `governance.yml`) and the lint, unit and integration lanes. `docs/ORLY_ARCHITECTURE.md` gains "Codex cloud environment" with that install brief.
 
-- **Dimension 7.1** — a helper whose installed version differs from its pin, or is missing for a runtime present on the machine, turns `orly doctor` red with the pinned install command → Test `doctor reports helper drift with the install command`
-- **Dimension 7.2** — helpers matching their pins for every runtime present keep `orly doctor` green → Test `doctor passes with pinned helpers`
+- **Dimension 7.1** — DONE — a helper whose installed version differs from its pin, or is missing for a runtime present on the machine, turns `orly doctor` red with the pinned install command → Test `doctor reports helper drift with the install command`
+- **Dimension 7.2** — DONE — helpers matching their pins for every runtime present keep `orly doctor` green → Test `doctor passes with pinned helpers`
 - **Dimension 7.3** — a Codex cloud task on this branch lists the three skills plus gstack's and EGM's, `orly doctor` is green, and `orly gate verify` is green → Test `cloud task matches the local experience`
 
 ## Interfaces
@@ -211,7 +213,7 @@ Every session, on the owner's Mac or in a Codex cloud task, runs the same orly, 
 - **Good:** a private `ErrorKind` passed to `error_shell!`, with `error_lifts!` for `From`
 - **Why:** one shape gives every error a code, a backtrace and a source chain
 
-### LOG-RS-1 — Runtime Rust never prints to a stream
+### LOG-STREAM — Runtime Rust never prints to a stream
 - **Applies to:** `**/src/**/*.rs`
 - **Checked by:** linter: clippy print_stdout, print_stderr, dbg_macro
 - **Bad:** `eprintln!("claim failed: {err}")`
@@ -219,7 +221,7 @@ Every session, on the owner's Mac or in a Codex cloud task, runs the same orly, 
 - **Why:** stream writes skip the log pipeline and its fields
 ```
 
-**Pack shape:** `"language.rust": { "extensions": [".rs"], "standards": ["languages/rust.md"], "managed_files": [] }`.
+**Pack shape:** `"language.rust": { "extensions": [".rs"], "managed_files": [{ "source": "standards/languages/rust.md", "target": "standards/languages/rust.md" }] }`.
 
 **Helper pins in `registry.json`:** `"helpers": { "gstack": { "source": "https://github.com/garrytan/gstack", "version": "1.91.271.0", "commit": "584e9c15352de1f1c42d237dd3c268d6284bfdee" }, "egm": { "source": "https://github.com/google/elephant-goldfish-model", "commit": "a8380ab5f0aba392c97e31c79f9a6666b3f09f14" } }`. A pin moves only in an orly release that was run with the new version.
 
@@ -278,7 +280,7 @@ No product or operator signal changes. §6 records managed files, always-on byte
 | 3.4 | manual | `reviewer ties every finding to a rule` | procedure: run the reviewer on PR #70's diff; evidence: findings in Session Notes, each with a rule ID |
 | 3.5 | manual | `each runtime loads the three skills` | procedure: in a fixture repository, ask Claude Code and Codex for their skill list; evidence: transcripts in Session Notes |
 | 4.1 | unit | `no reference to a retired file` | tracked files → no deleted path cited; `audits/` and `dispatch/` absent |
-| 4.2 | integration | `make audit passes without scripts` | `make audit` on the branch → exit 0 |
+| 4.2 | manual | `make audit passes without scripts` | procedure: run `make audit` on the branch (it runs the suite, so it cannot run inside it); evidence: exit 0 and its counts in Session Notes |
 | 5.1 | integration | `pr gate runs no spec criterion` | repository with an active spec → `orly gate pr` rows contain no `spec.` name |
 | 5.2 | unit | `work gate passes without conform` | `.orly/orly.json` with only `verify.unit` → `repo.config` passes; `orly gate work` exits 0 |
 | 5.3 | unit | `judge is not a command` | `orly judge spec x.md` → exit 1 with the unknown-command message |
@@ -359,6 +361,7 @@ No product or operator signal changes. §6 records managed files, always-on byte
 - **Superseded drafts** — the TypeScript audit engine and the Rocq-proved gate core (`.orly/judgments/superseded-m15-drafts/`), and the 23-skill version of this file (`32ebffc`).
 - **Learnings triage** — Oct 28, 2026, four read-only subagents over 800 gstack learnings (latest per key, `~/.gstack/projects/agentsfleet-{agentsfleet,orly}/learnings.jsonl`): 236 promoted into 72 rows, merged to 56 rules; 266 one-off; 197 already covered; 69 stale (33 Zig or Redis, 36 dead paths); 32 unverifiable. Into orly standards: `tests.md` 7 (a verdict is the command's own logged exit status; an absence claim needs a known positive; fix a flaky test at its race; prove a branch reachable before testing it; mutate a value for a red run; isolate live tests on every scope; strip `GIT_*` in scratch repositories), `code.md` 5 (`-z` for path lists; `git symbolic-ref --quiet HEAD`; widen an existing resolver before adding a seam; sweep deletes and renames repository-wide; anchor bulk edits and assert their count), `pr.md` 2 (name paths when the index is shared; branch from a fetched `origin/main`), `spec.md` 2 (numbers from a fetched `origin/main`; named tests exist before a Dimension is `DONE`), `languages/shell.md` 4, `languages/rust.md` 2, `languages/typescript.md` 2, `domains/sql.md` 5, `domains/logging.md` 1; always-on 4 (§2, with the reference-checkout fix). Into `agentsfleet` through its migration (§6): 17 facts for `.orly/LOCAL.md` and 5 notes for `docs/architecture/`, listed below. Reported by the triage as defects, not rules, and unverified by the author: an OpenTelemetry cardinality cap that counts runner slots instead of series (`metrics/instrument/view.rs:62`); `docs/development.md:301` saying acceptance runs on pull requests; the REST guide allowing `{gate_id}:approve` at line 88 and refusing it at 572-576; no check that `public/openapi.json` is regenerated.
 - **For `agentsfleet`'s `.orly/LOCAL.md`** (each verified by its triage agent against current source; re-check at migration): (1) one Rust lane per machine, only with at least 50 GB free; reclaim with `cargo clean`, never `trash`; (2) cargo results count only from `rustd/` with `--all-features` over a lane's crate set, a `-p` failure is retried workspace-wide, `--no-fail-fast` goes before `--`; (3) a red after `KEEP_TEST_STATE=1` or an ad-hoc run counts only after `make _reset-test-db`, `make _migrate-test-db` and a clean rerun; (4) ad-hoc `#[ignore]` tests need make's exported environment, an "X is unset" panic is an invocation error, `AFD_TEST_LOG=1` shows daemon logs, one ignored suite runs through a layered makefile; (5) a green PR proves neither Playwright (`make dry-app`) nor acceptance (after merge), so rendered-page changes run their specs locally; (6) one lane run per checkout, stop runs by PID never `pkill -f`, a vitest coverage-lock red is not a test failure; (7) a new error code lands as a family const, a `REGISTRY` row and a `problem/` entry in one commit; (8) regenerate `public/openapi.json` from `rustd/` with `--no-banner`; (9) never commit the `next-env.d.ts` that `next dev` rewrites, and local `next dev` calls api-dev on `origin/main`; (10) Dragonfly nodes announce 127.0.0.1, so probe inside the container with `redis-cli -c`, recreate only through `make _ensure-test-infra`, and force-recreate after changing `scripts/dragonfly-cluster.sh`; (11) Linux-only `afr_sandbox` and `afr_executor` code is linted and tested on Linux, which a Codex cloud task provides; (12) docs-repository API pages for a new route commit after the `agentsfleet` PR merges; (13) a new route updates `INVENTORY` in `route_inventory.rs` and the counts in `route_meta_total.rs`; (14) `ui/packages/app/app/icon.svg` is a copy of `brand.svg`, never a symlink; (15) an orly pin mismatch is fixed with an install into a task-owned prefix, never a global change; (16) cargo-mutants runs `--in-place` in a throwaway worktree; (17) pre-commit grades the staged index, so commit whole files. **For `docs/architecture/`:** span fields use `field::Empty` and `Span::record`; a metric cardinality limit caps total series; a multi-write rollback is proven by a `RAISE` trigger on a private database; stored and authored fleet configs share one parse; row locks are the standard exclusive-access tool and advisory locks live only in the migration lock.
+- **Product facts generalised out of the standards** (for `agentsfleet`'s `.orly/LOCAL.md` in §6): schema slots `schema/*.sql` and statement files `rustd/crates/**/src/**/*.sql`; migration list `rustd/crates/afd_db/src/migration.rs`; identifiers from `afd_core::id` and secret bytes from `afd_crypto::entropy`; `afd_db::constraint::violates_foreign_key`; wire types in `afd_wire`; routes in `rustd/crates/afd_http/src/route/*.rs` and handlers in `rustd/crates/afd_api_*/src/**`; `afd_validate` and `afd_core::paging`; error codes in `rustd/crates/afd_core/src/error_code/**` with the `UZ-` prefix; problem types under `https://docs.agentsfleet.net/errors/`; `public/openapi.json` regenerated from `rustd/` with `--no-banner`; auth paths `afd_auth`, `afd_credential`, `ui/packages/app/lib/auth/**`; the Dragonfly `session/verify_consume.lua` script; `DRAGONFLY_URL`; the `make` lanes; `afd_core::error_lifts!`; `afd_events` `test-util`.
 - **Codex cloud** — read Oct 28, 2026 (`https://learn.chatgpt.com/docs/environments/cloud-environments`): an environment records an install script and a start skill; repository skills are available, personal skills are not; network is all public or the package-manager preset plus allowed domains; Pro and Business tasks get 4 vCPUs, 16 GiB memory and 32 GiB disk, Plus 2 vCPUs, 8 GiB and 8 GiB. unverified: Docker availability, whether hooks run, and whether a cloud task loads gstack and EGM installed in the container's home; Dimension 7.3 settles them. A full `rustd` lane wanted at least 50 GB free in the learnings, more than a cloud task's disk, so cloud tasks run one lane and CI runs the rest. The owner's plan is Pro or Business (D7).
 - **Helper parity today** — read Oct 28, 2026 on the owner's Mac: gstack is 1.91.271.0 at `584e9c15` for Claude, Codex and `~/.agents` (`cat …/VERSION`; `git -C ~/.claude/skills/gstack rev-parse HEAD`), a commit that exists upstream, 20 behind `main`. EGM differs between runtimes: Claude's marketplace clone is `3d0b348`, Codex's install is `a8380ab`, and Claude's is 89 commits behind (`gh api repos/google/elephant-goldfish-model/compare/a8380ab…3d0b348` → `behind_by: 89`). The first pins are gstack `584e9c15352de1f1c42d237dd3c268d6284bfdee` and EGM `a8380ab5f0aba392c97e31c79f9a6666b3f09f14`. `codex plugin marketplace add` takes `owner/repo[@ref]` and `--ref` (`codex plugin marketplace add --help`, codex-cli 0.165.0); gstack's setup takes `--host codex` and `--no-browser` (gstack `README.md:39-42,71`).
 - **Open blockers** — (0) unverified: whether Codex supports project subagents; Dimension 3.5 settles it, and the inline fallback in §3 covers a no. (1) The owner approves any edit to `agentsfleet`'s `.github/workflows/governance.yml` in its migration.

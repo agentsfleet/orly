@@ -11,7 +11,7 @@ const ROOT = resolve(import.meta.dir, "..");
 const RUST_SOURCE = "src/lib.rs";
 const SHELL_PACK = "language.shell";
 const RUST_PACK = "language.rust";
-const ZIG_PACK = "language.zig";
+const GO_PACK = "language.go";
 
 function scratch(): string {
   const root = mkdtempSync(join(tmpdir(), "orly-config-"));
@@ -35,7 +35,7 @@ describe("selectPacks", () => {
     const packs = selectPacks(model, root, []);
 
     expect(packs).toContain(RUST_PACK);
-    expect(packs).not.toContain(ZIG_PACK);
+    expect(packs).not.toContain(GO_PACK);
   });
 
   test("never infers an opt-in pack, and takes it when the config names it", async () => {
@@ -52,17 +52,17 @@ describe("selectPacks", () => {
     expect(() => selectPacks(model, scratch(), ["language.cobol"])).toThrow("unknown pack");
   });
 
-  // Regression: install writes shell gate scripts. Counting them would select
-  // the shell pack on the next install, which writes more shell — a set that
-  // never settles. Files the lock records are excluded from the scan.
+  // Regression: install once wrote shell gate scripts. Counting them would
+  // select the shell pack on the next install, which writes more shell — a set
+  // that never settles. Files the lock records are excluded from the scan.
   test("files orly materialised are excluded, so selection settles", async () => {
     const model = await RulesModel.load(ROOT);
     const root = scratch();
-    mkdirSync(join(root, "dispatch"), { recursive: true });
-    writeFileSync(join(root, "dispatch/write_any.sh"), "#!/usr/bin/env bash\n");
+    mkdirSync(join(root, "standards"), { recursive: true });
+    writeFileSync(join(root, "standards/check.sh"), "#!/usr/bin/env bash\n");
 
     expect(selectPacks(model, root, [])).toContain(SHELL_PACK);
-    expect(selectPacks(model, root, [], new Set(["dispatch/write_any.sh"]))).not.toContain(SHELL_PACK);
+    expect(selectPacks(model, root, [], new Set(["standards/check.sh"]))).not.toContain(SHELL_PACK);
   });
 });
 
@@ -243,23 +243,23 @@ describe("managedDrift", () => {
   test("a managed file git refuses to track is drift, even though it is present", async () => {
     const root = scratch();
     Bun.spawnSync(["git", "init"], { cwd: root });
-    mkdirSync(join(root, ".claude/skills/orly-spec-new"), { recursive: true });
-    writeFileSync(join(root, ".claude/skills/orly-spec-new/SKILL.md"), "skill\n");
+    mkdirSync(join(root, ".claude/skills/orly-spec"), { recursive: true });
+    writeFileSync(join(root, ".claude/skills/orly-spec/SKILL.md"), "skill\n");
     writeFileSync(join(root, ".gitignore"), ".claude/skills/\n");
-    const config = { ...(await seedConfig(root)), managed: [".claude/skills/orly-spec-new/SKILL.md"] };
+    const config = { ...(await seedConfig(root)), managed: [".claude/skills/orly-spec/SKILL.md"] };
     const findings = managedDrift(root, config);
     expect(findings).toHaveLength(1);
     expect(findings[0]).toContain("ignored by git");
-    expect(findings[0]).toContain(".claude/skills/orly-spec-new/SKILL.md");
+    expect(findings[0]).toContain(".claude/skills/orly-spec/SKILL.md");
   });
 
   test("the same file reports nothing once the ignore is scoped to spare it", async () => {
     const root = scratch();
     Bun.spawnSync(["git", "init"], { cwd: root });
-    mkdirSync(join(root, ".claude/skills/orly-spec-new"), { recursive: true });
-    writeFileSync(join(root, ".claude/skills/orly-spec-new/SKILL.md"), "skill\n");
-    writeFileSync(join(root, ".gitignore"), ".claude/skills/*\n!.claude/skills/orly-spec-new/\n");
-    const config = { ...(await seedConfig(root)), managed: [".claude/skills/orly-spec-new/SKILL.md"] };
+    mkdirSync(join(root, ".claude/skills/orly-spec"), { recursive: true });
+    writeFileSync(join(root, ".claude/skills/orly-spec/SKILL.md"), "skill\n");
+    writeFileSync(join(root, ".gitignore"), ".claude/skills/*\n!.claude/skills/orly-spec/\n");
+    const config = { ...(await seedConfig(root)), managed: [".claude/skills/orly-spec/SKILL.md"] };
     expect(managedDrift(root, config)).toEqual([]);
   });
 });
@@ -279,14 +279,14 @@ describe("writeConfig", () => {
       digests: {},
     };
     await writeConfig(root, mine);
-    await writeConfig(root, { ...(await readConfig(root))!, orly_version: "0.4.0", managed: ["AGENTS.md", "dispatch/write_rust.md"] });
+    await writeConfig(root, { ...(await readConfig(root))!, orly_version: "0.4.0", managed: [".orly/standards/languages/rust.md", "AGENTS.md"] });
 
     const after = await readConfig(root);
     expect(after?.packs).toEqual(["persona.indy"]);
     expect(after?.commands).toEqual({ conform: [["make", "audit"]] });
     expect(after?.surfaces).toEqual({ user: ["src/"], docs: ["docs/"] });
     expect(after?.orly_version).toBe("0.4.0");
-    expect(after?.managed).toEqual(["AGENTS.md", "dispatch/write_rust.md"]);
+    expect(after?.managed).toEqual([".orly/standards/languages/rust.md", "AGENTS.md"]);
   });
 
   test("managed paths are sorted, so a rewrite diffs cleanly", async () => {

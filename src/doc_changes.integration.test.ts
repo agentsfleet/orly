@@ -14,7 +14,7 @@ const SLOP = "---\ntitle: Install\n---\n\n## Install\n\nWe leverage a robust sol
 const README = "README.md";
 const VERSION = "0.15.0";
 const CLAUDE = "CLAUDE.md";
-const SKILL = ".agents/skills/orly-spec-new/SKILL.md";
+const SKILL = ".agents/skills/orly-spec/SKILL.md";
 
 afterEach(cleanupTemporaryDirectories);
 
@@ -158,7 +158,7 @@ describe("changed documentation gate with real Git", () => {
     rmSync(join(root, README));
     await Bun.write(join(root, ".gitignore"), "node_modules/\n");
     await Bun.write(join(root, "node_modules/fixture/README.md"), SLOP);
-    await Bun.write(join(root, ".orly/docs/DOCUMENTATION_RULES.md"), SLOP);
+    await Bun.write(join(root, ".orly/standards/docs.md"), SLOP);
     await Bun.write(join(root, "docs/v1/done/record.md"), SLOP);
     expect(evaluate().ok).toBeTrue();
   });

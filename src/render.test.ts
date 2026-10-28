@@ -8,14 +8,15 @@ const ROOT = resolve(import.meta.dir, "..");
 
 // Pack sets stand in for the profiles they replaced: the renderer now takes the
 // list directly, so a test names exactly the packs whose filtering it asserts.
-const AGENTSFLEET_PACKS = ["universal.authoring", "language.zig", "domain.sql", "product.agentsfleet"];
-const CACHE_KIT_PACKS = ["universal.authoring", "language.rust", "language.shell", "domain.documentation"];
+const AGENTSFLEET_PACKS = ["universal.authoring", "language.rust", "domain.sql", "product.agentsfleet"];
 const DOCS_PACKS = ["universal.authoring", "language.mdx", "domain.documentation", "domain.changelog"];
-const KERNEL_PACKS = ["universal.authoring", "language.zig", "language.rust", "domain.sql"];
+const KERNEL_PACKS = ["universal.authoring", "language.rust", "domain.sql"];
 // This repository's own selection, as `.orly/orly.json` declares it — the
 // root render must stay current against exactly what `orly update` writes.
-const DOTFILES_PACKS = ["universal.authoring", "language.zig", "language.typescript", "language.javascript", "language.rust", "language.go", "language.python", "language.shell", "language.mdx", "domain.sql", "domain.http", "domain.auth", "domain.documentation", "domain.changelog", "workflow.specifications", "workflow.governance", "product.agentsfleet", "persona.indy", "workflow.skills"];
+const DOTFILES_PACKS = ["universal.authoring", "language.typescript", "language.javascript", "language.rust", "language.go", "language.python", "language.shell", "language.mdx", "domain.sql", "domain.http", "domain.auth", "domain.documentation", "domain.changelog", "workflow.specifications", "workflow.governance", "product.agentsfleet", "persona.indy", "workflow.skills"];
 const DOTFILES_COMMANDS = { conform: [["make", "conform"]], "verify.unit": [["bun", "test", "src"]] };
+const MAX_ALWAYS_ON_BYTES = 16_384;
+const HARD_SAFETY_FIXTURE = "fixtures/hard-safety-0.25.0.txt";
 
 describe("Renderer", () => {
   test("renders byte-stable text for a pack set", async () => {
@@ -31,16 +32,17 @@ describe("Renderer", () => {
     expect(text).not.toContain("Ruleset digest");
   });
 
-  test("filters unselected pack rows from the core document", async () => {
+  test("the standards index lists only the selected packs' standards", async () => {
     const renderer = new Renderer(await RulesModel.load(ROOT));
-    const agentsfleet = await renderer.renderText(AGENTSFLEET_PACKS);
+    const rust = await renderer.renderText(AGENTSFLEET_PACKS);
 
-    expect(agentsfleet).toContain("dispatch/write_zig.md");
-    expect(agentsfleet).not.toContain("dispatch/write_rust.md");
+    expect(rust).toContain("`standards/languages/rust.md`");
+    expect(rust).toContain("`standards/domains/sql.md`");
+    expect(rust).not.toContain("`standards/languages/typescript.md`");
 
-    const cacheKit = await renderer.renderText(CACHE_KIT_PACKS);
-    expect(cacheKit).toContain("dispatch/write_rust.md");
-    expect(cacheKit).not.toContain("dispatch/write_zig.md");
+    const typescript = await renderer.renderText(["language.typescript"]);
+    expect(typescript).toContain("`standards/languages/typescript.md`");
+    expect(typescript).not.toContain("`standards/languages/rust.md`");
   });
 
   test("the root render is current and reference-closed", async () => {
@@ -105,6 +107,28 @@ describe("the rendered rules match the machine", () => {
     // What persona is actually for stays behind with it.
     expect(withoutPersona).not.toContain("Indy's reference checkouts");
     expect(withoutPersona).not.toContain("🤠 Indy");
+  });
+
+  test("rendered agents file fits sixteen kibibytes", async () => {
+    const model = await RulesModel.load(ROOT);
+    const text = await new Renderer(model).renderText(Object.keys(model.registry.packs as object), DOTFILES_COMMANDS);
+
+    expect(Buffer.byteLength(text)).toBeLessThanOrEqual(MAX_ALWAYS_ON_BYTES);
+  });
+
+  test("hard safety survives verbatim", async () => {
+    const model = await RulesModel.load(ROOT);
+    const text = await new Renderer(model).renderText(Object.keys(model.registry.packs as object), DOTFILES_COMMANDS);
+    const bullets = (await Bun.file(resolve(ROOT, HARD_SAFETY_FIXTURE)).text()).split("\n").filter(Boolean);
+
+    expect(bullets).toHaveLength(15);
+    expect(bullets.filter((bullet) => !text.includes(bullet))).toEqual([]);
+  });
+
+  test("always-on file disallows gstack learn", async () => {
+    const text = await new Renderer(await RulesModel.load(ROOT)).renderText(DOTFILES_PACKS, DOTFILES_COMMANDS);
+
+    expect(text).toContain("gstack `/learn` is not used");
   });
 
   test("SOUL names the blocking language criterion and its changed-prose scope", async () => {

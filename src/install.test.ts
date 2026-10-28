@@ -21,9 +21,9 @@ describe("install", () => {
 
     expect(result.ok).toBe(true);
     expect(result.packs).toContain("language.rust");
-    expect(result.packs).not.toContain("language.zig");
+    expect(result.packs).not.toContain("language.go");
     expect(existsSync(join(repo, "AGENTS.md"))).toBe(true);
-    expect(existsSync(join(repo, ".orly/dispatch/write_rust.md"))).toBe(true);
+    expect(existsSync(join(repo, ".orly/standards/languages/rust.md"))).toBe(true);
     expect(existsSync(join(repo, ".orly/hooks/pre-commit"))).toBe(true);
     expect(existsSync(join(repo, ".orly/orly.json"))).toBe(true);
   });
@@ -45,13 +45,13 @@ describe("install", () => {
     const repo = newRepository();
     await Bun.write(join(repo, "src/lib.rs"), "pub fn main() {}\n");
     await install(model, { targetRoot: repo, force: false, installHooks: true, orlyVersion: "0.4.0" });
-    await Bun.write(join(repo, ".orly/dispatch/write_rust.md"), "hand-edited\n");
+    await Bun.write(join(repo, ".orly/standards/languages/rust.md"), "hand-edited\n");
 
     const result = await install(model, { targetRoot: repo, force: false, installHooks: true, orlyVersion: "0.4.0" });
 
     expect(result.ok).toBe(false);
     expect(result.written).toEqual([]);
-    expect(await Bun.file(join(repo, ".orly/dispatch/write_rust.md")).text()).toBe("hand-edited\n");
+    expect(await Bun.file(join(repo, ".orly/standards/languages/rust.md")).text()).toBe("hand-edited\n");
   });
 
   // The other half of the same rule: authorship decides. A file orly never
@@ -60,13 +60,13 @@ describe("install", () => {
     const model = await RulesModel.load(ROOT);
     const repo = newRepository();
     await Bun.write(join(repo, "src/lib.rs"), "pub fn main() {}\n");
-    await Bun.write(join(repo, ".orly/dispatch/write_rust.md"), "the repository's own file\n");
+    await Bun.write(join(repo, ".orly/standards/languages/rust.md"), "the repository's own file\n");
 
     const result = await install(model, { targetRoot: repo, force: false, installHooks: true, orlyVersion: "0.4.0" });
 
     expect(result.ok).toBe(false);
-    expect(result.errors.some((error) => error.path === ".orly/dispatch/write_rust.md")).toBeTrue();
-    expect(await Bun.file(join(repo, ".orly/dispatch/write_rust.md")).text()).toBe("the repository's own file\n");
+    expect(result.errors.some((error) => error.path === ".orly/standards/languages/rust.md")).toBeTrue();
+    expect(await Bun.file(join(repo, ".orly/standards/languages/rust.md")).text()).toBe("the repository's own file\n");
     expect(existsSync(join(repo, "AGENTS.md"))).toBe(false);
   });
 
@@ -75,12 +75,12 @@ describe("install", () => {
     const repo = newRepository();
     await Bun.write(join(repo, "src/lib.rs"), "pub fn main() {}\n");
     await install(model, { targetRoot: repo, force: false, installHooks: true, orlyVersion: "0.4.0" });
-    await Bun.write(join(repo, ".orly/dispatch/write_rust.md"), "hand-edited\n");
+    await Bun.write(join(repo, ".orly/standards/languages/rust.md"), "hand-edited\n");
 
     const result = await install(model, { targetRoot: repo, force: true, installHooks: true, orlyVersion: "0.4.0" });
 
     expect(result.ok).toBe(true);
-    expect(await Bun.file(join(repo, ".orly/dispatch/write_rust.md")).text()).not.toBe("hand-edited\n");
+    expect(await Bun.file(join(repo, ".orly/standards/languages/rust.md")).text()).not.toBe("hand-edited\n");
   });
 
   test("rejects a target that is not a git repository, naming the fix", async () => {
@@ -178,13 +178,13 @@ describe("install", () => {
     const outside = mkdtempSync(join(tmpdir(), "orly-install-outside-"));
     try {
       mkdirSync(join(repo, ".orly"), { recursive: true });
-      symlinkSync(outside, join(repo, ".orly/dispatch"));
+      symlinkSync(outside, join(repo, ".orly/standards"));
 
       const result = await install(model, { targetRoot: repo, force: false, installHooks: true, orlyVersion: "0.4.0" });
 
       expect(result.ok).toBe(false);
       expect(result.errors.some((error) => error.message.includes("outside the target repository"))).toBe(true);
-      expect(existsSync(join(outside, "write_rust.md"))).toBe(false);
+      expect(existsSync(join(outside, "code.md"))).toBe(false);
       expect(existsSync(join(repo, "AGENTS.md"))).toBe(false);
     } finally {
       rmSync(outside, { recursive: true, force: true });
@@ -269,19 +269,19 @@ describe("install", () => {
     const config = await readConfig(repo);
     expect(config).toBeDefined();
     expect(config?.orly_version).toBe("0.4.0");
-    expect(config?.managed).toContain(".orly/dispatch/write_rust.md");
+    expect(config?.managed).toContain(".orly/standards/languages/rust.md");
     expect(config?.managed).toContain(".orly/hooks/pre-commit");
   });
 
   test("refuses atomically when a selected pack's file cites a façade no selected pack provides", async () => {
-    // The §4 registry defects (dispatch/lifecycle.md owned by no pack;
-    // dispatch/name_architecture.md behind a pack universal prose didn't
-    // select) were exactly this shape: a synthetic engine root with one pack
-    // whose only managed file cites a dispatch/ path nothing installs.
+    // The §4 registry defects (a cited rule page owned by no pack; another
+    // behind a pack universal prose didn't select) were exactly this shape: a
+    // synthetic engine root with one pack whose only managed file cites a
+    // standards/ path nothing installs.
     const engineRoot = mkdtempSync(join(tmpdir(), "orly-install-broken-engine-"));
     try {
       await Bun.write(join(engineRoot, "core.md"), "core\n");
-      await Bun.write(join(engineRoot, "broken.md"), "cites dispatch/missing.md\n");
+      await Bun.write(join(engineRoot, "broken.md"), "cites standards/missing.md\n");
 
       const registry = {
         schema_version: 1,
@@ -295,7 +295,7 @@ describe("install", () => {
       const result = await install(model, { targetRoot: repo, force: false, installHooks: true, orlyVersion: "0.4.0" });
 
       expect(result.ok).toBe(false);
-      expect(result.errors[0]?.message).toContain("missing dispatch reference");
+      expect(result.errors[0]?.message).toContain("missing standard reference");
       expect(existsSync(join(repo, "broken.md"))).toBe(false);
       expect(existsSync(join(repo, "AGENTS.md"))).toBe(false);
       expect(existsSync(join(repo, ".orly"))).toBe(false);

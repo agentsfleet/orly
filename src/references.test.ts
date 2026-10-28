@@ -7,12 +7,12 @@ import { referenceClosureErrors, renderProfileText } from "./references";
 
 describe("renderProfileText", () => {
   test("keeps selected pack lines and removes their marker", () => {
-    const content = "before\nselected <!-- oracle-packs:language.rust -->\nremoved <!-- oracle-packs:language.zig -->\nafter";
+    const content = "before\nselected <!-- oracle-packs:language.rust -->\nremoved <!-- oracle-packs:language.go -->\nafter";
 
     const rendered = renderProfileText(
       content,
       new Set(["language.rust"]),
-      new Set(["language.rust", "language.zig"]),
+      new Set(["language.rust", "language.go"]),
       "fixture.md",
     );
 
@@ -30,16 +30,16 @@ describe("renderProfileText", () => {
 });
 
 describe("referenceClosureErrors", () => {
-  test("flags missing dispatch references in every rendered Markdown file", async () => {
+  test("flags missing standard references in every rendered Markdown file", async () => {
     const output = mkdtempSync(join(tmpdir(), "orly-references-test-"));
     try {
-      mkdirSync(join(output, "docs"));
-      const documentPath = join(output, "docs/EXECUTE_DOC_READS.md");
-      await Bun.write(documentPath, "| `*.rs` | `dispatch/write_rust.md` |\n");
+      mkdirSync(join(output, "standards"));
+      const documentPath = join(output, "standards/code.md");
+      await Bun.write(documentPath, "| `*.rs` | `standards/languages/rust.md` |\n");
 
       const errors = await referenceClosureErrors(output, [documentPath]);
 
-      expect(errors).toContain("missing dispatch reference: docs/EXECUTE_DOC_READS.md:1 -> dispatch/write_rust.md");
+      expect(errors).toContain("missing standard reference: standards/code.md:1 -> standards/languages/rust.md");
     } finally {
       rmSync(output, { recursive: true, force: true });
     }

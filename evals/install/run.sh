@@ -60,16 +60,16 @@ packed_paths() {
 
 # An initialised repository with one commit, so gate criteria that read git
 # history have something to read.
-# Live dispatch citations in an installed tree. HTML comments are stripped
-# first: docs/TEMPLATE.md carries a per-surface menu of façades a spec author
+# Live standard citations in an installed tree. HTML comments are stripped
+# first: the spec template carries a menu of standards a spec author
 # might cite, and orly's own reference checker skips those for the same reason
 # — grading a menu as a citation would force every repository to take every
 # language pack.
-cited_dispatch_paths() {
+cited_standard_paths() {
   local root="$1"
-  find "$root/.orly/AGENTS.md" "$root/.orly/dispatch" "$root/.orly/docs" -type f -name '*.md' 2>/dev/null \
+  find "$root/.orly/AGENTS.md" "$root/.orly/standards" -type f -name '*.md' 2>/dev/null \
     | while read -r file; do perl -0777 -pe 's/<!--.*?-->//gs' "$file"; done \
-    | grep -oE '\.orly/dispatch/[A-Za-z0-9_.-]+\.md' | sort -u
+    | grep -oE '\.orly/standards/[A-Za-z0-9_./-]+\.md' | sort -u
 }
 
 mk_repo() {

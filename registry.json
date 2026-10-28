@@ -13,99 +13,24 @@
       "extensions": [],
       "managed_files": [
         {
-          "source": "dispatch/write_any.md",
-          "target": "dispatch/write_any.md"
+          "source": "standards/code.md",
+          "target": "standards/code.md"
         },
         {
-          "source": "dispatch/write_any.sh",
-          "target": "dispatch/write_any.sh"
+          "source": "standards/tests.md",
+          "target": "standards/tests.md"
         },
         {
-          "source": "dispatch/lib.sh",
-          "target": "dispatch/lib.sh"
+          "source": "standards/pr.md",
+          "target": "standards/pr.md"
         },
         {
-          "source": "audits/scope.sh",
-          "target": "audits/scope.sh"
+          "source": "standards/domains/architecture.md",
+          "target": "standards/domains/architecture.md"
         },
         {
-          "source": "dispatch/lifecycle.md",
-          "target": "dispatch/lifecycle.md"
-        },
-        {
-          "source": "dispatch/name_architecture.md",
-          "target": "dispatch/name_architecture.md"
-        },
-        {
-          "source": "dispatch/write_pr_description.md",
-          "target": "dispatch/write_pr_description.md"
-        },
-        {
-          "source": "audits/doc-read.sh",
-          "target": "audits/doc-read.sh"
-        },
-        {
-          "source": "audits/rule-ledger-lib.sh",
-          "target": "audits/rule-ledger-lib.sh"
-        },
-        {
-          "source": "audits/ufs.sh",
-          "target": "audits/ufs.sh"
-        },
-        {
-          "source": "audits/logging.sh",
-          "target": "audits/logging.sh"
-        },
-        {
-          "source": "audits/msid-ui.sh",
-          "target": "audits/msid-ui.sh"
-        },
-        {
-          "source": "docs/greptile-learnings/RULES.md",
-          "target": "docs/greptile-learnings/RULES.md"
-        },
-        {
-          "source": "docs/LOGGING_STANDARD.md",
-          "target": "docs/LOGGING_STANDARD.md"
-        },
-        {
-          "source": "audits/ufs-strings.awk",
-          "target": "audits/ufs-strings.awk"
-        },
-        {
-          "source": "audits/logging-rust.awk",
-          "target": "audits/logging-rust.awk"
-        },
-        {
-          "source": "audits/doc-reads.ts",
-          "target": "audits/doc-reads.ts"
-        }
-      ]
-    },
-    "language.zig": {
-      "extensions": [
-        ".zig"
-      ],
-      "managed_files": [
-        {
-          "source": "dispatch/write_zig.md",
-          "target": "dispatch/write_zig.md"
-        },
-        {
-          "source": "dispatch/write_zig.sh",
-          "target": "dispatch/write_zig.sh"
-        },
-        {
-          "source": "audits/deinit-pairs.sh",
-          "target": "audits/deinit-pairs.sh"
-        },
-        {
-          "source": "audits/sql-mod.sh",
-          "target": "audits/sql-mod.sh"
-        },
-        {
-          "source": "docs/LIFECYCLE_PATTERNS.md",
-          "target": "docs/LIFECYCLE_PATTERNS.md"
+          "source": "standards/domains/logging.md",
+          "target": "standards/domains/logging.md"
         }
       ]
     },
@@ -116,12 +41,8 @@
       ],
       "managed_files": [
         {
-          "source": "dispatch/write_ts_adhere_bun.md",
-          "target": "dispatch/write_ts_adhere_bun.md"
-        },
-        {
-          "source": "dispatch/write_ts_adhere_bun.sh",
-          "target": "dispatch/write_ts_adhere_bun.sh"
+          "source": "standards/languages/typescript.md",
+          "target": "standards/languages/typescript.md"
         }
       ]
     },
@@ -132,12 +53,8 @@
       ],
       "managed_files": [
         {
-          "source": "dispatch/write_ts_adhere_bun.md",
-          "target": "dispatch/write_ts_adhere_bun.md"
-        },
-        {
-          "source": "dispatch/write_ts_adhere_bun.sh",
-          "target": "dispatch/write_ts_adhere_bun.sh"
+          "source": "standards/languages/typescript.md",
+          "target": "standards/languages/typescript.md"
         }
       ]
     },
@@ -147,16 +64,8 @@
       ],
       "managed_files": [
         {
-          "source": "dispatch/write_rust.sh",
-          "target": "dispatch/write_rust.sh"
-        },
-        {
-          "source": "audits/rust-error.sh",
-          "target": "audits/rust-error.sh"
-        },
-        {
-          "source": "packs/language/rust/rules.md",
-          "target": "dispatch/write_rust.md"
+          "source": "standards/languages/rust.md",
+          "target": "standards/languages/rust.md"
         }
       ]
     },
@@ -166,8 +75,8 @@
       ],
       "managed_files": [
         {
-          "source": "packs/language/go/rules.md",
-          "target": "dispatch/write_go.md"
+          "source": "standards/languages/go.md",
+          "target": "standards/languages/go.md"
         }
       ]
     },
@@ -177,8 +86,8 @@
       ],
       "managed_files": [
         {
-          "source": "packs/language/python/rules.md",
-          "target": "dispatch/write_python.md"
+          "source": "standards/languages/python.md",
+          "target": "standards/languages/python.md"
         }
       ]
     },
@@ -188,8 +97,8 @@
       ],
       "managed_files": [
         {
-          "source": "packs/language/shell/rules.md",
-          "target": "dispatch/write_shell.md"
+          "source": "standards/languages/shell.md",
+          "target": "standards/languages/shell.md"
         }
       ]
     },
@@ -199,8 +108,8 @@
       ],
       "managed_files": [
         {
-          "source": "packs/language/mdx/rules.md",
-          "target": "dispatch/write_mdx.md"
+          "source": "standards/languages/mdx.md",
+          "target": "standards/languages/mdx.md"
         }
       ]
     },
@@ -210,16 +119,8 @@
       ],
       "managed_files": [
         {
-          "source": "dispatch/write_sql.md",
-          "target": "dispatch/write_sql.md"
-        },
-        {
-          "source": "dispatch/write_sql.sh",
-          "target": "dispatch/write_sql.sh"
-        },
-        {
-          "source": "docs/SCHEMA_CONVENTIONS.md",
-          "target": "docs/SCHEMA_CONVENTIONS.md"
+          "source": "standards/domains/sql.md",
+          "target": "standards/domains/sql.md"
         }
       ]
     },
@@ -227,12 +128,16 @@
       "extensions": [],
       "managed_files": [
         {
-          "source": "dispatch/write_http.md",
-          "target": "dispatch/write_http.md"
+          "source": "standards/domains/http.md",
+          "target": "standards/domains/http.md"
         },
         {
-          "source": "docs/REST_API_DESIGN_GUIDELINES.md",
-          "target": "docs/REST_API_DESIGN_GUIDELINES.md"
+          "source": "standards/domains/http-responses.md",
+          "target": "standards/domains/http-responses.md"
+        },
+        {
+          "source": "standards/domains/http-surface.md",
+          "target": "standards/domains/http-surface.md"
         }
       ]
     },
@@ -240,8 +145,8 @@
       "extensions": [],
       "managed_files": [
         {
-          "source": "dispatch/write_auth.md",
-          "target": "dispatch/write_auth.md"
+          "source": "standards/domains/auth.md",
+          "target": "standards/domains/auth.md"
         }
       ]
     },
@@ -249,12 +154,12 @@
       "extensions": [],
       "managed_files": [
         {
-          "source": "dispatch/write_documentation.md",
-          "target": "dispatch/write_documentation.md"
+          "source": "standards/docs.md",
+          "target": "standards/docs.md"
         },
         {
-          "source": "docs/DOCUMENTATION_RULES.md",
-          "target": "docs/DOCUMENTATION_RULES.md"
+          "source": "standards/docs-pages.md",
+          "target": "standards/docs-pages.md"
         }
       ]
     },
@@ -262,16 +167,8 @@
       "extensions": [],
       "managed_files": [
         {
-          "source": "dispatch/write_changelog.md",
-          "target": "dispatch/write_changelog.md"
-        },
-        {
-          "source": "docs/CHANGELOG_VOICE.md",
-          "target": "docs/CHANGELOG_VOICE.md"
-        },
-        {
-          "source": "docs/RELEASE_TEMPLATE.md",
-          "target": "docs/RELEASE_TEMPLATE.md"
+          "source": "standards/changelog.md",
+          "target": "standards/changelog.md"
         }
       ]
     },
@@ -279,38 +176,18 @@
       "extensions": [],
       "managed_files": [
         {
-          "source": "dispatch/write_spec.md",
-          "target": "dispatch/write_spec.md"
+          "source": "standards/spec.md",
+          "target": "standards/spec.md"
         },
         {
-          "source": "docs/TEMPLATE.md",
-          "target": "docs/TEMPLATE.md"
-        },
-        {
-          "source": "audits/spec-template.sh",
-          "target": "audits/spec-template.sh"
-        },
-        {
-          "source": "audits/spec-template.ts",
-          "target": "audits/spec-template.ts"
+          "source": "standards/spec-template.md",
+          "target": "standards/spec-template.md"
         }
       ]
     },
     "workflow.governance": {
       "extensions": [],
       "managed_files": [
-        {
-          "source": "dispatch/edit_rules.md",
-          "target": "dispatch/edit_rules.md"
-        },
-        {
-          "source": "dispatch/edit_rules.sh",
-          "target": "dispatch/edit_rules.sh"
-        },
-        {
-          "source": "audits/agents-md.md",
-          "target": "audits/agents-md.md"
-        },
         {
           "source": "docs/ORLY_ARCHITECTURE.md",
           "target": "docs/ORLY_ARCHITECTURE.md"
@@ -319,83 +196,50 @@
     },
     "product.agentsfleet": {
       "extensions": [],
-      "managed_files": [
-        {
-          "source": "audits/design-tokens.sh",
-          "target": "audits/design-tokens.sh"
-        },
-        {
-          "source": "audits/error-codes.sh",
-          "target": "audits/error-codes.sh"
-        },
-        {
-          "source": "docs/EXECUTE_DOC_READS.md",
-          "target": "docs/EXECUTE_DOC_READS.md"
-        },
-        {
-          "source": "docs/HARNESS_VERIFY_OUTPUT.md",
-          "target": "docs/HARNESS_VERIFY_OUTPUT.md"
-        },
-        {
-          "source": "dispatch/verify.md",
-          "target": "dispatch/verify.md"
-        },
-        {
-          "source": "docs/VERIFY_TIERS.md",
-          "target": "docs/VERIFY_TIERS.md"
-        }
-      ]
+      "managed_files": []
     },
     "workflow.skills": {
       "extensions": [],
       "managed_files": [
         {
-          "source": "skills/orly-spec-new/SKILL.md",
-          "target": ".claude/skills/orly-spec-new/SKILL.md"
+          "source": "skills/orly-spec/SKILL.md",
+          "target": ".claude/skills/orly-spec/SKILL.md"
         },
         {
-          "source": "skills/orly-spec-new/SKILL.md",
-          "target": ".agents/skills/orly-spec-new/SKILL.md"
+          "source": "skills/orly-spec/SKILL.md",
+          "target": ".agents/skills/orly-spec/SKILL.md"
         },
         {
-          "source": "skills/orly-spec-new/SKILL.md",
-          "target": ".opencode/skills/orly-spec-new/SKILL.md"
+          "source": "skills/orly-spec/SKILL.md",
+          "target": ".opencode/skills/orly-spec/SKILL.md"
         },
         {
-          "source": "skills/orly-write-unit-test/SKILL.md",
-          "target": ".claude/skills/orly-write-unit-test/SKILL.md"
+          "source": "skills/orly-build/SKILL.md",
+          "target": ".claude/skills/orly-build/SKILL.md"
         },
         {
-          "source": "skills/orly-write-unit-test/SKILL.md",
-          "target": ".agents/skills/orly-write-unit-test/SKILL.md"
+          "source": "skills/orly-build/SKILL.md",
+          "target": ".agents/skills/orly-build/SKILL.md"
         },
         {
-          "source": "skills/orly-write-unit-test/SKILL.md",
-          "target": ".opencode/skills/orly-write-unit-test/SKILL.md"
+          "source": "skills/orly-build/SKILL.md",
+          "target": ".opencode/skills/orly-build/SKILL.md"
         },
         {
-          "source": "skills/orly-write-integration-test/SKILL.md",
-          "target": ".claude/skills/orly-write-integration-test/SKILL.md"
+          "source": "skills/orly-ship/SKILL.md",
+          "target": ".claude/skills/orly-ship/SKILL.md"
         },
         {
-          "source": "skills/orly-write-integration-test/SKILL.md",
-          "target": ".agents/skills/orly-write-integration-test/SKILL.md"
+          "source": "skills/orly-ship/SKILL.md",
+          "target": ".agents/skills/orly-ship/SKILL.md"
         },
         {
-          "source": "skills/orly-write-integration-test/SKILL.md",
-          "target": ".opencode/skills/orly-write-integration-test/SKILL.md"
+          "source": "skills/orly-ship/SKILL.md",
+          "target": ".opencode/skills/orly-ship/SKILL.md"
         },
         {
-          "source": "skills/orly-babysit-prs/SKILL.md",
-          "target": ".claude/skills/orly-babysit-prs/SKILL.md"
-        },
-        {
-          "source": "skills/orly-babysit-prs/SKILL.md",
-          "target": ".agents/skills/orly-babysit-prs/SKILL.md"
-        },
-        {
-          "source": "skills/orly-babysit-prs/SKILL.md",
-          "target": ".opencode/skills/orly-babysit-prs/SKILL.md"
+          "source": "agents/orly-standards-reviewer.md",
+          "target": ".claude/agents/orly-standards-reviewer.md"
         }
       ]
     }
@@ -444,5 +288,16 @@
       "pack": "universal.authoring",
       "command": "conform"
     }
-  ]
+  ],
+  "helpers": {
+    "gstack": {
+      "source": "https://github.com/garrytan/gstack",
+      "version": "1.91.271.0",
+      "commit": "584e9c15352de1f1c42d237dd3c268d6284bfdee"
+    },
+    "egm": {
+      "source": "https://github.com/google/elephant-goldfish-model",
+      "commit": "a8380ab5f0aba392c97e31c79f9a6666b3f09f14"
+    }
+  }
 }

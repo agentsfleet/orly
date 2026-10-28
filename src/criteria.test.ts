@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { rmSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join } from "node:path";
 
+import { CONFIG_PATH } from "./config";
 import { criteriaFor, runCommand } from "./criteria";
-import { activeSpecPath, closedSpecPath } from "./gates";
-import { cleanupTemporaryDirectories, closedSpecRepository, git, modelFor, newRepository, newSpecRepository } from "./gates_test_support";
+import { cleanupTemporaryDirectories, git, modelFor, newRepository, newSpecRepository } from "./gates_test_support";
 
+const README = "README.md";
 const WORK = "work";
 const VERIFY = "verify";
 const PR = "pr";
@@ -37,7 +38,7 @@ describe("criteriaFor", () => {
     const project = newSpecRepository();
     const names = named(VERIFY, await contextFor(project));
 
-    expect(names).not.toContain("spec.dimensions");
+    expect(names.filter((name) => name.startsWith("spec."))).toEqual([]);
     expect(names).not.toContain("cmd.verify.unit");
     // conform is the work gate's tier now, so the chain runs it once.
     expect(names).not.toContain("cmd.conform");
@@ -46,11 +47,14 @@ describe("criteriaFor", () => {
     expect(names).not.toContain("cmd.verify.integration");
   });
 
-  test("pr carries every closed-spec follow-through criterion", async () => {
+  // A spec is reviewed while it is written; the gate checks code and Git only,
+  // even on a branch that carries an active spec.
+  test("pr gate runs no spec criterion", async () => {
     const project = newSpecRepository();
     const names = named(PR, await contextFor(project));
 
-    for (const required of ["spec.moved", "spec.baseline", "spec.ordering", "spec.deferrals", "docs.updated"]) {
+    expect(names.filter((name) => name.startsWith("spec."))).toEqual([]);
+    for (const required of ["git.pushed", REPO_CONFIG, "docs.language", "docs.updated"]) {
       expect(names).toContain(required);
     }
     // git.branch belongs here and only here. It was a work-gate criterion until
@@ -168,22 +172,35 @@ describe("repo.config", () => {
 });
 
 describe("the final tree check", () => {
-  for (const stage of ["active", "done"]) {
-    test(`requires a ${stage} spec edit to be committed`, async () => {
-      const root = stage === "active" ? newSpecRepository() : closedSpecRepository("feat/spec");
-      const model = await modelFor(root);
-      const specPath = relative(root, activeSpecPath(root) ?? closedSpecPath(root)!);
-      const context = { root, model, specPath, acceptDirty: false };
-      const check = criteriaFor(PR, context).find((entry) => entry.name === "git.tree")!;
-      expect(check.evaluate(context).ok).toBe(true);
+  test("requires an edit to be committed", async () => {
+    const root = newSpecRepository();
+    const model = await modelFor(root);
+    const context = { root, model, acceptDirty: false };
+    const check = criteriaFor(PR, context).find((entry) => entry.name === "git.tree");
+    expect(check?.evaluate(context).ok).toBe(true);
 
-      const path = join(root, specPath);
-      await Bun.write(path, `${await Bun.file(path).text()}\nUpdated evidence.\n`);
-      expect(check.evaluate(context).ok).toBe(false);
-      git(root, "add", specPath);
-      expect(check.evaluate(context).ok).toBe(false);
-      git(root, "commit", "-qm", "docs: record evidence");
-      expect(check.evaluate(context).ok).toBe(true);
-    });
-  }
+    const path = join(root, README);
+    await Bun.write(path, `${await Bun.file(path).text()}\nUpdated evidence.\n`);
+    expect(check?.evaluate(context).ok).toBe(false);
+    git(root, "add", README);
+    expect(check?.evaluate(context).ok).toBe(false);
+    git(root, "commit", "-qm", "docs: record evidence");
+    expect(check?.evaluate(context).ok).toBe(true);
+  });
+});
+
+describe("an optional conform command", () => {
+  test("work gate passes without conform", async () => {
+    const project = newRepository();
+    const model = await modelFor(project);
+    const configPath = join(project, CONFIG_PATH);
+    const config = await Bun.file(configPath).json();
+    delete config.commands.conform;
+    await Bun.write(configPath, JSON.stringify(config, undefined, 2));
+    const context = { root: project, model, acceptDirty: false };
+
+    const criteria = criteriaFor(WORK, context);
+    expect(criteria.map((criterion) => criterion.name)).toEqual([REPO_CONFIG]);
+    expect(criteria.every((criterion) => criterion.evaluate(context).ok)).toBe(true);
+  });
 });
