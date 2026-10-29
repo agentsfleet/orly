@@ -48,8 +48,8 @@ checkout at a known path, which a fresh machine, a Continuous Integration (CI)
 runner or a remote fleet container does not have.
 
 `orly init` (M03) restored storage without the old failure. `orly update`
-turns a rule change into one command per repository, and the lock makes
-staleness a reported condition (`orly doctor`) instead of a silent one.
+turns a rule change into one command per repository, and `orly doctor`
+reports drift between the lock and the files on disk.
 
 cache-kit.rs showed both failures in one repository. Its `.orly/` snapshot sat
 frozen for four weeks with no update path. Its generated `AGENTS.md` named a
@@ -194,22 +194,25 @@ suite, including the always-on size cap and the Hard Safety text.
 
 ## Helper parity
 
-Every session runs the same orly, gstack and EGM, on the owner's Mac or in a
-Codex cloud task. `registry.json` pins gstack by version and commit and EGM by
-commit, and each orly release moves the pins only after running with them.
+orly's skills hand work to gstack and EGM, so every agent runtime needs both.
+Their versions are the owner's, because both upgrade themselves.
+`registry.json` names only where each comes from.
 
-`orly doctor` checks every agent runtime present on the machine. It reads
-gstack's `VERSION` and EGM's recorded commit, and a mismatch prints the pinned
-install command. A machine with no agent runtime, such as a CI runner, skips the check.
+`orly doctor` checks every agent runtime present on the machine. A missing
+gstack `VERSION` or EGM plugin prints its install command. A machine with no
+agent runtime, such as a CI runner, skips the helper check.
+
+Doctor does not compare the orly that wrote `.orly/orly.json` with the one
+running, because one global orly serves repositories pinned to different versions.
 
 ## Codex cloud environment
 
 A cloud task sees repository skills only, so the environment installs the rest.
-Its install script installs orly at the repository's pin and gitleaks. It
-checks out gstack at the pinned commit and runs `./setup --host codex --no-browser`.
+Its install script installs orly and gitleaks. It clones gstack and runs
+`./setup --host codex --no-browser`.
 
 The same script adds EGM with `codex plugin marketplace add
-google/elephant-goldfish-model --ref <commit>` and `codex plugin add egm@egm`. It
+google/elephant-goldfish-model` and `codex plugin add egm@egm`. It
 sets `core.hooksPath`, and the start skill ends with `orly doctor`.
 
 A cloud task pushes nothing. The skills run `orly gate work` and

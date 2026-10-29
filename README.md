@@ -52,12 +52,12 @@ The always-on `AGENTS.md` is under 16 KiB, down from 37 KB.
 The dispatch pages, the audit scripts, the read-logging gate and `orly judge` are gone.
 `orly gate pr` checks code and Git only; a spec is reviewed while it is written.
 
-`orly doctor` now checks that every agent runtime runs the gstack and Elephant-Goldfish Model (EGM) versions orly pins.
+`orly doctor` checks that every agent runtime has gstack and the Elephant-Goldfish Model (EGM), at whatever version you run.
 A Codex cloud task gets the same setup; see [the architecture page](docs/ORLY_ARCHITECTURE.md#codex-cloud-environment).
 
 See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
 The install commands below fetch the published package.
-The release workflow publishes 0.26.1 after its version change merges to `main` or an explicit release run.
+The release workflow publishes 0.27.0 after its version change merges to `main` or an explicit release run.
 
 ---
 
@@ -343,13 +343,13 @@ orly scans four directories deep. It skips `node_modules`, `target`, `.venv`, an
 
 ---
 
-## gstack and EGM are pinned
+## gstack and EGM are required
 
 orly's skills call [gstack](https://github.com/garrytan/gstack) for code review and the [Elephant-Goldfish Model](https://github.com/google/elephant-goldfish-model) (EGM) for spec review.
-Each orly release pins the versions it was tested with, in `registry.json`.
+Any version works, because both upgrade themselves.
 
-`orly doctor` checks every agent runtime on the machine against those pins.
-A missing or different version turns it red and prints the install command; the skills stop until it is green.
+`orly doctor` checks that every agent runtime on the machine has both.
+A missing one turns it red and prints the install command; the skills stop until it is green.
 A machine with no agent runtime, such as a CI runner, skips the check.
 
 > [!NOTE]

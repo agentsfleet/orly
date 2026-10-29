@@ -122,12 +122,6 @@ export function sameDigest(recorded: string, actual: string): boolean {
   return bare(recorded) === bare(actual);
 }
 
-// What orly installed here, and whether the engine has moved since.
-export function staleVersion(config: RepoConfig, installedVersion: string): string | undefined {
-  if (config.orly_version === installedVersion) return undefined;
-  return `ruleset was installed by orly ${config.orly_version || "an unrecorded version"}, installed engine is ${installedVersion} — run \`orly update\``;
-}
-
 const PIPE_OUTPUT = "pipe";
 
 // Which of these paths git refuses to track. `check-ignore` prints one ignored

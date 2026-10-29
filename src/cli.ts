@@ -4,9 +4,9 @@ import { join, resolve } from "node:path";
 
 import { printHelp } from "./cli_help";
 import { selectPacks } from "./config_discovery";
-import { CONFIG_PATH, managedDrift, readConfig, RepoConfig, staleVersion, writeConfig } from "./config";
+import { CONFIG_PATH, managedDrift, readConfig, RepoConfig, writeConfig } from "./config";
 import { GateReport, isGateName, recordOverride, runGate, runGates } from "./gates";
-import { agentRuntimes, defaultHomes, helperDrift, helperPins } from "./helpers";
+import { agentRuntimes, defaultHomes, helperSources, missingHelpers } from "./helpers";
 import { readInstallConfig } from "./installation/migration";
 import { install, InstallResult } from "./install";
 import { isString, OrlyError, readJsonObject, RulesModel } from "./model";
@@ -187,16 +187,15 @@ function projectRoot(): string {
 
 async function doctorGlobal(model: RulesModel): Promise<number> {
   const homes = defaultHomes();
-  const pins = helperPins(model.registry);
-  const errors = [...await doctorInstall(model), ...helperDrift(pins, homes)];
+  const errors = [...await doctorInstall(), ...missingHelpers(helperSources(model.registry), homes)];
   if (errors.length > 0) {
     for (const error of errors) console.log(`${FAIL_GLYPH} ${error}`);
     return 1;
   }
   const runtimes = agentRuntimes(homes);
   console.log(runtimes.length === 0
-    ? `${PASS_GLYPH} no agent runtime on this machine; helper pins not checked`
-    : `${PASS_GLYPH} gstack ${pins.gstack.version} and EGM ${pins.egm.commit.slice(0, 8)} match orly's pins for ${runtimes.join(" and ")}`);
+    ? `${PASS_GLYPH} no agent runtime on this machine; gstack and EGM not checked`
+    : `${PASS_GLYPH} gstack and EGM are installed for ${runtimes.join(" and ")}`);
   const config = await readConfig(projectRoot());
   if (!config) {
     console.log(`${FAIL_GLYPH} no ${CONFIG_PATH} here — run \`orly init\` first`);
@@ -211,13 +210,12 @@ async function doctorGlobal(model: RulesModel): Promise<number> {
 
 // A repository with no lock was never installed into — silence, not a finding.
 // One that has a lock must still match it, or the rules it claims to enforce
-// are not the rules on disk.
-async function doctorInstall(model: RulesModel): Promise<string[]> {
+// are not the rules on disk. Which orly version wrote them is not checked,
+// because one global orly serves repositories installed by different versions.
+async function doctorInstall(): Promise<string[]> {
   const targetRoot = projectRoot();
   const config = await readConfig(targetRoot);
-  if (!config) return [];
-  const stale = staleVersion(config, await packageVersion(model));
-  return [...managedDrift(targetRoot, config), ...(stale ? [stale] : [])];
+  return config ? managedDrift(targetRoot, config) : [];
 }
 
 // What init would write, without writing it. Replaces the `render` verb: the

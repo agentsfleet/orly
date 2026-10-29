@@ -2,108 +2,114 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { cleanupTemporaryDirectories, git, gitOutput, ROOT, temporaryDirectory } from "./gates_test_support";
-import { helperDrift, helperPins, type HelperPins } from "./helpers";
+import { cleanupTemporaryDirectories, ROOT, temporaryDirectory } from "./gates_test_support";
+import { helperSources, type HelperSources, missingHelpers } from "./helpers";
+import { OrlyError } from "./model";
 
-const GSTACK_SOURCE = "https://github.com/garrytan/gstack";
-const EGM_SOURCE = "https://github.com/google/elephant-goldfish-model";
-const GSTACK_VERSION = "1.91.271.0";
-const GSTACK_COMMIT = "584e9c15352de1f1c42d237dd3c268d6284bfdee";
-const STALE_VERSION = "1.90.0";
-const STALE_COMMIT = "0".repeat(40);
-const FULL_COMMIT = /^[0-9a-f]{40}$/;
-const RELEASE_VERSION = /^\d+\.\d+\.\d+(\.\d+)?$/;
+const SOURCES: HelperSources = {
+  gstack: "https://github.com/garrytan/gstack",
+  egm: "https://github.com/google/elephant-goldfish-model",
+};
+// Any version passes: doctor asks only whether gstack is there.
+const ANY_VERSION = "1.90.0";
 
 afterEach(cleanupTemporaryDirectories);
 
-function pins(egmCommit: string): HelperPins {
-  return {
-    gstack: { source: GSTACK_SOURCE, version: GSTACK_VERSION, commit: GSTACK_COMMIT },
-    egm: { source: EGM_SOURCE, commit: egmCommit },
-  };
-}
-
-async function writeVersion(directory: string, version: string): Promise<void> {
+async function writeVersion(directory: string): Promise<void> {
   mkdirSync(directory, { recursive: true });
-  await Bun.write(join(directory, "VERSION"), `${version}\n`);
+  await Bun.write(join(directory, "VERSION"), `${ANY_VERSION}\n`);
 }
 
-async function recordClaudePlugin(home: string, commit: string): Promise<void> {
+async function recordClaudePlugin(home: string): Promise<void> {
   const record = join(home, ".claude", "plugins", "installed_plugins.json");
-  await Bun.write(record, JSON.stringify({ plugins: { "egm@egm": [{ scope: "user", gitCommitSha: commit }] } }));
+  await Bun.write(record, JSON.stringify({ plugins: { "egm@egm": [{ scope: "user", gitCommitSha: "0".repeat(40) }] } }));
 }
 
-// Codex keeps an installed plugin version as a Git checkout; its HEAD is the
-// commit doctor compares.
-async function codexPluginCheckout(codexHome: string): Promise<string> {
-  const checkout = join(codexHome, "plugins", "cache", "egm", "egm", "0.1.0");
-  mkdirSync(checkout, { recursive: true });
-  git(checkout, "init", "-q");
-  git(checkout, "config", "user.email", "orly-tests@example.invalid");
-  git(checkout, "config", "user.name", "Orly Tests");
-  await Bun.write(join(checkout, "README.md"), "egm\n");
-  git(checkout, "add", ".");
-  git(checkout, "commit", "-qm", "egm");
-  return gitOutput(checkout, "rev-parse", "HEAD");
-}
-
-describe("helper pins", () => {
-  test("doctor reports helper drift with the install command", async () => {
+describe("helper installs", () => {
+  test("doctor reports a missing helper with the install command", async () => {
     const home = temporaryDirectory();
     const codexHome = join(home, ".codex");
-    await writeVersion(join(home, ".claude", "skills", "gstack"), STALE_VERSION);
-    await recordClaudePlugin(home, STALE_COMMIT);
-    await writeVersion(join(home, ".agents", "skills", "gstack"), STALE_VERSION);
+    await writeVersion(join(home, ".claude", "skills", "gstack"));
     mkdirSync(codexHome, { recursive: true });
-    const egmCommit = "a".repeat(40);
 
-    const findings = helperDrift(pins(egmCommit), { home, codexHome });
+    const findings = missingHelpers(SOURCES, { home, codexHome });
 
-    expect(findings).toHaveLength(5);
-    expect(findings[0]).toContain(`gstack for Claude Code is ${STALE_VERSION}; orly pins ${GSTACK_VERSION}`);
-    expect(findings[1]).toContain(`EGM for Claude Code is ${STALE_COMMIT.slice(0, 8)}`);
-    expect(findings[2]).toContain("gstack is not installed for Codex");
-    expect(findings[2]).toContain("./setup --host codex --no-browser");
-    expect(findings[3]).toContain(`.agents/skills/gstack) is ${STALE_VERSION}`);
-    expect(findings[4]).toContain(`codex plugin marketplace add google/elephant-goldfish-model --ref ${egmCommit}`);
+    expect(findings).toHaveLength(3);
+    expect(findings[0]).toContain("EGM is not installed for Claude Code");
+    expect(findings[0]).toContain("claude plugin marketplace add google/elephant-goldfish-model && claude plugin install egm@egm");
+    expect(findings[1]).toContain("gstack is not installed for Codex");
+    expect(findings[1]).toContain("./setup --host codex --no-browser");
+    expect(findings[2]).toContain("codex plugin marketplace add google/elephant-goldfish-model && codex plugin add egm@egm");
   });
 
-  test("doctor passes with pinned helpers", async () => {
+  test("doctor passes with helpers installed at any version", async () => {
     const home = temporaryDirectory();
     const codexHome = join(home, ".codex");
-    const egmCommit = await codexPluginCheckout(codexHome);
-    await writeVersion(join(home, ".claude", "skills", "gstack"), GSTACK_VERSION);
-    await recordClaudePlugin(home, egmCommit);
-    await writeVersion(join(codexHome, "skills", "gstack"), GSTACK_VERSION);
+    await writeVersion(join(home, ".claude", "skills", "gstack"));
+    await recordClaudePlugin(home);
+    await writeVersion(join(codexHome, "skills", "gstack"));
+    mkdirSync(join(codexHome, "plugins", "cache", "egm", "egm", "0.1.0"), { recursive: true });
 
-    expect(helperDrift(pins(egmCommit), { home, codexHome })).toEqual([]);
+    expect(missingHelpers(SOURCES, { home, codexHome })).toEqual([]);
   });
 
-  test("an unreadable plugin record reads as drift, not a crash", async () => {
+  test("an unreadable plugin record reads as missing, not a crash", async () => {
     const home = temporaryDirectory();
-    await writeVersion(join(home, ".claude", "skills", "gstack"), GSTACK_VERSION);
+    await writeVersion(join(home, ".claude", "skills", "gstack"));
     await Bun.write(join(home, ".claude", "plugins", "installed_plugins.json"), "{ not json");
 
-    const findings = helperDrift(pins(STALE_COMMIT), { home, codexHome: join(home, ".codex") });
+    const findings = missingHelpers(SOURCES, { home, codexHome: join(home, ".codex") });
 
     expect(findings).toHaveLength(1);
-    expect(findings[0]).toContain("EGM for Claude Code is unreadable");
+    expect(findings[0]).toContain("EGM is not installed for Claude Code");
+  });
+
+  test("Claude Code without gstack prints the clone and setup command", async () => {
+    const home = temporaryDirectory();
+    await recordClaudePlugin(home);
+
+    const findings = missingHelpers(SOURCES, { home, codexHome: join(home, ".codex") });
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]).toContain("gstack is not installed for Claude Code");
+    expect(findings[0]).toContain(`git clone ${SOURCES.gstack} ${join(home, ".claude", "skills", "gstack")} && (cd`);
+    expect(findings[0]).toContain("./setup)");
+  });
+
+  for (const [name, record] of [["no plugins", { plugins: {} }], ["an empty egm@egm list", { plugins: { "egm@egm": [] } }]] as const) {
+    test(`a Claude plugin record with ${name} reads as EGM missing`, async () => {
+      const home = temporaryDirectory();
+      await writeVersion(join(home, ".claude", "skills", "gstack"));
+      await Bun.write(join(home, ".claude", "plugins", "installed_plugins.json"), JSON.stringify(record));
+
+      expect(missingHelpers(SOURCES, { home, codexHome: join(home, ".codex") })).toEqual([
+        expect.stringContaining("EGM is not installed for Claude Code"),
+      ]);
+    });
+  }
+
+  test("an empty Codex EGM cache reads as EGM missing", async () => {
+    const home = temporaryDirectory();
+    const codexHome = join(home, ".codex");
+    await writeVersion(join(codexHome, "skills", "gstack"));
+    mkdirSync(join(codexHome, "plugins", "cache", "egm", "egm"), { recursive: true });
+
+    expect(missingHelpers(SOURCES, { home, codexHome })).toEqual([expect.stringContaining("EGM is not installed for Codex")]);
   });
 
   test("a machine with no agent runtime has no helper findings", () => {
     const home = temporaryDirectory();
-    expect(helperDrift(pins(STALE_COMMIT), { home, codexHome: join(home, ".codex") })).toEqual([]);
+    expect(missingHelpers(SOURCES, { home, codexHome: join(home, ".codex") })).toEqual([]);
   });
 
-  test("the registry pins gstack by version and commit and EGM by commit", async () => {
+  test("the registry names the gstack and EGM sources", async () => {
     const registry = await Bun.file(join(ROOT, "registry.json")).json();
-    const pinned = helperPins(registry);
-    expect(pinned.gstack.version).toMatch(RELEASE_VERSION);
-    expect(pinned.gstack.commit).toMatch(FULL_COMMIT);
-    expect(pinned.egm.commit).toMatch(FULL_COMMIT);
+    expect(helperSources(registry)).toEqual(SOURCES);
   });
 
-  test("a registry without both pins is refused", () => {
-    expect(() => helperPins({ helpers: { gstack: {} } })).toThrow("registry helpers must pin gstack and egm");
+  test("a registry without both sources is refused", () => {
+    const refused = () => helperSources({ helpers: { gstack: {} } });
+    expect(refused).toThrow(OrlyError);
+    expect(refused).toThrow("registry helpers must name the gstack and egm sources");
   });
 });
