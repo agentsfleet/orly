@@ -291,13 +291,10 @@
   ],
   "helpers": {
     "gstack": {
-      "source": "https://github.com/garrytan/gstack",
-      "version": "1.91.271.0",
-      "commit": "584e9c15352de1f1c42d237dd3c268d6284bfdee"
+      "source": "https://github.com/garrytan/gstack"
     },
     "egm": {
-      "source": "https://github.com/google/elephant-goldfish-model",
-      "commit": "a8380ab5f0aba392c97e31c79f9a6666b3f09f14"
+      "source": "https://github.com/google/elephant-goldfish-model"
     }
   }
 }

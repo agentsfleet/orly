@@ -76,7 +76,7 @@ SPEC AUTHORING RULES (load-bearing; the one comment that survives):
 
 - **PR title (eventual):** feat: turn orly's rules into standards, drop audit scripts and spec criteria
 - **Intent (one sentence):** Rules become short declarations an agent and a fresh-eyed reviewer both read, steps shrink to three skills, and every script and spec check whose job moved elsewhere is gone.
-- **Authoring handshake:** Restatement: convert every rule page into 17 standards with fixed fields; fold in still-true gstack learnings; drop UFS, Zig and Redis; replace the four orly skills with `orly-spec`, `orly-build`, `orly-ship` and the agent `orly-standards-reviewer`; slim the always-on file; delete every file under `audits/` and `dispatch/`, the read-logging gate and the consistency evaluations; remove the spec criteria, the spec parser and `orly judge`; make `conform` optional. ASSUMPTIONS I'M MAKING: (1) skills, the agent and standards install as committed copies (D1). (2) Surviving rules keep their meaning; Hard Safety stays word for word. (3) Consumers are protected by their version pin and migrate in their own Pull Request; `agentsfleet`'s is described in §6. (4) gstack and EGM are installed at the versions orly pins, on the owner's Mac and in Codex cloud; `orly doctor` fails when they are not (§7).
+- **Authoring handshake:** Restatement: convert every rule page into 17 standards with fixed fields; fold in still-true gstack learnings; drop UFS, Zig and Redis; replace the four orly skills with `orly-spec`, `orly-build`, `orly-ship` and the agent `orly-standards-reviewer`; slim the always-on file; delete every file under `audits/` and `dispatch/`, the read-logging gate and the consistency evaluations; remove the spec criteria, the spec parser and `orly judge`; make `conform` optional. ASSUMPTIONS I'M MAKING: (1) skills, the agent and standards install as committed copies (D1). (2) Surviving rules keep their meaning; Hard Safety stays word for word. (3) Consumers are protected by their version pin and migrate in their own Pull Request; `agentsfleet`'s is described in §6. (4) gstack and EGM are installed on the owner's Mac and in Codex cloud; `orly doctor` fails when they are not (§7).
 - **Implementer handshake:** recorded in the Pull Request Session Notes at PLAN, before any edit. A restatement that differs from the Intent stops the work until the two are reconciled.
 
 ## Implementing agent — read these first
@@ -103,7 +103,7 @@ SPEC AUTHORING RULES (load-bearing; the one comment that survives):
 | `src/criteria.ts`, `src/gates.ts`, `src/validation.ts`, `src/cli.ts`, `src/cli_help.ts`, `src/doc_rules.ts`, `src/git_env.ts`, `src/install.ts`, `src/installation/plan.ts`, `src/loaders.ts`, `src/render.ts`, `src/model.ts`, `src/references.ts` | EDIT | no spec criteria; `conform` optional; no `judge`; rule pages are `standards/`; install standards and the agent |
 | `src/standards.ts`, `src/standards_catalogue.test.ts`, `fixtures/standards-rule-ids.json`, `fixtures/hard-safety-0.25.0.txt` | CREATE | §1 rule-block parser and catalogue rules; §2 Hard Safety fixture |
 | `src/installation/transaction.ts`, `src/layout.test.ts` | EDIT, CREATE | retiring files removes the directories they leave empty; layout tests for §3, §4 and §5 |
-| `src/helpers.ts`, `src/helpers.test.ts` | CREATE | §7: read the helper pins from `registry.json`, find each runtime's installed gstack and EGM, report drift with the install command |
+| `src/helpers.ts`, `src/helpers.test.ts` | CREATE | §7: read the helper sources from `registry.json`, find each runtime's installed gstack and EGM, report a missing one with its install command |
 | `src/gates.test.ts`, `src/criteria.test.ts`, `src/scanner_index.test.ts`, `src/install.test.ts`, `src/install_packs.test.ts`, `src/render.test.ts`, `src/references.test.ts`, `src/gates_test_support.ts` | EDIT | the new gate list and standards |
 | `audits/` (23 files and `fixtures/`), `dispatch/` (19 pages, 7 scripts), `packs/language/*/rules.md` (5) | DELETE | content in standards; checks in linters or review |
 | `docs/CHANGELOG_VOICE.md`, `DOCUMENTATION_RULES.md`, `EXECUTE_DOC_READS.md`, `HARNESS_VERIFY_OUTPUT.md`, `LIFECYCLE_PATTERNS.md`, `LOGGING_STANDARD.md`, `RELEASE_TEMPLATE.md`, `REST_API_DESIGN_GUIDELINES.md`, `SCHEMA_CONVENTIONS.md`, `VERIFY_TIERS.md`, `TEMPLATE.md`, `DISPATCH_ARCHITECTURE.md`, `DISPATCH_REVIEW_DISPOSITION.md`, `RULE_ENFORCEMENT.md`, `JUDGMENTS.md`, `docs/greptile-learnings/` | DELETE | content in standards, or the retired dispatch, judge and harness systems |
@@ -111,7 +111,8 @@ SPEC AUTHORING RULES (load-bearing; the one comment that survives):
 | `evals/install/cases.sh`, `evals/install/release_cases.sh`, `evals/install/run.sh` | EDIT | install proofs check standards and the reviewer instead of dispatch pages |
 | `llms.txt`, `src/telemetry.ts`, the remaining `src/*.test.ts` that named retired paths | EDIT | new layout and skill names |
 | `Makefile`, `.githooks/pre-commit`, `.githooks/pre-push` | EDIT | drop deleted steps, the read-logging check, and deleted paths from the governance pattern |
-| `docs/ORLY_ARCHITECTURE.md`, `README.md`, `docs/CHANGELOG.md`, `package.json` | EDIT | the new architecture; "Changing a standard"; version 0.26.0 |
+| `docs/ORLY_ARCHITECTURE.md`, `README.md`, `docs/CHANGELOG.md`, `package.json` | EDIT | the new architecture; "Changing a standard"; version 0.26.0, then 0.27.0 |
+| `src/config.ts`, `src/config.test.ts`, `src/cli.ts` | EDIT | §7 (0.27.0): remove `staleVersion`, so `orly doctor` no longer compares the running orly with `orly_version` |
 | `docs/v2/pending/M15_001_P1_GOV_SKILL_RULES_BECOME_STANDARDS.md` | CREATE | this spec |
 
 ## Applicable Rules
@@ -196,10 +197,10 @@ On a copy of `agentsfleet` (orly 0.17.0, `jq -r .orly_version .orly/orly.json`; 
 
 ### §7 — The same experience locally and in Codex cloud
 
-Every session, on the owner's Mac or in a Codex cloud task, runs the same orly, gstack and EGM. Each orly release pins the helper versions it was tested with in `registry.json` under `helpers` (gstack by `VERSION` and commit, EGM by commit), and `orly doctor` compares what is installed for each runtime on the machine with those pins: gstack's `VERSION` under `~/.claude/skills/gstack`, `${CODEX_HOME:-~/.codex}/skills/gstack` and `~/.agents/skills/gstack`; EGM's Git commit under `~/.claude/plugins/marketplaces/egm` and `${CODEX_HOME:-~/.codex}/plugins/cache/egm/egm/<version>`. A missing or drifted helper is red, and the line prints the exact install command for the pin. The skills have no fallback: when `orly doctor` is red, they stop and print its lines. Codex cloud tasks see only what the environment installs, because "Personal skills from your local computer aren't synced to cloud environments" (`https://learn.chatgpt.com/docs/environments/cloud-environments`); the environment therefore installs orly at the repository's pin, gstack at the pinned commit with `./setup --host codex --no-browser`, and EGM with `codex plugin marketplace add google/elephant-goldfish-model --ref <commit>` then `codex plugin add egm@egm`, and its start skill ends with `orly doctor`. A cloud container pushes nothing and runs Git hooks only when `core.hooksPath` is set, so `orly-build` and `orly-ship` run `orly gate work` and `orly gate verify` themselves and stop before `orly gate pr`; on the Pull Request, CI runs `orly gate work` (`agentsfleet` `governance.yml`) and the lint, unit and integration lanes. `docs/ORLY_ARCHITECTURE.md` gains "Codex cloud environment" with that install brief.
+Every session, on the owner's Mac or in a Codex cloud task, has orly, gstack and EGM. `registry.json` names each helper's source under `helpers`, and `orly doctor` checks that each runtime on the machine has them: gstack's `VERSION` under `~/.claude/skills/gstack` and `${CODEX_HOME:-~/.codex}/skills/gstack`; EGM in Claude Code's plugin record and under `${CODEX_HOME:-~/.codex}/plugins/cache/egm/egm/<version>`. A missing helper is red, and the line prints its install command. Versions are not compared, neither the helpers' nor orly's own against `.orly/orly.json`: exact pins went red within a day as gstack and EGM upgraded themselves, and one global orly serves repositories pinned to different versions (Discovery, Oct 29). The skills have no fallback: when `orly doctor` is red, they stop and print its lines. Codex cloud tasks see only what the environment installs, because "Personal skills from your local computer aren't synced to cloud environments" (`https://learn.chatgpt.com/docs/environments/cloud-environments`); the environment therefore installs orly, gstack with `./setup --host codex --no-browser`, and EGM with `codex plugin marketplace add google/elephant-goldfish-model` then `codex plugin add egm@egm`, and its start skill ends with `orly doctor`. A cloud container pushes nothing and runs Git hooks only when `core.hooksPath` is set, so `orly-build` and `orly-ship` run `orly gate work` and `orly gate verify` themselves and stop before `orly gate pr`; on the Pull Request, CI runs `orly gate work` (`agentsfleet` `governance.yml`) and the lint, unit and integration lanes. `docs/ORLY_ARCHITECTURE.md` gains "Codex cloud environment" with that install brief.
 
-- **Dimension 7.1** — DONE — a helper whose installed version differs from its pin, or is missing for a runtime present on the machine, turns `orly doctor` red with the pinned install command → Test `doctor reports helper drift with the install command`
-- **Dimension 7.2** — DONE — helpers matching their pins for every runtime present keep `orly doctor` green → Test `doctor passes with pinned helpers`
+- **Dimension 7.1** — DONE — a helper missing for a runtime present on the machine turns `orly doctor` red with its install command → Test `doctor reports a missing helper with the install command`
+- **Dimension 7.2** — DONE — helpers installed at any version for every runtime present keep `orly doctor` green → Test `doctor passes with helpers installed at any version`
 - **Dimension 7.3** — a Codex cloud task on this branch lists the three skills plus gstack's and EGM's, `orly doctor` is green, and `orly gate verify` is green → Test `cloud task matches the local experience`
 
 ## Interfaces
@@ -224,7 +225,7 @@ Every session, on the owner's Mac or in a Codex cloud task, runs the same orly, 
 
 **Pack shape:** `"language.rust": { "extensions": [".rs"], "managed_files": [{ "source": "standards/languages/rust.md", "target": "standards/languages/rust.md" }] }`.
 
-**Helper pins in `registry.json`:** `"helpers": { "gstack": { "source": "https://github.com/garrytan/gstack", "version": "1.91.271.0", "commit": "584e9c15352de1f1c42d237dd3c268d6284bfdee" }, "egm": { "source": "https://github.com/google/elephant-goldfish-model", "commit": "a8380ab5f0aba392c97e31c79f9a6666b3f09f14" } }`. A pin moves only in an orly release that was run with the new version.
+**Helper sources in `registry.json`:** `"helpers": { "gstack": { "source": "https://github.com/garrytan/gstack" }, "egm": { "source": "https://github.com/google/elephant-goldfish-model" } }`. orly 0.26 pinned versions and commits here; 0.27.0 drops them (Discovery, Oct 29).
 
 **Gate criteria after this Workstream:** `work` → `repo.config` + `conform` if declared · `verify` → `repo.config`, `docs.language`, non-test `verify.*` · `pr` → `git.branch`, `git.tree`, `git.pushed`, `repo.config`, `docs.language`, `docs.updated`, every `verify.*`.
 
@@ -251,7 +252,7 @@ AGENTS.md, CLAUDE.md          pointers, unchanged
 | Noisy reviewer | degradation | the reviewer reports opinions | its instructions forbid untied findings; the replay measures it | `reviewer ties every finding to a rule` |
 | Skill not loaded | degradation | a runtime does not match the trigger | the agent misses the steps; `orly gate` still blocks | `each runtime loads the three skills` |
 | Hidden spec check | failure | a spec criterion survives the removal | the gate test fails | `pr gate runs no spec criterion` |
-| Helper drift | failure | gstack or EGM missing, or at a version other than the pin, locally or in a cloud task | `orly doctor` exits 1 naming the pin and the install command; the skills stop | `doctor reports helper drift with the install command` |
+| Helper missing | failure | gstack or EGM missing, locally or in a cloud task | `orly doctor` exits 1 with the install command; the skills stop | `doctor reports a missing helper with the install command` |
 
 ## Invariants
 
@@ -286,8 +287,8 @@ No product or operator signal changes. §6 records managed files, always-on byte
 | 5.2 | unit | `work gate passes without conform` | `.orly/orly.json` with only `verify.unit` → `repo.config` passes; `orly gate work` exits 0 |
 | 5.3 | unit | `judge is not a command` | `orly judge spec x.md` → exit 1 with the unknown-command message |
 | 6.1 | manual | `agentsfleet copy updates and stays green` | procedure: the §6 steps on a copy; evidence: counts and command output in Session Notes |
-| 7.1 | unit | `doctor reports helper drift with the install command` | fake home with gstack `VERSION` 1.90.0 and no EGM for Codex → exit 1; lines name both pins and print `./setup --host codex --no-browser` and `codex plugin marketplace add … --ref <commit>` |
-| 7.2 | unit | `doctor passes with pinned helpers` | fake home with gstack `VERSION` and EGM commit equal to the pins → helper lines green, exit 0 |
+| 7.1 | unit | `doctor reports a missing helper with the install command` | fake home with Claude's gstack only and an empty Codex home → three lines: Claude's EGM, Codex's gstack with `./setup --host codex --no-browser`, Codex's EGM with `codex plugin marketplace add …` |
+| 7.2 | unit | `doctor passes with helpers installed at any version` | fake home with gstack `VERSION` 1.90.0 and EGM for both runtimes → no findings |
 | 7.3 | manual | `cloud task matches the local experience` | procedure: start a Codex cloud task on the branch in the published environment; ask for the skill list; run `orly doctor` and `orly gate verify`; evidence: task transcript in Session Notes |
 
 ## Acceptance Rubric (single scoring surface)
@@ -300,7 +301,7 @@ No product or operator signal changes. §6 records managed files, always-on byte
 | R4 | The gate runs no spec criterion (§5) | `bun test src/gates.test.ts` | exit 0 | P0 | |
 | R5 | A real consumer updates and stays green (§6) | manual: Dimension 6.1 evidence | `make lint-all` and `make test-unit-all` exit 0 recorded | P0 | |
 | R6 | The reviewer stays on rules (§3) | manual: Dimension 3.4 evidence | every finding names a rule ID | P1 | |
-| R7 | Local and cloud sessions run the pinned orly, gstack and EGM (§7) | `bun test src/helpers.test.ts` | exit 0 | P0 | |
+| R7 | Local and cloud sessions have orly, gstack and EGM (§7) | `bun test src/helpers.test.ts` | exit 0 | P0 | |
 | S1 | Conform gates green | `make conform` | exit 0 | P0 | |
 | S2 | Unit tests pass | `bun test src` | exit 0 | P0 | |
 | S4 | No secrets | `gitleaks detect --redact --no-banner` | exit 0 | P0 | |
@@ -391,6 +392,10 @@ No product or operator signal changes. §6 records managed files, always-on byte
 > Owner (Kishore, Oct 28, 2026, time not recorded): "6. Yes cloud flare audit is one of audit when indy triggers manually." — context: Cloudflare's `security-audit` is manual only.
 
 > Owner (Kishore, Oct 28, 2026, time not recorded): "3. yes disallow /learn" — context: the always-on line in §2.
+
+> Owner (Kishore, Oct 29, 2026, time not recorded): "why are those pinned" — then chose "Drop the check" over minimum versions and exact pins. Context: §7 stops comparing gstack and EGM versions; doctor checks only that each is installed. Evidence: gstack had auto-upgraded 1.91.271.0 → 1.91.291.0 and Codex's EGM a8380ab5 → f0ba151b since Oct 28, so `orly doctor` was red on the owner's Mac.
+
+> Owner (Kishore, Oct 29, 2026, time not recorded): "Also why do we need to be strict on th eorly version? i think its a friction here? how do we solve that." — then chose "Drop the version check" over self-dispatch and a major.minor match. Context: `orly doctor` no longer compares the running orly with `.orly/orly.json`'s `orly_version`; docs at 0.26.0 beside `agentsfleet` and orly at 0.26.1 had needed a second orly install and a version-switching launcher in the Codex setup script.
 
 > Owner (Kishore, Oct 28, 2026, time not recorded): "D4 A (just tell what you will add in the learnings)" — context: still-true gstack learnings are promoted into standards in §1.
 

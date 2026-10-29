@@ -42,10 +42,9 @@ Install (the repository is the unit — no checkout of this package required):
   --dry-run                         show what would be written; change nothing
 
   orly doctor                       check this repository's installed rules
-                                    against what orly would write today, and
-                                    each agent runtime's gstack and Elephant-
-                                    Goldfish Model (EGM) against the versions
-                                    this orly pins
+                                    against .orly/orly.json, and that each
+                                    agent runtime has gstack and the Elephant-
+                                    Goldfish Model (EGM) installed
   orly --version                    the installed package version
 
 Usage telemetry (off by default):

@@ -2,14 +2,12 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { isObject, type JsonObject, OrlyError } from "./model";
 
-// orly pins the gstack and Elephant-Goldfish Model (EGM) it was released with.
-// A session on the owner's Mac and one in a Codex cloud task must run the same
-// skills, so `orly doctor` refuses a machine whose agent runtimes run anything
-// else. Only runtimes present on the machine are checked: a CI runner has none.
-const PIPE_OUTPUT = "pipe";
+// orly's skills hand work to gstack and the Elephant-Goldfish Model (EGM), so
+// `orly doctor` refuses an agent runtime that lacks either. Which version runs
+// is the owner's, because both helpers upgrade themselves.
+// Only runtimes present on the machine are checked: a CI runner has none.
 const UTF8 = "utf8";
 const VERSION_FILE = "VERSION";
 const GSTACK = "gstack";
@@ -17,18 +15,12 @@ const SKILLS = "skills";
 const EGM_PLUGIN = "egm@egm";
 const CLAUDE_DIRECTORY = ".claude";
 const CODEX_DIRECTORY = ".codex";
-const AGENTS_DIRECTORY = ".agents";
 const CODEX_HOME = "CODEX_HOME";
 const CLAUDE_PLUGIN_RECORD = ["plugins", "installed_plugins.json"];
-const CLAUDE_EGM_MARKETPLACE = ["plugins", "marketplaces", "egm"];
 const CODEX_EGM_CACHE = ["plugins", "cache", "egm", "egm"];
-const UNREADABLE = "unreadable";
 const GITHUB_REPOSITORY = /github\.com[/:]([^/]+\/[^/.]+?)(?:\.git)?$/;
 
-export type HelperPins = {
-  gstack: { source: string; version: string; commit: string };
-  egm: { source: string; commit: string };
-};
+export type HelperSources = { gstack: string; egm: string };
 export type HelperHomes = { home: string; codexHome: string };
 
 export function defaultHomes(): HelperHomes {
@@ -36,18 +28,12 @@ export function defaultHomes(): HelperHomes {
   return { home, codexHome: Bun.env[CODEX_HOME] || join(home, CODEX_DIRECTORY) };
 }
 
-export function helperPins(registry: JsonObject): HelperPins {
+export function helperSources(registry: JsonObject): HelperSources {
   const helpers = registry.helpers;
-  const gstack = isObject(helpers) ? helpers.gstack : undefined;
-  const egm = isObject(helpers) ? helpers.egm : undefined;
-  if (!isObject(gstack) || !isObject(egm)) throw new OrlyError("registry helpers must pin gstack and egm");
-  const pins = {
-    gstack: { source: text(gstack.source), version: text(gstack.version), commit: text(gstack.commit) },
-    egm: { source: text(egm.source), commit: text(egm.commit) },
-  };
-  const blank = [pins.gstack.source, pins.gstack.version, pins.gstack.commit, pins.egm.source, pins.egm.commit].some((value) => !value);
-  if (blank) throw new OrlyError("registry helpers need a source and a commit, and gstack a version");
-  return pins;
+  const gstack = isObject(helpers) && isObject(helpers.gstack) ? text(helpers.gstack.source) : "";
+  const egm = isObject(helpers) && isObject(helpers.egm) ? text(helpers.egm.source) : "";
+  if (!gstack || !egm) throw new OrlyError("registry helpers must name the gstack and egm sources");
+  return { gstack, egm };
 }
 
 export const CLAUDE_CODE = "Claude Code";
@@ -60,81 +46,55 @@ export function agentRuntimes(homes: HelperHomes): string[] {
   ];
 }
 
-export function helperDrift(pins: HelperPins, homes: HelperHomes): string[] {
+export function missingHelpers(sources: HelperSources, homes: HelperHomes): string[] {
   const runtimes = agentRuntimes(homes);
   return [
-    ...(runtimes.includes(CLAUDE_CODE) ? claudeDrift(pins, homes.home) : []),
-    ...(runtimes.includes(CODEX) ? codexDrift(pins, homes) : []),
+    ...(runtimes.includes(CLAUDE_CODE) ? claudeGaps(sources, homes.home) : []),
+    ...(runtimes.includes(CODEX) ? codexGaps(sources, homes.codexHome) : []),
   ];
 }
 
-function claudeDrift(pins: HelperPins, home: string): string[] {
+function claudeGaps(sources: HelperSources, home: string): string[] {
   const gstack = join(home, CLAUDE_DIRECTORY, SKILLS, GSTACK);
-  const update = `git -C ${gstack} fetch && git -C ${gstack} checkout ${pins.gstack.commit} && (cd ${gstack} && ./setup)`;
-  const marketplace = join(home, CLAUDE_DIRECTORY, ...CLAUDE_EGM_MARKETPLACE);
-  const reinstall = `git -C ${marketplace} fetch && git -C ${marketplace} checkout ${pins.egm.commit}, then reinstall ${EGM_PLUGIN} in Claude Code`;
-  const commits = claudePluginCommits(join(home, CLAUDE_DIRECTORY, ...CLAUDE_PLUGIN_RECORD));
+  const install = `git clone ${sources.gstack} ${gstack} && (cd ${gstack} && ./setup)`;
+  const plugin = `claude plugin marketplace add ${repository(sources.egm)} && claude plugin install ${EGM_PLUGIN}`;
   return [
-    ...versionDrift(CLAUDE_CODE, gstack, pins, update),
-    ...commitDrift(CLAUDE_CODE, commits, pins, reinstall),
+    ...(existsSync(join(gstack, VERSION_FILE)) ? [] : [gap(GSTACK, CLAUDE_CODE, install)]),
+    ...(claudeHasEgm(join(home, CLAUDE_DIRECTORY, ...CLAUDE_PLUGIN_RECORD)) ? [] : [gap("EGM", CLAUDE_CODE, plugin)]),
   ];
 }
 
-function codexDrift(pins: HelperPins, homes: HelperHomes): string[] {
-  const install = `git clone ${pins.gstack.source} ~/gstack && git -C ~/gstack checkout ${pins.gstack.commit} && (cd ~/gstack && ./setup --host codex --no-browser)`;
-  const repository = pins.egm.source.match(GITHUB_REPOSITORY)?.[1] ?? pins.egm.source;
-  const plugin = `codex plugin marketplace remove egm; codex plugin marketplace add ${repository} --ref ${pins.egm.commit} && codex plugin add ${EGM_PLUGIN}`;
-  const shared = join(homes.home, AGENTS_DIRECTORY, SKILLS, GSTACK);
+function codexGaps(sources: HelperSources, codexHome: string): string[] {
+  const install = `git clone ${sources.gstack} ~/gstack && (cd ~/gstack && ./setup --host codex --no-browser)`;
+  const plugin = `codex plugin marketplace add ${repository(sources.egm)} && codex plugin add ${EGM_PLUGIN}`;
+  const cache = join(codexHome, ...CODEX_EGM_CACHE);
   return [
-    ...versionDrift(CODEX, join(homes.codexHome, SKILLS, GSTACK), pins, install),
-    ...(existsSync(shared) ? versionDrift(`${CODEX} (${shared})`, shared, pins, install) : []),
-    ...commitDrift(CODEX, codexPluginCommits(join(homes.codexHome, ...CODEX_EGM_CACHE)), pins, plugin),
+    ...(existsSync(join(codexHome, SKILLS, GSTACK, VERSION_FILE)) ? [] : [gap(GSTACK, CODEX, install)]),
+    ...(existsSync(cache) && readdirSync(cache).length > 0 ? [] : [gap("EGM", CODEX, plugin)]),
   ];
 }
 
-function versionDrift(runtime: string, directory: string, pins: HelperPins, fix: string): string[] {
-  const file = join(directory, VERSION_FILE);
-  const pinned = `orly pins ${pins.gstack.version} (${pins.gstack.commit.slice(0, 8)})`;
-  if (!existsSync(file)) return [`gstack is not installed for ${runtime}; ${pinned}: ${fix}`];
-  const found = readFileSync(file, UTF8).trim();
-  return found === pins.gstack.version ? [] : [`gstack for ${runtime} is ${found}; ${pinned}: ${fix}`];
+function gap(helper: string, runtime: string, install: string): string {
+  return `${helper} is not installed for ${runtime}: ${install}`;
 }
 
-function commitDrift(runtime: string, commits: string[], pins: HelperPins, fix: string): string[] {
-  const pinned = `orly pins ${pins.egm.commit.slice(0, 8)}`;
-  if (commits.length === 0) return [`EGM is not installed for ${runtime}; ${pinned}: ${fix}`];
-  const other = commits.find((commit) => commit !== pins.egm.commit);
-  return other === undefined ? [] : [`EGM for ${runtime} is ${other ? other.slice(0, 8) : UNREADABLE}; ${pinned}: ${fix}`];
+function repository(source: string): string {
+  return source.match(GITHUB_REPOSITORY)?.[1] ?? source;
 }
 
-// Claude Code records each installed plugin's commit; its cached copy is not a
-// Git checkout.
-function claudePluginCommits(record: string): string[] {
-  if (!existsSync(record)) return [];
+// Claude Code records each installed plugin; a record that does not parse
+// cannot show EGM, so it reads as missing.
+function claudeHasEgm(record: string): boolean {
+  if (!existsSync(record)) return false;
   let parsed: unknown;
   try {
     parsed = JSON.parse(readFileSync(record, UTF8));
   } catch {
-    // A record that does not parse cannot prove the pin; it reads as drift.
-    return [""];
+    return false;
   }
   const plugins = isObject(parsed) && isObject(parsed.plugins) ? parsed.plugins : {};
   const installs = plugins[EGM_PLUGIN];
-  if (!Array.isArray(installs)) return [];
-  return installs.map((install) => (isObject(install) ? text(install.gitCommitSha) : ""));
-}
-
-// Codex keeps each installed plugin version as a Git checkout.
-function codexPluginCommits(cache: string): string[] {
-  if (!existsSync(cache)) return [];
-  return readdirSync(cache).map((version) => gitHead(join(cache, version)));
-}
-
-function gitHead(directory: string): string {
-  const result = Bun.spawnSync(["git", "-C", directory, "rev-parse", "HEAD"], {
-    env: UNSCOPED_ENVIRONMENT, stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT,
-  });
-  return result.exitCode === 0 ? result.stdout.toString().trim() : "";
+  return Array.isArray(installs) && installs.length > 0;
 }
 
 function text(value: unknown): string {

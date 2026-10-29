@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.27.0 (2026-10-29)
+
+`orly doctor` checks that gstack and the Elephant-Goldfish Model (EGM) are installed, not which version. It no longer compares orly's own version with the repository's pin.
+
+- **Helpers** — Any installed gstack or EGM passes; a missing one prints its install command.
+- **orly version** — One global orly runs in every repository, whatever `.orly/orly.json` records. `orly update` still records the version that wrote the files.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.27.0 update`.
+
 ## 0.26.1 (2026-10-28)
 
 The standards reviewer reads where a repository keeps its files, and `orly-ship` pushes before it gates.

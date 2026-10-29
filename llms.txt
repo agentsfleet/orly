@@ -204,8 +204,8 @@ repository, no files), `persona.indy` (tone and address handles only, no files).
 
 Skills provided by `workflow.skills`, per repository: `orly-spec`, `orly-build`,
 `orly-ship`, plus the `orly-standards-reviewer` agent. gstack and the
-Elephant-Goldfish Model (EGM) install per agent host at the versions orly pins;
-`orly doctor` checks them.
+Elephant-Goldfish Model (EGM) install per agent host at any version;
+`orly doctor` checks they are present.
 
 ---
 

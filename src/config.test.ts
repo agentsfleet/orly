@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 import { selectPacks } from "./config_discovery";
-import { CONFIG_PATH, contentDigest, managedDrift, readConfig, readConfigSync, seedConfig, staleVersion, writeConfig } from "./config";
+import { CONFIG_PATH, contentDigest, managedDrift, readConfig, readConfigSync, seedConfig, writeConfig } from "./config";
 import { RulesModel } from "./model";
 
 const ROOT = resolve(import.meta.dir, "..");
@@ -139,21 +139,6 @@ describe("readConfig", () => {
 
   test("an absent config is undefined, not an error — the normal pre-init state", async () => {
     expect(await readConfig(scratch())).toBeUndefined();
-  });
-});
-
-describe("staleVersion", () => {
-  test("a config installed by the running engine reports no staleness", async () => {
-    const config = { ...(await seedConfig(scratch())), orly_version: "0.4.0" };
-    expect(staleVersion(config, "0.4.0")).toBeUndefined();
-  });
-
-  test("an older install names both versions and the fix command", async () => {
-    const config = { ...(await seedConfig(scratch())), orly_version: "0.3.0" };
-    const message = staleVersion(config, "0.4.0");
-    expect(message).toContain("0.3.0");
-    expect(message).toContain("0.4.0");
-    expect(message).toContain("orly update");
   });
 });
 
