@@ -20,9 +20,12 @@ const HARD_SAFETY_FIXTURE = "fixtures/hard-safety-0.25.0.txt";
 
 describe("Renderer", () => {
   test("renders byte-stable text for a pack set", async () => {
-    const renderer = new Renderer(await RulesModel.load(ROOT));
+    const model = await RulesModel.load(ROOT);
+    const renderer = new Renderer(model);
+    const everyPack = Object.keys(model.registry.packs as Record<string, unknown>).sort();
 
     expect(await renderer.renderText(AGENTSFLEET_PACKS)).toBe(await renderer.renderText(AGENTSFLEET_PACKS));
+    expect(await renderer.renderText(everyPack, DOTFILES_COMMANDS)).toBe(await renderer.renderText(everyPack, DOTFILES_COMMANDS));
   });
 
   test("emits CommonMark and Markdown JSX compatible headers", async () => {

@@ -11,11 +11,10 @@ import { readInstallConfig } from "./installation/migration";
 import { install, InstallResult } from "./install";
 import { isString, OrlyError, readJsonObject, RulesModel } from "./model";
 import { Renderer } from "./render";
-import { verifyRenders, writeEvidence } from "./verify";
+import { verifyRuleset } from "./verify";
 import { commandSetupErrors } from "./validation";
 
 const PASS_RESULT = "pass";
-const NOT_REQUIRED_RESULT = "not-required";
 const ACCEPT_DIRTY_FLAG = "--accept-dirty";
 const HELP_FLAG = "--help";
 const SHORT_HELP_FLAG = "-h";
@@ -209,13 +208,9 @@ async function preview(model: RulesModel, targetRoot: string, requested: string[
 
 async function verify(model: RulesModel, args: string[]): Promise<number> {
   requireEngineCheckout(model, VERIFY_COMMAND);
-  const checks = await verifyRenders(model);
+  requireNoArguments(args, "usage: orly verify");
+  const checks = await verifyRuleset(model);
   for (const check of checks) console.log(`${check.result === PASS_RESULT ? PASS_GLYPH : FAIL_GLYPH} ${check.name}${check.detail ? `: ${check.detail}` : ""}`);
-  if (args.includes("--write-evidence")) {
-    const result = optionalValue(args, "--llm-result") ?? NOT_REQUIRED_RESULT;
-    if (result !== PASS_RESULT && result !== NOT_REQUIRED_RESULT) throw new OrlyError("--llm-result must be pass or not-required");
-    console.log(`evidence: ${await writeEvidence(model, "dotfiles", checks, result)}`);
-  }
   return checks.every((check) => check.result === PASS_RESULT) ? 0 : 1;
 }
 

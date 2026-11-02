@@ -46,13 +46,13 @@ describe("orly command", () => {
     expect(result.stdout.toString().trim()).toBe(manifest.version);
   });
 
-  // `validate` is gone: verifyRenders calls model.validate() before its own
+  // `validate` is gone: verifyRuleset calls model.validate() before its own
   // checks, so the verb was a strict subset of `verify` with a second name.
-  test("verify validates the registry on its way to the render checks", () => {
+  test("verify validates the registry on its way to the ruleset checks", () => {
     const result = Bun.spawnSync([COMMAND, "verify"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout.toString()).toContain("render.local.idempotent");
+    expect(result.stdout.toString()).toContain("standards.catalogue");
   });
 
   test("validate is not a verb", () => {
@@ -62,10 +62,14 @@ describe("orly command", () => {
     expect(result.stderr.toString()).toContain("unknown command: validate");
   });
 
-  test("verify needs no --all, because there was never a not-all", () => {
-    const result = Bun.spawnSync([COMMAND, "verify"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
+  // The evidence flags left with the evidence file, and an unknown flag never
+  // passes silently: `verify` takes no arguments at all.
+  test.each(["--write-evidence", "--llm-result pass", "--all"])("verify refuses retired and unknown flags: %s", (flags) => {
+    const result = Bun.spawnSync([COMMAND, "verify", ...flags.split(" ")], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
 
-    expect(result.exitCode).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout.toString()).toBe("");
+    expect(result.stderr.toString()).toBe("orly: usage: orly verify\n");
   });
 
   // Telemetry is gone, and its command with it: no alias keeps accepting the

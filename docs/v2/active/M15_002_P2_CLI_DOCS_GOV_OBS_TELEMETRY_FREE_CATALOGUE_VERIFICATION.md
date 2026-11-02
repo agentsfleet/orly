@@ -132,9 +132,9 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 
 `orly verify` reports `standards.catalogue`, `generated.root.current` and `packs.sources.current`, and exits non-zero when any fails. The render-twice determinism check leaves the command and becomes a unit test in `src/render.test.ts`. `writeEvidence`, `--write-evidence`, `--llm-result` and `schemas/evidence.schema.json` go; `verify` takes no arguments and refuses any with its usage line. It still refuses to run from a published package.
 
-- **Dimension 2.1** — The shipped catalogue passes → Test `verify accepts the shared valid catalogue` (unit and subprocess): the validator returns no findings for this checkout, and `orly verify` prints all three checks green and exits 0.
-- **Dimension 2.2** — Each broken property is named → Test `verify names catalogue failures` (unit): scratch catalogues with an empty directory, a missing field, a duplicated identifier, a missing inventory, a broken link, a 401-line page, a retired-stack term and a template citing an absent SPEC rule each yield a finding naming the file.
-- **Dimension 2.3** — Retired flags cannot pass silently → Test `verify refuses retired and unknown flags` (subprocess): `orly verify --write-evidence` and `orly verify --all` exit 1 with `usage: orly verify`.
+- **Dimension 2.1** — DONE — The shipped catalogue passes → Test `verify accepts the shared valid catalogue` (unit and subprocess): the validator returns no findings for this checkout, and `orly verify` prints all three checks green and exits 0.
+- **Dimension 2.2** — DONE — Each broken property is named → Test `verify names catalogue failures` (unit): scratch catalogues with an empty directory, a missing field, a duplicated identifier, a missing inventory, a broken link, a 401-line page, a retired-stack term and a template citing an absent SPEC rule each yield a finding naming the file.
+- **Dimension 2.3** — DONE — Retired flags cannot pass silently → Test `verify refuses retired and unknown flags` (subprocess): `orly verify --write-evidence` and `orly verify --all` exit 1 with `usage: orly verify`.
 
 ### §3 — Commits run the work gate, pushes run gitleaks
 
