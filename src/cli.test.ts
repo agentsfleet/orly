@@ -18,6 +18,15 @@ describe("orly command", () => {
     expect(output).not.toContain("oracle-rules");
   });
 
+  // Help is the public surface: it names verify, which proves the check can
+  // see a command, and none of the commands or consent text 0.28 removed.
+  test("help lists only live commands", () => {
+    const output = Bun.spawnSync([COMMAND, "--help"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" }).stdout.toString();
+
+    expect(output).toContain("orly verify");
+    for (const retired of ["lifecycle", "skill-event", "telemetry", ".config/agentsfleet"]) expect(output).not.toContain(retired);
+  });
+
   // Adversarial review found recordOptIn running before the --dry-run branch,
   // so a preview created .orly/orly.json — and on an installed repository
   // permanently added the pack. A dry run changes nothing, opt-in included.

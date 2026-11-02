@@ -42,6 +42,15 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
+## 0.28: no telemetry, a slimmer spec
+
+orly collects no usage telemetry, and `orly skill-event` and `orly lifecycle` are gone.
+The spec template is a skeleton whose comments cite the rules in the spec standard.
+Each Dimension carries its test tier and result, and baselines come from the base commit's CI run.
+
+`docs.language` now reports a template slot left on a changed spec line.
+A configuration that still carries the retired `execution` key is refused.
+
 ## 0.26: rules become standards
 
 Rules now live in standards: short pages of rule blocks with Applies to, Checked by, Bad, Good and Why.
@@ -50,14 +59,14 @@ The `orly-standards-reviewer` agent checks a diff against the standards before t
 
 The always-on `AGENTS.md` is under 16 KiB, down from 37 KB.
 The dispatch pages, the audit scripts, the read-logging gate and `orly judge` are gone.
-`orly gate pr` checks code and Git only; a spec is reviewed while it is written.
+`orly gate pr` checks code and Git; a spec is reviewed while it is written.
 
 `orly doctor` checks that every agent runtime has gstack and the Elephant-Goldfish Model (EGM), at whatever version you run.
 A Codex cloud task gets the same setup; see [the architecture page](docs/ORLY_ARCHITECTURE.md#codex-cloud-environment).
 
 See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
 The install commands below fetch the published package.
-The release workflow publishes 0.27.0 after its version change merges to `main` or an explicit release run.
+The release workflow publishes 0.28.0 after its version change merges to `main` or an explicit release run.
 
 ---
 
@@ -382,9 +391,12 @@ make audit
 
 `make audit` is the bar. If it passes, the change is reviewable. Its steps run in parallel, around half a minute:
 
-- **typecheck and unit tests**
-- **render determinism:** the same sources always produce the same rules
+- **`orly verify`:** the standards catalogue, the root render and every pack copy
+- **typecheck and unit tests**, including render determinism
 - **gate fixtures:** every gate proved against one passing and one failing case
+
+Every commit here runs `bin/orly gate work`, which runs `orly verify`.
+A push runs gitleaks only, and CI runs `make audit` on every pull request.
 
 Coverage is gated at a 90% line floor. The workflow fails below it.
 

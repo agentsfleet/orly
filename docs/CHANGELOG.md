@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.28.0 (2026-11-02)
+
+orly collects no usage telemetry, and the spec template is a skeleton that cites the spec standard's rules.
+
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.28.0 update`. Remove any `execution` key from `.orly/orly.json` first, because 0.28 refuses it. You may delete `~/.config/agentsfleet/orly/`, which orly no longer reads.
+- **Telemetry** — Commands send no usage events and ask for no consent. `orly skill-event` is gone, and generated hooks stop exporting `ORLY_INVOCATION`.
+- **Spec template** — Each Dimension carries its test tier and result. The Test Specification table and the baseline headers are gone.
+- **Leftover slots** — `docs.language` reports a `{{fill:` slot or `tpl:` comment left on a changed spec line.
+- **Removed** — `orly lifecycle` and the disabled remote adapter are gone, with no alias.
+
 ## 0.27.0 (2026-10-29)
 
 `orly doctor` checks that gstack and the Elephant-Goldfish Model (EGM) are installed, not which version. It no longer compares orly's own version with the repository's pin.

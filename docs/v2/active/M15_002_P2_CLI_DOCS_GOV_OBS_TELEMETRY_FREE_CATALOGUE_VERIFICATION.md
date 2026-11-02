@@ -169,7 +169,7 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 
 `package.json` moves to 0.28.0. Help, `README.md`, `docs/ORLY_ARCHITECTURE.md`, `docs/architecture/installation.md`, `llms.txt` and the changelog describe 0.28 together. Finished specs and released changelog entries keep their wording (DOC-S7).
 
-- **Dimension 7.1** — Help lists only live commands → Test `help lists only live commands` (subprocess): help names `orly verify` and no `lifecycle`, `skill-event` or consent file.
+- **Dimension 7.1** — DONE — Help lists only live commands → Test `help lists only live commands` (subprocess): help names `orly verify` and no `lifecycle`, `skill-event` or consent file.
 
 ## Interfaces
 
@@ -222,11 +222,13 @@ Usage telemetry is removed: the PostHog command, gate and skill events stop. No 
 
 | Deleted file or symbol | Verify | Expected |
 |------------------------|--------|----------|
-| telemetry modules and command | `git grep -n -E "beginTelemetry\|recordTelemetry\|telemetry_sync\|skill-event\|ORLY_TELEMETRY" -- src bin evals skills core agents standards` | no output |
-| lifecycle inspector and adapter | `git grep -n -E "lifecyclePlan\|readExecution\|DISABLED_MODE\|orly lifecycle" -- src bin evals docs/architecture README.md llms.txt` | no output |
-| evidence writer and schema | `git grep -n -E "writeEvidence\|evidence\.schema\|write-evidence\|llm-result" -- src bin evals schemas .githooks Makefile` | no output |
+| telemetry modules and command | `git grep -n -E "beginTelemetry\|recordTelemetry\|telemetry_sync\|skill-event\|ORLY_TELEMETRY" -- src bin evals skills core agents standards ":!src/*.test.ts"` | no output |
+| hook invocation marker | `git grep -n ORLY_INVOCATION -- src bin evals ":!src/*.test.ts"` | `src/installation/migration.ts` only, the 0.10 byte record |
+| lifecycle inspector and adapter | `git grep -n -E "lifecyclePlan\|readExecution\|DISABLED_MODE\|orly lifecycle" -- src bin evals docs/architecture llms.txt ":!src/*.test.ts"` | no output |
+| evidence writer and schema | `git grep -n -E "writeEvidence\|evidence\.schema\|write-evidence\|llm-result" -- src bin evals schemas .githooks Makefile ":!src/*.test.ts"` | no output |
 | release archive | `git grep -n "evals/release" -- src evals docs/architecture README.md llms.txt Makefile` | no output |
 
+Negative tests name the retired commands to prove their refusal, and the README's 0.28 notes announce the removals.
 `.gitignore` still ignores `.orly/evidence.json`, as it still ignores `.oracle/evidence.json`, so a stale local file never dirties a tree.
 
 ## Out of Scope
