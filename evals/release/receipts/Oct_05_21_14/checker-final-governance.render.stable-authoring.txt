@@ -1,4 +1,0 @@
-🟢 render.local.idempotent
-🟢 render.all.idempotent
-🟢 generated.root.current
-🟢 packs.sources.current

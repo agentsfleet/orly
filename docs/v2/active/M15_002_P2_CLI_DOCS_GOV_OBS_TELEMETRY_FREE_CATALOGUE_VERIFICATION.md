@@ -155,7 +155,7 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 
 `evals/release/` holds 279 files: audit records, 267 receipts and hand-run packaging scripts for 0.11 and 0.12. Only `src/release_inventory.test.ts` and an install-eval exclusion keep them alive, and all three go. The retired-verb scan in `evals/install/release_cases.sh` loses its receipt exclusion and the case that proved it. The active-call case still proves that live calls are reported.
 
-- **Dimension 5.1** — The retired-verb scan still reports active calls → Test `install_retired_reference_scope_rejects_active_calls` (integration, `make install-evals`): three planted calls to retired verbs are each reported once.
+- **Dimension 5.1** — DONE — The retired-verb scan still reports active calls → Test `install_retired_reference_scope_rejects_active_calls` (integration, `make install-evals`): three planted calls to retired verbs are each reported once.
 
 ### §6 — Slim the spec template
 

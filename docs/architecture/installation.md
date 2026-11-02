@@ -57,4 +57,4 @@ Disposable migration checks do not prove an upgrade in a live consuming reposito
 
 ## Related pages
 
-- [Release report](../../evals/release/release-report.md)
+- [Orly architecture](../ORLY_ARCHITECTURE.md)
