@@ -25,7 +25,7 @@ This page describes what orly 0.28.0 installs into a consuming repository, and h
 
 ## Why it exists
 
-Installed rules must be distinguishable from repository-owned documentation and code. A recorded path alone does not authorize discarding a user's edit; git holds every committed version, so an update may replace only a managed path git reports as clean.
+Installed rules must be distinguishable from repository-owned documentation and code. A recorded path alone does not authorize discarding a user's edit. Git holds every committed version, so update replaces only a managed path git reports as clean.
 
 The orly source checkout remains an authoring repository: root `core/`, `standards/`, `skills/`, `agents/`, `docs/` and its generated root operating model are source files.
 Consumer installation must never relocate or replace those authoritative sources.
