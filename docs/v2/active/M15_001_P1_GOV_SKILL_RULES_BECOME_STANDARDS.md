@@ -329,7 +329,7 @@ No product or operator signal changes. §6 records managed files, always-on byte
 
 ## Out of Scope
 
-- **[M15_002](../pending/M15_002_P2_CLI_DOCS_GOV_OBS_TELEMETRY_FREE_CATALOGUE_VERIFICATION.md) (0.28 follow-up) — telemetry, `orly verify` and pre-push coverage.** `src/telemetry.ts`, `src/telemetry_sync.ts`, `orly skill-event`, the consent text in `orly --help`; `orly verify` becomes catalogue tests; the PR #70 pre-push range tests (a deleted branch, a new branch through `--not --remotes`, several refs, an unreadable range).
+- **[M15_002](M15_002_P2_CLI_DOCS_GOV_OBS_TELEMETRY_FREE_CATALOGUE_VERIFICATION.md) (0.28 follow-up) — telemetry, `orly verify` and pre-push coverage.** `src/telemetry.ts`, `src/telemetry_sync.ts`, `orly skill-event`, the consent text in `orly --help`; `orly verify` becomes catalogue tests; the PR #70 pre-push range tests (a deleted branch, a new branch through `--not --remotes`, several refs, an unreadable range).
 - **`agentsfleet`'s migration** — its own Pull Request in its own repository, after 0.26.0 releases, doing exactly §6; `~/Projects/docs` and `cache-kit.rs` migrate when their owners bump their pins.
 - **M16 — the gate's language,** TypeScript or Rocq with OCaml, decided on the gate left after this milestone.
 - Linter rule files (ast-grep or GritQL): not planned; reviewer judgment covers the regular-expression checks, and a file format is chosen only if the reviewer misses them in practice.
