@@ -123,8 +123,8 @@ Every command stops collecting, spooling and sending usage events. `src/telemetr
 
 Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `.orly/hooks/` migrates through its recorded digest, which `src/install.ts` checks before any write. A legacy hook under `.githooks/` has no digest and migrates through byte recognition in `src/installation/migration.ts`; that template keeps the historical marker line as a local literal. A one-byte edit to either refuses before any write.
 
-- **Dimension 1.1** — The removed telemetry command is refused → Test `retired telemetry command is refused` (subprocess): `orly skill-event orly-build` exits 1 and prints `unknown command: skill-event`.
-- **Dimension 1.2** — Untouched old hooks migrate and edited ones stay protected → Test `hook cleanup preserves ownership conflicts` (integration): an untouched 0.27 `.orly/hooks/pre-commit` and an untouched legacy `.githooks/pre-commit` both end as the 0.28 bytes; a one-byte edit to either fails the update and leaves the file unchanged.
+- **Dimension 1.1** — DONE — The removed telemetry command is refused → Test `retired telemetry command is refused` (subprocess): `orly skill-event orly-build` exits 1 and prints `unknown command: skill-event`.
+- **Dimension 1.2** — DONE — Untouched old hooks migrate and edited ones stay protected → Test `hook cleanup preserves ownership conflicts` (integration): an untouched 0.27 `.orly/hooks/pre-commit` and an untouched legacy `.githooks/pre-commit` both end as the 0.28 bytes; a one-byte edit to either fails the update and leaves the file unchanged.
 
 ### §2 — Verify the standards catalogue
 

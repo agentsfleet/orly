@@ -2,7 +2,6 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { CONFIG_PATH, contentDigest, parseConfig, readConfig, sameDigest, type RepoConfig } from "../config";
 import { assertWritableInside, OrlyError } from "../model";
-import { HOOK_INVOCATION_ENV, HOOK_INVOCATION_VALUE } from "../telemetry";
 import type { FileDelete } from "./transaction";
 
 export const PREVIOUS_CONFIG = ".oracle/orly.json";
@@ -42,6 +41,8 @@ function previousHookDigest(root: string, path: string): string | undefined {
   return content.toString(TEXT_ENCODING) === previousHookScript(gate) ? contentDigest(content) : undefined;
 }
 
+// The exact bytes orly 0.10 wrote to `.githooks/`, telemetry marker included:
+// only a byte-for-byte match proves orly still owns the file it deletes.
 function previousHookScript(gate: string): string {
   return [
     "#!/usr/bin/env bash",
@@ -58,7 +59,7 @@ function previousHookScript(gate: string): string {
     "    exit 1",
     "fi",
     "",
-    `export ${HOOK_INVOCATION_ENV}=${HOOK_INVOCATION_VALUE}`,
+    "export ORLY_INVOCATION=hook",
     `exec orly gate ${gate}`,
     "",
   ].join("\n");

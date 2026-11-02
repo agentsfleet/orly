@@ -2,7 +2,6 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { UNSCOPED_ENVIRONMENT } from "../git_env";
 import { OrlyError } from "../model";
-import { HOOK_INVOCATION_ENV, HOOK_INVOCATION_VALUE } from "../telemetry";
 import type { RepoConfig } from "../config";
 import type { PlannedFile } from "./plan";
 
@@ -60,7 +59,6 @@ function hookScript(gate: string, version: string): string {
     "export ORLY_INDEX_FILE",
     "unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_COMMON_DIR GIT_PREFIX \\",
     "      GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES",
-    `export ${HOOK_INVOCATION_ENV}=${HOOK_INVOCATION_VALUE}`,
     `exec bunx --bun @agentsfleet/orly@${version} gate ${gate}`,
     "",
   ].join("\n");
