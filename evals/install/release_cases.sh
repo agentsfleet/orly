@@ -113,7 +113,9 @@ install_update_repins_across_a_version_bump() {
   local pkg repo; pkg="$(packed_root)"; repo="$(mk_repo)"
   if [[ -z "$pkg" ]]; then bad "$name" "npm pack or extract failed"; return; fi
 
-  run_packed "$pkg" "$repo" init >/dev/null
+  # Without hooks: the commit below would run a hook pinned to an unpublished version.
+  run_packed "$pkg" "$repo" init --no-hooks >/dev/null
+  git -C "$repo" add -A && git -C "$repo" commit -qm "orly init" >/dev/null
   local before; before="$(python3 -c "import json;print(json.load(open('$repo/.orly/orly.json'))['orly_version'])")"
 
   local copy; copy="$(mk_sandbox)"

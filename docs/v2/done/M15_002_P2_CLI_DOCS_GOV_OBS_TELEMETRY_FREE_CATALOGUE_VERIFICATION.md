@@ -18,7 +18,7 @@
 
 **Depends on:** M15_001, which supplies the standards catalogue and the three skills
 
-**Provenance:** agent-drafted (Nov 01, 2026) from the owner's 0.28 direction; amended Nov 02, 2026 after an adversarial review and three owner decisions quoted in Discovery
+**Provenance:** agent-drafted (Nov 01, 2026) from the owner's 0.28 direction; amended Nov 02, 2026 after an adversarial review and the owner decisions quoted in Discovery; §8 added Nov 02, 2026
 
 **Canonical architecture:** `docs/ORLY_ARCHITECTURE.md`, its verification, hooks and telemetry sections
 
@@ -77,10 +77,11 @@ CI     ─► make audit (verify, typecheck, bun test src) and make install-eval
 | `.orly/orly.json`; `AGENTS.md`; `SOUL.md` | EDIT | `verify.typecheck` declared; the owner's decision-brief rule; the render records both |
 | `src/execution/plan.ts`; `src/execution/plan.test.ts`; `src/execution/config.ts` | DELETE | lifecycle inspector and disabled remote adapter |
 | `src/criteria.ts`; `src/criteria.test.ts` | EDIT | owns gate tiers and command selection |
-| `src/config.ts`; `src/config_validation.ts`; `src/config_validation.test.ts`; `schemas/profile.schema.json` | EDIT | the `execution` key is removed and refused |
+| `src/config.ts`; `src/config.test.ts`; `src/config_validation.ts`; `src/config_validation.test.ts`; `schemas/profile.schema.json` | EDIT | the `execution` and `digests` keys are removed and refused |
+| `src/install.ts`; `src/layout.test.ts` | EDIT | update proves ownership through git |
 | `docs/architecture/remote-execution.md` | DELETE | describes the removed adapter |
 | `evals/release/` (279 files); `src/release_inventory.test.ts` | DELETE | 0.11 and 0.12 release records |
-| `evals/install/release_cases.sh` | EDIT | receipt exclusion and its case removed |
+| `evals/install/release_cases.sh`; `evals/install/cases.sh` | EDIT | receipt exclusion and its case removed; update cases commit first and doctor stops checking edits |
 | `standards/spec-template.md`; `standards/spec.md`; `fixtures/standards-rule-ids.json` | EDIT | slim template; rules absorb its guidance; SPEC-BASELINE recorded as removed |
 | `skills/orly-build/SKILL.md`; `skills/orly-ship/SKILL.md` | EDIT | no baseline headers; baselines from CI |
 | `src/spec_fill.ts`; `src/spec_fill.test.ts`; `src/doc_changes.ts`; `src/doc_changes.integration.test.ts` | CREATE / CREATE / EDIT / EDIT | leftover template slots in changed, committed spec lines |
@@ -172,6 +173,13 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 
 - **Dimension 7.1** — DONE — Help lists only live commands → Test `help lists only live commands` (e2e): help names `orly verify` and its three checks, and no `lifecycle`, `skill-event` or consent file.
 
+### §8 — Update proves ownership through git
+
+`.orly/orly.json` drops per-file `digests`. `orly update` replaces a managed file, or deletes an obsolete one, only while `git status` reports it clean; an uncommitted change stops the update and names the path. A committed hand edit is replaced and shows in the update's diff. Migration from 0.10 `.oracle/orly.json` and `.githooks/` is removed: every consumer is on 0.27.
+
+- **Dimension 8.1** — DONE — An uncommitted edit stops the update, and a committed stale file is replaced → Test `a committed stale hook is replaced; an uncommitted edit stops the update` (integration); `migration_preserves_owned_content refuses uncommitted or unowned` (integration).
+- **Dimension 8.2** — DONE — A 0.27 configuration with digests updates cleanly, and gates refuse it until then → Test `interrupted_install_recovers` (integration) starts from a committed 0.27 configuration; `both configuration readers reject invalid digests value {}` (unit).
+
 ## Interfaces
 
 - `orly verify` takes no arguments and prints one line per check: `standards.catalogue`, `generated.root.current`, `packs.sources.current`. It exits 0 only when all pass; any argument exits 1 with `orly: usage: orly verify`.
@@ -179,6 +187,7 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 - Generated `.orly/hooks/*` files lose `export ORLY_INVOCATION=hook` and the `ORLY_INDEX_FILE` hand-off, which nothing read. The commit gate checks the working tree; `orly gate pr` checks the committed tree.
 - `docs.language` reports `DOCFILL` for a leftover template slot on a changed, committed spec line.
 - This repository declares `verify.typecheck`.
+- `.orly/orly.json` has no `digests` key; a configuration that still lists one is refused until `orly update` rewrites it.
 
 ## Failure Modes
 
@@ -188,7 +197,7 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 | Retired flag | `orly verify --write-evidence` | exit 1, usage line | `verify refuses retired and unknown flags` |
 | Broken catalogue | missing field, duplicate identifier, broken link, long page, retired term, dead SPEC citation | finding names the file; `verify` exits 1 | `verify names catalogue failures`; `verify exits 1 when the catalogue breaks` |
 | Invalid registry | registry fails validation | `verify` stops before any check | `verify refuses an invalid registry before any check` |
-| Edited generated hook | one-byte edit to a 0.27 or legacy hook | update refuses before any write | `hook cleanup preserves ownership conflicts` |
+| Uncommitted managed edit | an edit git reports as changed | update refuses before any write, naming the path | `a committed stale hook is replaced; an uncommitted edit stops the update` |
 | Stale configuration | `execution` key | configuration refused, naming the key | `a configuration with execution is refused` |
 | Leftover template slot | a slot on a changed, committed spec line | DOCFILL finding; `docs.language` red | `docs language flags unfilled template slots` |
 | Failing conform at commit | `make conform` red | commit blocked | `a commit runs the work gate` |
@@ -197,7 +206,7 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 ## Invariants
 
 1. No command path reaches telemetry — the modules are deleted, so an import fails `bun run typecheck`.
-2. An edited managed hook never becomes managed by an update — `src/install.ts` compares recorded digests before any write.
+2. An update never discards an uncommitted change — `src/install.ts` and `src/installation/migration.ts` check `git status` before any write or delete.
 
 ## Metrics & Observability
 
@@ -214,6 +223,7 @@ Usage telemetry is removed: the PostHog command, gate and skill events stop. No 
 | R5 | Distribution still installs (§5) | `make install-evals` | exit 0 | P0 | ✅ `24 passed / 0 failed` |
 | R6 | Leftover template slots reported (§6) | `bun test src/spec_fill.test.ts` | exit 0 | P1 | ✅ `Ran 1 test across 1 file`, 0 fail |
 | R7 | Public version (§7) | `bin/orly --version` | `0.28.0` | P1 | ✅ `0.28.0` |
+| R8 | Ownership through git (§8) | `bun test src/installation/migration.test.ts src/layout.test.ts src/config_validation.test.ts` | exit 0 | P0 | ✅ `Ran 58 tests across 3 files`, 0 fail |
 | S1 | Declared conform | `make conform` | exit 0 | P0 | ✅ exit 0; final `orly gate pr` run in the PR Session Notes |
 | S2 | Declared unit lane | `bun test src` | exit 0 | P0 | ✅ `Ran 332 tests across 32 files`, 0 fail |
 | S3 | Declared typecheck lane | `bun run typecheck` | exit 0 | P0 | ✅ exit 0 |
@@ -288,5 +298,7 @@ Negative tests name the retired commands to prove their refusal, and the README'
 > Owner (Indy, Nov 02, 2026, time not recorded): "Also i need to mention that any decision that is asked with Indy must be elaborate with with a user experience thinking from the docs/architechture/*.md in ELI20 ascii pictorial with detail on api, files called and so on. So its clear for indy to take a decision" — context: recorded in `SOUL.md`'s "When a call needs his input" rule; the owner added "on ascii pictorial draw" and "explain me with pros and cons on the reasoning for selecting recommended options".
 
 > Owner (Indy, Nov 02, 2026, time not recorded): "so dont add oracle" — context: openclaw's `oracle` skill is not adopted.
+
+> Owner (Indy, Nov 02, 2026, time not recorded): "I PRFER WE DROP THE PER FILE HASH ITS CUMBERSOME", then "GO" to "Yes, git guard, in #75", then "JUST KEEP THE CODE SIMPLE" and "NO CLUTTER" — context: §8; per-file digests and the 0.10 migration leave, git status guards update.
 
 > Owner (Indy, Nov 02, 2026, time not recorded): "I select this │ 3 / C: A, plus delete ORLY_INDEX_FILE" — context: the commit gate keeps checking the working tree; the false docs are fixed and the unused index hand-off is removed from generated hooks, the engine hook and `src/git_env.ts`.

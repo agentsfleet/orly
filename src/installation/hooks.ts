@@ -2,7 +2,6 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { UNSCOPED_ENVIRONMENT } from "../git_env";
 import { OrlyError } from "../model";
-import type { RepoConfig } from "../config";
 import type { PlannedFile } from "./plan";
 
 export const HOOKS_DIRECTORY = ".orly/hooks";
@@ -17,18 +16,17 @@ export function plannedHooks(version: string): PlannedFile[] {
   return HOOK_GATES.map(([name, gate]) => ({ target: `${HOOKS_DIRECTORY}/${name}`, content: Buffer.from(hookScript(gate, version)), mode: "0755" }));
 }
 
-export function checkHooks(root: string, config: RepoConfig, force: boolean): void {
+export function checkHooks(root: string, force: boolean): void {
   const existing = hooksPath(root);
   if (existing === HOOKS_DIRECTORY || force) return;
   const previous = existing ?? git(root, ["rev-parse", "--git-path", "hooks"]).stdout.toString().trim();
   const directory = resolve(root, previous);
-  const managed = existing === ".githooks" && HOOK_GATES.every(([name]) => config.managed.includes(`${existing}/${name}`));
   const ownerHook = existsSync(directory) && readdirSync(directory).some((name) => {
-    if (name.endsWith(".sample") || (managed && HOOK_GATES.some(([hook]) => hook === name))) return false;
+    if (name.endsWith(".sample")) return false;
     const stat = statSync(join(directory, name));
     return stat.isFile() && (stat.mode & EXECUTABLE_BITS) !== 0;
   });
-  if ((!existing || managed) && !ownerHook) return;
+  if (!existing && !ownerHook) return;
   throw new OrlyError(`${HOOKS_PATH_KEY} uses '${previous}' with repository hooks; use --no-hooks to preserve repository hooks, or explicitly --force to retarget`);
 }
 

@@ -133,20 +133,16 @@ Unknown settings and malformed values are refused; `schemas/profile.schema.json`
 
 ---
 
-## Upgrade from 0.10.x
+## Update
 
-Run the update from the consumer repository. If the repository owns its hooks, preserve them explicitly:
+Commit first, then run the update from the consumer repository. If the repository owns its hooks, preserve them explicitly:
 
 ```bash
 bunx --bun @agentsfleet/orly update --no-hooks
 ```
 
-Expected: managed files move under `.orly/`; owner hooks remain unchanged. Conflicting owner edits stop the update and name the affected path.
+Expected: managed files are replaced and the change shows in `git diff`. A managed file with uncommitted changes stops the update and names the path.
 Use the installed candidate executable for an unpublished release trial; the command above fetches the published version.
-
-Update repository-owned callers that still read `.oracle/orly.json`, `.orly/dispatch/` or `.orly/audits/`.
-Rules now live in `.orly/standards/`; the audit scripts have no replacement, so drop those calls.
-Repository-owned audit scripts and project documents retain their existing locations.
 
 Review existing hooks before choosing an update without `--no-hooks`.
 
@@ -156,7 +152,6 @@ bunx --bun @agentsfleet/orly doctor
 
 Expected: installed rules match `.orly/orly.json` and work and verification commands are declared.
 Then run the repository's declared checks; `doctor` alone does not run them.
-An empty old directory can remain after its files move. Git does not track empty directories; remove one only after checking it is empty.
 
 ---
 

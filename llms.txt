@@ -80,12 +80,10 @@ suites. `init` reports missing configuration; `doctor` rejects it.
 
 ---
 
-For a 0.10.x consumer with repository-owned hooks, run `orly update --no-hooks`
-using the intended installed version. Change repository callers from
-`.oracle/orly.json` to `.orly/orly.json` and shared rule/audit paths to `.orly/`.
-Keep repository-owned scripts and documents in place. Run `orly doctor` and the
-declared checks before accepting the migration; doctor alone does not run checks.
-Empty old directories may remain, but contain no tracked managed files.
+Commit before `orly update`: it replaces only managed files git reports as
+clean, and stops on an uncommitted change. With repository-owned hooks, run
+`orly update --no-hooks`. Run `orly doctor` and the declared checks afterwards;
+doctor alone does not run checks.
 
 ## 4. Read order before you edit anything
 

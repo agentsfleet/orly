@@ -1,13 +1,13 @@
 import { existsSync, mkdirSync, mkdtempSync, rmSync, copyFileSync, lstatSync, readlinkSync, symlinkSync, realpathSync, readdirSync, rmdirSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
-import { CONFIG_PATH, contentDigest, sameDigest, seedConfig, serialiseConfig, type RepoConfig } from "./config";
+import { CONFIG_PATH, contentDigest, seedConfig, serialiseConfig, type RepoConfig } from "./config";
 import { selectPacks } from "./config_discovery";
 import { assertWritableInside, applyMode, modeLabel, OrlyError, MODE_EXECUTABLE, MODE_REGULAR, type RulesModel } from "./model";
 import { installLoaders, loaderTargets, type Layout } from "./loaders";
 import { referenceClosureErrors } from "./references";
 import { planFiles, resolveLayout, type PlannedFile } from "./installation/plan";
-import { readInstallConfig, migrationDeletes, PREVIOUS_CONFIG } from "./installation/migration";
+import { readInstallConfig, migrationDeletes, uncommittedPaths } from "./installation/migration";
 import { plannedHooks, checkHooks, configureHooks, hooksPath, HOOKS_DIRECTORY } from "./installation/hooks";
 import { diskDigest, InstallTransaction, type FileWrite, type InstallCheckpoint } from "./installation/transaction";
 import { installationLock } from "./installation/lock";
@@ -38,7 +38,6 @@ async function installLocked(model: RulesModel, options: InstallOptions, root: s
   const transaction = new InstallTransaction(root, options.orlyVersion, options.checkpoint);
   transaction.recover(() => configureHooks(root));
   const expected = new Map([[CONFIG_PATH, diskDigest(root, CONFIG_PATH)]]);
-  if (expected.get(CONFIG_PATH) === null) expected.set(PREVIOUS_CONFIG, diskDigest(root, PREVIOUS_CONFIG));
   const config = await readInstallConfig(root) ?? await seedConfig(root);
   config.packs = [...new Set([...config.packs, ...(options.requestedPacks ?? [])])].sort();
   const packs = selectPacks(model, root, config.packs, new Set(config.managed));
@@ -47,7 +46,7 @@ async function installLocked(model: RulesModel, options: InstallOptions, root: s
   try {
     for (const [path, before] of expected) if (diskDigest(root, path) !== before) throw new OrlyError(`installation conflict: ${path} changed after planning`);
     if (options.installHooks) {
-      checkHooks(root, config, options.force);
+      checkHooks(root, options.force);
       planned.push(...plannedHooks(options.orlyVersion));
     }
     return await materialise(root, layout, planned, packs, config, options, transaction, expected);
@@ -68,12 +67,11 @@ async function materialise(root: string, layout: Layout, planned: PlannedFile[],
   const hooks = options.installHooks ? { before: hooksPath(root), after: HOOKS_DIRECTORY } : null;
   const errors = await preflight(root, planned, config, options.force, expected);
   if (errors.length) return { ok: false, packs, written: [], skipped: [], errors };
-  const preservedHooks = options.installHooks ? [] : config.managed.filter((path) => /^(?:\.githooks|\.orly\/hooks)\//.test(path));
+  const preservedHooks = options.installHooks ? [] : config.managed.filter((path) => /^\.orly\/hooks\//.test(path));
   const destinations = new Set([...planned.map((file) => file.target), ...preservedHooks]);
   const deletes = migrationDeletes(root, config, destinations);
-  for (const file of deletes) if (file.path === PREVIOUS_CONFIG) file.before = expected.get(file.path)!;
   const { files: staged, skipped: loaderSkipped } = await stagePlan(root, layout, planned, deletes.map((file) => file.path));
-  const next = { ...config, orly_version: options.orlyVersion, managed: [...destinations], digests: { ...Object.fromEntries(preservedHooks.filter((path) => config.digests[path]).map((path) => [path, config.digests[path]!])), ...Object.fromEntries(planned.map((file) => [file.target, contentDigest(file.content)])) } };
+  const next = { ...config, orly_version: options.orlyVersion, managed: [...destinations] };
   staged.push({ target: CONFIG_PATH, content: Buffer.from(serialiseConfig(next)), mode: MODE_REGULAR });
   const written: string[] = [];
   const skipped: string[] = [...loaderSkipped];
@@ -86,24 +84,30 @@ async function materialise(root: string, layout: Layout, planned: PlannedFile[],
     else written.push(file.target);
     writes.push({ path: file.target, before, content: Buffer.from(file.content).toString("base64"), mode: file.mode === MODE_EXECUTABLE ? MODE_EXECUTABLE : MODE_REGULAR });
   }
-  if (options.installHooks) checkHooks(root, config, options.force);
+  if (options.installHooks) checkHooks(root, options.force);
   if (written.length || deletes.length) transaction.commit(writes, deletes, hooks, () => configureHooks(root));
   else if (options.installHooks) configureHooks(root);
   return { ok: true, packs, written: written.sort(), skipped: skipped.sort(), errors: [] };
 }
 
+// orly may replace a file only at a path it manages, and only when git holds
+// the current bytes: an uncommitted change would be lost, a committed one shows
+// in the update's diff and stays one revert away.
 async function preflight(root: string, planned: PlannedFile[], config: RepoConfig, force: boolean, expected: Map<string, string | null>): Promise<InstallError[]> {
-  const errors: InstallError[] = [];
+  const changing: PlannedFile[] = [];
   for (const file of planned) {
     assertWritableInside(root, file.target, MANAGED_KIND);
     const current = diskDigest(root, file.target);
     expected.set(file.target, current);
-    if (current === null || current === contentDigest(file.content)) continue;
-    const recorded = config.digests[file.target];
-    if (force || (config.managed.includes(file.target) && recorded && sameDigest(recorded, current))) continue;
-    errors.push({ path: file.target, message: "existing content is unowned or edited after installation", suggestion: "preserve or reconcile your change; --force explicitly replaces ordinary update conflicts" });
+    if (current !== null && current !== contentDigest(file.content)) changing.push(file);
   }
-  return errors;
+  if (force) return [];
+  const dirty = uncommittedPaths(root, changing.filter((file) => config.managed.includes(file.target)).map((file) => file.target));
+  return changing.flatMap((file) => {
+    if (!config.managed.includes(file.target)) return [{ path: file.target, message: "existing content is not managed by orly", suggestion: "move or rename your file; --force explicitly replaces it" }];
+    if (dirty.has(file.target)) return [{ path: file.target, message: "managed file has uncommitted changes", suggestion: "commit or stash your change first; --force explicitly discards it" }];
+    return [];
+  });
 }
 
 async function stagePlan(root: string, layout: Layout, planned: PlannedFile[], obsolete: string[]): Promise<{ files: PlannedFile[]; skipped: string[] }> {

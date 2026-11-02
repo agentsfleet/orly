@@ -54,8 +54,5 @@
   },
   "managed": [
     "AGENTS.md"
-  ],
-  "digests": {
-    "AGENTS.md": "sha256:bebe987a486a22f6a85994e1ed53f8d1884e4d479ae8c0dd3bc9c604fa00409c"
-  }
+  ]
 }

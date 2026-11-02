@@ -2,8 +2,8 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { contentDigest, readConfig, writeConfig } from "./config";
-import { cleanupTemporaryDirectories, newRepository, ROOT } from "./gates_test_support";
+import { readConfig, writeConfig } from "./config";
+import { cleanupTemporaryDirectories, git, newRepository, ROOT } from "./gates_test_support";
 import { install } from "./install";
 import { RulesModel } from "./model";
 
@@ -87,7 +87,7 @@ describe("the retired layout", () => {
   });
 });
 
-// A page the previous release wrote, recorded with the digest it was written with.
+// A page the previous release wrote and the repository committed.
 async function recordRetiredPage(repo: string, body: string): Promise<void> {
   mkdirSync(join(repo, ".orly/dispatch"), { recursive: true });
   await Bun.write(join(repo, RETIRED_PAGE), body);
@@ -96,6 +96,7 @@ async function recordRetiredPage(repo: string, body: string): Promise<void> {
   await writeConfig(repo, {
     ...config,
     managed: [...config.managed, RETIRED_PAGE],
-    digests: { ...config.digests, [RETIRED_PAGE]: contentDigest(Buffer.from(body)) },
   });
+  git(repo, "add", "-A");
+  git(repo, "commit", "-q", "--allow-empty", "-m", "test: previous release");
 }

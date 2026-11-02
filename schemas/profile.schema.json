@@ -7,10 +7,6 @@
     "orly_version": {"type": "string", "pattern": "^$|^\\d+\\.\\d+\\.\\d+(?:-[a-zA-Z0-9.-]+)?(?:\\+[a-zA-Z0-9.-]+)?$"},
     "packs": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}},
     "managed": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}},
-    "digests": {
-      "type": "object", "propertyNames": {"$ref": "#/$defs/nonempty"},
-      "additionalProperties": {"type": "string", "pattern": "^(?:sha256:)?[a-f0-9]{64}$"}
-    },
     "commands": {
       "type": "object", "propertyNames": {"$ref": "#/$defs/nonempty"},
       "additionalProperties": {

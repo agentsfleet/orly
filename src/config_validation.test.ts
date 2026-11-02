@@ -15,7 +15,7 @@ afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: 
 
 for (const [field, value] of [
   ["packs", null], ["packs", [false]], ["managed", {}], ["managed", [""]],
-  ["digests", []], ["digests", { path: false }], ["digests", { path: "broken" }],
+  ["digests", {}],
   ["orly_version", {}], ["orly_version", "yesterday"], ["schema_version", 2],
   ["unknown_setting", true], ["limits", []], ["limits", { [UNIT_LANE]: { timeout_ms: 0 } }],
   ["limits", { [UNIT_LANE]: { output_bytes: -1 } }], ["limits", { [UNIT_LANE]: { timeout_ms: 1.5 } }],
@@ -44,7 +44,6 @@ test("a minimal seeded configuration normalizes optional ownership records", () 
   const config = parseConfig({ schema_version: 1 });
   expect(config.packs).toEqual([]);
   expect(config.managed).toEqual([]);
-  expect(config.digests).toEqual({});
   expect(config.orly_version).toBe("");
 });
 
