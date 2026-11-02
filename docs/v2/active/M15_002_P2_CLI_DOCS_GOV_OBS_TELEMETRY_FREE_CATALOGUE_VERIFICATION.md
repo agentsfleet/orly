@@ -163,7 +163,7 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 
 `standards/spec.md` absorbs the guidance the comments carried. It amends SPEC-DIM, SPEC-FAIL, SPEC-DECIDE, SPEC-CLARITY and SPEC-FILL, and drops SPEC-BASELINE, which the inventory records as removed. `orly-build` stops writing baseline headers, and `orly-ship` takes baselines from CI. Changed spec lines get one mechanical check: an unfilled `{{fill:` slot or an opening `tpl:` comment is a `DOCFILL` finding under `docs.language`, while specs stay outside the prose rules.
 
-- **Dimension 6.1** — A leftover slot fails, and an opener alone does not → Test `docs language flags unfilled template slots` (unit): a changed spec line holding a slot yields one DOCFILL finding; an unchanged line, a rule page and an opener with no closing braces yield none.
+- **Dimension 6.1** — DONE — A leftover slot fails, and an opener alone does not → Test `docs language flags unfilled template slots` (unit): a changed spec line holding a slot yields one DOCFILL finding; an unchanged line, a rule page and an opener with no closing braces yield none.
 
 ### §7 — Publish the coherent 0.28 surface
 
