@@ -8,7 +8,7 @@
 
 **Date:** Nov 01, 2026
 
-**Status:** IN_PROGRESS
+**Status:** DONE
 
 **Priority:** P2, finish the approved standards-model cleanup and remove what nothing calls
 
@@ -207,17 +207,17 @@ Usage telemetry is removed: the PostHog command, gate and skill events stop. No 
 
 | # | Criterion (observable outcome) | Verify (copy-paste) | Expected | Priority | Graded (VERIFY) |
 |---|--------------------------------|---------------------|----------|----------|-----------------|
-| R1 | Telemetry retired; old hooks migrate (§1) | `bun test src/cli.test.ts src/installation/migration.test.ts` | exit 0 | P0 | |
-| R2 | Catalogue verification (§2) | `bun test src/standards_catalogue.test.ts src/verify.test.ts` | exit 0 | P0 | |
-| R3 | Commit and push hooks (§3) | `bun test src/required_scanner.test.ts src/commit_hook.test.ts` | exit 0 | P0 | |
-| R4 | Inspector and adapter gone (§4) | `bun test src/criteria.test.ts src/config_validation.test.ts` | exit 0 | P0 | |
-| R5 | Distribution still installs (§5) | `make install-evals` | exit 0 | P0 | |
-| R6 | Leftover template slots reported (§6) | `bun test src/spec_fill.test.ts` | exit 0 | P1 | |
-| R7 | Public version (§7) | `bin/orly --version` | `0.28.0` | P1 | |
-| S1 | Declared conform | `make conform` | exit 0 | P0 | |
-| S2 | Declared unit lane | `bun test src` | exit 0 | P0 | |
-| S3 | Declared typecheck lane | `bun run typecheck` | exit 0 | P0 | |
-| S4 | No secrets | `gitleaks detect --redact --no-banner` | exit 0 | P0 | |
+| R1 | Telemetry retired; old hooks migrate (§1) | `bun test src/cli.test.ts src/installation/migration.test.ts` | exit 0 | P0 | ✅ `Ran 51 tests across 2 files`, 0 fail |
+| R2 | Catalogue verification (§2) | `bun test src/standards_catalogue.test.ts src/verify.test.ts` | exit 0 | P0 | ✅ `Ran 21 tests across 2 files`, 0 fail |
+| R3 | Commit and push hooks (§3) | `bun test src/required_scanner.test.ts src/commit_hook.test.ts` | exit 0 | P0 | ✅ `Ran 5 tests across 2 files`, 0 fail |
+| R4 | Inspector and adapter gone (§4) | `bun test src/criteria.test.ts src/config_validation.test.ts` | exit 0 | P0 | ✅ `Ran 37 tests across 2 files`, 0 fail |
+| R5 | Distribution still installs (§5) | `make install-evals` | exit 0 | P0 | ✅ `24 passed / 0 failed` |
+| R6 | Leftover template slots reported (§6) | `bun test src/spec_fill.test.ts` | exit 0 | P1 | ✅ `Ran 1 test across 1 file`, 0 fail |
+| R7 | Public version (§7) | `bin/orly --version` | `0.28.0` | P1 | ✅ `0.28.0` |
+| S1 | Declared conform | `make conform` | exit 0 | P0 | ✅ exit 0; final `orly gate pr` run in the PR Session Notes |
+| S2 | Declared unit lane | `bun test src` | exit 0 | P0 | ✅ `Ran 332 tests across 32 files`, 0 fail |
+| S3 | Declared typecheck lane | `bun run typecheck` | exit 0 | P0 | ✅ exit 0 |
+| S4 | No secrets | `gitleaks detect --redact --no-banner` | exit 0 | P0 | ✅ exit 0, no leaks found |
 
 ## Dead Code Sweep
 
