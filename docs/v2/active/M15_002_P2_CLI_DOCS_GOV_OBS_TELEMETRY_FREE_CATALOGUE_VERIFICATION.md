@@ -147,9 +147,9 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 
 `orly lifecycle`, `lifecyclePlan` and the `execution.remote` adapter are deleted; the adapter never launched anything. `docs/architecture/remote-execution.md` goes with them. Gate tiers and `selectedCommands` move into `src/criteria.ts`, their only remaining caller. The configuration schema is strict and drops `execution`, so a configuration that still carries the key is refused by name. None of the four local configurations carries it: orly, agentsfleet, docs and cache-kit.rs.
 
-- **Dimension 4.1** — The inspector is gone → Test `lifecycle is not a command` (subprocess): `orly lifecycle` exits 1 and prints `unknown command: lifecycle`.
-- **Dimension 4.2** — A stale configuration is refused → Test `a configuration with execution is refused` (unit): parsing a configuration with `execution` throws an error naming the key.
-- **Dimension 4.3** — Tiers select what they selected before the move → Test `gate tiers select their declared commands` (unit): conform selects `conform`; fast selects `verify.*` without unit and integration; all selects every `verify.*`.
+- **Dimension 4.1** — DONE — The inspector is gone → Test `lifecycle is not a command` (subprocess): `orly lifecycle` exits 1 and prints `unknown command: lifecycle`.
+- **Dimension 4.2** — DONE — A stale configuration is refused → Test `a configuration with execution is refused` (unit): parsing a configuration with `execution` throws an error naming the key.
+- **Dimension 4.3** — DONE — Tiers select what they selected before the move → Test `gate tiers select their declared commands` (unit): conform selects `conform`; fast selects `verify.*` without unit and integration; all selects every `verify.*`.
 
 ### §5 — Retire the 0.11 and 0.12 release archive
 

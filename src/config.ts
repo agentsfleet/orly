@@ -4,7 +4,6 @@ import { dirname, join } from "node:path";
 import { assertWritableInside, hashContent, isObject, isString, JsonObject, objectValue, OrlyError, readJsonObject, RulesModel, stringArray } from "./model";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { selectPacks, sniffCommands } from "./config_discovery";
-import { readExecution, type ExecutionConfig } from "./execution/config";
 import { validateCommands, validateSurfaces } from "./validation";
 import { validateConfiguration } from "./config_validation";
 import { commandLimitsSchema, type LaneLimits } from "./command_limits";
@@ -35,7 +34,6 @@ export type RepoConfig = {
   surfaces: JsonObject | undefined;
   managed: string[];
   digests: Record<string, string>;
-  execution?: ExecutionConfig | undefined;
   limits?: LaneLimits;
 };
 
@@ -83,7 +81,6 @@ export function parseConfig(value: JsonObject): RepoConfig {
     surfaces: isObject(value.surfaces) ? value.surfaces : undefined,
     managed: stringArray(value[MANAGED_FIELD] ?? [], `${CONFIG_PATH} ${MANAGED_FIELD}`),
     digests: readDigests(value[DIGESTS_FIELD]),
-    execution: readExecution(value.execution),
     ...(isObject(value.limits) ? { limits: Object.fromEntries(Object.entries(value.limits).map(([lane, limits]) => [lane, commandLimitsSchema.parse(limits)])) } : {}),
   };
 }
@@ -200,7 +197,6 @@ export function serialiseConfig(config: RepoConfig): string {
     packs: config.packs,
     commands: config.commands,
     ...(config.surfaces ? { surfaces: config.surfaces } : {}),
-    ...(config.execution ? { execution: config.execution } : {}),
     ...(config.limits ? { limits: config.limits } : {}),
     managed: [...config.managed].sort(),
     digests: Object.fromEntries(Object.entries(config.digests).sort(([a], [b]) => a.localeCompare(b))),

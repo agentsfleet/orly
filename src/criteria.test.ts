@@ -3,7 +3,7 @@ import { rmSync } from "node:fs";
 import { join } from "node:path";
 
 import { CONFIG_PATH } from "./config";
-import { criteriaFor, runCommand } from "./criteria";
+import { criteriaFor, runCommand, selectedCommands } from "./criteria";
 import { cleanupTemporaryDirectories, git, modelFor, newRepository, newSpecRepository } from "./gates_test_support";
 
 const README = "README.md";
@@ -203,4 +203,14 @@ describe("an optional conform command", () => {
     expect(criteria.map((criterion) => criterion.name)).toEqual([REPO_CONFIG]);
     expect(criteria.every((criterion) => criterion.evaluate(context).ok)).toBe(true);
   });
+});
+
+// Each gate's tier picks its commands from the declared set: work runs conform
+// alone, verify the fast lanes, and pr every verify.* lane.
+test("gate tiers select their declared commands", () => {
+  const commands = { conform: [["true"]], "verify.lint": [["true"]], "verify.unit": [["true"]], "verify.integration": [["true"]], other: [["true"]] };
+
+  expect(selectedCommands(commands, "conform")).toEqual(["conform"]);
+  expect(selectedCommands(commands, "fast")).toEqual(["verify.lint"]);
+  expect(selectedCommands(commands, "all")).toEqual(["verify.integration", "verify.lint", "verify.unit"]);
 });

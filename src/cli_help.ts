@@ -15,10 +15,6 @@ Gates (read-only; no PR without every criterion green or a recorded override):
   Set limits.<command>.timeout_ms and output_bytes in .orly/orly.json to override.
   Exceeding either limit fails the check and prints the saved output path.
 
-Inspect:
-  orly lifecycle [--json]           inspect stages, declared local checks and
-                                    resource ownership; remote adapter disabled
-
 Install (the repository is the unit — no checkout of this package required):
   orly init [--force] [--no-hooks] [--with <PACK>] [--dry-run] [--json]
                                     materialise rules, gates, hooks, and a

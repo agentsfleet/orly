@@ -61,12 +61,6 @@ async function run(model: RulesModel, args: string[]): Promise<number> {
   if (command === "init") return materialise(model, rest, true);
   if (command === "update") return materialise(model, rest, false);
   if (command === VERIFY_COMMAND) return verify(model, rest);
-  if (command === "lifecycle") {
-    if (rest.some((argument) => argument !== JSON_FLAG)) throw new OrlyError("usage: orly lifecycle [--json]");
-    const { lifecyclePlan } = await import("./execution/plan");
-    console.log(JSON.stringify(lifecyclePlan(projectRoot()), undefined, JSON_INDENT));
-    return 0;
-  }
   if (command === "gate") return gate(model, rest);
   if (command === "override") return override(rest);
   throw new OrlyError(`unknown command: ${command}`);

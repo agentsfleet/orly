@@ -48,9 +48,10 @@ test("a minimal seeded configuration normalizes optional ownership records", () 
   expect(config.orly_version).toBe("");
 });
 
-test("disabled execution settings round-trip while active remote execution refuses", () => {
-  const disabled: JsonObject = { ...BASE, execution: { remote: { mode: "disabled", launcher: ["sentinel"] } } };
-  const config = parseConfig(disabled);
-  expect(parseConfig(JSON.parse(serialiseConfig(config)))).toEqual(config);
-  expect(() => parseConfig({ ...BASE, execution: { remote: { mode: "enabled" } } })).toThrow("unsupported");
+// The remote adapter never launched anything and is gone; a configuration that
+// still names it is refused rather than silently ignored.
+test("a configuration with execution is refused", () => {
+  const stale: JsonObject = { ...BASE, execution: { remote: { mode: "disabled" } } };
+
+  expect(() => parseConfig(stale)).toThrow('root: Unrecognized key: "execution"');
 });

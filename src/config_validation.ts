@@ -15,7 +15,6 @@ const configurationSchema = z.object({
   surfaces: z.unknown().optional(),
   managed: z.array(nonempty).optional(),
   digests: z.record(nonempty, z.string().regex(DIGEST_PATTERN)).optional(),
-  execution: z.unknown().optional(),
   limits: z.record(nonempty, commandLimitsSchema).optional(),
 }).strict();
 

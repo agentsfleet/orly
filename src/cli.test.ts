@@ -72,6 +72,16 @@ describe("orly command", () => {
     expect(result.stderr.toString()).toBe("orly: usage: orly verify\n");
   });
 
+  // The lifecycle inspector described a remote adapter that never ran; the
+  // command left with it, with no alias.
+  test("lifecycle is not a command", () => {
+    const result = Bun.spawnSync([COMMAND, "lifecycle", "--json"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout.toString()).toBe("");
+    expect(result.stderr.toString()).toBe("orly: unknown command: lifecycle\n");
+  });
+
   // Telemetry is gone, and its command with it: no alias keeps accepting the
   // event a stale skill might still send.
   test("retired telemetry command is refused", () => {

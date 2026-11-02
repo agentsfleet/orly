@@ -8,7 +8,6 @@ import { scanChangedDocuments } from "./doc_changes";
 import { isObject, JsonObject, objectValue, OrlyError, RulesModel } from "./model";
 import { readConfigSync, RepoConfig } from "./config";
 import { classifyBranch, SurfaceReport } from "./surfaces";
-import { selectedCommands, CONDITIONAL_LANES, CONFORM_TIER, FAST_TIER, ALL_TIER, type CommandTier } from "./execution/plan";
 import { commandSetupErrors } from "./validation";
 import { limitsFor, type CommandLimits } from "./command_limits";
 
@@ -36,6 +35,13 @@ const DOCS_LANGUAGE = "docs.language";
 // How many findings a report names before it stops listing them. A criterion
 // line is a summary, not a linter dump.
 const NAMED_FINDINGS = 3;
+const CONFORM_TIER = "conform";
+const FAST_TIER = "fast";
+const ALL_TIER = "all";
+const VERIFY_PREFIX = "verify.";
+const UNIT_LANE = "verify.unit";
+const CONDITIONAL_LANES = ["verify.integration", "verify.memory"];
+type CommandTier = typeof CONFORM_TIER | typeof FAST_TIER | typeof ALL_TIER;
 
 // CONFORM is its own lifecycle stage — EXECUTE → CONFORM → VERIFY — and it is
 // its own tier here for the same reason. Lumped into verify, the deterministic
@@ -100,6 +106,16 @@ function repositoryConfig(): Criterion {
       return { ok: false, detail: error instanceof Error ? error.message : String(error) };
     }
   });
+}
+
+// The declared commands a tier runs: conform alone, the fast verify.* lanes
+// without the boundary suites, or every verify.* lane.
+export function selectedCommands(commands: RepoConfig["commands"], tier: CommandTier): string[] {
+  return Object.keys(commands).filter((key) => {
+    if (tier === CONFORM_TIER) return key === CONFORM_TIER;
+    if (!key.startsWith(VERIFY_PREFIX)) return false;
+    return tier === ALL_TIER || (key !== UNIT_LANE && !CONDITIONAL_LANES.includes(key));
+  }).sort();
 }
 
 // Commands and source paths are repository-owned. Only integration and memory
