@@ -140,8 +140,8 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 
 `.githooks/pre-push` keeps its gitleaks block and loses the pushed-range selector, `make audit` and the evidence write. CI's `make audit` in `.github/workflows/harness.yml` stays the full proof. `.githooks/pre-commit` runs `bin/orly gate work`, which runs `make conform`; the gate took 0.22 s on this checkout. `.orly/orly.json` declares `verify.typecheck` as `bun run typecheck`, so `orly gate verify` and `orly gate pr` type-check locally, and `AGENTS.md` re-renders with it.
 
-- **Dimension 3.1** — A governance push needs nothing but gitleaks → Test `a push needs only gitleaks` (integration): a ref line touching `src/` on stdin, with only `git` and a passing `gitleaks` on `PATH`, exits 0.
-- **Dimension 3.2** — A commit runs the work gate → Test `a commit runs the work gate` (integration): a scratch checkout whose `bin/orly` exits 1 fails the hook, and one that records its arguments receives `gate work`.
+- **Dimension 3.1** — DONE — A governance push needs nothing but gitleaks → Test `a push needs only gitleaks` (integration): a ref line touching `src/` on stdin, with only `git` and a passing `gitleaks` on `PATH`, exits 0.
+- **Dimension 3.2** — DONE — A commit runs the work gate → Test `a commit runs the work gate` (integration): a scratch checkout whose `bin/orly` exits 1 fails the hook, and one that records its arguments receives `gate work`.
 
 ### §4 — Remove the lifecycle inspector and the disabled remote adapter
 

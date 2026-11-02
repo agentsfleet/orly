@@ -33,6 +33,13 @@
         "test",
         "src"
       ]
+    ],
+    "verify.typecheck": [
+      [
+        "bun",
+        "run",
+        "typecheck"
+      ]
     ]
   },
   "surfaces": {
@@ -49,6 +56,6 @@
     "AGENTS.md"
   ],
   "digests": {
-    "AGENTS.md": "sha256:c30bdf6586d46c8b27b2ed3b45199ddd9b433252660ddb172f568129a976ed5b"
+    "AGENTS.md": "sha256:87f3ecc0e29d3e76727fd4e67310c895eeb67e940a1022e6f6000b0a6d71fbd0"
   }
 }

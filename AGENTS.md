@@ -234,4 +234,5 @@ Optimise for one thing: he never has to ask twice.
 | Responsibility | Commands |
 |---|---|
 | `conform` | `make conform` |
+| `verify.typecheck` | `bun run typecheck` |
 | `verify.unit` | `bun test src` |

@@ -23,22 +23,9 @@ unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_COMMON_DIR GIT_PREFIX \
 
 ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT" || exit 1
-# Read once into a variable: piping into `grep -q` lets grep exit on the first
-# match, the producer takes SIGPIPE, and `pipefail` turns that into a miss.
-staged="$(env ${ORLY_INDEX_FILE:+"GIT_INDEX_FILE=$ORLY_INDEX_FILE"} git -c core.quotePath=false diff --cached --name-only)"
-
-# `make audit` runs the whole orly suite plus every eval sandbox. It moved to
-# pre-push on Indy's call (Aug 16, 2026): the audit proves the rule corpus, and
-# a corpus cannot reach anyone else until it is pushed. Committing stays cheap;
-# pushing still cannot skip it.
-#
-# The trigger surface stays named here — AGENTS.md, standards/, skills/, src/ —
-# so this hook still says out loud which layer a change touches, and where the
-# proof now happens. Announcing, not gating: the gate is pre-push.
-GOVERNANCE_PATTERN='^(AGENTS\.md|SOUL\.md|README\.md|Makefile|package\.json|bun\.lock|tsconfig\.json|(core|standards|skills|agents|schemas|src)/|registry\.json|fixtures/|evals/|docs/ORLY_ARCHITECTURE\.md|\.githooks/)'
-
-if grep -qE "$GOVERNANCE_PATTERN" <<<"$staged"; then
-  echo "pre-commit: governance staged — make audit runs at push (.githooks/pre-push)" >&2
-fi
-
-exit 0
+# Every commit runs the work gate from this checkout's own engine: the
+# declared conform command, `make conform`, runs `orly verify` over the
+# standards catalogue, the root render and the pack copies, in well under a
+# second. The full audit runs in CI (.github/workflows/harness.yml), and
+# `orly gate pr` runs every declared verify.* command before a PR opens.
+exec bin/orly gate work
