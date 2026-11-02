@@ -65,7 +65,7 @@ render, and compares every pack copy with its source.
 
 | Gate | Proves |
 |---|---|
-| `work` | repository configuration and the declared `conform` command over the staged change |
+| `work` | repository configuration and the declared `conform` command over the working tree |
 | `verify` | documentation checks and non-test `verify.*` commands; unfinished Sections may be pushed |
 | `pr` | branch, clean tree, exact pushed revision, docs surface, and every declared `verify.*` command |
 
@@ -75,7 +75,7 @@ and memory suites run at the PR boundary.
 No stored verification cache or
 assumption about a custom pre-push hook can remove them. Baselines come from
 the CI run of the branch's base commit and sit beside the branch counts in the
-Pull Request.
+Pull Request. A lane CI did not run on that commit is measured at the merge base.
 
 Every criterion is mechanical: it reads an exit code or a file. Claims that
 cannot be proven that way stay prose and are graded by the spec's rubric; they
@@ -147,9 +147,10 @@ Normal commands remove their temporary files after the gate reads the complete o
 
 ## Usage telemetry
 
-Orly collects no usage telemetry. Version 0.28 removed the consent prompt, the
-local event spool and the upload. Files an earlier version left under
-`~/.config/agentsfleet/orly/` are never read, and you can delete them.
+Orly 0.28 collects no usage telemetry: the consent prompt, the local event
+spool and the upload are gone. It never reads the files earlier versions left
+under `~/.config/agentsfleet/orly/`. Hooks still pinned to an earlier version do
+read them, so keep `{"telemetry":"off"}` there until every repository updates.
 
 ## Standards, skills and the reviewer
 

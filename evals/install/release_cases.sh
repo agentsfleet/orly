@@ -105,6 +105,9 @@ install_retired_reference_scope_rejects_active_calls() {
   ok "$name"
 }
 
+# update re-materialises whatever the lock pinned, and a rule change should
+# cost one command per repository — the property that replaces M01's
+# zero-sync-commit guarantee. Prove it moves a real version forward.
 install_update_repins_across_a_version_bump() {
   local name="update moves a repository from an older pinned version to the current one"
   local pkg repo; pkg="$(packed_root)"; repo="$(mk_repo)"

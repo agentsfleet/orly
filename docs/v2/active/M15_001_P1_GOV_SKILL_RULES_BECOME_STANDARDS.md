@@ -162,7 +162,7 @@ Each standard is Markdown with one block per rule: `### <ID> — <statement>`, t
 | Skill or agent | Steps it owns | Calls |
 |---|---|---|
 | `orly-spec` | explore, choose, draft, review, resolve, commit to `pending/` on a branch and open a docs-only PR, because orly's and `agentsfleet`'s `main` both require pull requests (`gh api repos/agentsfleet/<repo>/rules/branches/main` lists `pull_request`) | `/egm_brainstorm`, `standards/spec.md`, `/egm_review`, `/egm_resolve` |
-| `orly-build` | move the spec to `active/` with `Status`, `Branch` and `Baseline revision`; branch and worktree; read the standards for the files a Section touches; code and tests; mark Dimensions `DONE` in the same commit | `standards/*`, `orly lifecycle`, gstack `/investigate` and `/qa` |
+| `orly-build` | move the spec to `active/` with `Status`; branch and worktree; read the standards for the files a Section touches; code and tests; mark Dimensions `DONE` in the same commit | `standards/*`, gstack `/investigate` and `/qa` |
 | `orly-ship` | review, fix, move the spec to `done/`, `orly gate pr`, PR body, babysit CI and greptile until two quiet polls, then after your merge pull and prune | gstack `/review`, `orly-standards-reviewer`, `standards/pr.md`, `standards/changelog.md` |
 | `orly-standards-reviewer` | sees the diff, the spec and the matching standards only; reports `{rule ID, file:line, fix}`; nothing it cannot tie to a rule | read-only tools |
 

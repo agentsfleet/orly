@@ -48,8 +48,8 @@ test("a minimal seeded configuration normalizes optional ownership records", () 
   expect(config.orly_version).toBe("");
 });
 
-// The remote adapter never launched anything and is gone; a configuration that
-// still names it is refused rather than silently ignored.
+// The schema is strict and has no `execution` key, so a configuration that
+// still carries one is refused by name rather than silently ignored.
 test("a configuration with execution is refused", () => {
   const stale: JsonObject = { ...BASE, execution: { remote: { mode: "disabled" } } };
 

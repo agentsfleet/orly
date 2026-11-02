@@ -46,7 +46,7 @@ CI     ─► make audit (verify, typecheck, bun test src) and make install-eval
 
 ## PR Intent & comprehension handshake
 
-- **PR title (eventual):** feat(orly): drop telemetry, verify the catalogue and slim the spec template (0.28.0)
+- **PR title (eventual):** feat(orly)!: drop telemetry, verify the catalogue, slim specs (0.28.0)
 - **Intent (one sentence):** Ship 0.28 as the M15 cleanup: less code, fewer steps, and a spec template another agent can build from.
 - **Authoring handshake:** The owner wants 0.28 to remove what nothing uses and to keep the proofs that matter. ASSUMPTIONS I'M MAKING: 1. Remove orly's own telemetry and leave its local state files untouched. 2. Removed commands, flags and configuration keys get no alias. 3. "Docs on 0.28" means the live pages (`README.md`, `docs/ORLY_ARCHITECTURE.md`, `docs/architecture/`, `llms.txt`, the changelog); finished specs and released changelog entries stay as history. 4. The implementation lands on PR #75's branch, by owner direction.
 - **Implementer handshake:** recorded in the Pull Request Session Notes at PLAN, before any edit.
@@ -64,17 +64,17 @@ CI     ─► make audit (verify, typecheck, bun test src) and make install-eval
 | File | Action | Why |
 |------|--------|-----|
 | this spec, `docs/v2/active/` then `docs/v2/done/` | MOVE / EDIT | scope, decisions and completion evidence |
-| `docs/v2/active/M15_001_P1_GOV_SKILL_RULES_BECOME_STANDARDS.md` | EDIT | links this spec as the recorded follow-up |
+| `docs/v2/active/M15_001_P1_GOV_SKILL_RULES_BECOME_STANDARDS.md` | EDIT | links this spec as the recorded follow-up; its `orly-build` row matches the new opening step |
 | `src/telemetry.ts`; `src/telemetry_sync.ts`; `src/telemetry.test.ts` | DELETE | collection, spool and upload |
 | `src/cli.ts`; `src/cli_help.ts`; `src/cli.test.ts` | EDIT | no telemetry wrapper, `skill-event` or `lifecycle`; `verify` takes no arguments |
-| `src/installation/hooks.ts`; `src/installation/migration.ts` | EDIT | generated hooks drop the invocation marker; legacy bytes stay recognisable |
+| `src/installation/hooks.ts`; `src/installation/migration.ts`; `src/git_env.ts`; `standards/languages/shell.md` | EDIT | generated hooks drop the invocation marker and the unused index hand-off; legacy bytes stay recognisable; SH-HOOKINDEX covers hooks that read the staged tree |
 | `src/installation/migration.test.ts`; `src/install_loaders.test.ts`; `src/setup.test.ts` | EDIT | hook ownership proof; telemetry assertions and variables retired |
 | `src/standards.ts`; `src/standards_catalogue.test.ts` | EDIT | one catalogue validator, proven valid and invalid |
 | `src/verify.ts`; `src/verify.test.ts`; `src/render.test.ts` | EDIT | verify checks the catalogue and currency; render determinism becomes a unit test |
 | `schemas/evidence.schema.json` | DELETE | the evidence file has no writer |
 | `.githooks/pre-push`; `.githooks/pre-commit`; `Makefile` | EDIT | push runs gitleaks; commit runs the work gate |
 | `src/required_scanner.test.ts`; `src/commit_hook.test.ts` | EDIT / CREATE | push and commit hook proofs |
-| `.orly/orly.json`; `AGENTS.md` | EDIT | `verify.typecheck` declared; the render records it |
+| `.orly/orly.json`; `AGENTS.md`; `SOUL.md` | EDIT | `verify.typecheck` declared; the owner's decision-brief rule; the render records both |
 | `src/execution/plan.ts`; `src/execution/plan.test.ts`; `src/execution/config.ts` | DELETE | lifecycle inspector and disabled remote adapter |
 | `src/criteria.ts`; `src/criteria.test.ts` | EDIT | owns gate tiers and command selection |
 | `src/config.ts`; `src/config_validation.ts`; `src/config_validation.test.ts`; `schemas/profile.schema.json` | EDIT | the `execution` key is removed and refused |
@@ -83,22 +83,23 @@ CI     ─► make audit (verify, typecheck, bun test src) and make install-eval
 | `evals/install/release_cases.sh` | EDIT | receipt exclusion and its case removed |
 | `standards/spec-template.md`; `standards/spec.md`; `fixtures/standards-rule-ids.json` | EDIT | slim template; rules absorb its guidance; SPEC-BASELINE recorded as removed |
 | `skills/orly-build/SKILL.md`; `skills/orly-ship/SKILL.md` | EDIT | no baseline headers; baselines from CI |
-| `src/spec_fill.ts`; `src/spec_fill.test.ts`; `src/doc_changes.ts` | CREATE / CREATE / EDIT | leftover template slots in changed spec lines |
+| `src/spec_fill.ts`; `src/spec_fill.test.ts`; `src/doc_changes.ts`; `src/doc_changes.integration.test.ts` | CREATE / CREATE / EDIT / EDIT | leftover template slots in changed, committed spec lines |
+| `src/gates_test_support.ts` | EDIT | the fixture spec takes the template's current shape; helpers nothing calls are removed |
 | `package.json`; `README.md`; `docs/ORLY_ARCHITECTURE.md`; `docs/architecture/installation.md`; `llms.txt`; `docs/CHANGELOG.md` | EDIT | the 0.28 surface |
 
 Discovery searched `git grep -n -w` for each removed name: `beginTelemetry`, `recordTelemetry`, `telemetry_sync`, `skill-event`, `ORLY_TELEMETRY`, `ORLY_INVOCATION`, `lifecyclePlan`, `readExecution`, `writeEvidence`, `evals/release`. Production callers are `src/cli.ts`, `src/cli_help.ts`, `src/installation/hooks.ts`, `src/installation/migration.ts`, `src/config.ts` and `.githooks/pre-push`. Test callers are the test files above. Finished specs and released changelog entries name the retired items as history.
 
 ## Applicable Rules
 
-- **`code.md`** — NDC, NLG, NLR, ORP, HLP, FLL, CODE-MSID
+- **`code.md`** — NDC, NLG, NLR, NRC, ORP, HLP, FLL, CODE-MSID
 - **`tests.md`** — TNM, TST-NAM, TCF, TEST-OUTCOME, TEST-NEG, TEST-GITENV, TEST-ABSENT, TEST-DELTA
-- **`languages/typescript.md`** — TS-ORDER, TS-TYPEIMPORT, TS-SPAWN
+- **`languages/typescript.md`** — TS-ORDER, TS-TYPEIMPORT, TS-NONNULL, TS-SPAWN, PTK
 - **`languages/shell.md`** — SH-QUOTE, SH-HOOKINDEX
 - **`changelog.md`** — CL-USER, CL-BUDGET, CL-UPGRADE, CL-NOREF, CL-BUMP
-- **`docs.md`** — DOC-02, DOC-03, DOC-S7
+- **`docs.md`** — DOC-02, DOC-03, DOC-10, DOC-S7
 - **`domains/architecture.md`** — ARCH-HOMES, ARCH-PUBLISHED
 - **`pr.md`** — PR-BUDGET, PR-UNIT, CHR
-- **`spec.md`** — SPEC-AMEND, SPEC-BLAST, SPEC-FILL
+- **`spec.md`** — SPEC-AMEND, SPEC-BLAST, SPEC-DIM, SPEC-FILES, SPEC-FILL, SPEC-INVARIANT, SPEC-MODEL
 
 ## Applicable Gates
 
@@ -119,11 +120,11 @@ Discovery searched `git grep -n -w` for each removed name: `beginTelemetry`, `re
 
 ### §1 — Remove telemetry and consent
 
-Every command stops collecting, spooling and sending usage events. `src/telemetry.ts` and `src/telemetry_sync.ts` are deleted with their tests, and `src/cli.ts` runs the command with no telemetry wrapper. `orly skill-event` and the help's telemetry block go; the removed command falls through to `unknown command`. Old state under `~/.config/agentsfleet/orly/` (or `$AGENTSFLEET_STATE_DIR/orly/`) is never read, written or deleted: `.orly.json`, `.telemetry-prompted`, `installation-id` and `analytics/`. The changelog names the directory for manual removal.
+Every command stops collecting, spooling and sending usage events. `src/telemetry.ts` and `src/telemetry_sync.ts` are deleted with their tests, and `src/cli.ts` runs the command with no telemetry wrapper. `orly skill-event` and the help's telemetry block go; the removed command falls through to `unknown command`. orly 0.28 never reads, writes or deletes the old state under `~/.config/agentsfleet/orly/` (or `$AGENTSFLEET_STATE_DIR/orly/`): `.orly.json`, `.telemetry-prompted`, `installation-id` and `analytics/`. Hooks still pinned to an earlier version keep reading it until their repository updates, which the changelog says.
 
 Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `.orly/hooks/` migrates through its recorded digest, which `src/install.ts` checks before any write. A legacy hook under `.githooks/` has no digest and migrates through byte recognition in `src/installation/migration.ts`; that template keeps the historical marker line as a local literal. A one-byte edit to either refuses before any write.
 
-- **Dimension 1.1** — DONE — The removed telemetry command is refused → Test `retired telemetry command is refused` (subprocess): `orly skill-event orly-build` exits 1 and prints `unknown command: skill-event`.
+- **Dimension 1.1** — DONE — The removed telemetry command is refused → Test `retired telemetry command is refused` (e2e): `orly skill-event orly-build` exits 1 and prints `unknown command: skill-event`.
 - **Dimension 1.2** — DONE — Untouched old hooks migrate and edited ones stay protected → Test `hook cleanup preserves ownership conflicts` (integration): an untouched 0.27 `.orly/hooks/pre-commit` and an untouched legacy `.githooks/pre-commit` both end as the 0.28 bytes; a one-byte edit to either fails the update and leaves the file unchanged.
 
 ### §2 — Verify the standards catalogue
@@ -132,9 +133,9 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 
 `orly verify` reports `standards.catalogue`, `generated.root.current` and `packs.sources.current`, and exits non-zero when any fails. The render-twice determinism check leaves the command and becomes a unit test in `src/render.test.ts`. `writeEvidence`, `--write-evidence`, `--llm-result` and `schemas/evidence.schema.json` go; `verify` takes no arguments and refuses any with its usage line. It still refuses to run from a published package.
 
-- **Dimension 2.1** — DONE — The shipped catalogue passes → Test `verify accepts the shared valid catalogue` (unit and subprocess): the validator returns no findings for this checkout, and `orly verify` prints all three checks green and exits 0.
-- **Dimension 2.2** — DONE — Each broken property is named → Test `verify names catalogue failures` (unit): scratch catalogues with an empty directory, a missing field, a duplicated identifier, a missing inventory, a broken link, a 401-line page, a retired-stack term and a template citing an absent SPEC rule each yield a finding naming the file.
-- **Dimension 2.3** — DONE — Retired flags cannot pass silently → Test `verify refuses retired and unknown flags` (subprocess): `orly verify --write-evidence` and `orly verify --all` exit 1 with `usage: orly verify`.
+- **Dimension 2.1** — DONE — The shipped catalogue passes → Test `verify accepts the shared valid catalogue` (e2e): the validator returns no findings for this checkout or for a 400-line page, and `orly verify` prints all three checks green and exits 0.
+- **Dimension 2.2** — DONE — Each broken property is named → Test `verify names catalogue failures` (unit): scratch catalogues with an empty directory, a missing field, a duplicated identifier, an identifier named like an object property, a missing or malformed inventory, a broken link, a 401-line page, a retired-stack term and a template citing an absent SPEC rule each yield a finding naming the file.
+- **Dimension 2.3** — DONE — Retired flags cannot pass silently → Test `verify refuses retired and unknown flags` (e2e): `orly verify --write-evidence` and `orly verify --all` exit 1 with `usage: orly verify`.
 
 ### §3 — Commits run the work gate, pushes run gitleaks
 
@@ -147,9 +148,9 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 
 `orly lifecycle`, `lifecyclePlan` and the `execution.remote` adapter are deleted; the adapter never launched anything. `docs/architecture/remote-execution.md` goes with them. Gate tiers and `selectedCommands` move into `src/criteria.ts`, their only remaining caller. The configuration schema is strict and drops `execution`, so a configuration that still carries the key is refused by name. None of the four local configurations carries it: orly, agentsfleet, docs and cache-kit.rs.
 
-- **Dimension 4.1** — DONE — The inspector is gone → Test `lifecycle is not a command` (subprocess): `orly lifecycle` exits 1 and prints `unknown command: lifecycle`.
+- **Dimension 4.1** — DONE — The inspector is gone → Test `lifecycle is not a command` (e2e): `orly lifecycle` exits 1 and prints `unknown command: lifecycle`.
 - **Dimension 4.2** — DONE — A stale configuration is refused → Test `a configuration with execution is refused` (unit): parsing a configuration with `execution` throws an error naming the key.
-- **Dimension 4.3** — DONE — Tiers select what they selected before the move → Test `gate tiers select their declared commands` (unit): conform selects `conform`; fast selects `verify.*` without unit and integration; all selects every `verify.*`.
+- **Dimension 4.3** — DONE — Tiers select what they selected before the move → Test `gate tiers select their declared commands` (integration): over a scratch repository's declared lanes, `criteriaFor` names `cmd.conform` for work, `cmd.verify.lint` for verify, and every `verify.*` lane for pr.
 
 ### §5 — Retire the 0.11 and 0.12 release archive
 
@@ -161,22 +162,22 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 
 `standards/spec-template.md` becomes a skeleton whose `tpl:` comments cite the governing rule instead of restating it. The Test Specification table goes, because each Dimension line now carries its tier and observable result. The four pending header fields go: the Pull Request Session Notes carry the branch and the baselines, taken from the base commit's CI run. Product Clarity is required only for the API, CLI and UI Categories, and Discovery keeps four bullets.
 
-`standards/spec.md` absorbs the guidance the comments carried. It amends SPEC-DIM, SPEC-FAIL, SPEC-DECIDE, SPEC-CLARITY and SPEC-FILL, and drops SPEC-BASELINE, which the inventory records as removed. `orly-build` stops writing baseline headers, and `orly-ship` takes baselines from CI. Changed spec lines get one mechanical check: an unfilled `{{fill:` slot or an opening `tpl:` comment is a `DOCFILL` finding under `docs.language`, while specs stay outside the prose rules.
+`standards/spec.md` absorbs the guidance the comments carried. It amends SPEC-DIM, SPEC-FAIL, SPEC-DECIDE, SPEC-CLARITY and SPEC-FILL, and drops SPEC-BASELINE, which the inventory records as removed. `orly-build` stops writing baseline headers, and `orly-ship` takes baselines from CI. Changed spec lines get one mechanical check: an unfilled `{{fill:` slot or an opening `tpl:` comment is a `DOCFILL` finding under `docs.language`, while specs stay outside the prose rules. An untracked draft waits until it is added, so drafting a spec never blocks a push.
 
-- **Dimension 6.1** — DONE — A leftover slot fails, and an opener alone does not → Test `docs language flags unfilled template slots` (unit): a changed spec line holding a slot yields one DOCFILL finding; an unchanged line, a rule page and an opener with no closing braces yield none.
+- **Dimension 6.1** — DONE — A leftover slot fails, and an opener alone does not → Test `docs language flags unfilled template slots` (unit): a changed spec line holding a slot yields one DOCFILL finding; an unchanged line and an opener with no closing braces yield none; only spec records get the check.
 
 ### §7 — Publish the coherent 0.28 surface
 
 `package.json` moves to 0.28.0. Help, `README.md`, `docs/ORLY_ARCHITECTURE.md`, `docs/architecture/installation.md`, `llms.txt` and the changelog describe 0.28 together. Finished specs and released changelog entries keep their wording (DOC-S7).
 
-- **Dimension 7.1** — DONE — Help lists only live commands → Test `help lists only live commands` (subprocess): help names `orly verify` and no `lifecycle`, `skill-event` or consent file.
+- **Dimension 7.1** — DONE — Help lists only live commands → Test `help lists only live commands` (e2e): help names `orly verify` and its three checks, and no `lifecycle`, `skill-event` or consent file.
 
 ## Interfaces
 
 - `orly verify` takes no arguments and prints one line per check: `standards.catalogue`, `generated.root.current`, `packs.sources.current`. It exits 0 only when all pass; any argument exits 1 with `orly: usage: orly verify`.
 - Removed with no alias: `orly skill-event`, `orly lifecycle`, `orly verify --write-evidence`, `--llm-result`, the configuration key `execution`, `.orly/evidence.json` and `schemas/evidence.schema.json`.
-- Generated `.orly/hooks/*` files lose `export ORLY_INVOCATION=hook`.
-- `docs.language` reports `DOCFILL` for a leftover template slot on a changed spec line.
+- Generated `.orly/hooks/*` files lose `export ORLY_INVOCATION=hook` and the `ORLY_INDEX_FILE` hand-off, which nothing read. The commit gate checks the working tree; `orly gate pr` checks the committed tree.
+- `docs.language` reports `DOCFILL` for a leftover template slot on a changed, committed spec line.
 - This repository declares `verify.typecheck`.
 
 ## Failure Modes
@@ -185,18 +186,18 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 |------|-------|-------------------------------------|------|
 | Retired command | `orly skill-event` or `orly lifecycle` | exit 1, `unknown command: <verb>` | `retired telemetry command is refused`; `lifecycle is not a command` |
 | Retired flag | `orly verify --write-evidence` | exit 1, usage line | `verify refuses retired and unknown flags` |
-| Broken catalogue | missing field, duplicate identifier, broken link, long page, retired term, dead SPEC citation | finding names the file; `verify` exits 1 | `verify names catalogue failures` |
+| Broken catalogue | missing field, duplicate identifier, broken link, long page, retired term, dead SPEC citation | finding names the file; `verify` exits 1 | `verify names catalogue failures`; `verify exits 1 when the catalogue breaks` |
+| Invalid registry | registry fails validation | `verify` stops before any check | `verify refuses an invalid registry before any check` |
 | Edited generated hook | one-byte edit to a 0.27 or legacy hook | update refuses before any write | `hook cleanup preserves ownership conflicts` |
 | Stale configuration | `execution` key | configuration refused, naming the key | `a configuration with execution is refused` |
-| Leftover template slot | a slot on a changed spec line | DOCFILL finding; `docs.language` red | `docs language flags unfilled template slots` |
+| Leftover template slot | a slot on a changed, committed spec line | DOCFILL finding; `docs.language` red | `docs language flags unfilled template slots` |
 | Failing conform at commit | `make conform` red | commit blocked | `a commit runs the work gate` |
 | Secret at push | gitleaks finding or missing gitleaks | push blocked | `a scanner finding blocks the push` |
 
 ## Invariants
 
-1. One catalogue implementation serves `orly verify` and the tests — the test file imports the validator and defines no predicate of its own.
-2. No command path reaches telemetry — the modules are deleted, so an import fails `bun run typecheck`.
-3. An edited managed hook never becomes managed by an update — `src/install.ts` compares recorded digests before any write.
+1. No command path reaches telemetry — the modules are deleted, so an import fails `bun run typecheck`.
+2. An edited managed hook never becomes managed by an update — `src/install.ts` compares recorded digests before any write.
 
 ## Metrics & Observability
 
@@ -222,12 +223,14 @@ Usage telemetry is removed: the PostHog command, gate and skill events stop. No 
 
 | Deleted file or symbol | Verify | Expected |
 |------------------------|--------|----------|
-| telemetry modules and command | `git grep -n -E "beginTelemetry\|recordTelemetry\|telemetry_sync\|skill-event\|ORLY_TELEMETRY" -- src bin evals skills core agents standards ":!src/*.test.ts"` | no output |
-| hook invocation marker | `git grep -n ORLY_INVOCATION -- src bin evals ":!src/*.test.ts"` | `src/installation/migration.ts` only, the 0.10 byte record |
-| lifecycle inspector and adapter | `git grep -n -E "lifecyclePlan\|readExecution\|DISABLED_MODE\|orly lifecycle" -- src bin evals docs/architecture llms.txt ":!src/*.test.ts"` | no output |
-| evidence writer and schema | `git grep -n -E "writeEvidence\|evidence\.schema\|write-evidence\|llm-result" -- src bin evals schemas .githooks Makefile ":!src/*.test.ts"` | no output |
-| release archive | `git grep -n "evals/release" -- src evals docs/architecture README.md llms.txt Makefile` | no output |
+| telemetry modules and command | `git grep -n -F -e beginTelemetry -e recordTelemetry -e telemetry_sync -e skill-event -e ORLY_TELEMETRY -- src bin evals skills core agents standards ":!src/*.test.ts"` | no output; the same search at `700df9c` finds 21 lines |
+| hook invocation marker | `git grep -n -F -e ORLY_INVOCATION -- src bin evals ":!src/*.test.ts"` | `src/installation/migration.ts` only, the 0.10.6 to 0.10.14 byte record |
+| lifecycle inspector and adapter | `git grep -n -F -e lifecyclePlan -e readExecution -e DISABLED_MODE -e "orly lifecycle" -- src bin evals docs/architecture llms.txt ":!src/*.test.ts"` | no output; 14 lines at `700df9c` |
+| evidence writer and schema | `git grep -n -F -e writeEvidence -e evidence.schema -e write-evidence -e llm-result -- src bin evals schemas .githooks Makefile ":!src/*.test.ts"` | no output; 13 lines at `700df9c` |
+| release archive | `git grep -n -F -e evals/release -- src evals docs/architecture README.md llms.txt Makefile` | no output; 932 lines at `700df9c` |
+| fixture helpers nothing calls | `git grep -n -F -e closedSpecRepository -e writeFixtureTest -- src` | no output; 4 lines at `700df9c` |
 
+Each search runs at `700df9c` by inserting the revision before `--`, so its "no output" counts only beside a known positive.
 Negative tests name the retired commands to prove their refusal, and the README's 0.28 notes announce the removals.
 `.gitignore` still ignores `.orly/evidence.json`, as it still ignores `.oracle/evidence.json`, so a stale local file never dirties a tree.
 
@@ -237,6 +240,7 @@ Negative tests name the retired commands to prove their refusal, and the README'
 - agentsfleet's move to 0.28 is its own chore Pull Request after release.
 - Changing `docs.updated` is not planned.
 - Merging and the release workflow stay with the owner.
+- Adopting openclaw's `oracle` second-model review skill is not planned, by the owner's decision below.
 
 ---
 
@@ -261,9 +265,14 @@ Negative tests name the retired commands to prove their refusal, and the README'
 
 ## Discovery (consult log)
 
-- **Consults** — Fetched `origin/main` at `700df9c125530a4d2b0d356ee6f0511c536ca35b`. The Nov 02 adversarial review found five defects in the first draft, each fixed above. §2 would have deleted `packSourceErrors` (`src/verify.ts:59`), the only pack-drift check. `--all` was already gone (`src/cli.test.ts:78`). A telemetry-absence test proves nothing once the code is deleted. The telemetry state path was unnamed. Live docs still described 0.11 to 0.13 (`docs/architecture/installation.md:5`, `llms.txt:15`).
-- **Model reviews** — Native authoring review (Nov 01): 0 Blockers, 5 Majors, 2 Nits, all accepted. Adversarial review by Claude Opus 5.5 (Nov 02): 7 findings, all accepted, two of its own claims corrected in session. The full EGM pipeline did not run.
-- **Open blockers** — none.
+- **Consults** — Fetched `origin/main` at `700df9c125530a4d2b0d356ee6f0511c536ca35b`. The Nov 02 adversarial review found these errors in the first draft, each fixed above. §2 would have deleted `packSourceErrors` (`src/verify.ts:59`), the only pack-drift check. `--all` was already gone (`src/cli.test.ts:78`). A telemetry-absence test proves nothing once the code is deleted. The telemetry state path was unnamed. Live docs still described 0.11 to 0.13 (`docs/architecture/installation.md:5`, `llms.txt:15`).
+- **Model reviews** — Native authoring review (Nov 01; model and version not recorded): 0 Blockers, 5 Majors, 2 Nits, all accepted. Adversarial spec review by Claude Opus 5.5 (Nov 02): 8 findings, 6 fixed in this spec and 2 settled by owner decisions quoted below; it corrected two of its own claims in session. Implementation reviews (Nov 02, Claude Opus 5.5 subagents):
+  - `orly-standards-reviewer`: 19 findings; 18 fixed; 1 dropped, because TS-NAME governs identifier case, not file names.
+  - gstack `/review` (gstack 1.91.291.0): 5 core findings, all fixed. Specialists returned 8 findings and 1 advisory, all applied (testing 4, maintainability 4, simplification 1 advisory, security 0). Performance and state machines were not dispatched: the first is a command-line tool with no hot path, the second a detector false positive on a directory name.
+  - Adversarial pass: 10 findings. 7 fixed; 2 settled by the owner ("Ignore the make audit then."; option C for the commit gate); 1 accepted, because commits here now need `bun`, already a prerequisite.
+  - Red team: 2 findings; 1 fixed, 1 closed at push by retitling PR #75 and appending Session notes 3.
+  - The full EGM pipeline did not run, and the Codex outside review is disabled (`codex_reviews`).
+- **Open blockers** — none. The commit gate checks the working tree, not the staged snapshot; `orly gate pr` refuses a dirty tree and an unpushed head before rerunning the same checks, so the committed tree is always checked. The two docs that claimed a staged check now say "working tree", and the unused `ORLY_INDEX_FILE` hand-off is removed, by the owner's choice below.
 - **Deferrals and transfers** — M15_001 transferred the pre-push range coverage from PR #70 to this spec. It dissolves: §3 deletes the range selector, by the owner's "Gitleaks only" decision below. Telemetry removal traces to the owner's M15_001 quote, repeated below.
 
 > Owner (Kishore, Oct 28, 2026, time not recorded): "5. Telemetry - cut the crap" — context: telemetry leaves in M15_002, as M15_001 records.
@@ -273,3 +282,11 @@ Negative tests name the retired commands to prove their refusal, and the README'
 > Owner (Indy, Nov 02, 2026, time not recorded): "lets use that PR75 to push orly updates for 0.28" — context: the implementation lands on PR #75, beyond PR-BUDGET's one follow-up.
 
 > Owner (Indy, Nov 02, 2026, time not recorded): "Gitleaks only (Recommended)", "Slim it in 0.28 (Recommended)", "orly lifecycle + remote, evals/release (279 files), Evidence file" — context: the three scope decisions, answered through AskUserQuestion.
+
+> Owner (Indy, Nov 02, 2026, time not recorded): "Ignore the make audit then." — context: CI's Harness `audit` stays advisory on `main`; no ruleset change and no push audit.
+
+> Owner (Indy, Nov 02, 2026, time not recorded): "Also i need to mention that any decision that is asked with Indy must be elaborate with with a user experience thinking from the docs/architechture/*.md in ELI20 ascii pictorial with detail on api, files called and so on. So its clear for indy to take a decision" — context: recorded in `SOUL.md`'s "When a call needs his input" rule; the owner added "on ascii pictorial draw" and "explain me with pros and cons on the reasoning for selecting recommended options".
+
+> Owner (Indy, Nov 02, 2026, time not recorded): "so dont add oracle" — context: openclaw's `oracle` skill is not adopted.
+
+> Owner (Indy, Nov 02, 2026, time not recorded): "I select this │ 3 / C: A, plus delete ORLY_INDEX_FILE" — context: the commit gate keeps checking the working tree; the false docs are fixed and the unused index hand-off is removed from generated hooks, the engine hook and `src/git_env.ts`.

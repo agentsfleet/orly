@@ -3,8 +3,21 @@ import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
+import { UNSCOPED_ENVIRONMENT } from "./git_env";
+
 const ROOT = resolve(import.meta.dir, "..");
 const COMMAND = resolve(ROOT, "bin/orly");
+
+// A throwaway copy of this engine at HEAD, so a test can break one file and
+// watch `orly verify` turn red without touching the checkout.
+function scratchEngine(): string {
+  const engine = mkdtempSync(join(tmpdir(), "orly-engine-"));
+  const archive = Bun.spawnSync(["git", "-C", ROOT, "archive", "--format=tar", "HEAD"], { env: UNSCOPED_ENVIRONMENT, stdout: "pipe", stderr: "pipe" });
+  if (archive.exitCode !== 0) throw new Error(archive.stderr.toString());
+  const extract = Bun.spawnSync(["tar", "-x", "-C", engine], { stdin: archive.stdout, stdout: "pipe", stderr: "pipe" });
+  if (extract.exitCode !== 0) throw new Error(extract.stderr.toString());
+  return engine;
+}
 
 describe("orly command", () => {
   test("uses the concise public command surface", () => {
@@ -18,12 +31,13 @@ describe("orly command", () => {
     expect(output).not.toContain("oracle-rules");
   });
 
-  // Help is the public surface: it names verify, which proves the check can
-  // see a command, and none of the commands or consent text 0.28 removed.
+  // Help is the public command surface. Finding verify and its three checks
+  // proves the scan sees live commands; the retired names must not appear.
   test("help lists only live commands", () => {
     const output = Bun.spawnSync([COMMAND, "--help"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" }).stdout.toString();
 
     expect(output).toContain("orly verify");
+    expect(output).toContain("the standards catalogue keeps its rules");
     for (const retired of ["lifecycle", "skill-event", "telemetry", ".config/agentsfleet"]) expect(output).not.toContain(retired);
   });
 
@@ -55,13 +69,21 @@ describe("orly command", () => {
     expect(result.stdout.toString().trim()).toBe(manifest.version);
   });
 
-  // `validate` is gone: verifyRuleset calls model.validate() before its own
-  // checks, so the verb was a strict subset of `verify` with a second name.
-  test("verify validates the registry on its way to the ruleset checks", () => {
-    const result = Bun.spawnSync([COMMAND, "verify"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
+  // verify is the commit gate's check, so a broken catalogue must fail the
+  // command itself, not only print a red line.
+  test("verify exits 1 when the catalogue breaks", () => {
+    const engine = scratchEngine();
+    try {
+      writeFileSync(join(engine, "fixtures/standards-rule-ids.json"), "{");
+      // bin/orly pins --root to its own checkout, so run this checkout's source
+      // against the scratch engine instead.
+      const result = Bun.spawnSync([process.execPath, join(ROOT, "src/cli.ts"), "--root", engine, "verify"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.toString()).toContain("standards.catalogue");
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout.toString()).toContain("🔴 standards.catalogue: fixtures/standards-rule-ids.json: not valid JSON\n");
+    } finally {
+      rmSync(engine, { recursive: true, force: true });
+    }
   });
 
   test("validate is not a verb", () => {
@@ -71,8 +93,8 @@ describe("orly command", () => {
     expect(result.stderr.toString()).toContain("unknown command: validate");
   });
 
-  // The evidence flags left with the evidence file, and an unknown flag never
-  // passes silently: `verify` takes no arguments at all.
+  // verify takes no arguments, so a stale evidence flag or a typo fails loudly
+  // instead of passing silently.
   test.each(["--write-evidence", "--llm-result pass", "--all"])("verify refuses retired and unknown flags: %s", (flags) => {
     const result = Bun.spawnSync([COMMAND, "verify", ...flags.split(" ")], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
 
@@ -81,8 +103,7 @@ describe("orly command", () => {
     expect(result.stderr.toString()).toBe("orly: usage: orly verify\n");
   });
 
-  // The lifecycle inspector described a remote adapter that never ran; the
-  // command left with it, with no alias.
+  // lifecycle is not a command, and no alias answers for it.
   test("lifecycle is not a command", () => {
     const result = Bun.spawnSync([COMMAND, "lifecycle", "--json"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
 
@@ -91,8 +112,8 @@ describe("orly command", () => {
     expect(result.stderr.toString()).toBe("orly: unknown command: lifecycle\n");
   });
 
-  // Telemetry is gone, and its command with it: no alias keeps accepting the
-  // event a stale skill might still send.
+  // skill-event is not a command: a stale skill that still sends it gets a loud
+  // refusal, not a silent success.
   test("retired telemetry command is refused", () => {
     const result = Bun.spawnSync([COMMAND, "skill-event", "orly-build"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
 

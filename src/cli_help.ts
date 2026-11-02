@@ -40,8 +40,9 @@ Install (the repository is the unit — no checkout of this package required):
   orly --version                    the installed package version
 
 Ruleset authoring (an orly checkout only — refused from an installed package):
-  orly verify                       the rules render the same twice, and the
-                                    committed copy matches that render`;
+  orly verify                       the standards catalogue keeps its rules,
+                                    the root AGENTS.md matches its render, and
+                                    every pack copy matches its source`;
 
 export function printHelp(): void {
   // logging: command help is the program interface.

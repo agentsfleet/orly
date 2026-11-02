@@ -40,8 +40,8 @@ test("a scanner finding blocks the push", () => {
   expect(result.stderr.toString()).toContain("gitleaks found a secret");
 });
 
-// A new branch whose commit touches src/ once made the hook run `make audit`;
-// CI runs that audit now, so the push needs nothing but a clean scan.
+// A push needs only gitleaks, even for a new branch whose commit touches src/:
+// CI runs the audit on the pull request, and `make` is not on this PATH.
 test("a push needs only gitleaks", () => {
   const root = newRepository();
   mkdirSync(join(root, "src"));

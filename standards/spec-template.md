@@ -133,9 +133,9 @@ changes in the commit that delivers it (SPEC-TESTS, SPEC-WIRED). -->
 
 ## Metrics & Observability
 
-| Metric / event | Audience | Fires when | Properties allowed | Test |
-|----------------|----------|------------|--------------------|------|
-| `{{fill:event_name}}` | {{fill:product \| operator}} | {{fill:exact user or system action}} | {{fill:coarse context, resource id, duration, outcome}} | `{{fill:test_name}}` |
+| Metric / event | Audience | Fires when | Properties allowed | Privacy guard | Test |
+|----------------|----------|------------|--------------------|---------------|------|
+| `{{fill:event_name}}` | {{fill:product \| operator}} | {{fill:exact user or system action}} | {{fill:coarse context, resource id, duration, outcome}} | {{fill:no raw email, password, token, one-time password or key material}} | `{{fill:test_name}}` |
 
 <!-- tpl: SPEC-METRICS. No signal changes: "N/A: no product or operator
 signal changes." -->

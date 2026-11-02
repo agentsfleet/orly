@@ -11,8 +11,8 @@ ROOT="$(git rev-parse --show-toplevel)"
 cd "$ROOT" || exit 1
 
 # A push runs one check, gitleaks: "Before commit or push, gitleaks passes."
-# The audit that used to follow repeated the `make audit` CI runs on every pull
-# request (.github/workflows/harness.yml); commits run `orly gate work`, and
+# Nothing else runs here because CI runs `make audit` on every pull request
+# (.github/workflows/harness.yml), commits run `orly gate work`, and
 # `orly gate pr` runs every declared verify.* command before a PR opens.
 #
 # It reads no stdin (</dev/null leaves the pushed ref list unread) and walks

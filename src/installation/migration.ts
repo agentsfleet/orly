@@ -41,8 +41,9 @@ function previousHookDigest(root: string, path: string): string | undefined {
   return content.toString(TEXT_ENCODING) === previousHookScript(gate) ? contentDigest(content) : undefined;
 }
 
-// The exact bytes orly 0.10 wrote to `.githooks/`, telemetry marker included:
-// only a byte-for-byte match proves orly still owns the file it deletes.
+// The exact bytes orly 0.10.6 to 0.10.14 wrote to `.githooks/`, telemetry marker
+// included: only a byte-for-byte match proves orly still owns the file it
+// deletes. Earlier 0.10 hooks differ and stop the update as a conflict.
 function previousHookScript(gate: string): string {
   return [
     "#!/usr/bin/env bash",

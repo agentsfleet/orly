@@ -46,7 +46,7 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 orly collects no usage telemetry, and `orly skill-event` and `orly lifecycle` are gone.
 The spec template is a skeleton whose comments cite the rules in the spec standard.
-Each Dimension carries its test tier and result, and baselines come from the base commit's CI run.
+Each Dimension carries its test tier and result, and baselines come from the base commit's Continuous Integration (CI) run.
 
 `docs.language` now reports a template slot left on a changed spec line.
 A configuration that still carries the retired `execution` key is refused.
@@ -258,7 +258,7 @@ flowchart TB
 | Directory | Meaning |
 |---|---|
 | `docs/v1/pending/` | the spec is written and committed on the detected default branch |
-| `docs/v1/active/` | branch cut, comparison revision recorded, measurement pending; no code until it commits |
+| `docs/v1/active/` | branch cut, spec moved to active/ and committed; no code until it commits |
 | `docs/v1/done/` | gates green, Pull Request opens |
 
 Inside `active/`, work runs through the stages: **PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT**.

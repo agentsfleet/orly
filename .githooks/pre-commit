@@ -6,18 +6,8 @@ set -uo pipefail
 # GIT_DIR/GIT_INDEX_FILE silently redirects those calls at THIS repository:
 # a sandbox `git add -A` once staged fixture paths into the real index, and a
 # linked worktree (whose .git is a file) broke outright.
-# The scope dies here, before anything is run.
-#
-# The index is the one exception worth keeping: `git commit -a` and
-# `git commit <path>` stage into a temporary index named only by
-# GIT_INDEX_FILE, so a reader of the default index sees nothing staged. Its
-# absolute path survives as ORLY_INDEX_FILE, used only for this repository.
-case "${GIT_INDEX_FILE:-}" in
-  "") ORLY_INDEX_FILE="" ;;
-  /*) ORLY_INDEX_FILE="$GIT_INDEX_FILE" ;;
-  *) ORLY_INDEX_FILE="$PWD/$GIT_INDEX_FILE" ;;
-esac
-export ORLY_INDEX_FILE
+# The scope dies here, before anything is run. Nothing below reads the
+# staged tree, so the commit's index path is not kept.
 unset GIT_DIR GIT_INDEX_FILE GIT_WORK_TREE GIT_COMMON_DIR GIT_PREFIX \
       GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
 

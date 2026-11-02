@@ -10,10 +10,6 @@ import { CONFIG_PATH } from "./config";
 import { RulesModel } from "./model";
 
 const GIT = "git";
-const HEAD = "HEAD";
-const REV_PARSE = "rev-parse";
-const IN_PROGRESS = "IN_PROGRESS";
-const BASELINE_EVIDENCE = "**Baseline evidence:** README.md";
 const QUIET = "-q";
 const COMMIT = "commit";
 const CONFIG = "config";
@@ -25,9 +21,8 @@ const ACCEPTANCE_RUBRIC_HEADING = "Acceptance Rubric";
 const FIXTURE = "fixture";
 
 export const ROOT = resolve(import.meta.dir, "..");
-export const SPEC_RELATIVE = "docs/v1/active/M99_001_P2_CLI_FIXTURE.md";
-export const FIXTURE_TEST = "fixture_test";
-const FIXTURE_TEST_FILE = "tests/fixture.test.ts";
+const SPEC_RELATIVE = "docs/v1/active/M99_001_P2_CLI_FIXTURE.md";
+const FIXTURE_TEST = "fixture_test";
 export const FIXTURE_CONFIG = { schema_version: 1, packs: [], commands: { conform: [[TRUE_COMMAND]], "verify.unit": [[TRUE_COMMAND]] } };
 
 const temporaryDirectories: string[] = [];
@@ -100,44 +95,19 @@ export function newRepository(): string {
   return project;
 }
 
-// A stream that already ran CHORE(close): the spec sits under done/ with
-// Status: DONE and a Branch: header naming the branch, committed as the
-// branch's first commit so ordering holds.
-export function closedSpecRepository(branch: string, extraLines: string[] = []): string {
-  const project = newRepository();
-  git(project, "checkout", QUIET, "-b", branch);
-  mkdirSync(join(project, "docs/v1/done"), { recursive: true });
-  Bun.write(join(project, "docs/v1/done/M99_001_P2_CLI_FIXTURE.md"), specFixture("DONE", branch, [
-    `**Baseline revision:** ${gitOutput(project, REV_PARSE, HEAD)}`, BASELINE_EVIDENCE, ...extraLines,
-  ]));
-  writeFixtureTest(project);
-  git(project, ADD, ".");
-  git(project, COMMIT, QUIET, MESSAGE, "chore: close the fixture spec");
-  return project;
-}
-
-// spec.tests needs a tracked file defining the test the fixture spec names.
-// The fixture's commands are `true`, so this file is found but never run.
-function writeFixtureTest(project: string): void {
-  mkdirSync(join(project, "tests"), { recursive: true });
-  writeFileSync(join(project, FIXTURE_TEST_FILE), `test("${FIXTURE_TEST}", () => {});\n`);
-}
-
 export function newSpecRepository(): string {
   const project = newRepository();
   mkdirSync(join(project, "docs/v1/active"), { recursive: true });
-  Bun.write(join(project, SPEC_RELATIVE), specFixture(IN_PROGRESS, undefined, [
-    `**Baseline revision:** ${gitOutput(project, REV_PARSE, HEAD)}`, BASELINE_EVIDENCE,
-  ]));
-  writeFixtureTest(project);
+  writeFileSync(join(project, SPEC_RELATIVE), specFixture());
   git(project, ADD, ".");
   git(project, COMMIT, QUIET, MESSAGE, "test: add fixture spec");
   return project;
 }
 
-// A realistic spec on the branch: the gate no longer reads specs, and these
-// fixtures prove it checks code and Git only even when one is present.
-export function specFixture(status = IN_PROGRESS, branch?: string, extraLines: string[] = []): string {
+// A spec in the template's current shape, with every slot filled: the gate
+// reads a spec only for leftover slots, so these fixtures prove its code and
+// Git criteria behave the same with a spec on the branch.
+function specFixture(): string {
   const sections = [
     "PR Intent & comprehension handshake",
     "Overview",
@@ -150,7 +120,6 @@ export function specFixture(status = IN_PROGRESS, branch?: string, extraLines: s
     "Failure Modes",
     "Invariants",
     "Metrics & Observability",
-    "Test Specification (tiered)",
     ACCEPTANCE_RUBRIC_HEADING,
     "Dead Code Sweep",
     "Out of Scope",
@@ -162,23 +131,19 @@ export function specFixture(status = IN_PROGRESS, branch?: string, extraLines: s
     heading === ACCEPTANCE_RUBRIC_HEADING
       ? `## ${heading}\n\n| # | Criterion | Verify | Expected | Priority | Graded |\n|---|---|---|---|---|---|\n| S1 | Declared checks | \`${TRUE_COMMAND}\` | exit 0 | P0 | |\n`
       : heading.startsWith("Implementing agent") ? `## ${heading}\n\n1. \`README.md\` — fixture reference.\n`
-      : heading.startsWith("Test Specification") ? `## ${heading}\n\n| Dimension | Tier | Test | Asserts |\n|---|---|---|---|\n| 1.1 | unit | \`${FIXTURE_TEST}\` | Valid input is accepted. |\n`
       : `## ${heading}\n\nFixture content for ${heading}.\n`,
   );
   return [
     "# M99_001: Fixture milestone",
     "",
-    `**Status:** ${status}`,
-    "**Priority:** P2 — fixture",
-    ...(branch ? [`**Branch:** \`${branch}\``] : []),
-    "**Test Baseline:** unit=0 integration=0",
-    ...extraLines,
+    "**Status:** IN_PROGRESS",
+    "**Priority:** P2, fixture",
     "",
     "## Sections (implementation slices)",
     "",
     "### §1 — Fixture slice",
     "",
-    `- **Dimension 1.1** — DONE — fixture behaviour → Test \`${FIXTURE_TEST}\``,
+    `- **Dimension 1.1** — DONE — fixture behaviour → Test \`${FIXTURE_TEST}\` (unit): valid input is accepted`,
     "",
     ...sections,
   ].join("\n");

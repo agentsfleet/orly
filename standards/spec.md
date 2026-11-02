@@ -71,13 +71,13 @@ Priority is the only sizing signal and Depends on the only sequencing signal.
 P0 blocks, P1 faces customers or operators, P2 is tooling and P3 can wait.
 
 ### SPEC-FILL — A filled spec keeps no `{{fill:` slot and no `tpl:` comment.
-- **Applies to:** a spec in any stage directory
+- **Applies to:** a committed spec in any stage directory
 - **Checked by:** `docs.language` (DOCFILL) on changed spec lines, and review
 - **Bad:** `**Goal (testable):** {{fill:one sentence}}` left in place
 - **Good:** every slot replaced with instance content, and the authoring-rules banner as the only comment left
 - **Why:** leftover guidance reads as instruction to the implementing agent.
 
-Runtime parameters the spec defines, such as `/projects/{project_id}`, are not slots. A slot opener named in prose, with no closing braces, is not a slot either.
+Runtime parameters the spec defines, such as `/projects/{project_id}`, are not slots. A slot opener named in prose, with no closing braces, is not a slot either. An untracked draft is checked once it is added.
 
 ## Intent
 
@@ -184,7 +184,7 @@ Command-line work states which of six practices it follows:
 - **Good:** "`tests/support/project.rs` | EDIT | seeds the new column"
 - **Why:** the table scopes review and orphan sweeps, and line numbers drift.
 
-The table includes the spec itself, its move to `done/`, the changelog entry and any architecture page. Edits outside it need the owner's approval.
+The table includes the spec itself, its move to `done/`, the changelog entry and any architecture page. It also names real writers and readers, schema registration, grants, fixtures, deployment and secret references, and protocol docs. Edits outside it need the owner's approval.
 
 ### SPEC-BLAST — A teardown, rename or flip spec lists every word-boundary hit of its token across the repository, with production and test files apart.
 - **Applies to:** specs that delete, rename or flip a name, flag or path
@@ -283,7 +283,7 @@ Each promised result names a plausible false pass its check rejects.
 - **Good:** `should_reject_expired_token` passes in the Section's lane, and `DONE —` lands in the same commit as the code
 - **Why:** a name in the spec proves only that someone typed it.
 
-Formatting and lint never mark a Dimension `DONE`. A row of tier `manual` carries durable evidence in place of a test source.
+Formatting and lint never mark a Dimension `DONE`. A Dimension of tier `manual` carries durable evidence in place of a test source.
 
 ### SPEC-WIRED — A Dimension is `DONE` only when a production entry point calls the code it delivers.
 - **Applies to:** marking a Dimension `DONE`
@@ -314,7 +314,7 @@ A timeout is told apart from a rollback, and an acknowledgement from durable rec
 - **Applies to:** the Metrics & Observability section
 - **Checked by:** review
 - **Bad:** an empty table; an event first found in review
-- **Good:** `project_created` with its allowed properties, privacy guard and test; or "Not applicable: no product or operator signal changes."
+- **Good:** `project_created` with its allowed properties, privacy guard and test; or "N/A: no product or operator signal changes."
 - **Why:** a missing event is an implementation gap that ships unseen.
 
 Event properties never carry raw email, passwords, tokens, one-time passwords or key material. A changed funnel updates the repository's analytics playbook in the same Pull Request.

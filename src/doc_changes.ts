@@ -38,7 +38,14 @@ export function scanChangedDocuments(root: string): DocFinding[] {
     const options = !base || untracked.has(file) || /^--- \/dev\/null$|^old mode 120000$/m.test(patch)
       ? {} : changedLines(patch);
     const text = readFileSync(absolute, UTF8);
-    findings.push(...(isSpecRecord(file) ? specFillFindings(file, text, options) : scanDocument(file, text, options)));
+    // A spec still being drafted is untracked and belongs to no commit, so its
+    // slots wait; once added, every changed line must be filled. The PR gate's
+    // clean-tree criterion refuses an untracked draft anyway.
+    if (isSpecRecord(file)) {
+      if (!untracked.has(file)) findings.push(...specFillFindings(file, text, options));
+      continue;
+    }
+    findings.push(...scanDocument(file, text, options));
   }
   return findings;
 }

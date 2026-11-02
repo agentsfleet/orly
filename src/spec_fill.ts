@@ -1,7 +1,6 @@
 import type { DocFinding, DocScanOptions } from "./doc_rules";
 
-export const DOC_FILL = "DOCFILL";
-
+const DOC_FILL = "DOCFILL";
 const SPEC_RECORD = /^docs\/v\d+(?:\.\d+)*\/(pending|active|done)\//;
 const NEWLINE = /\r?\n/;
 // A whole slot, or the opening of a guidance comment, as the spec template

@@ -4,11 +4,10 @@
 
 orly collects no usage telemetry, and the spec template is a skeleton that cites the spec standard's rules.
 
-- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.28.0 update`. Remove any `execution` key from `.orly/orly.json` first, because 0.28 refuses it. You may delete `~/.config/agentsfleet/orly/`, which orly no longer reads.
-- **Telemetry** — Commands send no usage events and ask for no consent. `orly skill-event` is gone, and generated hooks stop exporting `ORLY_INVOCATION`.
+- **Upgrade** — Remove calls to `orly lifecycle` and `orly skill-event`, and any `execution` key in `.orly/orly.json`; 0.28 refuses all three. Then run `bunx --bun @agentsfleet/orly@0.28.0 update`.
+- **Telemetry** — Commands send no usage events and ask for no consent, and generated hooks stop exporting `ORLY_INVOCATION` and the unused `ORLY_INDEX_FILE`. Hooks pinned to an earlier version still read `~/.config/agentsfleet/orly/` until you update.
 - **Spec template** — Each Dimension carries its test tier and result. The Test Specification table and the baseline headers are gone.
-- **Leftover slots** — `docs.language` reports a `{{fill:` slot or `tpl:` comment left on a changed spec line.
-- **Removed** — `orly lifecycle` and the disabled remote adapter are gone, with no alias.
+- **Leftover slots** — `docs.language` reports a `{{fill:` slot or `tpl:` comment left on a changed, committed spec line.
 
 ## 0.27.0 (2026-10-29)
 

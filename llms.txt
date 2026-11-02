@@ -212,13 +212,13 @@ bun install --frozen-lockfile
 make audit
 ```
 
-- `make audit` is the bar CI holds every Pull Request to: `orly verify`, the
+- `make audit` is the bar Continuous Integration (CI) holds every Pull Request to: `orly verify`, the
   typecheck and the unit tests, run in parallel with full command output.
 - Commits here run `bin/orly gate work`, which runs `orly verify` over the
   standards catalogue, the root render and the pack copies. A push runs gitleaks
   only.
 - `make install-evals` runs real installs into throwaway repositories. Run on
-  demand; Continuous Integration (CI) runs them on every Pull Request and release.
+  demand; CI runs them on every Pull Request and release.
 - Render orly's own rules with `bin/orly update --no-hooks`. The `--no-hooks`
   flag is required here because this checkout hand-wrote its `.githooks/`.
 - Release: merge to `main` with a new `package.json` version. That publishes,

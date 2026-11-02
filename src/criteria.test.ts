@@ -3,7 +3,7 @@ import { rmSync } from "node:fs";
 import { join } from "node:path";
 
 import { CONFIG_PATH } from "./config";
-import { criteriaFor, runCommand, selectedCommands } from "./criteria";
+import { criteriaFor, runCommand } from "./criteria";
 import { cleanupTemporaryDirectories, git, modelFor, newRepository, newSpecRepository } from "./gates_test_support";
 
 const README = "README.md";
@@ -47,8 +47,8 @@ describe("criteriaFor", () => {
     expect(names).not.toContain("cmd.verify.integration");
   });
 
-  // A spec is reviewed while it is written; the gate checks code and Git only,
-  // even on a branch that carries an active spec.
+  // A spec is reviewed while it is written, so no criterion grades one, even on
+  // a branch carrying an active spec; the docs check reads only leftover slots.
   test("pr gate runs no spec criterion", async () => {
     const project = newSpecRepository();
     const names = named(PR, await contextFor(project));
@@ -207,10 +207,13 @@ describe("an optional conform command", () => {
 
 // Each gate's tier picks its commands from the declared set: work runs conform
 // alone, verify the fast lanes, and pr every verify.* lane.
-test("gate tiers select their declared commands", () => {
-  const commands = { conform: [["true"]], "verify.lint": [["true"]], "verify.unit": [["true"]], "verify.integration": [["true"]], other: [["true"]] };
+test("gate tiers select their declared commands", async () => {
+  const project = newRepository();
+  const lanes = { "verify.lint": [["true"]], "verify.integration": [["true"]] };
+  const context = { root: project, model: await modelFor(project, undefined, lanes), acceptDirty: false };
+  const commands = (gate: string) => criteriaFor(gate, context).map((entry) => entry.name).filter((name) => name.startsWith("cmd.")).sort();
 
-  expect(selectedCommands(commands, "conform")).toEqual(["conform"]);
-  expect(selectedCommands(commands, "fast")).toEqual(["verify.lint"]);
-  expect(selectedCommands(commands, "all")).toEqual(["verify.integration", "verify.lint", "verify.unit"]);
+  expect(commands(WORK)).toEqual(["cmd.conform"]);
+  expect(commands(VERIFY)).toEqual(["cmd.verify.lint"]);
+  expect(commands(PR)).toEqual(["cmd.verify.integration", "cmd.verify.lint", "cmd.verify.unit"]);
 });

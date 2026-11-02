@@ -27,6 +27,17 @@ function sandbox(target?: string): { model: RulesModel; root: string } {
   return { model: new RulesModel(root, registry), root };
 }
 
+// verify validates the registry before any check, so an invalid registry
+// stops the run instead of producing three green lines.
+test("verify refuses an invalid registry before any check", async () => {
+  const { model, root } = sandbox();
+  try {
+    await expect(verifyRuleset(model)).rejects.toThrow("registry schema_version must equal 1");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("pack targets match their sources", async () => {
   const model = await RulesModel.load(ROOT);
   const local = Object.keys(model.registry.packs as Record<string, unknown>).sort();

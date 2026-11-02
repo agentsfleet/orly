@@ -49,7 +49,7 @@ Repository hook implementations remain repository-owned. Fresh consumers use `.o
 Generated hooks invoke the pinned published package through bunx.
 They do not require a global orly installation or a project dependency.
 
-An update replaces a hook an earlier version wrote only while its bytes still match. Under `.orly/hooks/` the recorded digest decides. Under `.githooks/` the bytes must equal the 0.10 template exactly.
+An update replaces a hook an earlier version wrote only while its bytes still match. Under `.orly/hooks/` the recorded digest decides. Under `.githooks/` the bytes must equal what orly 0.10.6 to 0.10.14 wrote, and an older 0.10 hook stops the update.
 
 Migration evaluations must cover fresh installation, populated upgrade, unchanged rerun, edited content, unowned destinations, escaping symlinks and each interruption boundary. Failure tests must assert preserved bytes and successful recovery, not only a returned error.
 

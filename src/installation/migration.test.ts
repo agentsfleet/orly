@@ -213,12 +213,21 @@ test("migration removes only proven obsolete instruction references", async () =
 
 const LEGACY_HOOKS = ".githooks";
 const MARKER = "export ORLY_INVOCATION=hook\n";
+// The index hand-off 0.27 hooks carried before the git scope was cleared.
+const INDEX_HANDOFF = [
+  "# `git commit -a` and `git commit <path>` stage into a temporary index named only",
+  "# here; staged audits read it as ORLY_INDEX_FILE after the git scope is cleared.",
+  'case "${GIT_INDEX_FILE:-}" in "") ORLY_INDEX_FILE="" ;; /*) ORLY_INDEX_FILE="$GIT_INDEX_FILE" ;; *) ORLY_INDEX_FILE="$PWD/$GIT_INDEX_FILE" ;; esac',
+  "export ORLY_INDEX_FILE",
+  "",
+].join("\n");
 const PRE_COMMIT = "pre-commit";
+const PRE_PUSH = "pre-push";
 const ONE_BYTE = "#";
 type InstallOptions = Parameters<typeof install>[1];
 
-// What orly 0.10 wrote to `.githooks/`, byte for byte, kept here rather than
-// imported so a drifted recognition template fails this test.
+// What orly 0.10.6 to 0.10.14 wrote to `.githooks/`, byte for byte, kept here
+// rather than imported so a drifted recognition template fails this test.
 function legacyHook(gate: string): string {
   return [
     "#!/usr/bin/env bash",
@@ -248,22 +257,22 @@ function plannedHook(name: string): string {
 }
 
 async function seedLegacyHooks(repo: string, edited: boolean): Promise<string> {
-  for (const [name, gate] of [[PRE_COMMIT, "work"], ["pre-push", "verify"]]) {
-    await Bun.write(join(repo, LEGACY_HOOKS, name ?? ""), legacyHook(gate ?? "") + (edited && name === PRE_COMMIT ? ONE_BYTE : ""));
+  for (const [name, gate] of [[PRE_COMMIT, "work"], [PRE_PUSH, "verify"]] as const) {
+    await Bun.write(join(repo, LEGACY_HOOKS, name), legacyHook(gate) + (edited && name === PRE_COMMIT ? ONE_BYTE : ""));
   }
   const config = await Bun.file(join(repo, PREVIOUS_CONFIG)).json();
-  config.managed.push(`${LEGACY_HOOKS}/${PRE_COMMIT}`, `${LEGACY_HOOKS}/pre-push`);
+  config.managed.push(`${LEGACY_HOOKS}/${PRE_COMMIT}`, `${LEGACY_HOOKS}/${PRE_PUSH}`);
   await Bun.write(join(repo, PREVIOUS_CONFIG), JSON.stringify(config));
   expect(Bun.spawnSync(["git", "-C", repo, "config", "core.hooksPath", LEGACY_HOOKS], { env: UNSCOPED_ENVIRONMENT }).exitCode).toBe(0);
   return `${LEGACY_HOOKS}/${PRE_COMMIT}`;
 }
 
-// A 0.27 installation: the current hook plus the telemetry marker, with the
-// marked bytes recorded as owned.
+// A 0.27 installation: the current hook plus the index hand-off and the
+// telemetry marker, with those bytes recorded as owned.
 async function seedMarkedHook(repo: string, model: RulesModel, options: InstallOptions, edited: boolean): Promise<string> {
   expect((await install(model, options)).errors).toEqual([]);
   const path = `${HOOKS_DIRECTORY}/${PRE_COMMIT}`;
-  const marked = plannedHook(PRE_COMMIT).replace("exec bunx", `${MARKER}exec bunx`);
+  const marked = plannedHook(PRE_COMMIT).replace("unset GIT_DIR", `${INDEX_HANDOFF}unset GIT_DIR`).replace("exec bunx", `${MARKER}exec bunx`);
   expect(marked).not.toBe(plannedHook(PRE_COMMIT));
   const config = await readConfig(repo);
   if (!config) throw new Error("installation wrote no configuration");
@@ -282,9 +291,20 @@ test.each([
   const before = await Bun.file(join(repo, path)).text();
   const result = await install(model, hookOptions);
   if (edited) {
+    // Refused before any write: nothing written, the sibling hook intact, and
+    // no new hook beside the legacy pair.
     expect(result.ok).toBe(false);
+    expect(result.written).toEqual([]);
     expect(await Bun.file(join(repo, path)).text()).toBe(before);
     expect(hooksPath(repo)).toBe(legacy ? LEGACY_HOOKS : HOOKS_DIRECTORY);
+    if (legacy) {
+      expect(await Bun.file(join(repo, LEGACY_HOOKS, PRE_PUSH)).text()).toBe(legacyHook("verify"));
+      expect(await Bun.file(join(repo, HOOKS_DIRECTORY, PRE_COMMIT)).exists()).toBe(false);
+    }
+    // Reverting the edit lets the same update through.
+    await Bun.write(join(repo, path), before.slice(0, -ONE_BYTE.length));
+    expect((await install(model, hookOptions)).errors).toEqual([]);
+    expect(await Bun.file(join(repo, HOOKS_DIRECTORY, PRE_COMMIT)).text()).toBe(plannedHook(PRE_COMMIT));
     return;
   }
   expect(result.errors).toEqual([]);

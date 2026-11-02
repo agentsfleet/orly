@@ -21,9 +21,7 @@ test("docs language flags unfilled template slots", () => {
   // Only changed lines count, and the prose line names an opener, not a slot.
   expect(specFillFindings(SPEC, TEXT, { lines: new Set([5]) }).map((finding) => finding.line)).toEqual([5]);
   expect(specFillFindings(SPEC, TEXT, { lines: new Set([7]) })).toEqual([]);
-});
-
-test("only spec records get the slot check", () => {
+  // Spec records get the check; the template itself and other pages do not.
   expect(isSpecRecord(SPEC)).toBeTrue();
   expect(isSpecRecord("docs/v1/done/M04_001_P1_SKILL_DEMO.md")).toBeTrue();
   expect(isSpecRecord("standards/spec-template.md")).toBeFalse();
