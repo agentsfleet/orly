@@ -65,6 +65,8 @@ export function readConfigSync(targetRoot: string): RepoConfig | undefined {
 // rather than as a confusing red criterion later.
 export function parseConfig(value: JsonObject): RepoConfig {
   if (value.schema_version !== CONFIG_SCHEMA_VERSION) throw new OrlyError(`${CONFIG_PATH} schema_version must equal ${CONFIG_SCHEMA_VERSION}`);
+  // 0.27 recorded per-file digests; nothing reads them, and update drops them.
+  delete value.digests;
   validateConfiguration(value);
   const errors: string[] = [];
   if (value[COMMANDS_FIELD] !== undefined) validateCommands(CONFIG_PATH, value[COMMANDS_FIELD], errors);

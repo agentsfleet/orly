@@ -1,22 +1,13 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { configPath, contentDigest, parseConfig, type RepoConfig } from "../config";
+import { contentDigest, type RepoConfig } from "../config";
 import { UNSCOPED_ENVIRONMENT } from "../git_env";
-import { assertWritableInside, OrlyError, readJsonObject } from "../model";
+import { assertWritableInside, OrlyError } from "../model";
 import type { FileDelete } from "./transaction";
 
 const PIPE_OUTPUT = "pipe";
 // `git status --porcelain=v1` prints "XY path"; the path starts at column 3.
 const STATUS_PREFIX_LENGTH = 3;
-
-// Update rewrites a 0.27 configuration without its per-file digests.
-export async function readInstallConfig(root: string): Promise<RepoConfig | undefined> {
-  const path = configPath(root);
-  if (!existsSync(path)) return undefined;
-  const value = await readJsonObject(path);
-  delete value.digests;
-  return parseConfig(value);
-}
 
 // Git holds every committed version, so only an uncommitted change can be lost.
 export function uncommittedPaths(root: string, paths: string[]): Set<string> {

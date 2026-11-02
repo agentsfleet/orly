@@ -7,7 +7,6 @@ import { selectPacks } from "./config_discovery";
 import { CONFIG_PATH, managedDrift, readConfig, RepoConfig, writeConfig } from "./config";
 import { GateReport, isGateName, recordOverride, runGate, runGates } from "./gates";
 import { agentRuntimes, defaultHomes, helperSources, missingHelpers } from "./helpers";
-import { readInstallConfig } from "./installation/migration";
 import { install, InstallResult } from "./install";
 import { isString, OrlyError, readJsonObject, RulesModel } from "./model";
 import { Renderer } from "./render";
@@ -111,7 +110,7 @@ async function packageVersion(model: RulesModel): Promise<string> {
 async function materialise(model: RulesModel, args: string[], isInit: boolean): Promise<number> {
   model.validate();
   const targetRoot = projectRoot();
-  const existing = await readInstallConfig(targetRoot);
+  const existing = await readConfig(targetRoot);
   if (!isInit && !existing) throw new OrlyError(`no ${CONFIG_PATH} here — run \`orly init\` first`);
   const requested = optionalValues(args, WITH_FLAG);
   // --dry-run changes nothing, and recording an opt-in pack is a change. It
@@ -189,7 +188,7 @@ async function doctorInstall(): Promise<string[]> {
 // What init would write, without writing it. Replaces the `render` verb: the
 // preview belongs on the command you are about to run, not beside it.
 async function preview(model: RulesModel, targetRoot: string, requested: string[] = []): Promise<number> {
-  const config = await readInstallConfig(targetRoot);
+  const config = await readConfig(targetRoot);
   const local = { packs: selectPacks(model, targetRoot, config?.packs ?? [], new Set(config?.managed ?? [])), commands: config?.commands ?? {} };
   // selectPacks validates the requested names and unions them with what the
   // repository's own sources select — the same call the real run makes, minus

@@ -15,7 +15,6 @@ afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: 
 
 for (const [field, value] of [
   ["packs", null], ["packs", [false]], ["managed", {}], ["managed", [""]],
-  ["digests", {}],
   ["orly_version", {}], ["orly_version", "yesterday"], ["schema_version", 2],
   ["unknown_setting", true], ["limits", []], ["limits", { [UNIT_LANE]: { timeout_ms: 0 } }],
   ["limits", { [UNIT_LANE]: { output_bytes: -1 } }], ["limits", { [UNIT_LANE]: { timeout_ms: 1.5 } }],
@@ -38,6 +37,11 @@ test("configuration limits survive a rewrite and override only their named lane"
   expect(limitsFor(config.limits, UNIT_LANE)).toEqual(limits[UNIT_LANE]);
   expect(limitsFor(config.limits, "conform")).toEqual({ timeout_ms: 500, output_bytes: DEFAULT_COMMAND_OUTPUT_BYTES });
   expect(limitsFor(config.limits, "verify.integration")).toEqual({ timeout_ms: DEFAULT_COMMAND_TIMEOUT_MS, output_bytes: DEFAULT_COMMAND_OUTPUT_BYTES });
+});
+
+test("a 0.27 configuration's digests are dropped, not refused", () => {
+  const config = parseConfig({ ...BASE, digests: { "AGENTS.md": "sha256:0" } });
+  expect(serialiseConfig(config)).not.toContain("digests");
 });
 
 test("a minimal seeded configuration normalizes optional ownership records", () => {

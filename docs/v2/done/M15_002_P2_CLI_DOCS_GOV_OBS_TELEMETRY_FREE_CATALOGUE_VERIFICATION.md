@@ -178,7 +178,7 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 `.orly/orly.json` drops per-file `digests`. `orly update` replaces a managed file, or deletes an obsolete one, only while `git status` reports it clean; an uncommitted change stops the update and names the path. A committed hand edit is replaced and shows in the update's diff. Migration from 0.10 `.oracle/orly.json` and `.githooks/` is removed: every consumer is on 0.27.
 
 - **Dimension 8.1** — DONE — An uncommitted edit stops the update, and a committed stale file is replaced → Test `a committed stale hook is replaced; an uncommitted edit stops the update` (integration); `migration_preserves_owned_content refuses uncommitted or unowned` (integration).
-- **Dimension 8.2** — DONE — A 0.27 configuration with digests updates cleanly, and gates refuse it until then → Test `interrupted_install_recovers` (integration) starts from a committed 0.27 configuration; `both configuration readers reject invalid digests value {}` (unit).
+- **Dimension 8.2** — DONE — A 0.27 configuration with digests updates cleanly, and every reader drops the key until then → Test `interrupted_install_recovers` (integration) starts from a committed 0.27 configuration; `a 0.27 configuration's digests are dropped, not refused` (unit).
 
 ## Interfaces
 
@@ -187,7 +187,7 @@ Generated hooks drop the `export ORLY_INVOCATION=hook` line. A 0.27 hook under `
 - Generated `.orly/hooks/*` files lose `export ORLY_INVOCATION=hook` and the `ORLY_INDEX_FILE` hand-off, which nothing read. The commit gate checks the working tree; `orly gate pr` checks the committed tree.
 - `docs.language` reports `DOCFILL` for a leftover template slot on a changed, committed spec line.
 - This repository declares `verify.typecheck`.
-- `.orly/orly.json` has no `digests` key; a configuration that still lists one is refused until `orly update` rewrites it.
+- `.orly/orly.json` has no `digests` key; every reader drops a leftover one, and `orly update` rewrites the file without it.
 
 ## Failure Modes
 
@@ -299,6 +299,6 @@ Negative tests name the retired commands to prove their refusal, and the README'
 
 > Owner (Indy, Nov 02, 2026, time not recorded): "so dont add oracle" — context: openclaw's `oracle` skill is not adopted.
 
-> Owner (Indy, Nov 02, 2026, time not recorded): "I PRFER WE DROP THE PER FILE HASH ITS CUMBERSOME", then "GO" to "Yes, git guard, in #75", then "JUST KEEP THE CODE SIMPLE" and "NO CLUTTER" — context: §8; per-file digests and the 0.10 migration leave, git status guards update.
+> Owner (Indy, Nov 02, 2026, time not recorded): "I PRFER WE DROP THE PER FILE HASH ITS CUMBERSOME", then "GO" to "Yes, git guard, in #75", then "JUST KEEP THE CODE SIMPLE" and "NO CLUTTER", then "Drop it quietly (Recommended)" — context: §8; per-file digests and the 0.10 migration leave, git status guards update, and a leftover `digests` key is dropped so agentsfleet stays green when 0.28 publishes.
 
 > Owner (Indy, Nov 02, 2026, time not recorded): "I select this │ 3 / C: A, plus delete ORLY_INDEX_FILE" — context: the commit gate keeps checking the working tree; the false docs are fixed and the unused index hand-off is removed from generated hooks, the engine hook and `src/git_env.ts`.

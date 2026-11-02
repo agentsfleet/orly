@@ -1,13 +1,13 @@
 import { existsSync, mkdirSync, mkdtempSync, rmSync, copyFileSync, lstatSync, readlinkSync, symlinkSync, realpathSync, readdirSync, rmdirSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
-import { CONFIG_PATH, contentDigest, seedConfig, serialiseConfig, type RepoConfig } from "./config";
+import { CONFIG_PATH, contentDigest, readConfig, seedConfig, serialiseConfig, type RepoConfig } from "./config";
 import { selectPacks } from "./config_discovery";
 import { assertWritableInside, applyMode, modeLabel, OrlyError, MODE_EXECUTABLE, MODE_REGULAR, type RulesModel } from "./model";
 import { installLoaders, loaderTargets, type Layout } from "./loaders";
 import { referenceClosureErrors } from "./references";
 import { planFiles, resolveLayout, type PlannedFile } from "./installation/plan";
-import { readInstallConfig, migrationDeletes, uncommittedPaths } from "./installation/migration";
+import { migrationDeletes, uncommittedPaths } from "./installation/migration";
 import { plannedHooks, checkHooks, configureHooks, hooksPath, HOOKS_DIRECTORY } from "./installation/hooks";
 import { diskDigest, InstallTransaction, type FileWrite, type InstallCheckpoint } from "./installation/transaction";
 import { installationLock } from "./installation/lock";
@@ -38,7 +38,7 @@ async function installLocked(model: RulesModel, options: InstallOptions, root: s
   const transaction = new InstallTransaction(root, options.orlyVersion, options.checkpoint);
   transaction.recover(() => configureHooks(root));
   const expected = new Map([[CONFIG_PATH, diskDigest(root, CONFIG_PATH)]]);
-  const config = await readInstallConfig(root) ?? await seedConfig(root);
+  const config = await readConfig(root) ?? await seedConfig(root);
   config.packs = [...new Set([...config.packs, ...(options.requestedPacks ?? [])])].sort();
   const packs = selectPacks(model, root, config.packs, new Set(config.managed));
   const layout = resolveLayout(model, root);
