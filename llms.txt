@@ -12,19 +12,11 @@ Package: `@agentsfleet/orly` (npm)
 Source: https://github.com/agentsfleet/orly
 License: Massachusetts Institute of Technology (MIT)
 
-0.12.0 shipped migration verification; the runtime commands and `.orly/` layout
-originally shipped in 0.11.0. The 0.12.1 patch avoids irrelevant staged audit
-snapshots and preserves hosted-check diagnostics. The `bunx` commands below
-fetch the published package; available versions are listed at
-https://github.com/agentsfleet/orly/releases. Use an installed local tarball for candidate checks.
-The 0.13.0 source candidate adds contributor-only offline controls and a separate explicit TypeSafe Jev measurement command.
-Run `bun evals/judgments/comparison/run.ts --check` or `--offline` from source.
-The separate `jev-run.ts --live` collects actual model replies; `--replay` checks saved answers with no new requests.
-See `docs/architecture/judgment-evaluation.md` for required inputs and measured limitations.
-Expected output is JSON with `passed: true`; deliberate false completions stay failed.
-All five proposed checks remain evaluation-only. Do not infer model accuracy or
-agent improvement from scripted controls. Live model runs, publication, merge
-and live consumer upgrades need subsequent owner instruction.
+This guide describes orly 0.28.0. The `bunx` commands below fetch the
+published package; available versions are listed at
+https://github.com/agentsfleet/orly/releases. Use an installed local tarball for
+candidate checks. orly collects no usage telemetry and makes no network request
+of its own.
 
 ---
 
@@ -88,12 +80,10 @@ suites. `init` reports missing configuration; `doctor` rejects it.
 
 ---
 
-For a 0.10.x consumer with repository-owned hooks, run `orly update --no-hooks`
-using the intended installed version. Change repository callers from
-`.oracle/orly.json` to `.orly/orly.json` and shared rule/audit paths to `.orly/`.
-Keep repository-owned scripts and documents in place. Run `orly doctor` and the
-declared checks before accepting the migration; doctor alone does not run checks.
-Empty old directories may remain, but contain no tracked managed files.
+Commit before `orly update`: it replaces only managed files git reports as
+clean, and stops on an uncommitted change. With repository-owned hooks, run
+`orly update --no-hooks`. Run `orly doctor` and the declared checks afterwards;
+doctor alone does not run checks.
 
 ## 4. Read order before you edit anything
 
@@ -108,12 +98,12 @@ Re-read step 3 for each new file kind you touch in the same task.
 ## 5. The task lifecycle
 
 The spec is a file on disk. Its directory is the status. Only the named stages
-move it. `orly gate pr` reads where it ended up.
+move it. The gates read one thing in it: a template slot left on a changed line.
 
 ```
 docs/v1/pending/   spec written, committed on the detected default branch
       │
-      │  CHORE(open)   branch cut, comparison revision recorded, baseline measurement pending
+      │  CHORE(open)   branch cut, spec moved to active/ and committed
       ▼
 docs/v1/active/    PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT
       │
@@ -220,11 +210,13 @@ bun install --frozen-lockfile
 make audit
 ```
 
-- `make audit` is the bar: typecheck and unit tests, render determinism, and
-  gate fixtures (each gate proved against one passing and one failing case).
-  Runs in parallel and retains full command output.
+- `make audit` is the bar Continuous Integration (CI) holds every Pull Request to: `orly verify`, the
+  typecheck and the unit tests, run in parallel with full command output.
+- Commits here run `bin/orly gate work`, which runs `orly verify` over the
+  standards catalogue, the root render and the pack copies. A push runs gitleaks
+  only.
 - `make install-evals` runs real installs into throwaway repositories. Run on
-  demand; Continuous Integration (CI) runs them on every Pull Request and release.
+  demand; CI runs them on every Pull Request and release.
 - Render orly's own rules with `bin/orly update --no-hooks`. The `--no-hooks`
   flag is required here because this checkout hand-wrote its `.githooks/`.
 - Release: merge to `main` with a new `package.json` version. That publishes,

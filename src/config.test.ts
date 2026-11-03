@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 import { selectPacks } from "./config_discovery";
-import { CONFIG_PATH, contentDigest, managedDrift, readConfig, readConfigSync, seedConfig, writeConfig } from "./config";
+import { CONFIG_PATH, managedDrift, readConfig, readConfigSync, seedConfig, writeConfig } from "./config";
 import { RulesModel } from "./model";
 
 const ROOT = resolve(import.meta.dir, "..");
@@ -142,58 +142,6 @@ describe("readConfig", () => {
   });
 });
 
-describe("managedDrift — content", () => {
-  test("a managed file edited after orly wrote it is drift", async () => {
-    // The gap this closes was not hypothetical: a consuming repository added a
-    // gradient ban and a font-ownership check straight to a materialised gate
-    // script, the pack never learned them, and the next update deleted them —
-    // with doctor green the whole way, because it asked only whether the file
-    // EXISTED. A gate whose checks can be removed under a passing verifier is
-    // not a gate.
-    const root = scratch();
-    const wrote = "check_one\ncheck_two\n";
-    writeFileSync(join(root, "audit.sh"), wrote);
-    const config = { ...(await seedConfig(root)), managed: ["audit.sh"], digests: { "audit.sh": contentDigest(new TextEncoder().encode(wrote)) } };
-    expect(managedDrift(root, config)).toEqual([]);
-
-    writeFileSync(join(root, "audit.sh"), "check_one\n");
-    const drift = managedDrift(root, config);
-    expect(drift).toHaveLength(1);
-    expect(drift[0]).toContain("audit.sh");
-    expect(drift[0]).toContain("edited after orly wrote it");
-    // Deliberately NOT "run orly update": the local content may be the better
-    // version, and update discards it. The source is where it has to go.
-    expect(drift[0]).toContain("move the change into the pack source");
-  });
-
-  test("a digest is algorithm-prefixed, and the unprefixed spelling still matches", async () => {
-    // Bare hex is indistinguishable from a credential to an entropy scanner:
-    // gitleaks refused the first commit that carried these, in every consuming
-    // repository at once. The prefix is what makes it pass without a scanner
-    // suppression — and 0.10.2's unprefixed records must not read as drift.
-    const bytes = new TextEncoder().encode("managed\n");
-    const digest = contentDigest(bytes);
-    expect(digest.startsWith("sha256:")).toBe(true);
-
-    const root = scratch();
-    writeFileSync(join(root, "managed.md"), "managed\n");
-    const legacy = { ...(await seedConfig(root)), managed: ["managed.md"], digests: { "managed.md": digest.slice("sha256:".length) } };
-    expect(managedDrift(root, legacy)).toEqual([]);
-
-    const prefixed = { ...legacy, digests: { "managed.md": digest } };
-    expect(managedDrift(root, prefixed)).toEqual([]);
-  });
-
-  test("a file with no recorded digest makes no claim", async () => {
-    // Two cases share this path: a config written before digests existed, and a
-    // hook orly manages but did not author. Neither may be reported as drift.
-    const root = scratch();
-    writeFileSync(join(root, "hook.sh"), "the repository's own\n");
-    const config = { ...(await seedConfig(root)), managed: ["hook.sh"], digests: {} };
-    expect(managedDrift(root, config)).toEqual([]);
-  });
-});
-
 describe("managedDrift", () => {
   test("every managed file present reports no drift", async () => {
     const root = scratch();
@@ -261,7 +209,6 @@ describe("writeConfig", () => {
       commands: { conform: [["make", "audit"]] },
       surfaces: { user: ["src/"], docs: ["docs/"] },
       managed: ["AGENTS.md"],
-      digests: {},
     };
     await writeConfig(root, mine);
     await writeConfig(root, { ...(await readConfig(root))!, orly_version: "0.4.0", managed: [".orly/standards/languages/rust.md", "AGENTS.md"] });

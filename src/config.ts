@@ -4,7 +4,6 @@ import { dirname, join } from "node:path";
 import { assertWritableInside, hashContent, isObject, isString, JsonObject, objectValue, OrlyError, readJsonObject, RulesModel, stringArray } from "./model";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { selectPacks, sniffCommands } from "./config_discovery";
-import { readExecution, type ExecutionConfig } from "./execution/config";
 import { validateCommands, validateSurfaces } from "./validation";
 import { validateConfiguration } from "./config_validation";
 import { commandLimitsSchema, type LaneLimits } from "./command_limits";
@@ -18,7 +17,6 @@ const NEWLINE = "\n";
 const PACKS_FIELD = "packs";
 const VERSION_FIELD = "orly_version";
 const MANAGED_FIELD = "managed";
-const DIGESTS_FIELD = "digests";
 const DIGEST_ALGORITHM = "sha256";
 const COMMANDS_FIELD = "commands";
 const TEXT_ENCODING = "utf8";
@@ -34,8 +32,6 @@ export type RepoConfig = {
   commands: Record<string, string[][]>;
   surfaces: JsonObject | undefined;
   managed: string[];
-  digests: Record<string, string>;
-  execution?: ExecutionConfig | undefined;
   limits?: LaneLimits;
 };
 
@@ -69,6 +65,8 @@ export function readConfigSync(targetRoot: string): RepoConfig | undefined {
 // rather than as a confusing red criterion later.
 export function parseConfig(value: JsonObject): RepoConfig {
   if (value.schema_version !== CONFIG_SCHEMA_VERSION) throw new OrlyError(`${CONFIG_PATH} schema_version must equal ${CONFIG_SCHEMA_VERSION}`);
+  // 0.27 recorded per-file digests; nothing reads them, and update drops them.
+  delete value.digests;
   validateConfiguration(value);
   const errors: string[] = [];
   if (value[COMMANDS_FIELD] !== undefined) validateCommands(CONFIG_PATH, value[COMMANDS_FIELD], errors);
@@ -82,25 +80,12 @@ export function parseConfig(value: JsonObject): RepoConfig {
     commands: readCommands(value[COMMANDS_FIELD]),
     surfaces: isObject(value.surfaces) ? value.surfaces : undefined,
     managed: stringArray(value[MANAGED_FIELD] ?? [], `${CONFIG_PATH} ${MANAGED_FIELD}`),
-    digests: readDigests(value[DIGESTS_FIELD]),
-    execution: readExecution(value.execution),
     ...(isObject(value.limits) ? { limits: Object.fromEntries(Object.entries(value.limits).map(([lane, limits]) => [lane, commandLimitsSchema.parse(limits)])) } : {}),
   };
 }
 
-// Absent in a config written before digests existed, and absent per-file for
-// anything orly did not author (a hook it declined to overwrite). Both cases
-// read as "no claim", which is what keeps an older checkout green until its
-// next update rather than failing it for a record it never had.
-function readDigests(value: unknown): Record<string, string> {
-  if (value === undefined) return {};
-  if (!isObject(value)) throw new OrlyError(`${CONFIG_PATH} digests must be an object`);
-  const digests: Record<string, string> = {};
-  for (const [path, digest] of Object.entries(value)) if (isString(digest)) digests[path] = digest;
-  return digests;
-}
-
-/// The digest orly records for content it wrote, and recomputes to check it.
+/// The digest an install journal records for content it stages, and recomputes
+/// to check it after an interruption.
 ///
 /// Algorithm-prefixed, and not for elegance: a bare 64-character hex string is
 /// indistinguishable from a credential to an entropy-based secret scanner, and
@@ -111,15 +96,6 @@ function readDigests(value: unknown): Record<string, string> {
 /// credential eventually rides through.
 export function contentDigest(bytes: Uint8Array): string {
   return `${DIGEST_ALGORITHM}:${hashContent(bytes)}`;
-}
-
-// Tolerates the unprefixed spelling 0.10.2 wrote for its one release, so a
-// checkout installed on that version is not reported as wholly drifted before
-// its next update — a format change is not an edit, and saying so would be the
-// false alarm that teaches people to ignore the real ones.
-export function sameDigest(recorded: string, actual: string): boolean {
-  const bare = (digest: string) => digest.startsWith(`${DIGEST_ALGORITHM}:`) ? digest.slice(DIGEST_ALGORITHM.length + 1) : digest;
-  return bare(recorded) === bare(actual);
 }
 
 const PIPE_OUTPUT = "pipe";
@@ -156,31 +132,7 @@ export function managedDrift(targetRoot: string, config: RepoConfig): string[] {
     ...present
       .filter((relativePath) => ignored.has(relativePath))
       .map((relativePath) => `managed file is ignored by git: ${relativePath} — orly wrote it and a clone will not receive it; scope the .gitignore rule that excludes it`),
-    ...editedManaged(targetRoot, config, present),
   ].sort();
-}
-
-// A managed file whose CONTENT no longer matches what orly wrote.
-//
-// The half `managedDrift` was missing, and the gap was not theoretical: a
-// consuming repository added two checks straight to a materialised gate script,
-// the pack never learned them, and the next update deleted them — while doctor
-// reported green throughout, because it verified that the file EXISTED and
-// never that it still said what orly put there. A gate whose checks can be
-// removed under a passing verifier is not a gate.
-//
-// The remedy for a hit is deliberately not `orly update`: the local content may
-// be the better version, as it was in that case. Update overwrites it; the
-// message says to move the change into the source instead, which is the only
-// way it reaches every other consumer.
-function editedManaged(targetRoot: string, config: RepoConfig, present: string[]): string[] {
-  return present.flatMap((relativePath) => {
-    const recorded = config.digests[relativePath];
-    if (!recorded) return [];
-    const actual = contentDigest(readFileSync(join(targetRoot, relativePath)));
-    if (sameDigest(recorded, actual)) return [];
-    return [`managed file was edited after orly wrote it: ${relativePath} — move the change into the pack source, or explicitly use \`orly update --force\` to discard it`];
-  });
 }
 
 // Key order is fixed so a rewrite produces a reviewable diff: orly's own two
@@ -200,10 +152,8 @@ export function serialiseConfig(config: RepoConfig): string {
     packs: config.packs,
     commands: config.commands,
     ...(config.surfaces ? { surfaces: config.surfaces } : {}),
-    ...(config.execution ? { execution: config.execution } : {}),
     ...(config.limits ? { limits: config.limits } : {}),
     managed: [...config.managed].sort(),
-    digests: Object.fromEntries(Object.entries(config.digests).sort(([a], [b]) => a.localeCompare(b))),
   };
   return `${JSON.stringify(ordered, undefined, JSON_INDENT)}${NEWLINE}`;
 }
@@ -212,7 +162,7 @@ export function serialiseConfig(config: RepoConfig): string {
 // from what the repository already builds with; an empty set is honest rather
 // than wrong, and says so in the gate's own failure message.
 export async function seedConfig(targetRoot: string): Promise<RepoConfig> {
-  return { schema_version: CONFIG_SCHEMA_VERSION, orly_version: "", packs: [], commands: await sniffCommands(targetRoot), surfaces: undefined, managed: [], digests: {} };
+  return { schema_version: CONFIG_SCHEMA_VERSION, orly_version: "", packs: [], commands: await sniffCommands(targetRoot), surfaces: undefined, managed: [] };
 }
 
 // What this repository installed and runs with, read from its own `.orly/`.

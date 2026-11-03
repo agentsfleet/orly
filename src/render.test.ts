@@ -14,15 +14,18 @@ const KERNEL_PACKS = ["universal.authoring", "language.rust", "domain.sql"];
 // This repository's own selection, as `.orly/orly.json` declares it — the
 // root render must stay current against exactly what `orly update` writes.
 const DOTFILES_PACKS = ["universal.authoring", "language.typescript", "language.javascript", "language.rust", "language.go", "language.python", "language.shell", "language.mdx", "domain.sql", "domain.http", "domain.auth", "domain.documentation", "domain.changelog", "workflow.specifications", "workflow.governance", "product.agentsfleet", "persona.indy", "workflow.skills"];
-const DOTFILES_COMMANDS = { conform: [["make", "conform"]], "verify.unit": [["bun", "test", "src"]] };
+const DOTFILES_COMMANDS = { conform: [["make", "conform"]], "verify.typecheck": [["bun", "run", "typecheck"]], "verify.unit": [["bun", "test", "src"]] };
 const MAX_ALWAYS_ON_BYTES = 16_384;
 const HARD_SAFETY_FIXTURE = "fixtures/hard-safety-0.25.0.txt";
 
 describe("Renderer", () => {
   test("renders byte-stable text for a pack set", async () => {
-    const renderer = new Renderer(await RulesModel.load(ROOT));
+    const model = await RulesModel.load(ROOT);
+    const renderer = new Renderer(model);
+    const everyPack = Object.keys(model.registry.packs as Record<string, unknown>).sort();
 
     expect(await renderer.renderText(AGENTSFLEET_PACKS)).toBe(await renderer.renderText(AGENTSFLEET_PACKS));
+    expect(await renderer.renderText(everyPack, DOTFILES_COMMANDS)).toBe(await renderer.renderText(everyPack, DOTFILES_COMMANDS));
   });
 
   test("emits CommonMark and Markdown JSX compatible headers", async () => {

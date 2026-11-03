@@ -162,7 +162,7 @@ Each standard is Markdown with one block per rule: `### <ID> — <statement>`, t
 | Skill or agent | Steps it owns | Calls |
 |---|---|---|
 | `orly-spec` | explore, choose, draft, review, resolve, commit to `pending/` on a branch and open a docs-only PR, because orly's and `agentsfleet`'s `main` both require pull requests (`gh api repos/agentsfleet/<repo>/rules/branches/main` lists `pull_request`) | `/egm_brainstorm`, `standards/spec.md`, `/egm_review`, `/egm_resolve` |
-| `orly-build` | move the spec to `active/` with `Status`, `Branch` and `Baseline revision`; branch and worktree; read the standards for the files a Section touches; code and tests; mark Dimensions `DONE` in the same commit | `standards/*`, `orly lifecycle`, gstack `/investigate` and `/qa` |
+| `orly-build` | move the spec to `active/` with `Status`; branch and worktree; read the standards for the files a Section touches; code and tests; mark Dimensions `DONE` in the same commit | `standards/*`, gstack `/investigate` and `/qa` |
 | `orly-ship` | review, fix, move the spec to `done/`, `orly gate pr`, PR body, babysit CI and greptile until two quiet polls, then after your merge pull and prune | gstack `/review`, `orly-standards-reviewer`, `standards/pr.md`, `standards/changelog.md` |
 | `orly-standards-reviewer` | sees the diff, the spec and the matching standards only; reports `{rule ID, file:line, fix}`; nothing it cannot tie to a rule | read-only tools |
 
@@ -329,7 +329,7 @@ No product or operator signal changes. §6 records managed files, always-on byte
 
 ## Out of Scope
 
-- **M15_002 (the follow-up Pull Request) — telemetry, `orly verify` and pre-push coverage.** `src/telemetry.ts`, `src/telemetry_sync.ts`, `orly skill-event`, the consent text in `orly --help`; `orly verify` becomes catalogue tests; the PR #70 pre-push range tests (a deleted branch, a new branch through `--not --remotes`, several refs, an unreadable range).
+- **[M15_002](../done/M15_002_P2_CLI_DOCS_GOV_OBS_TELEMETRY_FREE_CATALOGUE_VERIFICATION.md) (0.28 follow-up) — telemetry, `orly verify` and pre-push coverage.** `src/telemetry.ts`, `src/telemetry_sync.ts`, `orly skill-event`, the consent text in `orly --help`; `orly verify` becomes catalogue tests; the PR #70 pre-push range tests (a deleted branch, a new branch through `--not --remotes`, several refs, an unreadable range).
 - **`agentsfleet`'s migration** — its own Pull Request in its own repository, after 0.26.0 releases, doing exactly §6; `~/Projects/docs` and `cache-kit.rs` migrate when their owners bump their pins.
 - **M16 — the gate's language,** TypeScript or Rocq with OCaml, decided on the gate left after this milestone.
 - Linter rule files (ast-grep or GritQL): not planned; reviewer judgment covers the regular-expression checks, and a file format is chosen only if the reviewer misses them in practice.

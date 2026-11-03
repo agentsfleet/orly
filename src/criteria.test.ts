@@ -47,8 +47,8 @@ describe("criteriaFor", () => {
     expect(names).not.toContain("cmd.verify.integration");
   });
 
-  // A spec is reviewed while it is written; the gate checks code and Git only,
-  // even on a branch that carries an active spec.
+  // A spec is reviewed while it is written, so no criterion grades one, even on
+  // a branch carrying an active spec; the docs check reads only leftover slots.
   test("pr gate runs no spec criterion", async () => {
     const project = newSpecRepository();
     const names = named(PR, await contextFor(project));
@@ -203,4 +203,17 @@ describe("an optional conform command", () => {
     expect(criteria.map((criterion) => criterion.name)).toEqual([REPO_CONFIG]);
     expect(criteria.every((criterion) => criterion.evaluate(context).ok)).toBe(true);
   });
+});
+
+// Each gate's tier picks its commands from the declared set: work runs conform
+// alone, verify the fast lanes, and pr every verify.* lane.
+test("gate tiers select their declared commands", async () => {
+  const project = newRepository();
+  const lanes = { "verify.lint": [["true"]], "verify.integration": [["true"]] };
+  const context = { root: project, model: await modelFor(project, undefined, lanes), acceptDirty: false };
+  const commands = (gate: string) => criteriaFor(gate, context).map((entry) => entry.name).filter((name) => name.startsWith("cmd.")).sort();
+
+  expect(commands(WORK)).toEqual(["cmd.conform"]);
+  expect(commands(VERIFY)).toEqual(["cmd.verify.lint"]);
+  expect(commands(PR)).toEqual(["cmd.verify.integration", "cmd.verify.lint", "cmd.verify.unit"]);
 });

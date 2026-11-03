@@ -8,12 +8,13 @@ import { scanChangedDocuments } from "./doc_changes";
 import { isObject, JsonObject, objectValue, OrlyError, RulesModel } from "./model";
 import { readConfigSync, RepoConfig } from "./config";
 import { classifyBranch, SurfaceReport } from "./surfaces";
-import { selectedCommands, CONDITIONAL_LANES, CONFORM_TIER, FAST_TIER, ALL_TIER, type CommandTier } from "./execution/plan";
 import { commandSetupErrors } from "./validation";
 import { limitsFor, type CommandLimits } from "./command_limits";
 
 export type { Criterion, CriterionContext, CriterionResult, Verdict };
 export { runCommand };
+
+type CommandTier = typeof CONFORM_TIER | typeof FAST_TIER | typeof ALL_TIER;
 
 const DEFAULT_BRANCHES = ["master", "main"];
 const REPOSITORIES_LABEL = "repositories";
@@ -36,17 +37,23 @@ const DOCS_LANGUAGE = "docs.language";
 // How many findings a report names before it stops listing them. A criterion
 // line is a summary, not a linter dump.
 const NAMED_FINDINGS = 3;
+const CONFORM_TIER = "conform";
+const FAST_TIER = "fast";
+const ALL_TIER = "all";
+const VERIFY_PREFIX = "verify.";
+const UNIT_LANE = "verify.unit";
+const CONDITIONAL_LANES = ["verify.integration", "verify.memory"];
 
 // CONFORM is its own lifecycle stage — EXECUTE → CONFORM → VERIFY — and it is
 // its own tier here for the same reason. Lumped into verify, the deterministic
 // rule audit could only run beside the lint and unit suites, so a repository
 // paid minutes to learn something its seconds-long conform command already
 // knew, and `orly gate` ran it twice on the way to `pr`.
-// Commit checks read the index. Push checks permit in-flight Sections and omit
-// the boundary test suites. The final gate runs all declared verification
-// itself, including checks a custom repository hook may not have invoked.
-// A spec is reviewed while it is written (an EGM review), so the gate checks
-// code and Git only.
+// Commit checks run the repository's conform command over the working tree.
+// Push checks permit in-flight Sections and omit the boundary test suites. The
+// final gate runs all declared verification itself, including checks a custom
+// repository hook may not have invoked. A spec is reviewed while it is written
+// (an EGM review); the gate reads one thing in it, a leftover template slot.
 export function criteriaFor(gate: string, context: CriterionContext): Criterion[] {
   if (gate === "work") return [repositoryConfig(), ...commandCriteria(context, CONFORM_TIER)];
   if (gate === "verify") return [repositoryConfig(), docsLanguage(), ...commandCriteria(context, FAST_TIER)];
@@ -100,6 +107,16 @@ function repositoryConfig(): Criterion {
       return { ok: false, detail: error instanceof Error ? error.message : String(error) };
     }
   });
+}
+
+// The declared commands a tier runs: conform alone, the fast verify.* lanes
+// without the boundary suites, or every verify.* lane.
+function selectedCommands(commands: RepoConfig["commands"], tier: CommandTier): string[] {
+  return Object.keys(commands).filter((key) => {
+    if (tier === CONFORM_TIER) return key === CONFORM_TIER;
+    if (!key.startsWith(VERIFY_PREFIX)) return false;
+    return tier === ALL_TIER || (key !== UNIT_LANE && !CONDITIONAL_LANES.includes(key));
+  }).sort();
 }
 
 // Commands and source paths are repository-owned. Only integration and memory

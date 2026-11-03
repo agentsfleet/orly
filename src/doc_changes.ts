@@ -3,6 +3,7 @@ import { join } from "node:path";
 
 import { scanDocument, type DocFinding, type DocScanOptions } from "./doc_rules";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { isSpecRecord, specFillFindings } from "./spec_fill";
 import { defaultMergeBase } from "./surfaces";
 
 const PIPE_OUTPUT = "pipe";
@@ -14,7 +15,6 @@ const NUL_PATHS = "-z";
 const END_OPTIONS = "--";
 const MARKDOWN = /\.mdx?$/i;
 const SNAPSHOT_OR_DEPENDENCY = /(^|\/)(\.orly|node_modules|vendor|third_party|dist|build)\//;
-const SPEC_RECORD = /^docs\/v\d+(?:\.\d+)*\/(pending|active|done)\//;
 const HUNK = /^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/gm;
 const DIFF = ["diff", "--no-ext-diff", "--no-textconv", "--no-color"];
 
@@ -30,14 +30,22 @@ export function scanChangedDocuments(root: string): DocFinding[] {
   const candidates = new Set([...tracked, ...untracked]);
   const findings: DocFinding[] = [];
   for (const file of candidates) {
-    if (!MARKDOWN.test(file) || SNAPSHOT_OR_DEPENDENCY.test(file) || SPEC_RECORD.test(file)) continue;
+    if (!MARKDOWN.test(file) || SNAPSHOT_OR_DEPENDENCY.test(file)) continue;
     const absolute = join(root, file);
     if (!existsSync(absolute) || !lstatSync(absolute).isFile()) continue;
     const patch = base && !untracked.has(file)
       ? gitText(root, [...DIFF, "--unified=0", base, END_OPTIONS, file]) : "";
     const options = !base || untracked.has(file) || /^--- \/dev\/null$|^old mode 120000$/m.test(patch)
       ? {} : changedLines(patch);
-    findings.push(...scanDocument(file, readFileSync(absolute, UTF8), options));
+    const text = readFileSync(absolute, UTF8);
+    // A spec still being drafted is untracked and belongs to no commit, so its
+    // slots wait; once added, every changed line must be filled. The PR gate's
+    // clean-tree criterion refuses an untracked draft anyway.
+    if (isSpecRecord(file)) {
+      if (!untracked.has(file)) findings.push(...specFillFindings(file, text, options));
+      continue;
+    }
+    findings.push(...scanDocument(file, text, options));
   }
   return findings;
 }

@@ -42,6 +42,15 @@ Works with Claude Code, Codex, OpenCode, and Amp.
 
 ---
 
+## 0.28: no telemetry, a slimmer spec
+
+orly collects no usage telemetry, and `orly skill-event` and `orly lifecycle` are gone.
+The spec template is a skeleton whose comments cite the rules in the spec standard.
+Each Dimension carries its test tier and result, and baselines come from the base commit's Continuous Integration (CI) run.
+
+`docs.language` now reports a template slot left on a changed spec line.
+A configuration that still carries the retired `execution` key is refused.
+
 ## 0.26: rules become standards
 
 Rules now live in standards: short pages of rule blocks with Applies to, Checked by, Bad, Good and Why.
@@ -50,14 +59,14 @@ The `orly-standards-reviewer` agent checks a diff against the standards before t
 
 The always-on `AGENTS.md` is under 16 KiB, down from 37 KB.
 The dispatch pages, the audit scripts, the read-logging gate and `orly judge` are gone.
-`orly gate pr` checks code and Git only; a spec is reviewed while it is written.
+`orly gate pr` checks code and Git; a spec is reviewed while it is written.
 
 `orly doctor` checks that every agent runtime has gstack and the Elephant-Goldfish Model (EGM), at whatever version you run.
 A Codex cloud task gets the same setup; see [the architecture page](docs/ORLY_ARCHITECTURE.md#codex-cloud-environment).
 
 See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
 The install commands below fetch the published package.
-The release workflow publishes 0.27.0 after its version change merges to `main` or an explicit release run.
+The release workflow publishes 0.28.0 after its version change merges to `main` or an explicit release run.
 
 ---
 
@@ -124,20 +133,16 @@ Unknown settings and malformed values are refused; `schemas/profile.schema.json`
 
 ---
 
-## Upgrade from 0.10.x
+## Update
 
-Run the update from the consumer repository. If the repository owns its hooks, preserve them explicitly:
+Commit first, then run the update from the consumer repository. If the repository owns its hooks, preserve them explicitly:
 
 ```bash
 bunx --bun @agentsfleet/orly update --no-hooks
 ```
 
-Expected: managed files move under `.orly/`; owner hooks remain unchanged. Conflicting owner edits stop the update and name the affected path.
+Expected: managed files are replaced and the change shows in `git diff`. A managed file with uncommitted changes stops the update and names the path.
 Use the installed candidate executable for an unpublished release trial; the command above fetches the published version.
-
-Update repository-owned callers that still read `.oracle/orly.json`, `.orly/dispatch/` or `.orly/audits/`.
-Rules now live in `.orly/standards/`; the audit scripts have no replacement, so drop those calls.
-Repository-owned audit scripts and project documents retain their existing locations.
 
 Review existing hooks before choosing an update without `--no-hooks`.
 
@@ -147,7 +152,6 @@ bunx --bun @agentsfleet/orly doctor
 
 Expected: installed rules match `.orly/orly.json` and work and verification commands are declared.
 Then run the repository's declared checks; `doctor` alone does not run them.
-An empty old directory can remain after its files move. Git does not track empty directories; remove one only after checking it is empty.
 
 ---
 
@@ -249,7 +253,7 @@ flowchart TB
 | Directory | Meaning |
 |---|---|
 | `docs/v1/pending/` | the spec is written and committed on the detected default branch |
-| `docs/v1/active/` | branch cut, comparison revision recorded, measurement pending; no code until it commits |
+| `docs/v1/active/` | branch cut, spec moved to active/ and committed; no code until it commits |
 | `docs/v1/done/` | gates green, Pull Request opens |
 
 Inside `active/`, work runs through the stages: **PLAN → EXECUTE → CONFORM → VERIFY → REVIEW → DOCUMENT → COMMIT**.
@@ -382,9 +386,12 @@ make audit
 
 `make audit` is the bar. If it passes, the change is reviewable. Its steps run in parallel, around half a minute:
 
-- **typecheck and unit tests**
-- **render determinism:** the same sources always produce the same rules
+- **`orly verify`:** the standards catalogue, the root render and every pack copy
+- **typecheck and unit tests**, including render determinism
 - **gate fixtures:** every gate proved against one passing and one failing case
+
+Every commit here runs `bin/orly gate work`, which runs `orly verify`.
+A push runs gitleaks only, and CI runs `make audit` on every pull request.
 
 Coverage is gated at a 90% line floor. The workflow fails below it.
 

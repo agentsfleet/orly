@@ -123,18 +123,6 @@ describe("installation loaders and hooks", () => {
     expect(existsSync(join(repo, "AGENTS.md"))).toBe(false);
   });
 
-  test("generated_hooks_mark_telemetry_invocation", async () => {
-    const model = await RulesModel.load(ROOT);
-    const repo = newRepository();
-    await Bun.write(join(repo, ".orly/hooks/pre-commit"), "#!/usr/bin/env bash\necho 'ours'\n");
-
-    const result = await install(model, { targetRoot: repo, force: true, installHooks: true, orlyVersion: "0.4.0" });
-
-    expect(result.ok).toBe(true);
-    expect(await Bun.file(join(repo, ".orly/hooks/pre-commit")).text()).toContain("export ORLY_INVOCATION=hook");
-    expect(await Bun.file(join(repo, ".orly/hooks/pre-push")).text()).toContain("export ORLY_INVOCATION=hook");
-  });
-
   test("--no-hooks installs the rules over an existing hook without touching it", async () => {
     const model = await RulesModel.load(ROOT);
     const repo = newRepository();

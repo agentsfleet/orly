@@ -82,40 +82,26 @@ install_retired_verbs_are_gone_and_unreferenced() {
 retired_command_references() {
   # The pattern must survive a quoted path: `"$DOTFILES/bin/orly" sync` shipped
   # green under an anchored `(bin/)?orly ` because of the closing quote.
-  # The questionnaire and its archived receipts name removed verbs to prove
-  # their removal. Active source and documentation still belong to the scan.
+  # Finished specs and these evals name removed verbs to record or prove their
+  # removal. Active source and documentation still belong to the scan.
   git -C "$1" grep -nE 'orly"? (sync|render|validate)([^a-z-]|$)' -- . \
     ':!docs/v1/done/*' ':!docs/v1/active/*' ':!evals/install/*' \
-    ':!evals/release/receipts/*' ':!SOUL_LOG.md' 2>/dev/null || true
-}
-
-install_retired_reference_scope_preserves_archived_receipts() {
-  local name="archived questionnaire receipts do not count as active command calls"
-  local repo archive found; repo="$(mk_repo)"
-  archive="$repo/evals/release/receipts/fixture/native-inspection"
-  mkdir -p "$archive"
-  printf '%s\n' '{"question":"Are orly sync, orly render and orly validate gone?"}' > "$archive/questionnaire.json"
-  printf '%s\n' 'Are `orly sync`, `orly render` and `orly validate` gone?' > "$archive/questionnaire.md"
-  git -C "$repo" add -A
-  found="$(retired_command_references "$repo")"
-  if [[ -n "$found" ]]; then bad "$name" "archived evidence counted as a caller: $found"; return; fi
-  ok "$name"
+    ':!SOUL_LOG.md' 2>/dev/null || true
 }
 
 install_retired_reference_scope_rejects_active_calls() {
-  local name="active obsolete calls remain visible outside the receipt archive"
+  local name="active obsolete calls are reported"
   local repo found path; repo="$(mk_repo)"
-  mkdir -p "$repo/docs" "$repo/evals/release/receipts-active"
+  mkdir -p "$repo/docs"
   printf '%s\n' 'orly sync' > "$repo/src/current.sh"
   printf '%s\n' '"$TOOLS/bin/orly" render' > "$repo/run.sh"
   printf '%s\n' 'orly validate' > "$repo/docs/current.md"
-  printf '%s\n' 'orly sync' > "$repo/evals/release/receipts-active/current.md"
   git -C "$repo" add -A
   found="$(retired_command_references "$repo")"
-  for path in src/current.sh run.sh docs/current.md evals/release/receipts-active/current.md; do
+  for path in src/current.sh run.sh docs/current.md; do
     if [[ "$found" != *"$path:1:"* ]]; then bad "$name" "missing active caller $path: $found"; return; fi
   done
-  if [[ "$(printf '%s\n' "$found" | wc -l | tr -d ' ')" != 4 ]]; then bad "$name" "expected exactly four active callers: $found"; return; fi
+  if [[ "$(printf '%s\n' "$found" | wc -l | tr -d ' ')" != 3 ]]; then bad "$name" "expected exactly three active callers: $found"; return; fi
   ok "$name"
 }
 
@@ -127,7 +113,9 @@ install_update_repins_across_a_version_bump() {
   local pkg repo; pkg="$(packed_root)"; repo="$(mk_repo)"
   if [[ -z "$pkg" ]]; then bad "$name" "npm pack or extract failed"; return; fi
 
-  run_packed "$pkg" "$repo" init >/dev/null
+  # Without hooks: the commit below would run a hook pinned to an unpublished version.
+  run_packed "$pkg" "$repo" init --no-hooks >/dev/null
+  git -C "$repo" add -A && git -C "$repo" commit -qm "orly init" >/dev/null
   local before; before="$(python3 -c "import json;print(json.load(open('$repo/.orly/orly.json'))['orly_version'])")"
 
   local copy; copy="$(mk_sandbox)"

@@ -151,6 +151,7 @@
     "BRQ": "already retired in RULES.md",
     "SNT": "already retired in RULES.md",
     "SCM": "already resolved in RULES.md",
-    "GLS": "the gate dispatcher it guarded is deleted"
+    "GLS": "the gate dispatcher it guarded is deleted",
+    "SPEC-BASELINE": "baselines moved to the Pull Request Session Notes, taken from the base commit's CI run"
   }
 }

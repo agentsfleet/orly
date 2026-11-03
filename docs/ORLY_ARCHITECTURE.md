@@ -55,8 +55,9 @@ cache-kit.rs showed both failures in one repository. Its `.orly/` snapshot sat
 frozen for four weeks with no update path. Its generated `AGENTS.md` named a
 Rust crate `agentsfleet`, a product leak M03 closed with opt-in packs.
 
-`orly verify --all` still renders each pack set twice and compares them. It
-then compares the committed root `AGENTS.md` against a fresh render.
+`orly verify` checks the ruleset in an orly checkout. It validates the
+standards catalogue, compares the committed root `AGENTS.md` with a fresh
+render, and compares every pack copy with its source.
 
 ## Gates
 
@@ -64,7 +65,7 @@ then compares the committed root `AGENTS.md` against a fresh render.
 
 | Gate | Proves |
 |---|---|
-| `work` | repository configuration and the declared `conform` command over the staged change |
+| `work` | repository configuration and the declared `conform` command over the working tree |
 | `verify` | documentation checks and non-test `verify.*` commands; unfinished Sections may be pushed |
 | `pr` | branch, clean tree, exact pushed revision, docs surface, and every declared `verify.*` command |
 
@@ -72,15 +73,18 @@ The `orly-build` and `orly-ship` skills carry the sequence. Full unit, integrati
 and memory suites run at the PR boundary.
 
 No stored verification cache or
-assumption about a custom pre-push hook can remove them. Baselines name an
-immutable comparison revision and are measured before the Pull Request.
+assumption about a custom pre-push hook can remove them. Baselines come from
+the CI run of the branch's base commit and sit beside the branch counts in the
+Pull Request. A lane CI did not run on that commit is measured at the merge base.
 
 Every criterion is mechanical: it reads an exit code or a file. Claims that
 cannot be proven that way stay prose and are graded by the spec's rubric; they
 never become fake criteria.
 
-The gate reads no spec. A spec is reviewed while it is written, by an
-Elephant-Goldfish Model (EGM) review, and the gate checks code and Git only.
+A spec is reviewed while it is written, by an Elephant-Goldfish Model (EGM)
+review. The gate checks one thing in a spec: `docs.language` reports a template
+slot or `tpl:` comment left on a changed spec line. Specs stay outside the
+prose rules.
 
 The `docs.language` criterion rejects mechanical language findings in changed
 Markdown and Markdown JSX (MDX) prose, including new pages and uncommitted edits.
@@ -133,8 +137,8 @@ checks without declaring application test suites. `init` reports missing
 commands; `doctor` rejects incomplete setup without running those commands.
 The final tree check includes the spec, so its evidence must be committed.
 
-`schemas/profile.schema.json` describes the repository file, including ownership records and disabled execution settings.
-Both configuration readers refuse unknown settings, malformed types and unsupported execution modes before selecting commands.
+`schemas/profile.schema.json` describes the repository file, including ownership records.
+Both configuration readers refuse unknown settings and malformed types before selecting commands.
 Each invocation defaults to 30 minutes and 64 mebibytes of combined output; `limits` supplies per-command overrides.
 
 The synchronous gate calls a Bun supervisor that reads both streams and stops the owned process group on either limit.
@@ -143,28 +147,10 @@ Normal commands remove their temporary files after the gate reads the complete o
 
 ## Usage telemetry
 
-Orly keeps usage telemetry off until a person enables anonymous collection in
-an interactive run. Hooks, Continuous Integration (CI), and other automated
-runs never ask for consent. Off writes no event and makes no network request.
-
-Anonymous events enter a bounded outbound spool under the agentsfleet state
-root. After each append, Orly launches a detached sync attempt and lets the
-command exit. The sync sends at most 100 events and exits without a fetch when
-another attempt ran within five minutes. A successful response removes the
-acknowledged prefix. Spool maintenance drops records older than seven days and
-keeps the file at or below 10 MiB, so an unavailable destination cannot create
-an unbounded local log. Orly runs no telemetry daemon.
-
-PostHog owns product-event storage and funnel analysis. Orly sends no source,
-path, repository, branch, argument, output, environment, hostname, username, or
-raw error value. A future Insights Fleet may query PostHog with a private key;
-the Fleet is an analysis consumer and never the public ingestion boundary.
-
-## Evidence
-
-`orly verify --all --write-evidence` records the source commit and every check
-into `.orly/evidence.json` (git-ignored). Pre-push writes it when the pushed
-range touches governance paths.
+Orly 0.28 collects no usage telemetry: the consent prompt, the local event
+spool and the upload are gone. It never reads the files earlier versions left
+under `~/.config/agentsfleet/orly/`. Hooks still pinned to an earlier version do
+read them, so keep `{"telemetry":"off"}` there until every repository updates.
 
 ## Standards, skills and the reviewer
 
@@ -183,14 +169,21 @@ history. It reports only findings it can tie to a rule and a changed line.
 The rendered `AGENTS.md` carries only what applies on every turn, plus an
 index of the selected standards. A render test caps it at 16 KiB.
 
+The spec template is a skeleton. Its comments cite the spec standard's rule
+identifiers, and the standard holds the rules.
+
 ## Changing a standard
 
 A rule change edits its standard and keeps the five fields. A new rule takes a
 new identifier; a removed one leaves the catalogue fixture with its reason.
-`bun test src/standards_catalogue.test.ts` proves every identifier has one home.
+`orly verify` and the catalogue tests share one validator, which proves every
+identifier has one home.
 
-Run `make audit` before pushing. It renders the rules, typechecks and runs the
-suite, including the always-on size cap and the Hard Safety text.
+Every commit runs `orly gate work`, which runs `orly verify`. A push runs
+gitleaks only. CI runs `make audit` on every pull request, adding the typecheck
+and the unit suite.
+
+That suite covers the always-on size cap and the Hard Safety text.
 
 ## Helper parity
 

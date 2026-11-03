@@ -106,7 +106,7 @@ describe("documentation repositories", () => {
       symlinkSync(process.execPath, join(binaries, "bun"));
       git(root, "add", ".");
       const commit = Bun.spawnSync(["/usr/bin/git", "commit", "-qm", "docs: initialize checks"], {
-        cwd: root, env: { ...UNSCOPED_ENVIRONMENT, PATH: `${binaries}:/usr/bin:/bin`, ORLY_TELEMETRY_OFF: "1", ORLY_TEST_ENTRY: join(ROOT, "bin/orly") }, stdout: "pipe", stderr: "pipe",
+        cwd: root, env: { ...UNSCOPED_ENVIRONMENT, PATH: `${binaries}:/usr/bin:/bin`, ORLY_TEST_ENTRY: join(ROOT, "bin/orly") }, stdout: "pipe", stderr: "pipe",
       });
       expect({ code: commit.exitCode, output: commit.stderr.toString() }).toEqual({ code: 0, output: expect.any(String) });
 

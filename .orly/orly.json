@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "orly_version": "0.27.0",
+  "orly_version": "0.28.0",
   "packs": [
     "domain.auth",
     "domain.changelog",
@@ -33,6 +33,13 @@
         "test",
         "src"
       ]
+    ],
+    "verify.typecheck": [
+      [
+        "bun",
+        "run",
+        "typecheck"
+      ]
     ]
   },
   "surfaces": {
@@ -47,8 +54,5 @@
   },
   "managed": [
     "AGENTS.md"
-  ],
-  "digests": {
-    "AGENTS.md": "sha256:c30bdf6586d46c8b27b2ed3b45199ddd9b433252660ddb172f568129a976ed5b"
-  }
+  ]
 }

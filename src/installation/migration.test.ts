@@ -1,12 +1,11 @@
 import { afterEach, expect, test } from "bun:test";
 import { join } from "node:path";
 import { CONFIG_PATH, contentDigest, readConfig } from "../config";
-import { cleanupTemporaryDirectories, newRepository, temporaryDirectory } from "../gates_test_support";
+import { cleanupTemporaryDirectories, git, newRepository, temporaryDirectory } from "../gates_test_support";
 import { install } from "../install";
 import { RulesModel } from "../model";
 import { AGENTS_FILENAME } from "../loaders";
-import { PREVIOUS_CONFIG } from "./migration";
-import { HOOKS_DIRECTORY, hooksPath } from "./hooks";
+import { HOOKS_DIRECTORY, hooksPath, plannedHooks } from "./hooks";
 import type { FileWrite } from "./transaction";
 import { UNSCOPED_ENVIRONMENT } from "../git_env";
 import { chmodSync } from "node:fs";
@@ -15,7 +14,7 @@ const OLD_RULE = "standards/check.md";
 const OLD_AGENTS = "AGENTS.orly.md";
 const OWNER_RULES = "# Owner rules\nKeep this instruction.\n";
 const OLD_BODY = "old managed content\n";
-const OWNER_NOTE = ".oracle/owner-note";
+const OWNER_NOTE = "notes/owner-note";
 const UNOWNED_BODY = "unowned state\n";
 const CURRENT_RULE = ".orly/standards/check.md";
 const CONTENT_ENCODING = "base64";
@@ -33,11 +32,11 @@ const OPENCODE = "opencode.json";
 const OWNER_DOCUMENT = "owner.md";
 const STEPS: Array<[string, number]> = [
   [JOURNAL_STAGE, 0], ...Array.from({ length: WRITE_COUNT }, (_, index): [string, number] => [WRITE_STAGE, index]),
-  [METADATA_STAGE, 0], [DELETE_STAGE, 0], [DELETE_STAGE, 1], [DELETE_STAGE, 2],
+  [METADATA_STAGE, 0], [DELETE_STAGE, 0], [DELETE_STAGE, 1],
 ];
 const HOOK_STEPS: Array<[string, number]> = [
   [JOURNAL_STAGE, 0], ...Array.from({ length: HOOK_WRITE_COUNT }, (_, index): [string, number] => [WRITE_STAGE, index]),
-  [METADATA_STAGE, 0], [DELETE_STAGE, 0], [DELETE_STAGE, 1], [DELETE_STAGE, 2],
+  [METADATA_STAGE, 0], [DELETE_STAGE, 0], [DELETE_STAGE, 1],
 ];
 
 afterEach(cleanupTemporaryDirectories);
@@ -48,12 +47,7 @@ test.each([".git/hooks", ".githooks"])("an active owner hook in %s remains conne
   const owner = "#!/bin/sh\nexit 0\n";
   await Bun.write(path, owner);
   chmodSync(path, 0o755);
-  if (directory === ".githooks") {
-    const config = await Bun.file(join(repo, PREVIOUS_CONFIG)).json();
-    config.managed.push(".githooks/pre-commit", ".githooks/pre-push");
-    await Bun.write(join(repo, PREVIOUS_CONFIG), JSON.stringify(config));
-    expect(Bun.spawnSync(["git", "-C", repo, "config", "core.hooksPath", directory]).exitCode).toBe(0);
-  }
+  if (directory === ".githooks") git(repo, "config", "core.hooksPath", directory);
   const before = hooksPath(repo);
   const result = await install(model, { ...options, installHooks: true });
   expect(result.ok).toBe(false);
@@ -65,6 +59,7 @@ test.each([".git/hooks", ".githooks"])("an active owner hook in %s remains conne
   expect(await Bun.file(path).text()).toBe(owner);
 });
 
+// A committed 0.27 installation: its configuration still lists per-file digests.
 async function fixture() {
   const repo = newRepository();
   const engine = temporaryDirectory();
@@ -74,10 +69,12 @@ async function fixture() {
   await Bun.write(join(repo, OLD_RULE), OLD_BODY);
   await Bun.write(join(repo, OLD_AGENTS), OLD_BODY);
   await Bun.write(join(repo, AGENTS_FILENAME), OWNER_RULES);
-  await Bun.write(join(repo, PREVIOUS_CONFIG), JSON.stringify({
+  await Bun.write(join(repo, CONFIG_PATH), JSON.stringify({
     schema_version: 1, orly_version: "0.11.0", packs: [], commands: { conform: [["true"]], "verify.unit": [["true"]] },
     managed: [OLD_RULE, OLD_AGENTS], digests: { [OLD_RULE]: contentDigest(Buffer.from(OLD_BODY)), [OLD_AGENTS]: contentDigest(Buffer.from(OLD_BODY)) },
   }));
+  git(repo, "add", "-A");
+  git(repo, "commit", "-q", "-m", "test: 0.27 installation");
   await Bun.write(join(repo, OWNER_NOTE), UNOWNED_BODY);
   return { repo, model, options: { targetRoot: repo, force: false, installHooks: false, orlyVersion: VERSION } };
 }
@@ -93,7 +90,6 @@ test.each(HOOK_STEPS)("hook installation recovers interruption at %s %d", async 
 async function recoverInterruptedFixture(stage: string, ordinal: number, installHooks: boolean, writeCount: number) {
   const { repo, model, options } = await fixture();
   options.installHooks = installHooks;
-  const previous = await Bun.file(join(repo, PREVIOUS_CONFIG)).text();
   let injected = 0;
   const result = await install(model, { ...options, checkpoint: (current, index) => {
     if (current === stage && index === ordinal) { injected++; throw new Error(INTERRUPTION); }
@@ -101,20 +97,20 @@ async function recoverInterruptedFixture(stage: string, ordinal: number, install
   expect(injected).toBe(1);
   expect(result.ok).toBe(false);
   expect(result.errors.map((error) => error.message)).toEqual([INTERRUPTION]);
-  await expectInterruptedState(repo, stage, ordinal, previous, writeCount);
+  await expectInterruptedState(repo, stage, ordinal, writeCount);
   const configured = installHooks && (stage === METADATA_STAGE || stage === DELETE_STAGE);
   expect(hooksPath(repo)).toBe(configured ? HOOKS_DIRECTORY : null);
   expect((await install(model, options)).errors).toEqual([]);
   expect(await Bun.file(join(repo, CURRENT_RULE)).text()).toBe("new managed guide\n");
   expect(await Bun.file(join(repo, AGENTS_FILENAME)).text()).toStartWith(OWNER_RULES.trim());
   expect(await Bun.file(join(repo, OWNER_NOTE)).text()).toBe(UNOWNED_BODY);
-  for (const path of [OLD_RULE, OLD_AGENTS, PREVIOUS_CONFIG, JOURNAL]) expect(await Bun.file(join(repo, path)).exists()).toBe(false);
+  for (const path of [OLD_RULE, OLD_AGENTS, JOURNAL]) expect(await Bun.file(join(repo, path)).exists()).toBe(false);
   expect((await readConfig(repo))?.orly_version).toBe(VERSION);
   expect(hooksPath(repo)).toBe(installHooks ? HOOKS_DIRECTORY : null);
   expect((await install(model, options)).written).toEqual([]);
 }
 
-async function expectInterruptedState(repo: string, stage: string, ordinal: number, previous: string, writeCount: number): Promise<void> {
+async function expectInterruptedState(repo: string, stage: string, ordinal: number, writeCount: number): Promise<void> {
   const journal: { data: { writes: FileWrite[] } } = await Bun.file(join(repo, JOURNAL)).json();
   expect(journal.data.writes).toHaveLength(writeCount);
   const written = stage === JOURNAL_STAGE ? 0 : stage === WRITE_STAGE ? ordinal + 1 : writeCount;
@@ -124,26 +120,24 @@ async function expectInterruptedState(repo: string, stage: string, ordinal: numb
     else if (file.before === null) expect(await current.exists()).toBe(false);
     else expect(contentDigest(await current.bytes())).toBe(file.before);
   }
-  expect((await readConfig(repo))?.orly_version).toBe(written === writeCount ? VERSION : undefined);
-  const obsolete: Array<[string, string]> = [[OLD_RULE, OLD_BODY], [OLD_AGENTS, OLD_BODY], [PREVIOUS_CONFIG, previous]];
-  for (const [index, [path, bytes]] of obsolete.entries()) {
+  expect((await Bun.file(join(repo, CONFIG_PATH)).json()).orly_version).toBe(written === writeCount ? VERSION : "0.11.0");
+  for (const [index, path] of [OLD_RULE, OLD_AGENTS].entries()) {
     const deleted = stage === DELETE_STAGE && index <= ordinal;
     expect(await Bun.file(join(repo, path)).exists()).toBe(!deleted);
-    if (!deleted) expect(await Bun.file(join(repo, path)).text()).toBe(bytes);
+    if (!deleted) expect(await Bun.file(join(repo, path)).text()).toBe(OLD_BODY);
   }
   expect(await Bun.file(join(repo, OWNER_NOTE)).text()).toBe(UNOWNED_BODY);
   expect(await Bun.file(join(repo, AGENTS_FILENAME)).text()).toStartWith(OWNER_RULES.trim());
 }
 
-test.each([OLD_RULE, OLD_AGENTS, CURRENT_RULE])("migration_preserves_owned_content refuses edited or unowned %s", async (path) => {
+test.each([OLD_RULE, OLD_AGENTS, CURRENT_RULE])("migration_preserves_owned_content refuses uncommitted or unowned %s", async (path) => {
   const { repo, model, options } = await fixture();
   const correction = "owner correction\n";
   await Bun.write(join(repo, path), correction);
-  const before = await Bun.file(join(repo, PREVIOUS_CONFIG)).text();
+  const before = await Bun.file(join(repo, CONFIG_PATH)).text();
   expect((await install(model, options)).ok).toBe(false);
   expect(await Bun.file(join(repo, path)).text()).toBe(correction);
-  expect(await Bun.file(join(repo, PREVIOUS_CONFIG)).text()).toBe(before);
-  expect(await Bun.file(join(repo, ".orly/orly.json")).exists()).toBe(false);
+  expect(await Bun.file(join(repo, CONFIG_PATH)).text()).toBe(before);
 });
 
 test("recovery refuses an edited destination before deleting any old source", async () => {
@@ -152,7 +146,6 @@ test("recovery refuses an edited destination before deleting any old source", as
   await Bun.write(join(repo, CURRENT_RULE), "concurrent owner correction\n");
   await expect(install(model, options)).rejects.toThrow("changed after planning");
   expect(await Bun.file(join(repo, OLD_RULE)).text()).toBe(OLD_BODY);
-  expect(await Bun.file(join(repo, PREVIOUS_CONFIG)).exists()).toBe(true);
 });
 
 test("changed journal cannot authorize recovery", async () => {
@@ -162,15 +155,6 @@ test("changed journal cannot authorize recovery", async () => {
   journal.data.deletes = [];
   await Bun.write(join(repo, JOURNAL), JSON.stringify(journal));
   await expect(install(model, options)).rejects.toThrow("integrity mismatch");
-  expect(await Bun.file(join(repo, OLD_RULE)).text()).toBe(OLD_BODY);
-});
-
-test("a current installation preserves an independent previous configuration", async () => {
-  const { repo, model, options } = await fixture();
-  const independent = await Bun.file(join(repo, PREVIOUS_CONFIG)).text();
-  await Bun.write(join(repo, CONFIG_PATH), JSON.stringify({ schema_version: 1, packs: [], managed: [], digests: {}, commands: {} }));
-  expect((await install(model, options)).ok).toBe(true);
-  expect(await Bun.file(join(repo, PREVIOUS_CONFIG)).text()).toBe(independent);
   expect(await Bun.file(join(repo, OLD_RULE)).text()).toBe(OLD_BODY);
 });
 
@@ -200,7 +184,6 @@ test("owner hook changes during destination writes are refused before metadata o
   expect(result.errors.map((error) => error.message)).toEqual(["installation conflict: hooks setting changed after planning"]);
   expect(hooksPath(repo)).toBe(OWNER_HOOKS);
   expect(await Bun.file(join(repo, OLD_RULE)).text()).toBe(OLD_BODY);
-  expect(await Bun.file(join(repo, PREVIOUS_CONFIG)).exists()).toBeTrue();
   expect(await Bun.file(join(repo, JOURNAL)).exists()).toBeTrue();
 });
 
@@ -209,4 +192,32 @@ test("migration removes only proven obsolete instruction references", async () =
   await Bun.write(join(repo, OPENCODE), JSON.stringify({ instructions: [OLD_AGENTS, OWNER_DOCUMENT] }));
   expect((await install(model, options)).ok).toBe(true);
   expect((await Bun.file(join(repo, OPENCODE)).json()).instructions).toEqual([OWNER_DOCUMENT, "AGENTS.md", ".orly/AGENTS.md"]);
+});
+
+const PRE_COMMIT = "pre-commit";
+
+function plannedHook(name: string): string {
+  const hook = plannedHooks(VERSION).find((file) => file.target === `${HOOKS_DIRECTORY}/${name}`);
+  if (!hook) throw new Error(`no planned ${name} hook`);
+  return Buffer.from(hook.content).toString();
+}
+
+test.each([false, true])("a committed stale hook is replaced; an uncommitted edit stops the update: edited %p", async (edited) => {
+  const { repo, model, options } = await fixture();
+  const hookOptions = { ...options, installHooks: true };
+  expect((await install(model, hookOptions)).errors).toEqual([]);
+  const path = join(repo, HOOKS_DIRECTORY, PRE_COMMIT);
+  const stale = `${plannedHook(PRE_COMMIT)}# a previous release\n`;
+  await Bun.write(path, stale);
+  git(repo, "add", "-A");
+  git(repo, "commit", "-q", "-m", "test: previous hook");
+  if (edited) {
+    await Bun.write(path, `${stale}# owner edit\n`);
+    const result = await install(model, hookOptions);
+    expect(result.errors.map((error) => error.message)).toEqual(["managed file has uncommitted changes"]);
+    expect(await Bun.file(path).text()).toBe(`${stale}# owner edit\n`);
+    await Bun.write(path, stale);
+  }
+  expect((await install(model, hookOptions)).errors).toEqual([]);
+  expect(await Bun.file(path).text()).toBe(plannedHook(PRE_COMMIT));
 });

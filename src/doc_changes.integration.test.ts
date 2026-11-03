@@ -84,6 +84,22 @@ describe("changed documentation gate with real Git", () => {
     expect(result.detail).toContain("leverage");
   });
 
+  // A spec keeps its dense register, so a slop word passes there; a template
+  // slot left unfilled does not, once the spec is part of a commit. An
+  // untracked draft belongs to no commit and does not hold up a push.
+  test("rejects a leftover template slot in a changed spec, and only that", async () => {
+    const { root, evaluate } = await fixture();
+    const spec = "docs/v2/pending/M1_001_P2_CLI_DEMO.md";
+    await Bun.write(join(root, spec), "# M1_001: Demo\n\nWe leverage the cache.\n\n**Goal (testable):** {{fill:one sentence}}\n");
+    expect(evaluate().ok).toBeTrue();
+    git(root, "add", spec);
+    const result = evaluate();
+    expect(result.ok).toBeFalse();
+    expect(result.detail).toBe(`1 finding(s): ${spec}:5 DOCFILL: unfilled template slot (SPEC-FILL)`);
+    await Bun.write(join(root, spec), "# M1_001: Demo\n\nWe leverage the cache.\n\n**Goal (testable):** The cache serves reads.\n");
+    expect(evaluate().ok).toBeTrue();
+  });
+
   test("rejects staged and committed prose before the PR", async () => {
     const { root, evaluate } = await fixture();
     await Bun.write(join(root, PAGE), SLOP);

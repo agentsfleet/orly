@@ -229,9 +229,8 @@ install_installs_scoped_hooks() {
   ok "$name"
 }
 
-# Drift is the failure that actually happened: a vendored ruleset edited or
-# rotted in place with nothing reporting it. doctor must see it, init must
-# refuse it, and --force must be the only way through.
+# An uncommitted edit to a managed file stops the update, --force is the only
+# way through, and doctor reports a managed file that went missing.
 install_doctor_reports_drift_and_init_refuses() {
   local name="a hand edit is preserved by a refused update; repository instructions survive"
   local pkg repo; pkg="$(packed_root)"; repo="$(mk_repo)"
@@ -241,8 +240,6 @@ install_doctor_reports_drift_and_init_refuses() {
   printf '\n# tampered\n' >> "$repo/.orly/standards/languages/rust.md"
 
   local out code
-  out="$(run_packed "$pkg" "$repo" doctor)"; code=$?
-  if [[ "$code" -eq 0 || "$out" != *"edited after"* ]]; then bad "$name" "doctor missed the edited content: $out"; return; fi
   out="$(run_packed "$pkg" "$repo" update)"; code=$?
   if [[ "$code" -eq 0 ]]; then bad "$name" "update accepted edited content"; return; fi
   if ! grep -q "tampered" "$repo/.orly/standards/languages/rust.md"; then bad "$name" "refused update discarded the edit"; return; fi

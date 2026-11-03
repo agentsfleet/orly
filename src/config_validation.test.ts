@@ -15,7 +15,6 @@ afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: 
 
 for (const [field, value] of [
   ["packs", null], ["packs", [false]], ["managed", {}], ["managed", [""]],
-  ["digests", []], ["digests", { path: false }], ["digests", { path: "broken" }],
   ["orly_version", {}], ["orly_version", "yesterday"], ["schema_version", 2],
   ["unknown_setting", true], ["limits", []], ["limits", { [UNIT_LANE]: { timeout_ms: 0 } }],
   ["limits", { [UNIT_LANE]: { output_bytes: -1 } }], ["limits", { [UNIT_LANE]: { timeout_ms: 1.5 } }],
@@ -40,17 +39,22 @@ test("configuration limits survive a rewrite and override only their named lane"
   expect(limitsFor(config.limits, "verify.integration")).toEqual({ timeout_ms: DEFAULT_COMMAND_TIMEOUT_MS, output_bytes: DEFAULT_COMMAND_OUTPUT_BYTES });
 });
 
+test("a 0.27 configuration's digests are dropped, not refused", () => {
+  const config = parseConfig({ ...BASE, digests: { "AGENTS.md": "sha256:0" } });
+  expect(serialiseConfig(config)).not.toContain("digests");
+});
+
 test("a minimal seeded configuration normalizes optional ownership records", () => {
   const config = parseConfig({ schema_version: 1 });
   expect(config.packs).toEqual([]);
   expect(config.managed).toEqual([]);
-  expect(config.digests).toEqual({});
   expect(config.orly_version).toBe("");
 });
 
-test("disabled execution settings round-trip while active remote execution refuses", () => {
-  const disabled: JsonObject = { ...BASE, execution: { remote: { mode: "disabled", launcher: ["sentinel"] } } };
-  const config = parseConfig(disabled);
-  expect(parseConfig(JSON.parse(serialiseConfig(config)))).toEqual(config);
-  expect(() => parseConfig({ ...BASE, execution: { remote: { mode: "enabled" } } })).toThrow("unsupported");
+// The schema is strict and has no `execution` key, so a configuration that
+// still carries one is refused by name rather than silently ignored.
+test("a configuration with execution is refused", () => {
+  const stale: JsonObject = { ...BASE, execution: { remote: { mode: "disabled" } } };
+
+  expect(() => parseConfig(stale)).toThrow('root: Unrecognized key: "execution"');
 });

@@ -1,32 +1,16 @@
 import { expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
 import { RulesModel } from "./model";
-import { packSourceErrors, verifyRenders, writeEvidence } from "./verify";
+import { packSourceErrors, verifyRuleset } from "./verify";
 
 const ROOT = resolve(import.meta.dir, "..");
 const PACK = "language.demo";
 const SOURCE = "packs/demo/rules.md";
 const TARGET = "standards/languages/demo.md";
 const BODY = "# Demo\n\nOne rule, stated once.\n";
-const EVIDENCE = "evidence.json";
-const OWNER_BYTES = "owner evidence must survive\n";
-
-test("evidence refuses a directory symlink escape without replacing owner bytes", async () => {
-  const { model, root } = sandbox();
-  const outside = mkdtempSync(join(tmpdir(), "orly-outside-"));
-  try {
-    writeFileSync(join(outside, EVIDENCE), OWNER_BYTES);
-    symlinkSync(outside, join(root, ".orly"));
-    await expect(writeEvidence(model, "probe", [], "not-required")).rejects.toThrow("outside the target repository");
-    expect(await Bun.file(join(outside, EVIDENCE)).text()).toBe(OWNER_BYTES);
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-    rmSync(outside, { recursive: true, force: true });
-  }
-});
 
 // A checkout carrying one pack whose source and target are different paths —
 // the shape `planFiles` never writes into, and therefore the only shape that
@@ -43,10 +27,15 @@ function sandbox(target?: string): { model: RulesModel; root: string } {
   return { model: new RulesModel(root, registry), root };
 }
 
-test("every profile renders deterministically", async () => {
-  const checks = await verifyRenders(await RulesModel.load(ROOT));
-
-  expect(checks.filter((check) => check.name.endsWith(".idempotent")).every((check) => check.result === "pass")).toBeTrue();
+// verify validates the registry before any check, so an invalid registry
+// stops the run instead of producing three green lines.
+test("verify refuses an invalid registry before any check", async () => {
+  const { model, root } = sandbox();
+  try {
+    await expect(verifyRuleset(model)).rejects.toThrow("registry schema_version must equal 1");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("pack targets match their sources", async () => {
@@ -90,10 +79,10 @@ test("a matched pack target reports clean", async () => {
   }
 });
 
-test("verify reports pack source parity beside the render proofs", async () => {
-  const checks = await verifyRenders(await RulesModel.load(ROOT));
-  const parity = checks.find((check) => check.name === "packs.sources.current");
+test("verify reports pack parity beside the catalogue and the root render", async () => {
+  const checks = await verifyRuleset(await RulesModel.load(ROOT));
 
-  expect(parity).toBeDefined();
-  expect(parity?.result).toBe("pass");
+  expect(checks.map((check) => [check.name, check.result])).toEqual([
+    ["standards.catalogue", "pass"], ["generated.root.current", "pass"], ["packs.sources.current", "pass"],
+  ]);
 });

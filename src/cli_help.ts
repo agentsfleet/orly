@@ -1,7 +1,3 @@
-const TELEMETRY_CONFIG_KEY = "telemetry";
-const ANONYMOUS_TELEMETRY_CONFIG = JSON.stringify({ [TELEMETRY_CONFIG_KEY]: "anonymous" });
-const OFF_TELEMETRY_CONFIG = JSON.stringify({ [TELEMETRY_CONFIG_KEY]: "off" });
-
 const HELP_TEXT = `orly — prove the boundary; carry the rules
 
 Gates (read-only; no PR without every criterion green or a recorded override):
@@ -18,10 +14,6 @@ Gates (read-only; no PR without every criterion green or a recorded override):
   Commands default to 30 minutes and 64 mebibytes of combined output each.
   Set limits.<command>.timeout_ms and output_bytes in .orly/orly.json to override.
   Exceeding either limit fails the check and prints the saved output path.
-
-Inspect:
-  orly lifecycle [--json]           inspect stages, declared local checks and
-                                    resource ownership; remote adapter disabled
 
 Install (the repository is the unit — no checkout of this package required):
   orly init [--force] [--no-hooks] [--with <PACK>] [--dry-run] [--json]
@@ -47,20 +39,10 @@ Install (the repository is the unit — no checkout of this package required):
                                     Goldfish Model (EGM) installed
   orly --version                    the installed package version
 
-Usage telemetry (off by default):
-  Consent file:                     ~/.config/agentsfleet/orly/.orly.json
-  State-root override:              AGENTSFLEET_STATE_DIR
-  Set ${ANONYMOUS_TELEMETRY_CONFIG} to send command, gate, and packaged Orly skill
-  names, outcome, failed criterion, duration, Orly version, operating system, architecture,
-  invocation type, timestamps, and random event, session, and installation IDs.
-  Set ${OFF_TELEMETRY_CONFIG} to write and send nothing.
-  ORLY_TELEMETRY=off|anonymous changes one process; ORLY_TELEMETRY_OFF=1 wins.
-  Orly never collects source, paths, repositories, branches, arguments, prompts,
-  output, environment values, raw errors, or personal and account details.
-
 Ruleset authoring (an orly checkout only — refused from an installed package):
-  orly verify                       the rules render the same twice, and the
-                                    committed copy matches that render`;
+  orly verify                       the standards catalogue keeps its rules,
+                                    the root AGENTS.md matches its render, and
+                                    every pack copy matches its source`;
 
 export function printHelp(): void {
   // logging: command help is the program interface.

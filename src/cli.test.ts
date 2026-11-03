@@ -1,10 +1,23 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
+
+import { UNSCOPED_ENVIRONMENT } from "./git_env";
 
 const ROOT = resolve(import.meta.dir, "..");
 const COMMAND = resolve(ROOT, "bin/orly");
+
+// A throwaway copy of this engine at HEAD, so a test can break one file and
+// watch `orly verify` turn red without touching the checkout.
+function scratchEngine(): string {
+  const engine = mkdtempSync(join(tmpdir(), "orly-engine-"));
+  const archive = Bun.spawnSync(["git", "-C", ROOT, "archive", "--format=tar", "HEAD"], { env: UNSCOPED_ENVIRONMENT, stdout: "pipe", stderr: "pipe" });
+  if (archive.exitCode !== 0) throw new Error(archive.stderr.toString());
+  const extract = Bun.spawnSync(["tar", "-x", "-C", engine], { stdin: archive.stdout, stdout: "pipe", stderr: "pipe" });
+  if (extract.exitCode !== 0) throw new Error(extract.stderr.toString());
+  return engine;
+}
 
 describe("orly command", () => {
   test("uses the concise public command surface", () => {
@@ -18,17 +31,14 @@ describe("orly command", () => {
     expect(output).not.toContain("oracle-rules");
   });
 
-  test("telemetry_help_names_tiers_storage_and_privacy", () => {
-    const result = Bun.spawnSync([COMMAND, "--help"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
-    const output = result.stdout.toString();
+  // Help is the public command surface. Finding verify and its three checks
+  // proves the scan sees live commands; the retired names must not appear.
+  test("help lists only live commands", () => {
+    const output = Bun.spawnSync([COMMAND, "--help"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" }).stdout.toString();
 
-    expect(output).toContain("off by default");
-    expect(output).toContain("anonymous");
-    expect(output).toContain("~/.config/agentsfleet/orly/.orly.json");
-    expect(output).toContain("AGENTSFLEET_STATE_DIR");
-    expect(output).toContain("ORLY_TELEMETRY_OFF=1");
-    expect(output).toContain("packaged Orly skill");
-    expect(output).toContain("never collects source, paths, repositories, branches, arguments, prompts");
+    expect(output).toContain("orly verify");
+    expect(output).toContain("the standards catalogue keeps its rules");
+    for (const retired of ["lifecycle", "skill-event", "telemetry", ".config/agentsfleet"]) expect(output).not.toContain(retired);
   });
 
   // Adversarial review found recordOptIn running before the --dry-run branch,
@@ -59,13 +69,21 @@ describe("orly command", () => {
     expect(result.stdout.toString().trim()).toBe(manifest.version);
   });
 
-  // `validate` is gone: verifyRenders calls model.validate() before its own
-  // checks, so the verb was a strict subset of `verify` with a second name.
-  test("verify validates the registry on its way to the render checks", () => {
-    const result = Bun.spawnSync([COMMAND, "verify"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
+  // verify is the commit gate's check, so a broken catalogue must fail the
+  // command itself, not only print a red line.
+  test("verify exits 1 when the catalogue breaks", () => {
+    const engine = scratchEngine();
+    try {
+      writeFileSync(join(engine, "fixtures/standards-rule-ids.json"), "{");
+      // bin/orly pins --root to its own checkout, so run this checkout's source
+      // against the scratch engine instead.
+      const result = Bun.spawnSync([process.execPath, join(ROOT, "src/cli.ts"), "--root", engine, "verify"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
 
-    expect(result.exitCode).toBe(0);
-    expect(result.stdout.toString()).toContain("render.local.idempotent");
+      expect(result.exitCode).toBe(1);
+      expect(result.stdout.toString()).toContain("🔴 standards.catalogue: fixtures/standards-rule-ids.json: not valid JSON\n");
+    } finally {
+      rmSync(engine, { recursive: true, force: true });
+    }
   });
 
   test("validate is not a verb", () => {
@@ -75,76 +93,32 @@ describe("orly command", () => {
     expect(result.stderr.toString()).toContain("unknown command: validate");
   });
 
-  test("verify needs no --all, because there was never a not-all", () => {
-    const result = Bun.spawnSync([COMMAND, "verify"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
+  // verify takes no arguments, so a stale evidence flag or a typo fails loudly
+  // instead of passing silently.
+  test.each(["--write-evidence", "--llm-result pass", "--all"])("verify refuses retired and unknown flags: %s", (flags) => {
+    const result = Bun.spawnSync([COMMAND, "verify", ...flags.split(" ")], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
 
-    expect(result.exitCode).toBe(0);
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout.toString()).toBe("");
+    expect(result.stderr.toString()).toBe("orly: usage: orly verify\n");
   });
 
-  test("telemetry_failure_never_changes_command_result", () => {
-    const blockedRoot = join(mkdtempSync(join(tmpdir(), "orly-telemetry-blocked-")), "state-file");
-    writeFileSync(blockedRoot, "not a directory\n");
-    const enabled = { ...process.env, AGENTSFLEET_STATE_DIR: blockedRoot, ORLY_TELEMETRY: "anonymous" };
-    const off = { ...enabled, ORLY_TELEMETRY_OFF: "1" };
-    try {
-      const successWithFailure = Bun.spawnSync([COMMAND, "doctor"], { cwd: ROOT, env: enabled, stdout: "pipe", stderr: "pipe" });
-      const successWithOff = Bun.spawnSync([COMMAND, "doctor"], { cwd: ROOT, env: off, stdout: "pipe", stderr: "pipe" });
-      const errorWithFailure = Bun.spawnSync([COMMAND, "gate", "nope"], { cwd: ROOT, env: enabled, stdout: "pipe", stderr: "pipe" });
-      const errorWithOff = Bun.spawnSync([COMMAND, "gate", "nope"], { cwd: ROOT, env: off, stdout: "pipe", stderr: "pipe" });
+  // lifecycle is not a command, and no alias answers for it.
+  test("lifecycle is not a command", () => {
+    const result = Bun.spawnSync([COMMAND, "lifecycle", "--json"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
 
-      expect(successWithFailure.exitCode).toBe(successWithOff.exitCode);
-      expect(successWithFailure.stdout.toString()).toBe(successWithOff.stdout.toString());
-      expect(errorWithFailure.exitCode).toBe(errorWithOff.exitCode);
-      expect(errorWithFailure.stderr.toString()).toBe(errorWithOff.stderr.toString());
-    } finally {
-      rmSync(dirname(blockedRoot), { recursive: true, force: true });
-    }
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout.toString()).toBe("");
+    expect(result.stderr.toString()).toBe("orly: unknown command: lifecycle\n");
   });
 
-  test("gate_command_records_its_selected_gate_and_failed_criterion", async () => {
-    const root = mkdtempSync(join(tmpdir(), "orly-telemetry-command-"));
-    const repo = join(root, "repo");
-    const stateRoot = join(root, "state");
-    Bun.spawnSync(["git", "init", "-q", repo]);
-    writeFileSync(join(repo, "README.md"), "fixture\n");
-    Bun.spawnSync(["git", "-C", repo, "add", "README.md"]);
-    Bun.spawnSync(["git", "-C", repo, "-c", "user.name=Orly Test", "-c", "user.email=orly@example.invalid", "commit", "-q", "-m", "test: seed"]);
-    Bun.spawnSync(["git", "-C", repo, "checkout", "-q", "-b", "feat/telemetry"]);
-    const env = {
-      ...process.env,
-      AGENTSFLEET_STATE_DIR: stateRoot,
-      ORLY_TELEMETRY: "anonymous",
-      ORLY_TELEMETRY_OFF: "0",
-      ORLY_POSTHOG_HOST: "http://127.0.0.1:1",
-    };
-    try {
-      const result = Bun.spawnSync([COMMAND, "gate", "pr"], { cwd: repo, env, stdout: "pipe", stderr: "pipe" });
-      expect(result.exitCode).toBe(1);
-      const failedCriterion = result.stdout.toString().match(/🔴 ([^:]+):/)?.[1];
-      expect(failedCriterion).toBeDefined();
+  // skill-event is not a command: a stale skill that still sends it gets a loud
+  // refusal, not a silent success.
+  test("retired telemetry command is refused", () => {
+    const result = Bun.spawnSync([COMMAND, "skill-event", "orly-build"], { cwd: ROOT, stdout: "pipe", stderr: "pipe" });
 
-      const spool = join(stateRoot, "orly/analytics/orly-usage.jsonl");
-      for (let attempt = 0; attempt < 20 && !existsSync(spool); attempt += 1) await Bun.sleep(10);
-      const event = JSON.parse(readFileSync(spool, "utf8"));
-      expect(event).toMatchObject({ command: "gate", gate: "pr", outcome: "error", failed_criterion: failedCriterion });
-      expect(event.duration_ms).toBeGreaterThanOrEqual(0);
-    } finally {
-      rmSync(root, { recursive: true, force: true });
-    }
-  });
-
-  test("skill_event_accepts_only_packaged_skills", () => {
-    const env = { ...process.env, ORLY_TELEMETRY_OFF: "1", ORLY_INVOCATION: "skill" };
-    const packagedSkills = ["orly-build", "orly-ship", "orly-spec"];
-    for (const skill of packagedSkills) {
-      const accepted = Bun.spawnSync([COMMAND, "skill-event", skill], { cwd: ROOT, env, stdout: "pipe", stderr: "pipe" });
-      expect(accepted.exitCode).toBe(0);
-      expect(accepted.stdout.toString()).toBe("");
-    }
-    const rejected = Bun.spawnSync([COMMAND, "skill-event", "other-skill"], { cwd: ROOT, env, stdout: "pipe", stderr: "pipe" });
-
-    expect(rejected.exitCode).toBe(1);
-    expect(rejected.stderr.toString()).toContain("skill-event requires a packaged Orly skill name");
-    expect(Bun.spawnSync([COMMAND, "--help"], { cwd: ROOT, env, stdout: "pipe" }).stdout.toString()).not.toContain("skill-event");
+    expect(result.exitCode).toBe(1);
+    expect(result.stdout.toString()).toBe("");
+    expect(result.stderr.toString()).toBe("orly: unknown command: skill-event\n");
   });
 });

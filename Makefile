@@ -4,9 +4,9 @@ SHELL := /bin/bash
 .PHONY: conform audit install-evals
 
 # Run the deterministic audit chain (all green):
-#   1. Registry and profile validation.
-#   2. Oracle rules unit tests and byte-stable rendering.
-#   3. The standards catalogue (inside the test suite).
+#   1. `orly verify`: registry validation, the standards catalogue, the root
+#      render and every pack copy.
+#   2. Typecheck and the unit tests.
 #
 # The steps do not touch each other: each reads the tree or works inside its own
 # mktemp sandbox, and none writes back into the repository. So they run at once
@@ -23,14 +23,14 @@ SHELL := /bin/bash
 #
 # CONFORM_STEPS is what this repository declares as `conform`, and CONFORM is a
 # lifecycle stage that runs after every EXECUTE — so `orly gate work` runs it at
-# every commit and it has to cost seconds: the render is current and every pack
-# file matches its source.
+# every commit and it has to cost seconds: the catalogue keeps its rules, the
+# render is current and every pack file matches its source.
 CONFORM_STEPS := bin/orly verify
 # Everything the rule corpus must survive before it can reach anyone else:
-# CONFORM plus the type and test suite and every eval sandbox. This is what
-# .githooks/pre-push runs, and what Continuous Integration (CI) runs. It used to
-# BE the declared conform, which meant `orly gate` ran `bun test src` twice —
-# once inside the audit chain and once as the declared verify.unit.
+# CONFORM plus the type and test suite. Continuous Integration (CI) runs it on
+# every pull request; a push runs only gitleaks. It used to BE the declared
+# conform, which meant `orly gate` ran `bun test src` twice — once inside the
+# audit chain and once as the declared verify.unit.
 AUDIT_STEPS := $(CONFORM_STEPS)%bun run typecheck && bun test src
 
 conform: STEPS := $(CONFORM_STEPS)

@@ -7,18 +7,13 @@ import { selectPacks } from "./config_discovery";
 import { CONFIG_PATH, managedDrift, readConfig, RepoConfig, writeConfig } from "./config";
 import { GateReport, isGateName, recordOverride, runGate, runGates } from "./gates";
 import { agentRuntimes, defaultHomes, helperSources, missingHelpers } from "./helpers";
-import { readInstallConfig } from "./installation/migration";
 import { install, InstallResult } from "./install";
 import { isString, OrlyError, readJsonObject, RulesModel } from "./model";
 import { Renderer } from "./render";
-import { beginTelemetry, installedOrlyVersion, isTelemetrySkill, recordTelemetry } from "./telemetry";
-import { verifyRenders, writeEvidence } from "./verify";
+import { verifyRuleset } from "./verify";
 import { commandSetupErrors } from "./validation";
 
-type CliResult = { exitCode: number; gate?: string; failedCriterion?: string };
-
 const PASS_RESULT = "pass";
-const NOT_REQUIRED_RESULT = "not-required";
 const ACCEPT_DIRTY_FLAG = "--accept-dirty";
 const HELP_FLAG = "--help";
 const SHORT_HELP_FLAG = "-h";
@@ -36,67 +31,46 @@ const FAIL_GLYPH = "🔴";
 const PR_GATE = "pr";
 const ENGINE_MARKER = "evals/install/run.sh";
 const VERIFY_COMMAND = "verify";
-const SKILL_EVENT_COMMAND = "skill-event";
 
 const { root, arguments: commandArguments } = parseRoot(Bun.argv.slice(2));
-const startedAt = performance.now();
-const telemetry = await beginTelemetry(commandArguments);
-const result = await execute(root, commandArguments);
-await recordTelemetry(telemetry, {
-  ...(result.gate ? { gate: result.gate } : {}),
-  outcome: result.exitCode === 0 ? "success" : "error",
-  ...(result.failedCriterion ? { failedCriterion: result.failedCriterion } : {}),
-  durationMs: performance.now() - startedAt,
-  version: await installedOrlyVersion(root),
-});
-process.exit(result.exitCode);
+process.exit(await execute(root, commandArguments));
 
-async function execute(engineRoot: string, args: string[]): Promise<CliResult> {
+async function execute(engineRoot: string, args: string[]): Promise<number> {
   try {
     return await run(await RulesModel.load(engineRoot), args);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`orly: ${message}`);
-    return cliResult(1);
+    return 1;
   }
 }
 
-async function run(model: RulesModel, args: string[]): Promise<CliResult> {
+async function run(model: RulesModel, args: string[]): Promise<number> {
   const [command, ...rest] = args;
   if (!command || command === HELP_FLAG || command === SHORT_HELP_FLAG) {
     printHelp();
-    return cliResult(command ? 0 : 1);
+    return command ? 0 : 1;
   }
-  if (command === "--version" || command === "-v") return cliResult(await printVersion(model));
+  if (command === "--version" || command === "-v") return printVersion(model);
   if (command === "doctor") {
     model.validate();
     requireNoArguments(rest, "doctor checks the installed ruleset: orly doctor");
-    return cliResult(await doctorGlobal(model));
+    return doctorGlobal(model);
   }
-  if (command === "init") return cliResult(await materialise(model, rest, true));
-  if (command === "update") return cliResult(await materialise(model, rest, false));
-  if (command === VERIFY_COMMAND) return cliResult(await verify(model, rest));
-  if (command === "lifecycle") {
-    if (rest.some((argument) => argument !== JSON_FLAG)) throw new OrlyError("usage: orly lifecycle [--json]");
-    const { lifecyclePlan } = await import("./execution/plan");
-    console.log(JSON.stringify(lifecyclePlan(projectRoot()), undefined, JSON_INDENT));
-    return cliResult(0);
-  }
+  if (command === "init") return materialise(model, rest, true);
+  if (command === "update") return materialise(model, rest, false);
+  if (command === VERIFY_COMMAND) return verify(model, rest);
   if (command === "gate") return gate(model, rest);
-  if (command === "override") return cliResult(override(rest));
-  if (command === SKILL_EVENT_COMMAND) {
-    if (rest.length !== 1 || !isTelemetrySkill(rest[0])) throw new OrlyError("skill-event requires a packaged Orly skill name");
-    return cliResult(0);
-  }
+  if (command === "override") return override(rest);
   throw new OrlyError(`unknown command: ${command}`);
 }
 
 // Read-only: run every gate in order (stop at the first red group), or one
 // named gate. Nothing is ever written.
-function gate(model: RulesModel, args: string[]): CliResult {
+function gate(model: RulesModel, args: string[]): number {
   if (args.includes(HELP_FLAG) || args.includes(SHORT_HELP_FLAG)) {
     printHelp();
-    return cliResult(0);
+    return 0;
   }
   const acceptDirty = args.includes(ACCEPT_DIRTY_FLAG);
   const named = args.find((argument) => !argument.startsWith("-"));
@@ -105,14 +79,7 @@ function gate(model: RulesModel, args: string[]): CliResult {
   for (const report of reports) printGate(report);
   const allGreen = reports.every((report) => report.ok);
   if (allGreen && (named === undefined || named === PR_GATE)) console.log(`${PASS_GLYPH} PR boundary open — CHORE(close) is the next motion`);
-  const failedReport = reports.find((report) => !report.ok);
-  const failedCriterion = failedReport?.results.find((result) => !result.ok)?.name;
-  const selectedGate = named ?? failedReport?.gate;
-  return {
-    exitCode: allGreen ? 0 : 1,
-    ...(selectedGate ? { gate: selectedGate } : {}),
-    ...(failedCriterion ? { failedCriterion } : {}),
-  };
+  return allGreen ? 0 : 1;
 }
 
 function override(args: string[]): number {
@@ -143,7 +110,7 @@ async function packageVersion(model: RulesModel): Promise<string> {
 async function materialise(model: RulesModel, args: string[], isInit: boolean): Promise<number> {
   model.validate();
   const targetRoot = projectRoot();
-  const existing = await readInstallConfig(targetRoot);
+  const existing = await readConfig(targetRoot);
   if (!isInit && !existing) throw new OrlyError(`no ${CONFIG_PATH} here — run \`orly init\` first`);
   const requested = optionalValues(args, WITH_FLAG);
   // --dry-run changes nothing, and recording an opt-in pack is a change. It
@@ -221,7 +188,7 @@ async function doctorInstall(): Promise<string[]> {
 // What init would write, without writing it. Replaces the `render` verb: the
 // preview belongs on the command you are about to run, not beside it.
 async function preview(model: RulesModel, targetRoot: string, requested: string[] = []): Promise<number> {
-  const config = await readInstallConfig(targetRoot);
+  const config = await readConfig(targetRoot);
   const local = { packs: selectPacks(model, targetRoot, config?.packs ?? [], new Set(config?.managed ?? [])), commands: config?.commands ?? {} };
   // selectPacks validates the requested names and unions them with what the
   // repository's own sources select — the same call the real run makes, minus
@@ -234,13 +201,9 @@ async function preview(model: RulesModel, targetRoot: string, requested: string[
 
 async function verify(model: RulesModel, args: string[]): Promise<number> {
   requireEngineCheckout(model, VERIFY_COMMAND);
-  const checks = await verifyRenders(model);
+  requireNoArguments(args, "usage: orly verify");
+  const checks = await verifyRuleset(model);
   for (const check of checks) console.log(`${check.result === PASS_RESULT ? PASS_GLYPH : FAIL_GLYPH} ${check.name}${check.detail ? `: ${check.detail}` : ""}`);
-  if (args.includes("--write-evidence")) {
-    const result = optionalValue(args, "--llm-result") ?? NOT_REQUIRED_RESULT;
-    if (result !== PASS_RESULT && result !== NOT_REQUIRED_RESULT) throw new OrlyError("--llm-result must be pass or not-required");
-    console.log(`evidence: ${await writeEvidence(model, "dotfiles", checks, result)}`);
-  }
   return checks.every((check) => check.result === PASS_RESULT) ? 0 : 1;
 }
 
@@ -283,8 +246,4 @@ function optionalValues(args: string[], name: string): string[] {
     values.push(value);
   }
   return values;
-}
-
-function cliResult(exitCode: number): CliResult {
-  return { exitCode };
 }
