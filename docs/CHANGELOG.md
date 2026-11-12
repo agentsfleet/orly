@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.28.1 (2026-11-12)
+
+The agent proves a branch with one `orly gate pr` run on its final tree.
+
+- **Working notes** — `SOUL.md` says a lane run by hand only diagnoses a failure. It never pre-checks a command the gate runs again.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.28.1 update`.
+
 ## 0.28.0 (2026-11-02)
 
 orly collects no usage telemetry, and the spec template is a skeleton that cites the spec standard's rules.

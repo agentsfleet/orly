@@ -66,7 +66,7 @@ A Codex cloud task gets the same setup; see [the architecture page](docs/ORLY_AR
 
 See [releases](https://github.com/agentsfleet/orly/releases) for published versions.
 The install commands below fetch the published package.
-The release workflow publishes 0.28.0 after its version change merges to `main` or an explicit release run.
+The release workflow publishes 0.28.1 after its version change merges to `main` or an explicit release run.
 
 ---
 
