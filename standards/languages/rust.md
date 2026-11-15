@@ -87,7 +87,7 @@ Pick the one method that says the intent:
 | Change the error | `?` through a `From` impl; `map_err` only to add context (RS-MAPERR) | rebuilding the error in a `match` |
 | Leave early when absent | `let Some(v) = value else { return … };` | a nested `if let` |
 
-Use the `_else` form when the fallback allocates or has a side effect, so it runs only when needed. A repository that enables these lints workspace-wide gets the rule enforced on every new crate; one that does not yet should turn them on crate by crate as it converts.
+Use the `_else` form when the fallback allocates or has a side effect, so it runs only when needed. A repository that enables these lints workspace-wide enforces the rule on every new crate. A repository that has not yet enabled them turns them on crate by crate as it converts.
 
 ### RS-SENTINEL — A fallible function returns `Result`, an absent value is an `Option`, and no sentinel stands in for either.
 - **Applies to:** `**/*.rs`
