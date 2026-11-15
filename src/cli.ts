@@ -15,6 +15,7 @@ import { commandSetupErrors } from "./validation";
 
 const PASS_RESULT = "pass";
 const ACCEPT_DIRTY_FLAG = "--accept-dirty";
+const REUSE_VERIFICATION_FLAG = "--reuse-verification";
 const HELP_FLAG = "--help";
 const SHORT_HELP_FLAG = "-h";
 const REASON_FLAG = "--reason";
@@ -31,6 +32,10 @@ const FAIL_GLYPH = "🔴";
 const PR_GATE = "pr";
 const ENGINE_MARKER = "evals/install/run.sh";
 const VERIFY_COMMAND = "verify";
+const GATE_ERRORS = {
+  options: "[ORLY-GATE-001] gate accepts one name and only --accept-dirty or --reuse-verification",
+  reuse: "[ORLY-GATE-002] --reuse-verification requires the named pr gate",
+} as const;
 
 const { root, arguments: commandArguments } = parseRoot(Bun.argv.slice(2));
 process.exit(await execute(root, commandArguments));
@@ -65,8 +70,8 @@ async function run(model: RulesModel, args: string[]): Promise<number> {
   throw new OrlyError(`unknown command: ${command}`);
 }
 
-// Read-only: run every gate in order (stop at the first red group), or one
-// named gate. Nothing is ever written.
+// Gates leave the working tree unchanged. Eligible verification records live
+// privately beneath Git metadata, outside the files a branch publishes.
 function gate(model: RulesModel, args: string[]): number {
   if (args.includes(HELP_FLAG) || args.includes(SHORT_HELP_FLAG)) {
     printHelp();
@@ -74,8 +79,12 @@ function gate(model: RulesModel, args: string[]): number {
   }
   const acceptDirty = args.includes(ACCEPT_DIRTY_FLAG);
   const named = args.find((argument) => !argument.startsWith("-"));
+  const unknown = args.filter((argument) => argument.startsWith("-") && ![ACCEPT_DIRTY_FLAG, REUSE_VERIFICATION_FLAG].includes(argument));
+  if (unknown.length > 0 || args.filter((argument) => !argument.startsWith("-")).length > 1) throw new OrlyError(GATE_ERRORS.options);
   if (named !== undefined && !isGateName(named)) throw new OrlyError(`unknown gate: ${named} (work, verify, pr)`);
-  const reports = named ? [runGate(model, projectRoot(), named, acceptDirty)] : runGates(model, projectRoot(), acceptDirty);
+  const reuse = args.includes(REUSE_VERIFICATION_FLAG);
+  if (reuse && named !== PR_GATE) throw new OrlyError(GATE_ERRORS.reuse);
+  const reports = named ? [runGate(model, projectRoot(), named, acceptDirty, reuse)] : runGates(model, projectRoot(), acceptDirty);
   for (const report of reports) printGate(report);
   const allGreen = reports.every((report) => report.ok);
   if (allGreen && (named === undefined || named === PR_GATE)) console.log(`${PASS_GLYPH} PR boundary open — CHORE(close) is the next motion`);
@@ -143,7 +152,10 @@ function printInstall(result: InstallResult, setupErrors: string[]): void {
 
 function printGate(report: GateReport): void {
   console.log(`🔆 gate ${report.gate}`);
-  for (const result of report.results) console.log(`   ${result.ok ? PASS_GLYPH : FAIL_GLYPH} ${result.name}: ${result.detail}`);
+  for (const result of report.results) {
+    const glyph = result.override ? "🟡" : result.status === "passed" ? PASS_GLYPH : result.status === "skipped" || result.status === "not_run" ? "⚪" : FAIL_GLYPH;
+    console.log(`   ${glyph} ${result.name} [${result.status}]: ${result.detail}`);
+  }
 }
 
 function projectRoot(): string {

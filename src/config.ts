@@ -5,7 +5,7 @@ import { assertWritableInside, hashContent, isObject, isString, JsonObject, obje
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { selectPacks, sniffCommands } from "./config_discovery";
 import { validateCommands, validateSurfaces } from "./validation";
-import { validateConfiguration } from "./config_validation";
+import { validateConfiguration, reusePoliciesSchema, type ReusePolicies } from "./config_validation";
 import { commandLimitsSchema, type LaneLimits } from "./command_limits";
 
 const ORACLE_DIRECTORY = ".orly";
@@ -33,6 +33,7 @@ export type RepoConfig = {
   surfaces: JsonObject | undefined;
   managed: string[];
   limits?: LaneLimits;
+  reuse?: ReusePolicies;
 };
 
 export function configPath(targetRoot: string): string {
@@ -81,6 +82,7 @@ export function parseConfig(value: JsonObject): RepoConfig {
     surfaces: isObject(value.surfaces) ? value.surfaces : undefined,
     managed: stringArray(value[MANAGED_FIELD] ?? [], `${CONFIG_PATH} ${MANAGED_FIELD}`),
     ...(isObject(value.limits) ? { limits: Object.fromEntries(Object.entries(value.limits).map(([lane, limits]) => [lane, commandLimitsSchema.parse(limits)])) } : {}),
+    ...(value.reuse !== undefined ? { reuse: reusePoliciesSchema.parse(value.reuse) } : {}),
   };
 }
 
@@ -94,7 +96,7 @@ export function parseConfig(value: JsonObject): RepoConfig {
 /// file. The prefix is what makes the value self-describing enough to pass,
 /// and the alternative was a scanner suppression, which is how a real
 /// credential eventually rides through.
-export function contentDigest(bytes: Uint8Array): string {
+export function contentDigest(bytes: string | Uint8Array): string {
   return `${DIGEST_ALGORITHM}:${hashContent(bytes)}`;
 }
 
@@ -153,6 +155,7 @@ export function serialiseConfig(config: RepoConfig): string {
     commands: config.commands,
     ...(config.surfaces ? { surfaces: config.surfaces } : {}),
     ...(config.limits ? { limits: config.limits } : {}),
+    ...(config.reuse ? { reuse: config.reuse } : {}),
     managed: [...config.managed].sort(),
   };
   return `${JSON.stringify(ordered, undefined, JSON_INDENT)}${NEWLINE}`;

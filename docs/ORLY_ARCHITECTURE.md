@@ -72,8 +72,9 @@ render, and compares every pack copy with its source.
 The `orly-build` and `orly-ship` skills carry the sequence. Full unit, integration,
 and memory suites run at the PR boundary.
 
-No stored verification cache or
-assumption about a custom pre-push hook can remove them. Baselines come from
+Checks run fresh by default; only an explicit reviewed hermetic policy and invocation can reuse complete matching evidence. No assumption about a custom pre-push hook removes a check.
+
+Baselines come from
 the CI run of the branch's base commit and sit beside the branch counts in the
 Pull Request. A lane CI did not run on that commit is measured at the merge base.
 
@@ -111,8 +112,9 @@ Three behaviours worth knowing:
 `orly override <criterion> --reason <REASON>` writes an empty commit carrying an
 `Orly-Override: <criterion> (<reason>)` trailer. It is immutable once pushed,
 visible in the PR, scoped to the branch by merge-base, and dead after the merge.
-A red criterion with a matching trailer reports `overridden`, never green. A
-malformed trailer is not an override; the gate stays red.
+
+A failed criterion with a matching trailer retains its outcome and reports `overridden`.
+Blocked and not-run work cannot be waived. Malformed trailers leave the gate red.
 
 ## Profiles
 
@@ -131,10 +133,13 @@ surfaces:
 ```
 
 Orly owns policy and invokes these commands. The repository owns what they do.
-Setup requires `conform` and at least one named `verify.*` command.
+
+Setup requires at least one named `verify.*` command; `conform` is optional.
+
 Documentation repositories can use `verify.docs` for site validation and link
 checks without declaring application test suites. `init` reports missing
 commands; `doctor` rejects incomplete setup without running those commands.
+
 The final tree check includes the spec, so its evidence must be committed.
 
 `schemas/profile.schema.json` describes the repository file, including ownership records.
@@ -208,6 +213,37 @@ The same script adds EGM with `codex plugin marketplace add
 google/elephant-goldfish-model` and `codex plugin add egm@egm`. It
 sets `core.hooksPath`, and the start skill ends with `orly doctor`.
 
-A cloud task pushes nothing. The skills run `orly gate work` and
-`orly gate verify` themselves and stop before `orly gate pr`; CI runs the
-heavy lanes on the Pull Request.
+A cloud task follows explicit user authorization for feature-branch pushes and Pull Requests. Missing hooks require manual gate runs; runtime location does not waive checks.
+
+Without publishing authorization, return prepared work and evidence to the owner. Merge, release and consumer pin updates remain separate owner decisions.
+
+## Verification evidence
+
+Prerequisites precede commands; blocked or unrun groups never count as passes. Owner overrides retain the original status and reason.
+An unavailable command plan cannot be waived.
+
+`reuse.<verify-lane>` requires a hermetic declaration, maximum age, toolchain probes and optional input paths.
+The explicit `pr --reuse-verification` flag enables reuse; both opt-ins are required.
+Live integration and memory lanes always run fresh.
+
+Evidence binds actual source bytes, revision/base, native argv/limits, configuration and environment.
+It also binds engine/runtime, executable bytes, successful probes and declared extra inputs.
+Raw environment values are never saved.
+
+Hermeticity requires exclusively owned inputs and complete dependency identification, including ignored dependencies.
+Hashes cannot detect every temporary edit-and-restore; inputs must stay unchanged while a check runs.
+Missing, dirty, unpushed or unsupported symlink inputs disable reuse.
+
+A private per-worktree lock allows one eligible attempt at a time.
+A numbered directory is saved before probes or commands, using directory synchronization to establish its start marker.
+Only the preceding attempt is a reuse candidate.
+
+Signed completion covers the input binding, original run time and complete output digest.
+Failed or unfinished attempts never fall back to an older pass; replay retains original time and counts.
+Records protect local integrity, with no attestation against another process using the same operating-system identity.
+
+A start-marker write failure blocks the command. A completion-write failure retains the native result with a warning and keeps the lock.
+Interrupted locks also remain blocked; there is no automatic process recovery.
+
+After confirming the old workload has stopped, callers may remove the private evidence directory and run fresh.
+History remains caller-managed beneath Git metadata; no automatic cleanup erases it.

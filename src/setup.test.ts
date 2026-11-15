@@ -111,7 +111,7 @@ describe("documentation repositories", () => {
       expect({ code: commit.exitCode, output: commit.stderr.toString() }).toEqual({ code: 0, output: expect.any(String) });
 
       const model = await RulesModel.load(ROOT);
-      const checks = () => runGate(model, root, "pr").results.filter((entry) => entry.name.startsWith("cmd."));
+      const checks = () => runGate(model, root, "verify").results.filter((entry) => entry.name.startsWith("cmd."));
       expect(checks().map((entry) => [entry.name, entry.ok])).toEqual([[`cmd.${VERIFY_DOCS}`, true]]);
       await Bun.write(join(root, page), "");
       expect(orly(root, ROOT, "gate", "work").code).toBe(1);

@@ -117,7 +117,9 @@ One worktree per active stream; stay inside it. A new spec mid-stream → ask be
 
 **Anchor invariant — `orly gate` proves the boundary.** No PR opens unless every `orly gate pr` criterion is green or carries a user-recorded `Orly-Override` trailer. `orly gate pr` is the command CHORE(close) runs; a push is never proof that tests ran.
 
-`work` runs the declared `conform` at commit. `verify` runs documentation checks and non-test `verify.*` commands at push. `pr` checks branch shape, the upstream revision, documentation and every declared `verify.*` command itself.
+`work` runs the declared `conform` at commit. `verify` runs documentation checks and non-test `verify.*` commands at push. `pr` checks branch shape, the upstream revision, documentation and every declared `verify.*` command.
+
+Inspect prerequisites first and report unrun commands. Reuse requires explicit opt-in and current hermetic evidence.
 
 **VERIFY:** Section checks prove the changed Dimensions; the final gate runs the full declared verification set. Integration tests are due when the diff crosses a module boundary with real input/output.
 
