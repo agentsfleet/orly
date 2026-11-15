@@ -83,7 +83,9 @@ describe("the rendered rules match the machine", () => {
 
     expect(text).toContain("`orly gate pr` is the command CHORE(close) runs");
     expect(text).toContain("a push is never proof that tests ran");
-    expect(text).toContain("every declared `verify.*` command itself");
+    expect(text).toContain("every declared `verify.*` command");
+    expect(text).toContain("Inspect prerequisites first and report unrun commands");
+    expect(text).toContain("Reuse requires explicit opt-in and current hermetic evidence");
   });
 
   test("the integration skill is conditional on a real input/output boundary", async () => {
