@@ -1,10 +1,21 @@
-import { criteriaFor, CriterionContext, CriterionResult } from "./criteria";
+import type { Criterion, CriterionContext, CriterionResult } from "./criteria";
+import type { RulesModel } from "./model";
+
+import { criteriaFor } from "./criteria";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
-import { OrlyError, RulesModel } from "./model";
+import { OrlyError } from "./model";
 import { defaultMergeBase } from "./surfaces";
 
-export const GATE_ORDER = ["work", "verify", "pr"] as const;
 export type GateName = (typeof GATE_ORDER)[number];
+export type GateReport = {
+  gate: GateName;
+  results: CriterionResult[];
+  ok: boolean;
+};
+
+export type Override = { criterion: string; reason: string };
+
+export const GATE_ORDER = ["work", "verify", "pr"] as const;
 
 const PIPE_OUTPUT = "pipe";
 const GIT = "git";
@@ -15,27 +26,25 @@ const OVERRIDE_TRAILER = /^Orly-Override:\s*([a-z.]+[a-z])\s*\((.+)\)\s*$/;
 const OVERRIDE_PREFIX = "Orly-Override:";
 const OVERRIDDEN_DETAIL = "overridden";
 
-export type GateReport = {
-  gate: GateName;
-  results: CriterionResult[];
-  ok: boolean;
-};
-
-export type Override = { criterion: string; reason: string };
-
 // Run one gate: evaluate its criteria fresh from git + the working tree.
 // A red criterion with a matching Orly-Override trailer on the branch is
 // reported as overridden — satisfied, but never plain green.
-export function runGate(model: RulesModel, root: string, gate: GateName, acceptDirty = false): GateReport {
-  const context: CriterionContext = { root, model, acceptDirty };
+export function runGate(model: RulesModel, root: string, gate: GateName, acceptDirty = false, reuseVerification = false): GateReport {
+  const context: CriterionContext = { root, model, acceptDirty, reuseVerification };
   const overrides = branchOverrides(root);
-  const results = criteriaFor(gate, context).map((criterion) => {
-    const result = criterion.evaluate(context);
-    if (result.ok) return result;
-    const override = overrides.find((entry) => entry.criterion === result.name);
-    if (!override) return result;
-    return { name: result.name, ok: true, detail: `${OVERRIDDEN_DETAIL} (${override.reason}) — ${result.detail}` };
-  });
+  const criteria = criteriaFor(gate, context);
+  const results = criteria.filter((entry) => entry.kind === "check").map((entry) => evaluate(entry, context, overrides));
+  let stopped = results.filter((entry) => !entry.ok).map((entry) => entry.name).join(", ");
+  const prerequisiteFailure = stopped.length > 0;
+  for (const entry of criteria.filter((check) => check.kind !== "check")) {
+    if (stopped) {
+      results.push({ name: entry.name, ok: false, status: prerequisiteFailure ? "blocked" : "not_run", detail: `not executed: ${stopped} did not satisfy the boundary` });
+      continue;
+    }
+    const result = evaluate(entry, context, overrides);
+    results.push(result);
+    if (!result.ok) stopped = result.name;
+  }
   return { gate, results, ok: results.every((result) => result.ok) };
 }
 
@@ -80,6 +89,13 @@ export function branchOverrides(root: string): Override[] {
     }
   }
   return overrides;
+}
+
+function evaluate(entry: Criterion, context: CriterionContext, overrides: Override[]): CriterionResult {
+  const result = entry.evaluate(context);
+  if (result.ok || result.status === "blocked" || result.status === "not_run") return result;
+  const override = overrides.find((candidate) => candidate.criterion === result.name);
+  return override ? { ...result, ok: true, override: override.reason, detail: `${OVERRIDDEN_DETAIL} (${override.reason}) — ${result.detail}` } : result;
 }
 
 function gitOutput(root: string, command: string[]): string {

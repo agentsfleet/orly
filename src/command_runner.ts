@@ -23,11 +23,27 @@ export function runCommand(root: string, command: string[], limits: CommandLimit
   if (supervisor.exitCode !== 0) {
     stopOwnedGroup(supervisor.pid);
     try { stopOwnedGroup(Number(readFileSync(join(receipt, COMMAND_FILES.pid), TEXT_ENCODING))); } catch { /* child may not have started */ }
-    return { ok: false, detail: `command supervisor failed (${supervisor.signalCode ?? supervisor.exitCode}); complete captured output: ${receipt}; ${supervisor.stderr.toString().trim()}` };
+    return { ok: false, status: supervisor.signalCode ? "cancelled" : "blocked", detail: `command supervisor failed (${supervisor.signalCode ?? supervisor.exitCode}); complete captured output: ${receipt}; ${supervisor.stderr.toString().trim()}` };
   }
   const result: CommandResult = JSON.parse(readFileSync(join(receipt, COMMAND_FILES.result), TEXT_ENCODING));
-  if (result.failure) return { ok: false, detail: `${result.failure}; ${result.elapsed_ms} ms / ${limits.timeout_ms} ms deadline; ${result.output_bytes} bytes / ${limits.output_bytes} bytes output budget; complete captured output: ${receipt}` };
-  const output = [COMMAND_FILES.stdout, COMMAND_FILES.stderr].map((file) => readFileSync(join(receipt, file), TEXT_ENCODING)).filter(Boolean).join("\n").trim();
+  if (result.failure) return { ok: false, status: result.failure_kind === "invocation" ? "blocked" : result.failure_kind === "cancelled" ? "cancelled" : "failed", detail: `${result.failure}; ${result.elapsed_ms} ms / ${limits.timeout_ms} ms deadline; ${result.output_bytes} bytes / ${limits.output_bytes} bytes output budget; complete captured output: ${receipt}` };
+  const output = [COMMAND_FILES.stdout, COMMAND_FILES.stderr].map((file) => readFileSync(join(receipt, file), TEXT_ENCODING)).filter(Boolean).join("\n");
   rmSync(receipt, { recursive: true, force: true });
-  return { ok: result.exit_code === 0, detail: output ? `exit ${result.exit_code}:\n${output}` : result.exit_code === 0 ? "exit 0" : `exit ${result.exit_code}: no output` };
+  return { ok: result.exit_code === 0, status: result.exit_code === 0 ? "passed" : "failed", detail: output ? `exit ${result.exit_code}:\n${output}` : result.exit_code === 0 ? "exit 0" : `exit ${result.exit_code}: no output` };
+}
+
+export function runCommandGroup(root: string, invocations: string[][], limits: CommandLimits): Verdict {
+  if (invocations.length === 0 || invocations.some((argv) => argv.length === 0)) return { ok: false, status: "blocked", detail: "command group contains no executable invocation" };
+  const evidence: string[] = [];
+  for (const [index, argv] of invocations.entries()) {
+    let result: Verdict;
+    try { result = runCommand(root, argv, limits); }
+    catch (error) { result = { ok: false, status: "blocked", detail: `invocation unavailable: ${String(error)}` }; }
+    evidence.push(`${argv.join(" ")} -> ${result.detail}`);
+    if (!result.ok) {
+      for (const unrun of invocations.slice(index + 1)) evidence.push(`${unrun.join(" ")} -> not_run`);
+      return { ...result, detail: evidence.join("\n") };
+    }
+  }
+  return { ok: true, status: "passed", detail: `${invocations.length} invocation(s) exit 0\n${evidence.join("\n")}` };
 }

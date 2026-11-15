@@ -1,6 +1,3 @@
-import { realpathSync } from "node:fs";
-import { resolve } from "node:path";
-
 import {
   Criterion, CriterionContext, CriterionResult, criterion, gitOutput, runCommand, Verdict,
 } from "./criteria_support";
@@ -9,7 +6,8 @@ import { isObject, JsonObject, objectValue, OrlyError, RulesModel } from "./mode
 import { readConfigSync, RepoConfig } from "./config";
 import { classifyBranch, SurfaceReport } from "./surfaces";
 import { commandSetupErrors } from "./validation";
-import { limitsFor, type CommandLimits } from "./command_limits";
+import { limitsFor } from "./command_limits";
+import { runVerification } from "./verification";
 
 export type { Criterion, CriterionContext, CriterionResult, Verdict };
 export { runCommand };
@@ -22,7 +20,6 @@ const UNINSTALLED = "no .orly/orly.json here — run `orly init` first";
 const REV_PARSE = "rev-parse";
 const HEAD = "HEAD";
 const UPSTREAM = "@{upstream}";
-const NEWLINE = "\n";
 const DETAIL_SEPARATOR = "; ";
 const ABBREV_REF = "--abbrev-ref";
 const WORKTREE_LIST = ["worktree", "list", "--porcelain"];
@@ -76,7 +73,7 @@ function gitBranch(): Criterion {
 
 function gitTree(): Criterion {
   return criterion(GIT_TREE, (context) => {
-    const dirty = gitOutput(context.root, ["status", "--porcelain=v1", "-uall"])
+    const dirty = gitOutput(context.root, ["status", "--porcelain=v1", "-uall"], true)
       .split(/\r?\n/)
       .filter(Boolean);
     if (dirty.length === 0) return { ok: true, detail: "clean" };
@@ -123,15 +120,20 @@ function selectedCommands(commands: RepoConfig["commands"], tier: CommandTier): 
 // checks are conditional on code; every other declared lane always runs.
 function commandCriteria(context: CriterionContext, tier: CommandTier): Criterion[] {
   const config = resolvedConfig(context);
-  if (!config) return [];
+  if (!config) return unavailablePlan();
   const commands = config.commands;
   const selected = selectedCommands(commands, tier);
+  if (selected.length === 0 && tier === ALL_TIER) return unavailablePlan();
   return selected.map((key) => criterion(`cmd.${key}`, (inner) => {
     if (CONDITIONAL_LANES.includes(key) && report(inner, config.surfaces).code.length === 0) {
-      return { ok: true, detail: "skipped — no code files on this branch" };
+      return { ok: true, status: "skipped", detail: "skipped — no code files on this branch" };
     }
-    return runInvocations(inner.root, commands[key], limitsFor(config.limits, key));
-  }));
+    return runVerification(inner, config, key, limitsFor(config.limits, key));
+  }, "command"));
+}
+
+function unavailablePlan(): Criterion[] {
+  return [criterion("cmd.plan", () => ({ ok: false, status: "blocked", detail: "required command plan is unavailable; repair repository configuration" }), "command")];
 }
 
 function docsUpdated(): Criterion {
@@ -174,17 +176,4 @@ function resolvedConfig(context: CriterionContext): RepoConfig | undefined {
   } catch {
     return undefined;
   }
-}
-
-function runInvocations(root: string, invocations: unknown, limits: CommandLimits): Verdict {
-  if (!Array.isArray(invocations) || invocations.length === 0) return { ok: false, detail: "command group is empty" };
-  const evidence: string[] = [];
-  for (const invocation of invocations) {
-    if (!Array.isArray(invocation) || invocation.length === 0) return { ok: false, detail: "command invocation is empty" };
-    const argv = invocation.map((argument) => String(argument));
-    const result = runCommand(root, argv, limits);
-    evidence.push(`${argv.join(" ")} -> ${result.detail}`);
-    if (!result.ok) return { ok: false, detail: evidence.join(NEWLINE) };
-  }
-  return { ok: true, detail: `${invocations.length} invocation(s) exit 0\n${evidence.join(NEWLINE)}` };
 }

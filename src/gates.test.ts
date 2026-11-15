@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { branchOverrides, recordOverride, runGate, runGates } from "./gates";
 import {
   cleanupTemporaryDirectories, fixtureRegistry, git, gitOutput, modelFor,
-  names, newRepository, newSpecRepository, orly, temporaryDirectory,
+  names, newRepository, newSpecRepository, orly, pushFixture, temporaryDirectory,
 } from "./gates_test_support";
 
 const GIT_FIXTURE_TIMEOUT_MS = 30_000;
@@ -163,10 +163,11 @@ describe("docs and tiered suites", () => {
   test("slow suites run on code branches and skip on prose-only branches", async () => {
     const project = newSpecRepository();
     const model = await modelFor(project, { user: [], docs: [] }, { "verify.integration": [["false"]] });
-    git(project, "checkout", "-q", "-b", "feat/fixture");
-    await Bun.write(join(project, "notes.md"), "prose only\n");
+    pushFixture(project);
+    await Bun.write(join(project, "notes.md"), "# Notes\n\nProse only.\n");
     git(project, "add", ".");
     git(project, "commit", "-q", "-m", "docs: prose only");
+    git(project, "push", "-q");
 
     const skipped = runGate(model, project, "pr").results.find((result) => result.name === "cmd.verify.integration");
     expect(skipped?.ok).toBeTrue();
@@ -175,6 +176,7 @@ describe("docs and tiered suites", () => {
     await Bun.write(join(project, "src/thing.ts"), "export const THING = 1;\n");
     git(project, "add", ".");
     git(project, "commit", "-q", "-m", "feat: add code");
+    git(project, "push", "-q");
     const ran = runGate(model, project, "pr").results.find((result) => result.name === "cmd.verify.integration");
     expect(ran?.ok).toBeFalse();
     expect(ran?.detail).toContain("false -> exit 1");

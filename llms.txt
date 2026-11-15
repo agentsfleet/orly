@@ -74,7 +74,7 @@ If a human reports that gates are not firing, this is the first thing to check.
 `orly init` seeds `.orly/orly.json` with gate commands found in `Makefile` or
 `package.json`. Read the repository's build files to complete missing commands;
 ask only when the repository does not define a check. Do not invent commands.
-Declare `conform` and at least one named `verify.*` command. Documentation
+Declare at least one named `verify.*` command; `conform` is optional. Documentation
 repositories can use `verify.docs` without application unit or integration
 suites. `init` reports missing configuration; `doctor` rejects it.
 
@@ -168,8 +168,13 @@ never with a placeholder reason.
 | `orly update --with <pack>` | add an opt-in pack, recorded for every clone |
 | `orly gate` | run declared checks in order, stopping at the first failure |
 | `orly gate pr` | the Pull Request criteria check |
+| `orly gate pr --reuse-verification` | reuse intact current-input evidence only for reviewed hermetic policies |
 | `orly override <criterion> --reason <why>` | record a gate exception (user-authorised only) |
 | `orly doctor` | check installed files and required command configuration |
+
+Gates inspect prerequisites before commands and report blocked or unrun groups explicitly. Fresh execution is the default; a reuse flag alone cannot skip any command.
+Repository-owned `reuse` policies require hermetic input ownership, a maximum age and toolchain identities. Original execution output stays visible, and failed or unfinished latest attempts prevent fallback to an older pass.
+Keep fixture evidence, live acceptance and injected-delay measurements separate. Reviewers that are unavailable remain incomplete, and final review follows the same pushed head through two quiet polls.
 
 ---
 

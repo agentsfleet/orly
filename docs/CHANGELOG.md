@@ -1,11 +1,20 @@
 # Changelog
 
-## 0.29.0 (2026-11-15)
+## 0.30.0 (2026-11-15)
 
 The Rust standard names the `Option` and `Result` method for each intent.
 
 - **Rust** — FN-RS lists the method for each shape, such as `map_or_default`, `map_or_else`, `is_some_and`, `ok_or_else` and `let`-`else`. It names the Clippy lints that enforce it: `option_if_let_else`, `manual_let_else`, `map_unwrap_or`, `manual_map`, `manual_ok_or` and `question_mark`.
-- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.29.0 update`.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.30.0 update`.
+
+## 0.29.0 (2026-11-15)
+
+Gates stop blocked work and distinguish verification outcomes.
+
+- **Commands** — Inspect structural prerequisites first; leave later command groups unrun after failure. Preserve owner override reasons and original statuses.
+- **Evidence** — Optional hermetic policies and `pr --reuse-verification` reuse only complete matching local evidence. Numbered attempts retain original output; interruption, stale identity and damaged records force fresh work.
+- **Guidance** — Align parked-spec status, authorized cloud publishing, exact-base triage, review availability and visual evidence categories.
+- **Upgrade** — Update the package and run `orly update`. Existing repositories continue fresh verification until they explicitly configure and request reuse.
 
 ## 0.28.1 (2026-11-12)
 
