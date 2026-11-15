@@ -124,7 +124,7 @@ describe("git scope leaking from a hook environment", () => {
 
 describe("runCommand", () => {
   test("a zero exit reports ok with the exit-0 detail", () => {
-    expect(runCommand(process.cwd(), ["true"])).toEqual({ ok: true, detail: "exit 0" });
+    expect(runCommand(process.cwd(), ["true"])).toEqual({ ok: true, status: "passed", detail: "exit 0" });
   });
 
   test("a non-zero exit retains all output, including earlier findings", () => {
@@ -133,7 +133,7 @@ describe("runCommand", () => {
     expect(result.ok).toBeFalse();
     expect(result.detail).toContain("exit 3");
     expect(result.detail).toContain("first");
-    expect(result.detail).toEndWith("decisive");
+    expect(result.detail).toEndWith("decisive\n");
   });
 
   test("a successful command retains its measured counts", () => {

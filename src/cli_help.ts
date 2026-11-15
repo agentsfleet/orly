@@ -1,8 +1,10 @@
 const HELP_TEXT = `orly — prove the boundary; carry the rules
 
-Gates (read-only; no PR without every criterion green or a recorded override):
+Gates (working tree unchanged; required checks must pass or carry an owner override):
   orly gate [--accept-dirty]        run work → verify → pr; stop at first red
   orly gate <work|verify|pr>        run one gate
+  orly gate pr --reuse-verification
+                                   reuse only explicit hermetic policies with valid evidence
       work    does this commit conform? the declared conform command; no git
               state, so a commit hook's own dirty tree never blocks it
       verify  does the work hold up? configuration, docs language, and the
@@ -14,6 +16,12 @@ Gates (read-only; no PR without every criterion green or a recorded override):
   Commands default to 30 minutes and 64 mebibytes of combined output each.
   Set limits.<command>.timeout_ms and output_bytes in .orly/orly.json to override.
   Exceeding either limit fails the check and prints the saved output path.
+  Prerequisite failures block commands; a command failure leaves later groups not_run.
+  Results distinguish passed, failed, blocked, cancelled, skipped and not_run.
+  Reuse is off by default. A reviewed reuse.<verify-command> policy must declare
+  hermetic: true, max_age_ms, toolchain probes and any extra input paths.
+  Invalid prior completion runs fresh; lock or start-marker failures block commands.
+  Private attempt history stays beneath Git metadata.
 
 Install (the repository is the unit — no checkout of this package required):
   orly init [--force] [--no-hooks] [--with <PACK>] [--dry-run] [--json]

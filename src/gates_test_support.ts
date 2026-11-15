@@ -95,6 +95,14 @@ export function newRepository(): string {
   return project;
 }
 
+export function pushFixture(project: string): void {
+  const upstream = temporaryDirectory();
+  git(upstream, "init", "--bare", QUIET);
+  git(project, "checkout", QUIET, "-b", "feat/fixture");
+  git(project, "remote", "add", "origin", upstream);
+  git(project, "push", QUIET, "-u", "origin", "feat/fixture");
+}
+
 export function newSpecRepository(): string {
   const project = newRepository();
   mkdirSync(join(project, "docs/v1/active"), { recursive: true });

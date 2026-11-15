@@ -15,7 +15,7 @@ export const COMMAND_FILES = {
 } as const;
 
 type Request = { command: string[]; limits: CommandLimits; receipt: string; parent_pid: number };
-export type CommandResult = { exit_code: number | null; elapsed_ms: number; output_bytes: number; failure?: string };
+export type CommandResult = { exit_code: number | null; elapsed_ms: number; output_bytes: number; failure?: string; failure_kind?: "invocation" | "limit" | "cancelled" };
 
 export function stopOwnedGroup(pid: number): void {
   if (!Number.isSafeInteger(pid) || pid <= 0) throw new Error("invalid owned process group");
@@ -39,7 +39,7 @@ async function run(request: Request): Promise<CommandResult> {
   try {
     child = Bun.spawn(request.command, { detached: true, stdin: "ignore", stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
   } catch (error) {
-    return { exit_code: null, elapsed_ms: Math.ceil(performance.now() - started), output_bytes: 0, failure: `${request.command[0] ?? "command"} could not be run: ${error instanceof Error ? error.message : String(error)}` };
+    return { exit_code: null, elapsed_ms: Math.ceil(performance.now() - started), output_bytes: 0, failure_kind: "invocation", failure: `${request.command[0] ?? "command"} could not be run: ${error instanceof Error ? error.message : String(error)}` };
   }
   let stopped = false;
   try {
@@ -69,7 +69,7 @@ async function run(request: Request): Promise<CommandResult> {
       };
       await Promise.all([capture(child.stdout, stdout, onBytes), capture(child.stderr, stderr, onBytes), child.exited]);
       if (child.signalCode) failure ??= `stopped by ${child.signalCode}`;
-      return { exit_code: child.exitCode, elapsed_ms: Math.ceil(performance.now() - started), output_bytes: outputBytes, ...(failure ? { failure } : {}) };
+      return { exit_code: child.exitCode, elapsed_ms: Math.ceil(performance.now() - started), output_bytes: outputBytes, ...(failure ? { failure, failure_kind: failure === "deadline exceeded" || failure === "output limit exceeded" ? "limit" : "cancelled" } : {}) };
     } finally {
       clearTimeout(timer);
       clearInterval(owner);
