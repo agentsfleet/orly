@@ -5,7 +5,8 @@ import { join } from "node:path";
 import { contentDigest } from "./config";
 import { cleanupTemporaryDirectories, git, orly, ROOT } from "./gates_test_support";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
-import { recordOverride } from "./gates";
+import { recordOverride, runGate } from "./gates";
+import { RulesModel } from "./model";
 import { attemptPaths, verificationCount, verificationFixture } from "./verification_test_support";
 import { verificationState } from "./verification_store";
 
@@ -27,6 +28,27 @@ test("explicit_reuse_executes_a_hermetic_group_once", async () => {
   expect(result.output).toContain("fixture report: 7 checks passed");
   expect(verificationCount(root)).toBe(2);
   expect(attemptPaths(root)).toHaveLength(3);
+});
+
+test("in-process gates preserve reuse and refuse an older pass after a failed fresh retry", async () => {
+  const { root } = await verificationFixture();
+  const model = await RulesModel.load(ROOT);
+  const first = runGate(model, root, "pr");
+  expect(first.ok).toBeTrue();
+  expect(first.results.at(-1)).toMatchObject({ name: "cmd.verify.unit", status: "passed" });
+  const reused = runGate(model, root, "pr", false, true);
+  expect(reused.ok).toBeTrue();
+  expect(reused.results.at(-1)?.detail).toContain("reused run");
+  expect(reused.results.at(-1)?.detail).toContain("fixture report: 7 checks passed");
+  expect(verificationCount(root)).toBe(1);
+  writeFileSync(join(root, ".git/fail-verification"), "inject native assertion failure");
+  for (const reuse of [false, true]) {
+    const failed = runGate(model, root, "pr", false, reuse);
+    expect(failed.ok).toBeFalse();
+    expect(failed.results.at(-1)).toMatchObject({ name: "cmd.verify.unit", status: "failed" });
+    expect(failed.results.at(-1)?.detail).not.toContain("reused run");
+  }
+  expect(verificationCount(root)).toBe(3);
 });
 
 test("the reuse flag alone never skips an undeclared lane", async () => {

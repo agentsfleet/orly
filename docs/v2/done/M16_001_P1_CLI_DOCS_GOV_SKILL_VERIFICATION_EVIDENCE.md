@@ -201,15 +201,16 @@ N/A: no product or operator signal changes. Private command evidence and CLI sta
 
 | # | Criterion | Verify | Expected | Priority | Graded |
 |---|---|---|---|---|---|
-| R1 | Prerequisites, reuse integrity and source guidance | `bun test src/gate_outcomes.integration.test.ts src/command_runner.test.ts src/verification.integration.test.ts src/verification_identity.integration.test.ts src/verification_store.integration.test.ts src/verification_policy.test.ts src/learning_guidance.integration.test.ts` | All pass | P0 | ✅ `76 pass, 0 fail; Ran 76 tests across 7 files.` |
-| S1 | Type lane | `bun run typecheck` | Exit 0 | P0 | Final gate receipt: PR Session notes 1 |
-| S2 | Complete declared unit lane | `bun test src` | Exit 0 | P0 | Final gate receipt: PR Session notes 1 |
-| S3 | Isolated installation | `make install-evals` | Exit 0 | P0 | Final installation receipt: PR Session notes 1 |
+| R1 | Prerequisites, reuse integrity and source guidance | `bun test src/gate_outcomes.integration.test.ts src/command_runner.test.ts src/verification.integration.test.ts src/verification_identity.integration.test.ts src/verification_store.integration.test.ts src/verification_policy.test.ts src/learning_guidance.integration.test.ts` | All pass | P0 | ✅ `76 pass, 0 fail` at initial implementation; current-head full suite in S2 includes these cases and R2 |
+| R2 | In-process reuse and failed retry | `bun test src/verification.integration.test.ts --test-name-pattern 'in-process gates'` | Pass; retained output and execution count | P0 | ✅ `1 pass, 0 fail; 13 expect() calls` |
+| S1 | Type lane | `bun run typecheck` | Exit 0 | P0 | Final gate receipt: PR Session notes 2 |
+| S2 | Complete declared unit lane | `bun test src` | Exit 0 | P0 | Final gate receipt: PR Session notes 2 |
+| S3 | Isolated installation | `make install-evals` | Exit 0 | P0 | Final installation receipt: PR Session notes 2 |
 | S4 | Secrets | `gitleaks detect --redact --no-banner` | Exit 0 | P0 | ✅ `666 commits scanned; no leaks found` |
 | S6 | Catalogue and generated parity | `make conform` | Exit 0 | P0 | ✅ `standards.catalogue; generated.root.current; packs.sources.current` |
-| S5 | Final boundary | `orly gate pr` | Exit 0 at exact pushed head | P0 | Final gate receipt: PR Session notes 1 |
+| S5 | Final boundary | `orly gate pr` | Exit 0 at exact pushed head | P0 | Final gate receipt: PR Session notes 2 |
 
-S rows reference the exact pushed-head receipts in PR Session notes 1 under SPEC-GRADE. The PR opens only after those required checks succeed.
+S rows reference the exact pushed-head receipts in PR Session notes 2 under SPEC-GRADE. The PR opens only after those required checks succeed.
 
 ### Behaviour evals
 
@@ -258,8 +259,9 @@ Replace exhaustive command evaluation and boolean-only reporting. Remove contrad
 - Implementation review found four defects: unexecuted overrides, unavailable-identity source drift, lost output whitespace and filesystem errors escaping status reporting. Targeted review confirms all resolved. A follow-up tracked-symlink fallback defect is also fixed and reviewed; the combined regression run passes.
 - Standards review reported 26 findings across 12 files. Targeted resolution review confirms 25 resolved, including inventory, bounded inputs, statuses, module order, integration filenames, structured configuration errors and spec accuracy. Exact model/version provenance remains unavailable and explicitly incomplete.
 - Final zoom-out reported one major finding (unexecuted overrides) and one minor (accept-dirty evidence publication); both are fixed and covered by the passing combined regression run.
+- CI on `f59b8b3` passed all four checks, including the 90% coverage floor. Codecov reported patch coverage of 86.31%; orchestration executed in child CLI tests was not aggregated into the parent report. One in-process gate regression now covers fresh execution, reuse, failed retry and refusal of the older pass without changing production code.
 - Full verification found one stale render assertion expecting unconditional native execution wording. The source now permits explicitly authorized reuse, so the assertion requires the declared commands plus the explicit hermetic opt-in boundary. The first full result remains recorded as `394 pass, 1 fail`; the replacement run is recorded separately.
-- Verification receipts: regression command in R1 printed `76 pass`, `0 fail`, `Ran 76 tests across 7 files. [14.98s]`; `bun run typecheck` exited 0. Final pushed-head receipts belong in PR Session notes 1. The first installation run had 23 passes and one README example failure; the corrected example passed its targeted retry. Preserve both observations beside the final installation result.
+- Verification receipts: regression command in R1 printed `76 pass`, `0 fail`, `Ran 76 tests across 7 files. [14.98s]`; `bun run typecheck` exited 0. Final pushed-head receipts belong in PR Session notes 2. The first installation run had 23 passes and one README example failure; the corrected example passed its targeted retry. Preserve both observations beside the final installation result.
 - Deferrals and transfers: none. Non-hermetic reuse is excluded by design and stays fresh.
 - Owner refinement: keep verification code and README smaller. Consolidate evidence/locking, put policy decoding in the existing configuration owner, and remove duplicate receipt fields while retaining negative tests.
 
