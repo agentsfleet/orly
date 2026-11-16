@@ -5,6 +5,7 @@ import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot } from "./b
 
 import { z } from "zod";
 
+import { callerAddress } from "./burst_caller";
 import { captureProcess, pause, until } from "./burst_process";
 import { OrlyError } from "./model";
 
@@ -18,10 +19,6 @@ const CLEANUP_WAIT_MS = 15 * 60_000;
 // are progress.
 const FAILED_IMAGE_STATES = new Set(["failed", "error", "invalid", "deregistered", "disabled"]);
 const BASE_IMAGE = Object.freeze({ id: "resolve:ssm:/aws/service/debian/release/13/latest/amd64", name: "Debian 13 amd64", snapshot: false });
-// The caller's public address as AWS sees it, over HTTPS; it answers on a
-// GitHub-hosted runner as it does on a workstation.
-const CALLER_ADDRESS_URL = "https://checkip.amazonaws.com";
-const CALLER_TIMEOUT_MS = 15_000;
 const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 // A type with no Spot capacity, or none at this price, falls through to the
 // next type in ORLY_BURST_INSTANCE_TYPES; any other refusal stops the lane.
@@ -96,7 +93,7 @@ export class AwsSpot implements CloudProvider {
     const group = await this.#aws(["ec2", "create-security-group", "--group-name", name, "--description", `orly burst ${run.runId}: SSH from the caller only`,
       ...(vpc ? ["--vpc-id", vpc] : []), "--tag-specifications", tags("security-group"), "--query", "GroupId", "--output", "text"], { signal });
     this.#group = group.stdout.trim();
-    const caller = await this.#callerAddress();
+    const caller = await callerAddress(this.#fetch);
     await this.#aws(["ec2", "authorize-security-group-ingress", "--group-id", this.#group, "--protocol", "tcp", "--port", "22", "--cidr", `${caller}/32`], { signal });
     run.write(`orly burst: ${name} admits SSH from ${caller} only`);
   }
@@ -202,12 +199,6 @@ export class AwsSpot implements CloudProvider {
       "--query", "Instances[0].InstanceId", "--output", "text"];
   }
 
-  async #callerAddress(): Promise<string> {
-    const response = await this.#fetch(CALLER_ADDRESS_URL, { signal: AbortSignal.timeout(CALLER_TIMEOUT_MS) });
-    const address = (await response.text()).trim();
-    if (!response.ok || !IPV4.test(address)) throw new OrlyError(`could not learn this machine's public IPv4 address from ${CALLER_ADDRESS_URL}`);
-    return address;
-  }
 
   async #spotPrice(type: string, signal: AbortSignal): Promise<number | undefined> {
     const price = await this.#aws(["ec2", "describe-spot-price-history", "--instance-types", type, "--product-descriptions", "Linux/UNIX", "--max-items", "1",

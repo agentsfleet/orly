@@ -145,14 +145,17 @@ The `e2e` provider runs TIR virtual machines: whole Linux machines with their ow
 
 orly reads them from `E2E_API_KEY`, `E2E_AUTH_TOKEN` and `E2E_PROJECT_ID` only; MyAccount keys do not work here.
 TIR admits only a public key already saved in the account, so each run saves its key as `orly-burst-<RUN>` and deletes it after.
-TIR cannot delete a security group, so the first run creates `orly-burst-ssh`, which admits TCP 22 from any address, and later runs reuse it.
+
+Each run also creates a security group `orly-burst-<RUN>` that admits TCP 22 from the caller's public IPv4 address only, as on AWS.
+Once the run's VMs are gone, orly deletes the group, retrying for up to 5 minutes.
+Unverified: whether TIR lets a VM reach the internet when its group declares no outbound rule.
 
 | Operation | TIR API call, under `https://api.e2enetworks.com/myaccount/api/v1/gpu` |
 |---|---|
 | Hourly CPU plans | `GET /gpu_service/sku/?service=notebook` |
 | OS images | `GET /gpu_service/image/?category=notebook` |
 | Save and delete the run's key | `POST /ssh_keys/`, `GET /ssh_keys/`, `DELETE /ssh_keys/{pk}/` |
-| Find or create the SSH group | `GET /security_groups/`, `POST /security_groups/` |
+| Create and delete the run's SSH group | `POST /security_groups/`, `DELETE /security_groups/{id}/rules/` |
 | Create a VM | [`POST /notebooks/` with `kind: "vm"`](https://docs.e2enetworks.com/api/tir/compute/instancevm/post-notebooks/) |
 | Read a VM's state and address, then delete it | `GET /notebooks/{id}/`, `DELETE /notebooks/{id}/` |
 | Stop a VM, then snapshot it | `PUT /notebooks/{id}/actions/?action=Stop`, `POST /notebooks/{id}/snapshots/` |
@@ -368,7 +371,7 @@ A CI runner that kills orly before the cleanup ends leaves the resources behind.
 `--keep` leaves the machines running for inspection, with no scheduled shutdown, and prints the key to log in with.
 They bill until someone deletes them.
 
-On AWS that is the instance with its `orly-burst-<RUN>` key pair and group; in TIR, the VM and its saved key.
+On AWS that is the instance with its `orly-burst-<RUN>` key pair and group; in TIR, the VM with its saved key and group.
 A run that died without cleaning up leaves resources tagged or labelled `orly-burst`, which are safe to delete.
 
 **Deleting a snapshot is permanent; the next run starts cold from the base image.**

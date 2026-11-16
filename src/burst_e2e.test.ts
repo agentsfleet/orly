@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { burst } from "./burst";
 import { FakeTir } from "./burst_fake_tir";
-import { burstDependencies, burstEnvironment, burstRepository, fakeBin, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./burst_test_support";
+import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, fakeBin, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./burst_test_support";
 import { cleanupTemporaryDirectories, temporaryDirectory } from "./gates_test_support";
 
 const API_KEY = "e2e_test_key_00000000";
@@ -61,23 +61,38 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(run.api.keys.size).toBe(0);
     expect(creates[0]?.query).toEqual({ project_id: "12345", location: "Delhi", apikey: API_KEY });
     expect(creates[0]?.authorization).toBe(`Bearer ${AUTH_TOKEN}`);
-    expect(run.api.groups).toEqual([{ id: 700, name: "orly-burst-ssh" }]);
-    expect(fields(run.api.callsTo("POST", /^\/security_groups\/$/)[0]?.body).rules).toEqual([{ rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "any", ports: [22], description: "SSH for orly burst" }]);
+    const group = fields(run.api.callsTo("POST", /^\/security_groups\/$/)[0]?.body);
+    expect(String(group.name)).toMatch(/^orly-burst-feat-burst-fixture-\d{14}-[0-9a-f]{4}$/);
+    expect(group.rules).toEqual([{ rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "manual", cidr_ip: CALLER_ADDRESS, cidr_subnet: 32, ports: [22], description: "SSH from the orly burst caller" }]);
+    expect(run.api.groups.size).toBe(0);
+    const order = run.api.calls.map((call) => `${call.method} ${call.path}`);
+    expect(order.lastIndexOf("DELETE /notebooks/5002/")).toBeLessThan(order.indexOf("DELETE /security_groups/700/rules/"));
     const text = run.output.text();
+    expect(text).toContain(`admits SSH from ${CALLER_ADDRESS} only`);
     expect(text).toContain("[acceptance] lane acceptance ran");
     expect(text).toMatch(/orly burst: lane=acceptance provider=e2e machine=C3\.32GB minutes=\d+ cost≈₹25\/h \+ GST \(billed hourly\) exit=0 evidence=\S+/);
     expect(text).toContain("orly burst: total provider=e2e lanes=2 passed=2 failed=0");
     expect(text).not.toContain(API_KEY);
   });
 
-  test("an existing SSH group is reused, since TIR cannot delete one", async () => {
+  test("a group delete that TIR refuses at first is retried until the group is gone", async () => {
     const run = e2eRun();
-    run.api.groups.push({ id: 42, name: "orly-burst-ssh" });
+    run.api.groupDeleteFailures = 2;
 
-    await burst(ONE_LANE, run.dependencies);
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
+    expect(run.api.callsTo("DELETE", /^\/security_groups\/\d+\/rules\/$/)).toHaveLength(3);
+    expect(run.api.groups.size).toBe(0);
+  });
 
-    expect(run.api.callsTo("POST", /^\/security_groups\/$/)).toHaveLength(0);
-    expect(created(run.api)[0]?.security_group_id).toBe(42);
+  test("a caller address that cannot be learnt stops the run before any VM, and the key still goes", async () => {
+    const run = e2eRun();
+    const answer = run.api.fetch;
+    const { dependencies } = burstDependencies(run.root, run.env, async (input, init) => String(input).includes("checkip") ? new Response("", { status: 503 }) : answer(input, init));
+
+    await expect(burst(ONE_LANE, dependencies)).rejects.toThrow("could not learn this machine's public IPv4 address");
+    expect(run.api.callsTo("POST", CREATE)).toHaveLength(0);
+    expect(run.api.groups.size).toBe(0);
+    expect(run.api.keys.size).toBe(0);
   });
 
   test("secrets are read on the caller and reach the lane only through the session's input", async () => {
@@ -199,7 +214,9 @@ describe("e2e lanes on TIR virtual machines", () => {
 
     expect(run.api.vms.size).toBe(1);
     expect(run.api.keys.size).toBe(1);
+    expect(run.api.groups.size).toBe(1);
     expect(run.output.text()).toContain("--keep left e2e machine 5001 at 203.0.113.1");
+    expect(run.output.text()).toContain("--keep left TIR key orly-burst-feat-burst-fixture-");
     const key = run.output.text().match(/kept the run's SSH key at (\S+);/)?.[1] ?? "";
     expect(existsSync(key)).toBe(true);
     expect(machineScript(run.state)).not.toContain("shutdown -h");

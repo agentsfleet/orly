@@ -25,7 +25,6 @@ const skusSchema = z.object({ data: z.object({ CPU: z.array(z.object({
 })).default([]) }) });
 const imagesSchema = z.object({ data: z.array(z.object({ name: z.string(), versions: z.array(z.object({ image_version_id: z.number(), version: z.coerce.string() })).default([]) })) });
 const keysSchema = z.object({ data: z.array(z.object({ pk: identifier, label: z.string() })) });
-const groupsSchema = z.object({ data: z.array(z.object({ id: identifier, name: z.string() })) });
 const groupSchema = z.object({ data: z.object({ id: identifier }) });
 // One VM answers `data.id`; a quantity of them answers `data.created`.
 const createdSchema = z.object({ data: z.union([z.object({ id: identifier }), z.object({ created: z.array(z.object({ id: identifier })).min(1) })]) });
@@ -81,15 +80,15 @@ export class E2eApi {
     await this.#request("DELETE", `/ssh_keys/${pk}/`, { project: false });
   }
 
-  async securityGroups(): Promise<Array<{ id: string; name: string }>> {
-    return groupsSchema.parse(await this.#request("GET", "/security_groups/")).data;
+  // POST /security_groups/: a group whose one rule admits SSH from `address`.
+  async createSshGroup(name: string, address: string): Promise<string> {
+    const rules = [{ rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "manual", cidr_ip: address, cidr_subnet: 32, ports: [22], description: "SSH from the orly burst caller" }];
+    return groupSchema.parse(await this.#request("POST", "/security_groups/", { body: { name, description: "SSH for one orly burst run", rules } })).data.id;
   }
 
-  // TIR has no delete for a security group, so orly makes one SSH group per
-  // project, by name, and every later run reuses it.
-  async createSshGroup(name: string): Promise<string> {
-    const rules = [{ rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "any", ports: [22], description: "SSH for orly burst" }];
-    return groupSchema.parse(await this.#request("POST", "/security_groups/", { body: { name, description: "SSH for orly burst VMs", rules } })).data.id;
+  // TIR files the group's delete under its rules path.
+  async deleteSecurityGroup(id: string): Promise<void> {
+    await this.#request("DELETE", `/security_groups/${id}/rules/`);
   }
 
   // POST /notebooks/: https://docs.e2enetworks.com/api/tir/compute/instancevm/post-notebooks/

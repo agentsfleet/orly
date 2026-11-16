@@ -2,12 +2,15 @@ import type { Fetch, OsImage, Plan, VmSnapshot } from "./burst_e2e_api";
 import type { BurstSettings } from "./burst_settings";
 import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot } from "./burst_types";
 
+import { callerAddress } from "./burst_caller";
 import { E2eApi, E2eRequestFailed } from "./burst_e2e_api";
 import { pause, until } from "./burst_process";
 import { OrlyError } from "./model";
 
 const DEFAULT_IMAGE = "Ubuntu 24.04";
-const SSH_GROUP = "orly-burst-ssh";
+// A deleted VM can hold its group briefly, so the group's delete is retried
+// for this long before it is reported for deletion by hand.
+const GROUP_DELETE_MS = 5 * 60_000;
 // Root disk of every VM; a VM launched from a snapshot needs at least the
 // snapshot's source disk, so it never shrinks.
 const DISK_GB = 100;
@@ -21,13 +24,15 @@ const RUPEES_PER_SNAPSHOT_MONTH = 200;
 
 // E2E Networks TIR virtual machines: whole Linux machines with their own
 // kernel, reached as root over SSH. TIR accepts only a public key already
-// saved in the account, so each run saves its key and removes it after; TIR
-// cannot delete a security group, so the runs share one that admits SSH.
+// saved in the account, so each run saves its key; each run also makes a
+// security group admitting SSH from the caller's address alone. Both go when
+// the run's VMs have.
 export class E2eNodes implements CloudProvider {
   readonly name = "e2e";
   readonly user: string;
   readonly #settings: BurstSettings;
   readonly #api: E2eApi;
+  readonly #fetch: Fetch;
   #plan: Promise<Plan> | undefined;
   #group: string | undefined;
   #keyLabel: string | undefined;
@@ -35,6 +40,7 @@ export class E2eNodes implements CloudProvider {
   constructor(settings: BurstSettings, fetcher: Fetch) {
     this.#settings = settings;
     this.user = settings.e2e.user;
+    this.#fetch = fetcher;
     this.#api = new E2eApi(settings.e2e, fetcher);
   }
 
@@ -64,10 +70,12 @@ export class E2eNodes implements CloudProvider {
   }
 
   async prepare(run: BurstRun): Promise<void> {
-    const label = `orly-burst-${run.runId}`;
-    await this.#api.addKey(label, run.publicKey);
-    this.#keyLabel = label;
-    this.#group = (await this.#api.securityGroups()).find((group) => group.name === SSH_GROUP)?.id ?? await this.#api.createSshGroup(SSH_GROUP);
+    const name = `orly-burst-${run.runId}`;
+    await this.#api.addKey(name, run.publicKey);
+    this.#keyLabel = name;
+    const caller = await callerAddress(this.#fetch);
+    this.#group = await this.#api.createSshGroup(name, caller);
+    run.write(`orly burst: ${name} admits SSH from ${caller} only`);
   }
 
   async create(run: BurstRun, job: Job): Promise<Machine> {
@@ -124,13 +132,24 @@ export class E2eNodes implements CloudProvider {
     await this.#api.deleteSnapshot(snapshot.id);
   }
 
-  // The run's key leaves the account once its VMs are gone; --keep keeps it
-  // so the kept VMs stay reachable.
+  // The run's key and group leave once its VMs are gone; --keep keeps both so
+  // the kept VMs stay reachable. Cleanup takes no cancellation: it is what a
+  // cancellation runs.
   async finish(run: BurstRun): Promise<void> {
     const label = this.#keyLabel;
-    if (!label || run.keep) return;
+    if (!label) return;
+    if (run.keep) {
+      run.write(`orly burst: --keep left TIR key ${label} and security group ${this.#group ?? "none"}; delete them with the VMs`);
+      return;
+    }
     const pk = (await this.#api.keys()).find((key) => key.label === label)?.pk;
     if (pk) await this.#api.deleteKey(pk);
+    const group = this.#group;
+    if (!group) return;
+    const never = new AbortController().signal;
+    const deleted = async () => this.#api.deleteSecurityGroup(group).then(() => true, () => undefined);
+    await until(`security group ${group} to delete`, deleted, { deadline: Date.now() + GROUP_DELETE_MS, signal: never, pollMs: this.#settings.pollMs })
+      .catch(() => run.write(`orly burst: could not delete TIR security group ${group} (${label}); delete it by hand`));
   }
 
   #resolvePlan(): Promise<Plan> {

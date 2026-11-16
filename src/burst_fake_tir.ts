@@ -1,6 +1,8 @@
-// E2E Networks TIR, in memory, as orly uses it, for the e2e tests. A VM runs
-// after one status poll and stops after one more once stopped. A snapshot is
-// pending for `savingLists` list calls, then `ready`, or `savedStatus`.
+// E2E Networks TIR, in memory, as orly uses it, for the e2e tests, plus the
+// caller-address lookup. A VM runs after one status poll and stops after one
+// more once stopped. A snapshot is pending for `savingLists` list calls, then
+// `ready`, or `savedStatus`. A group's delete fails `groupDeleteFailures` times.
+import { CALLER_ADDRESS } from "./burst_test_support";
 import { isObject } from "./model";
 
 type Call = { method: string; path: string; query: Record<string, string>; body: unknown; authorization: string | null };
@@ -15,9 +17,11 @@ export class FakeTir {
   readonly calls: Call[] = [];
   readonly vms = new Map<string, FakeVm>();
   readonly keys = new Map<string, { pk: number; label: string; ssh_key: string }>();
-  readonly groups: Array<{ id: number; name: string }> = [];
+  readonly groups = new Map<string, { id: number; name: string; rules: unknown }>();
   snapshots: FakeSnapshot[] = [];
   createStatus = 201;
+  groupDeleteFailures = 0;
+  #nextGroup = 700;
   savingLists = 1;
   savedStatus = "ready";
   #saving = new Map<number, number>();
@@ -26,6 +30,7 @@ export class FakeTir {
 
   fetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
     const url = new URL(String(input));
+    if (url.host === "checkip.amazonaws.com") return new Response(`${CALLER_ADDRESS}\n`);
     const method = init?.method ?? "GET";
     const path = url.pathname.replace(PREFIX, "");
     const body: unknown = init?.body ? JSON.parse(String(init.body)) : undefined;
@@ -50,8 +55,8 @@ export class FakeTir {
     if (route === "POST /ssh_keys/") return this.addKey(body);
     if (route === "GET /ssh_keys/") return reply([...this.keys.values()]);
     if (route === "DELETE /ssh_keys/{id}/") return reply({}, [...this.keys].some(([label, key]) => String(key.pk) === id && this.keys.delete(label)) ? 200 : 404);
-    if (route === "GET /security_groups/") return reply(this.groups);
     if (route === "POST /security_groups/") return this.addGroup(body);
+    if (route === "DELETE /security_groups/{id}/rules/") return this.deleteGroup(id);
     if (route === "POST /notebooks/") return this.create(body);
     if (route === "GET /notebooks/{id}/") return this.poll(id);
     if (route === "DELETE /notebooks/{id}/") return reply({}, this.vms.delete(id) ? 200 : 404);
@@ -73,9 +78,18 @@ export class FakeTir {
   }
 
   private addGroup(body: Record<string, unknown>): Response {
-    const group = { id: 700 + this.groups.length, name: String(body.name) };
-    this.groups.push(group);
-    return reply({ ...group, rules: body.rules }, 201);
+    const group = { id: this.#nextGroup, name: String(body.name), rules: body.rules };
+    this.#nextGroup += 1;
+    this.groups.set(String(group.id), group);
+    return reply(group, 201);
+  }
+
+  private deleteGroup(id: string): Response {
+    if (this.groupDeleteFailures > 0) {
+      this.groupDeleteFailures -= 1;
+      return reply({}, 400);
+    }
+    return reply("Security Group deleted successfully", this.groups.delete(id) ? 200 : 404);
   }
 
   private create(body: Record<string, unknown>): Response {
