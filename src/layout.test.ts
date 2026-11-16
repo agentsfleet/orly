@@ -8,7 +8,7 @@ import { install } from "./install";
 import { RulesModel } from "./model";
 
 const ENGINE_VERSION = "0.27.0";
-const SKILLS = ["orly-spec", "orly-build", "orly-ship"];
+const SKILLS = ["orly-spec", "orly-build", "orly-ship", "orly-burst"];
 const FRONT_MATTER = /^---\n([\s\S]*?)\n---/;
 const MAX_DESCRIPTION = 1_024;
 const RETIRED_PAGE = ".orly/dispatch/write_rust.md";

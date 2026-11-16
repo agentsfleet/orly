@@ -42,6 +42,7 @@
     "skills/orly-spec/",
     "skills/orly-build/",
     "skills/orly-ship/",
+    "skills/orly-burst/",
     "core/",
     "schemas/",
     "fixtures/",

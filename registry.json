@@ -238,6 +238,18 @@
           "target": ".opencode/skills/orly-ship/SKILL.md"
         },
         {
+          "source": "skills/orly-burst/SKILL.md",
+          "target": ".claude/skills/orly-burst/SKILL.md"
+        },
+        {
+          "source": "skills/orly-burst/SKILL.md",
+          "target": ".agents/skills/orly-burst/SKILL.md"
+        },
+        {
+          "source": "skills/orly-burst/SKILL.md",
+          "target": ".opencode/skills/orly-burst/SKILL.md"
+        },
+        {
           "source": "agents/orly-standards-reviewer.md",
           "target": ".claude/agents/orly-standards-reviewer.md"
         }
