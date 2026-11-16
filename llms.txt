@@ -12,7 +12,7 @@ Package: `@agentsfleet/orly` (npm)
 Source: https://github.com/agentsfleet/orly
 License: Massachusetts Institute of Technology (MIT)
 
-This guide describes orly 0.28.0. The `bunx` commands below fetch the
+This guide describes orly 0.40.0. The `bunx` commands below fetch the
 published package; available versions are listed at
 https://github.com/agentsfleet/orly/releases. Use an installed local tarball for
 candidate checks. orly collects no usage telemetry and makes no network request
@@ -66,7 +66,7 @@ If a human reports that gates are not firing, this is the first thing to check.
 | `AGENTS.md` | your host auto-loads this | the user — never rewrite it |
 | `.orly/AGENTS.md` | always-on rules and the standards index | orly — rewritten on update |
 | `.orly/standards/*.md` | the rules, one page per language or domain | orly |
-| `.claude/skills/`, `.agents/skills/`, `.opencode/skills/` | skills materialised per host | orly |
+| `.claude/skills/`, `.agents/skills/`, `.opencode/skills/` | skills materialised per host, including `orly-burst` | orly |
 | `.claude/agents/orly-standards-reviewer.md` | the reviewer that checks a diff against the standards | orly |
 | `.orly/hooks/` | pre-commit and pre-push, wired to pinned `orly gate` | orly |
 | `.orly/orly.json` | packs, gate commands, install record | shared — edit the commands |
@@ -171,6 +171,9 @@ never with a placeholder reason.
 | `orly gate pr --reuse-verification` | reuse intact current-input evidence only for reviewed hermetic policies |
 | `orly override <criterion> --reason <why>` | record a gate exception (user-authorised only) |
 | `orly doctor` | check installed files and required command configuration |
+| `orly burst` | list the declared `burst.*` lanes; exits 2 |
+| `orly burst <lane>... --provider aws-spot\|e2e\|here` | run lanes on rented machines, one each, or on this machine (costs money; only when asked) |
+| `orly burst snapshot --provider aws-spot\|e2e` | capture a warm image the next lanes start from; `--prune` keeps the newest two |
 
 Gates inspect prerequisites before commands and report blocked or unrun groups explicitly. Fresh execution is the default; a reuse flag alone cannot skip any command.
 Repository-owned `reuse` policies require hermetic input ownership, a maximum age and toolchain identities. Original execution output stays visible, and failed or unfinished latest attempts prevent fallback to an older pass.
@@ -198,7 +201,7 @@ Three install only when `.orly/orly.json` names them: `workflow.governance`
 repository, no files), `persona.indy` (tone and address handles only, no files).
 
 Skills provided by `workflow.skills`, per repository: `orly-spec`, `orly-build`,
-`orly-ship`, plus the `orly-standards-reviewer` agent. gstack and the
+`orly-ship`, `orly-burst`, plus the `orly-standards-reviewer` agent. gstack and the
 Elephant-Goldfish Model (EGM) install per agent host at any version;
 `orly doctor` checks they are present.
 

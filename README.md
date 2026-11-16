@@ -77,6 +77,17 @@ Stale, damaged, failed or incomplete evidence requires a fresh run; live integra
 
 Private history lives beneath Git metadata. [Architecture](docs/ORLY_ARCHITECTURE.md#verification-evidence) documents integrity, interruption recovery, input limits and cleanup.
 
+## Burst lanes
+
+Slow lanes such as acceptance tests can run on a machine rented for the run:
+
+```sh
+bunx --bun @agentsfleet/orly burst acceptance --provider e2e
+```
+
+Declare them as `burst.<name>` commands; AWS Spot, E2E Networks and `--provider here` run them, and no gate does.
+[Burst lanes](docs/BURST.md) covers declaration, one-time cloud setup, warm snapshots and costs.
+
 ## Update and ownership
 
 ```sh

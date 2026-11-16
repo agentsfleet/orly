@@ -71,6 +71,23 @@ describe("gate groups", () => {
   });
 });
 
+describe("burst lanes", () => {
+  // A burst lane rents a machine by the hour; the gate is free and runs on
+  // every commit and push, so no gate may ever run one.
+  test("no gate runs a burst.* command", async () => {
+    const project = newSpecRepository();
+    const marker = join(project, "burst-ran");
+    const model = await modelFor(project, undefined, { "burst.acceptance": [["touch", marker]], "verify.integration": [["true"]] });
+    pushFixture(project);
+
+    const reports = runGates(model, project);
+
+    expect(reports.map((report) => report.gate)).toEqual(["work", "verify", "pr"]);
+    expect(reports.flatMap((report) => report.results.map((result) => result.name)).filter((name) => name.includes("burst"))).toEqual([]);
+    expect(await Bun.file(marker).exists()).toBeFalse();
+  });
+});
+
 describe("repository resolution", () => {
   test("a linked worktree resolves the config its checkout committed", async () => {
     const project = newSpecRepository();

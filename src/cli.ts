@@ -2,6 +2,7 @@
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 
+import { burst } from "./burst";
 import { printHelp } from "./cli_help";
 import { selectPacks } from "./config_discovery";
 import { CONFIG_PATH, managedDrift, readConfig, RepoConfig, writeConfig } from "./config";
@@ -32,6 +33,7 @@ const FAIL_GLYPH = "🔴";
 const PR_GATE = "pr";
 const ENGINE_MARKER = "evals/install/run.sh";
 const VERIFY_COMMAND = "verify";
+const BURST_SIGNALS = ["SIGINT", "SIGTERM"] as const;
 const GATE_ERRORS = {
   options: "[ORLY-GATE-001] gate accepts one name and only --accept-dirty or --reuse-verification",
   reuse: "[ORLY-GATE-002] --reuse-verification requires the named pr gate",
@@ -67,6 +69,7 @@ async function run(model: RulesModel, args: string[]): Promise<number> {
   if (command === VERIFY_COMMAND) return verify(model, rest);
   if (command === "gate") return gate(model, rest);
   if (command === "override") return override(rest);
+  if (command === "burst") return burstCommand(rest);
   throw new OrlyError(`unknown command: ${command}`);
 }
 
@@ -89,6 +92,20 @@ function gate(model: RulesModel, args: string[]): number {
   const allGreen = reports.every((report) => report.ok);
   if (allGreen && (named === undefined || named === PR_GATE)) console.log(`${PASS_GLYPH} PR boundary open — CHORE(close) is the next motion`);
   return allGreen ? 0 : 1;
+}
+
+// Ctrl-C and SIGTERM cancel the run instead of killing orly, so every machine
+// it started is deleted before it exits.
+async function burstCommand(args: string[]): Promise<number> {
+  const controller = new AbortController();
+  const cancel = () => controller.abort();
+  for (const signal of BURST_SIGNALS) process.on(signal, cancel);
+  try {
+    // logging: lane logs and summary lines are the command's output.
+    return await burst(args, { root: projectRoot(), env: process.env, fetch, signal: controller.signal, write: (line) => console.log(line) });
+  } finally {
+    for (const signal of BURST_SIGNALS) process.off(signal, cancel);
+  }
 }
 
 function override(args: string[]): number {

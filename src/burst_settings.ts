@@ -1,0 +1,79 @@
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { z } from "zod";
+
+import { OrlyError } from "./model";
+
+export type Environment = Record<string, string | undefined>;
+export type BurstSettings = Readonly<{
+  env: Environment;
+  deadlineMs: number;
+  pollMs: number;
+  outRoot: string;
+  snapshotKeep: number;
+  aws: Readonly<{ region: string; types: readonly string[]; image: string | undefined; subnet: string | undefined; user: string }>;
+  e2e: Readonly<{ apiKey: string | undefined; authToken: string | undefined; projectId: string | undefined; location: string; plan: string; image: string | undefined; user: string }>;
+}>;
+
+const MINUTE_MS = 60_000;
+const SECOND_MS = 1_000;
+// x86 only: Spot capacity differs by type, so the launcher walks this list and
+// takes the first type that has any.
+const DEFAULT_INSTANCE_TYPES = "c7i.4xlarge c7a.4xlarge c6i.4xlarge m7i.4xlarge";
+const LOGIN_USER = /^[a-z_][a-z0-9_-]*$/;
+const bounded = (max: number) => z.coerce.number().positive().max(max);
+const environmentSchema = z.object({
+  ORLY_BURST_DEADLINE_MINUTES: bounded(1440).default(120),
+  ORLY_BURST_POLL_SECONDS: bounded(600).default(30),
+  ORLY_BURST_OUT: z.string().min(1).default(join(tmpdir(), "orly-burst")),
+  ORLY_BURST_SNAPSHOT_KEEP: z.coerce.number().int().min(1).max(20).default(2),
+  ORLY_BURST_REGION: z.string().regex(/^[a-z]{2}(?:-[a-z]+)+-\d$/).default("us-east-1"),
+  ORLY_BURST_INSTANCE_TYPES: z.string().default(DEFAULT_INSTANCE_TYPES)
+    .transform((value) => value.split(/\s+/).filter(Boolean))
+    .pipe(z.array(z.string().regex(/^[a-z0-9-]+\.[a-z0-9]+$/)).min(1)),
+  ORLY_BURST_AWS_IMAGE: z.string().regex(/^(?:ami-[0-9a-f]{8,17}|resolve:ssm:\/[\w./-]+)$/).optional(),
+  ORLY_BURST_SUBNET: z.string().regex(/^subnet-[0-9a-f]{8,17}$/).optional(),
+  // The Debian AMI's login user; E2E's Linux images log in as root.
+  ORLY_BURST_AWS_USER: z.string().regex(LOGIN_USER).default("admin"),
+  E2E_API_KEY: z.string().min(1).optional(),
+  E2E_AUTH_TOKEN: z.string().min(1).optional(),
+  E2E_PROJECT_ID: z.string().regex(/^\d+$/).optional(),
+  ORLY_BURST_E2E_LOCATION: z.enum(["Delhi", "Chennai"]).default("Delhi"),
+  ORLY_BURST_E2E_PLAN: z.string().regex(/^[A-Za-z0-9.-]+$/).default("C3.32GB"),
+  // A snapshot name, or an OS image as `<name> <version>`, such as `Ubuntu 22.04`.
+  ORLY_BURST_E2E_IMAGE: z.string().regex(/^[A-Za-z0-9._-]+(?: [A-Za-z0-9._-]+)?$/).optional(),
+  ORLY_BURST_E2E_USER: z.string().regex(LOGIN_USER).default("root"),
+});
+
+// Every variable `orly burst` reads, read once. A blank value means unset, so
+// `VAR= orly burst` behaves like the variable was never exported. Issues name
+// the variable and the rule it broke, never the value: some of these are keys.
+export function burstSettings(env: Environment): BurstSettings {
+  const known = Object.fromEntries(Object.keys(environmentSchema.shape).map((name) => [name, env[name] === "" ? undefined : env[name]]));
+  const parsed = environmentSchema.safeParse(known);
+  if (!parsed.success) throw new OrlyError(`orly burst environment invalid: ${parsed.error.issues.map((issue) => `${issue.path.join(".")}: ${issue.message}`).join("; ")}`);
+  const value = parsed.data;
+  return Object.freeze({
+    env,
+    deadlineMs: Math.round(value.ORLY_BURST_DEADLINE_MINUTES * MINUTE_MS),
+    pollMs: Math.round(value.ORLY_BURST_POLL_SECONDS * SECOND_MS),
+    outRoot: value.ORLY_BURST_OUT,
+    snapshotKeep: value.ORLY_BURST_SNAPSHOT_KEEP,
+    aws: Object.freeze({
+      region: value.ORLY_BURST_REGION, types: Object.freeze(value.ORLY_BURST_INSTANCE_TYPES), image: value.ORLY_BURST_AWS_IMAGE,
+      subnet: value.ORLY_BURST_SUBNET, user: value.ORLY_BURST_AWS_USER,
+    }),
+    e2e: Object.freeze({
+      apiKey: value.E2E_API_KEY, authToken: value.E2E_AUTH_TOKEN, projectId: value.E2E_PROJECT_ID,
+      location: value.ORLY_BURST_E2E_LOCATION, plan: value.ORLY_BURST_E2E_PLAN, image: value.ORLY_BURST_E2E_IMAGE,
+      user: value.ORLY_BURST_E2E_USER,
+    }),
+  });
+}
+
+// A provider asks for its required variables at the moment it needs them, so
+// `orly burst --provider here` never demands cloud credentials.
+export function required<T>(value: T | undefined, name: string): T {
+  if (value === undefined) throw new OrlyError(`set ${name} for this provider (see docs/BURST.md)`);
+  return value;
+}
