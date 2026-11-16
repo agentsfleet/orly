@@ -5,7 +5,7 @@ import { assertWritableInside, hashContent, isObject, isString, JsonObject, obje
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { selectPacks, sniffCommands } from "./config_discovery";
 import { validateCommands, validateSurfaces } from "./validation";
-import { validateConfiguration, reusePoliciesSchema, type ReusePolicies } from "./config_validation";
+import { burstSchema, validateConfiguration, reusePoliciesSchema, type BurstConfig, type ReusePolicies } from "./config_validation";
 import { commandLimitsSchema, type LaneLimits } from "./command_limits";
 
 const ORACLE_DIRECTORY = ".orly";
@@ -34,6 +34,7 @@ export type RepoConfig = {
   managed: string[];
   limits?: LaneLimits;
   reuse?: ReusePolicies;
+  burst?: BurstConfig;
 };
 
 export function configPath(targetRoot: string): string {
@@ -83,6 +84,7 @@ export function parseConfig(value: JsonObject): RepoConfig {
     managed: stringArray(value[MANAGED_FIELD] ?? [], `${CONFIG_PATH} ${MANAGED_FIELD}`),
     ...(isObject(value.limits) ? { limits: Object.fromEntries(Object.entries(value.limits).map(([lane, limits]) => [lane, commandLimitsSchema.parse(limits)])) } : {}),
     ...(value.reuse !== undefined ? { reuse: reusePoliciesSchema.parse(value.reuse) } : {}),
+    ...(value.burst !== undefined ? { burst: burstSchema.parse(value.burst) } : {}),
   };
 }
 
@@ -156,6 +158,7 @@ export function serialiseConfig(config: RepoConfig): string {
     ...(config.surfaces ? { surfaces: config.surfaces } : {}),
     ...(config.limits ? { limits: config.limits } : {}),
     ...(config.reuse ? { reuse: config.reuse } : {}),
+    ...(config.burst ? { burst: config.burst } : {}),
     managed: [...config.managed].sort(),
   };
   return `${JSON.stringify(ordered, undefined, JSON_INDENT)}${NEWLINE}`;

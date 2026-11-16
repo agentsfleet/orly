@@ -19,6 +19,11 @@ for (const [field, value] of [
   ["unknown_setting", true], ["limits", []], ["limits", { [UNIT_LANE]: { timeout_ms: 0 } }],
   ["limits", { [UNIT_LANE]: { output_bytes: -1 } }], ["limits", { [UNIT_LANE]: { timeout_ms: 1.5 } }],
   ["limits", { [UNIT_LANE]: { typo: 10 } }], ["limits", { [UNIT_LANE]: null }],
+  ["burst", []], ["burst", { setup: "make setup" }], ["burst", { setup: [[]] }], ["burst", { warm: [[""]] }],
+  ["burst", { secrets: { API_TOKEN: "Vault/item/field" } }], ["burst", { secrets: { "1API": "op://v/i/f" } }],
+  ["burst", { secrets: { OP_SERVICE_ACCOUNT_TOKEN: "op://v/i/f" } }], ["burst", { secrets: { API_TOKEN: "op://v/i/f\nx" } }],
+  ["burst", { artifacts: ["../outside"] }], ["burst", { artifacts: ["/abs/path"] }], ["burst", { artifacts: [".git/config"] }],
+  ["burst", { lanes: {} }],
 ] as Array<[string, unknown]>) {
   test(`both configuration readers reject invalid ${field} value ${JSON.stringify(value)}`, async () => {
     const root = mkdtempSync(join(tmpdir(), "orly-config-validation-"));
@@ -29,6 +34,18 @@ for (const [field, value] of [
     await expect(readConfig(root)).rejects.toThrow(field === "unknown_setting" ? "Unrecognized key" : field);
   });
 }
+
+test.each(["burst.Acceptance", "burst.", "burst.has space", "burst.this-lane-name-is-far-too-long"])("command %s is refused as a burst lane name", (lane) => {
+  expect(() => parseConfig({ ...BASE, commands: { ...BASE.commands, [lane]: [["true"]] } })).toThrow(`commands.${lane}: a burst lane is burst.<name>`);
+});
+
+test("a burst object survives a rewrite exactly, with no fields it did not have", () => {
+  const burst = { setup: [["make", "setup"]], secrets: { API_TOKEN: "op://Burst Vault/api/credential" }, artifacts: ["ui/report"] };
+  const config = parseConfig({ ...BASE, commands: { ...BASE.commands, "burst.acceptance": [["make", "acceptance"]] }, burst });
+
+  expect(JSON.parse(serialiseConfig(config)).burst).toEqual(burst);
+  expect(parseConfig(JSON.parse(serialiseConfig(config)))).toEqual(config);
+});
 
 test("configuration limits survive a rewrite and override only their named lane", () => {
   const limits = { [UNIT_LANE]: { timeout_ms: 200, output_bytes: 4096 }, conform: { timeout_ms: 500 } };
