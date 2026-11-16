@@ -13,14 +13,15 @@ const SCHEMA_VERSION = 1;
 const VERSION_PATTERN = /^$|^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?(?:\+[a-zA-Z0-9.-]+)?$/;
 const nonempty = z.string().min(1).refine((value) => !value.includes("\0"));
 const input = nonempty.refine((value) => !isAbsolute(value) && !value.split(/[\\/]/).some((part) => part === ".." || part === ".git"), "input must stay beneath the worktree and outside Git metadata");
-// A burst lane name becomes part of a machine name, an object-storage key and
-// a directory, so it is held to the narrowest set all three accept.
+// A burst lane name becomes part of a machine name, a cloud tag and a
+// directory, so it is held to the narrowest set all three accept.
 const BURST_LANE = /^burst\.[a-z0-9][a-z0-9-]{0,23}$/;
+// A secret's name is written unquoted into an `export` line on the machine.
 const ENVIRONMENT_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 // 1Password names a vault and an item with spaces allowed, never a control
-// character; the reference is resolved on the burst machine, never here.
+// character; `op read` resolves the reference on the caller.
 const OP_REFERENCE = /^op:\/\/[^/\u0000-\u001f]+\/[^/\u0000-\u001f]+\/[^\u0000-\u001f]+$/;
-// The machine's own token carries every secret; a lane cannot rename it.
+// The token `op` itself reads, which no declared secret may overwrite.
 const OP_TOKEN = "OP_SERVICE_ACCOUNT_TOKEN";
 const invocations = z.array(z.array(nonempty).min(1));
 export const burstSchema = z.object({

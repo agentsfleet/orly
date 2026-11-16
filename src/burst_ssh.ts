@@ -36,7 +36,8 @@ export function forgetKeyPair(run: BurstRun): void {
 // A booting machine refuses connections for a while, so the first connect is
 // retried until it answers or the job's deadline passes.
 export async function reachable(run: BurstRun, job: Job, machine: Machine, user: string): Promise<void> {
-  await until(`SSH to ${machine.address ?? machine.id}`, async () => (await captureProcess(sshArgs(run, machine, user, "true"), { env: run.settings.env, timeoutMs: PROBE_TIMEOUT_MS })).code === 0 || undefined, { deadline: job.deadline, signal: run.signal, pollMs: run.settings.pollMs });
+  const probe = async () => (await captureProcess(sshArgs(run, machine, user, "true"), { env: run.settings.env, timeoutMs: PROBE_TIMEOUT_MS, signal: run.signal })).code === 0 || undefined;
+  await until(`SSH to ${machine.address ?? machine.id}`, probe, { deadline: job.deadline, signal: run.signal, pollMs: run.settings.pollMs });
 }
 
 // Stages the ref's bundle, runs the job script as the session's standard
@@ -44,7 +45,7 @@ export async function reachable(run: BurstRun, job: Job, machine: Machine, user:
 // declared results back. The script carries a lane's secrets, so it exists
 // only as this process's memory and the remote shell's input.
 export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user: string, script: string): Promise<Status> {
-  const staged = await captureProcess(sshArgs(run, machine, user, "cat > /tmp/orly-burst.bundle"), { env: run.settings.env, stdin: Bun.file(run.bundle), timeoutMs: STAGE_TIMEOUT_MS });
+  const staged = await captureProcess(sshArgs(run, machine, user, "cat > /tmp/orly-burst.bundle"), { env: run.settings.env, stdin: Bun.file(run.bundle), timeoutMs: STAGE_TIMEOUT_MS, signal: run.signal });
   if (staged.code !== 0) throw new OrlyError(`could not stage ${run.ref} on ${machine.id}: ${staged.stderr.trim()}`);
   const log = Bun.file(join(job.evidence, "run.log")).writer();
   let outcome: Outcome;

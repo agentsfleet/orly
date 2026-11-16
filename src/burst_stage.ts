@@ -11,7 +11,7 @@ import { isObject, OrlyError } from "./model";
 
 const GIT_TIMEOUT_MS = 10 * 60_000;
 const BRANCH_PREFIX = "refs/heads/";
-const REPOSITORY_NAME_CHARS = 20;
+const REPOSITORY_NAME_CHARS = 40;
 const REF_NAME_CHARS = 24;
 
 // The ref a cloud run ships: the named one, or the branch checked out here.
@@ -33,10 +33,11 @@ export async function configAt(root: string, ref: string): Promise<RepoConfig> {
 }
 
 // Snapshots are found by this name, so every worktree of one repository
-// shares them: it comes from the origin remote, not the directory.
+// shares them. It is the origin remote's owner and repository, such as
+// `agentsfleet-orly`, so two owners' `web` repositories in one account differ.
 export async function repositoryName(root: string): Promise<string> {
   const origin = await git(root, ["remote", "get-url", "origin"]);
-  const source = origin.code === 0 ? origin.stdout.trim().replace(/\/+$/, "").split(/[/:]/).pop()?.replace(/\.git$/, "") ?? "" : basename(root);
+  const source = origin.code === 0 ? origin.stdout.trim().replace(/\/+$/, "").replace(/\.git$/, "").split(/[/:]/).slice(-2).join("-") : basename(root);
   return slug(source, REPOSITORY_NAME_CHARS) || "repository";
 }
 

@@ -65,8 +65,8 @@ describe("aws-spot lanes", () => {
     expect(launch).not.toContain("--iam-instance-profile");
     expect(launch).not.toContain("--user-data");
     expect(aws(run.state, "terminate-instances")).toHaveLength(2);
-    expect(verbs.slice(-3)).toEqual(["wait", "delete-security-group", "delete-key-pair"]);
-    expect(aws(run.state, "wait").at(-1)?.slice(3, 4)).toEqual(["instance-terminated"]);
+    expect(verbs.slice(-3)).toEqual(["describe-instances", "delete-security-group", "delete-key-pair"]);
+    expect(aws(run.state, "describe-instances").at(-1)).toContain(`Name=tag:orly-burst,Values=${option(launch, "--tag-specifications").match(/Value=(feat-[^}]+)\}/)?.[1]}`);
     const ssh = recordedCalls(run.state).filter((call) => call[0] === "ssh");
     expect(ssh.every((call) => call.includes("admin@198.51.100.1") || call.includes("admin@198.51.100.2"))).toBe(true);
     expect(ssh.some((call) => call.at(-1) === "sudo -n bash -s")).toBe(true);
@@ -123,6 +123,34 @@ describe("aws-spot lanes", () => {
     expect(run.output.text()).toMatch(/machine=none minutes=0 cost≈none exit=unlaunched /);
     expect(aws(run.state, "terminate-instances")).toHaveLength(0);
     expect(aws(run.state, "delete-key-pair")).toHaveLength(1);
+  });
+
+  test("an instance whose launch reply was lost is found by its run tag and terminated", async () => {
+    const run = await awsRun({ lostReply: true });
+
+    const code = await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
+
+    expect(code).toBe(1);
+    expect(run.output.text()).toMatch(/exit=unlaunched /);
+    const terminated = aws(run.state, "terminate-instances");
+    expect(terminated).toHaveLength(1);
+    expect(terminated[0]).toContain("i-00000000000000001");
+    const verbs = aws(run.state).map((call) => call[2]);
+    expect(verbs.indexOf("terminate-instances")).toBeLessThan(verbs.indexOf("delete-security-group"));
+    expect(verbs.slice(-4)).toEqual(["terminate-instances", "wait", "delete-security-group", "delete-key-pair"]);
+  });
+
+  test("a describe failure that is not transient ends the wait at once, and the instance is terminated", async () => {
+    const run = await awsRun({ describeFails: "AuthFailure" });
+    const started = Date.now();
+
+    const code = await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
+
+    expect(code).toBe(1);
+    expect(Date.now() - started).toBeLessThan(30_000);
+    expect(run.output.text()).toContain("aws ec2 describe-instances failed: An error occurred (AuthFailure)");
+    expect(run.output.text()).toMatch(/exit=interrupted /);
+    expect(aws(run.state, "terminate-instances")).toHaveLength(1);
   });
 
   test("a setup that fails after the key is imported still removes the key and the group", async () => {

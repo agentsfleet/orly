@@ -18,7 +18,8 @@ type FakeNode = { id: string; name: string; status: string; polls: number; addre
 type FakeImage = { image_id: string; template_id: number; name: string; image_state: string; image_size: string };
 
 export const FIXTURE_BRANCH = "feat/burst-fixture";
-export const REPOSITORY = "widget";
+// The origin remote below is acme/widget; snapshots are named for both parts.
+export const REPOSITORY = "acme-widget";
 export const SECRET_VALUE = "op-value-test-0000";
 export const CALLER_ADDRESS = "198.51.100.77";
 const JSON_HEADERS = { "Content-Type": "application/json" };
@@ -35,7 +36,7 @@ export function burstRepository(burst: Record<string, unknown> = {}, lanes: Reco
   git(root, "checkout", "-q", "-b", FIXTURE_BRANCH);
   git(root, "add", "-A");
   git(root, "commit", "-q", "-m", "test: declare burst lanes");
-  git(root, "remote", "add", "origin", `https://example.invalid/acme/${REPOSITORY}.git`);
+  git(root, "remote", "add", "origin", "https://example.invalid/acme/widget.git");
   return root;
 }
 
@@ -54,6 +55,11 @@ export function fakeBin(): { bin: string; state: string } {
     chmodSync(join(bin, name), 0o755);
   }
   return { bin, state };
+}
+
+// A recorded request body's fields, or none when it carried no object.
+export function fields(body: unknown): Record<string, unknown> {
+  return isObject(body) ? body : {};
 }
 
 export function sink(): { lines: string[]; write: (line: string) => void; text: () => string } {

@@ -62,8 +62,7 @@ function parseArguments(args: string[]): Request {
       if (!value || value.startsWith("-")) throw new InvalidBurstArguments(`${argument} needs a value`);
       index += 1;
       if (argument === "--ref") request.ref = value;
-      else if ((PROVIDERS as readonly string[]).includes(value)) request.provider = PROVIDERS.find((name) => name === value);
-      else throw new InvalidBurstArguments(`unknown provider ${value} (${PROVIDERS.join(", ")})`);
+      else request.provider = PROVIDERS.find((name) => name === value) ?? refuseProvider(value);
     } else if (argument === "--keep") request.keep = true;
     else if (argument === "--no-snapshot") request.useSnapshot = false;
     else if (argument === "--prune") request.prune = true;
@@ -72,6 +71,10 @@ function parseArguments(args: string[]): Request {
     else request.lanes.push(argument);
   }
   return checked(request);
+}
+
+function refuseProvider(value: string): never {
+  throw new InvalidBurstArguments(`unknown provider ${value} (${PROVIDERS.join(", ")})`);
 }
 
 function checked(request: Request): Request {

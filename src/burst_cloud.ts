@@ -64,8 +64,10 @@ export async function cloudPrune(provider: CloudProvider, run: BurstRun): Promis
 }
 
 async function repositorySnapshots(provider: CloudProvider, run: BurstRun): Promise<Snapshot[]> {
-  const prefix = `orly-burst-${run.repo}-`;
-  return (await provider.snapshots(run)).filter((snapshot) => snapshot.name.startsWith(prefix)).sort((left, right) => right.name.localeCompare(left.name));
+  // The whole name, so repository `web` never claims `orly-burst-web-app-…`;
+  // the repository slug holds only lowercase letters, digits and hyphens.
+  const name = new RegExp(`^orly-burst-${run.repo}-\\d{12}$`);
+  return (await provider.snapshots(run)).filter((snapshot) => name.test(snapshot.name)).sort((left, right) => right.name.localeCompare(left.name));
 }
 
 // An explicit image wins, then the newest snapshot unless --no-snapshot, and

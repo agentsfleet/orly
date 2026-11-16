@@ -50,10 +50,10 @@ Install (the repository is the unit — no checkout of this package required):
 Burst (paid machines, run only when asked; the gates never run burst.* commands):
   orly burst                        list the burst.* lanes .orly/orly.json declares
   orly burst <lane>... --provider aws-spot|e2e|here [--ref <REF>] [--keep] [--no-snapshot]
-                                    run burst.setup, then each lane with burst.secrets
-                                    resolved on the machine: one machine per lane, in
-                                    parallel, from the newest warm snapshot; here runs
-                                    them on this machine, one after another
+                                    run burst.setup, then each lane with burst.secrets,
+                                    read here and sent over SSH: one machine per lane,
+                                    in parallel, from the newest warm snapshot; here
+                                    runs them on this machine, one after another
   orly burst snapshot --provider aws-spot|e2e|here [--ref <REF>] [--keep]
                                     run burst.setup and burst.warm with no secrets on a
                                     base image, then save it as the repository's newest

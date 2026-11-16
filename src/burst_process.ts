@@ -57,16 +57,23 @@ export async function streamProcess(argv: string[], options: StreamOptions): Pro
 }
 
 // One short command whose output is read whole: an `aws` query, `git`, `tar`.
-export async function captureProcess(argv: string[], options: { env: Environment; timeoutMs: number; cwd?: string; stdin?: Blob | BunFile }): Promise<Captured> {
+// It runs in its own process group, so a Ctrl-C at the terminal reaches orly
+// alone; only the signal passed here stops it, which is how cleanup commands,
+// handed no signal, still finish after a cancellation.
+export async function captureProcess(argv: string[], options: { env: Environment; timeoutMs: number; cwd?: string; stdin?: Blob | BunFile; signal?: AbortSignal }): Promise<Captured> {
   const child = Bun.spawn([locate(argv, options.env), ...argv.slice(1)], {
-    env: options.env, stdin: options.stdin ?? "ignore", stdout: PIPE, stderr: PIPE,
+    env: options.env, stdin: options.stdin ?? "ignore", stdout: PIPE, stderr: PIPE, detached: true,
     timeout: options.timeoutMs, killSignal: "SIGKILL", ...(options.cwd ? { cwd: options.cwd } : {}),
   });
+  const cancel = () => child.kill("SIGKILL");
+  if (options.signal?.aborted) cancel();
+  else options.signal?.addEventListener("abort", cancel, { once: true });
   try {
     const [stdout, stderr] = await Promise.all([readBounded(child.stdout), readBounded(child.stderr), child.exited]);
     const stoppedBy = child.signalCode ? `\n${argv[0]} stopped by ${child.signalCode}` : "";
     return { code: child.exitCode ?? -1, stdout, stderr: `${stderr}${stoppedBy}` };
   } finally {
+    options.signal?.removeEventListener("abort", cancel);
     child.kill("SIGKILL");
   }
 }

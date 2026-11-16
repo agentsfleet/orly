@@ -40,6 +40,15 @@ describe("here lanes", () => {
     expect(run.output.text()).toMatch(new RegExp(`orly burst: lane=acceptance provider=here machine=local minutes=\\d+ cost≈none exit=0 evidence=${run.root}`));
   });
 
+  test("setup never sees the cloud credentials orly burst itself reads", async () => {
+    const credentials = ["sh", "-c", `printf '%s|%s' "\${E2E_AUTH_TOKEN-unset}" "\${AWS_SECRET_ACCESS_KEY-unset}" > setup.seen`];
+    const run = hereRun({ setup: [credentials] }, { "burst.acceptance": [["true"]] }, { E2E_AUTH_TOKEN: "e2e_test_token_00000000", AWS_SECRET_ACCESS_KEY: "aws_test_secret_00000000" });
+
+    await burst(["acceptance", "--provider", "here"], run.dependencies);
+
+    expect(seen(run.root, "setup.seen")).toBe("unset|unset");
+  });
+
   test("a secret the caller already holds is used as it is, without op", async () => {
     const run = hereRun({ secrets: { API_TOKEN: REFERENCE } }, { "burst.acceptance": [record("lane.seen")] }, { API_TOKEN: "preset-value-0000" });
 

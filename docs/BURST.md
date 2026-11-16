@@ -142,19 +142,28 @@ A node gets the run's public key at creation; no key is registered on the accoun
 
 | Variable | Effect | Default | Range |
 |---|---|---|---|
-| `ORLY_BURST_DEADLINE_MINUTES` | Minutes a run may take. The machine schedules its own shutdown for then, and the caller deletes it then. | 120 | above 0, at most 1440 |
+| `ORLY_BURST_DEADLINE_MINUTES` | Minutes a run may take. The caller deletes the machine then, and the machine schedules its own shutdown for then. | 120 | above 0, at most 1440 |
 | `ORLY_BURST_POLL_SECONDS` | Seconds between state checks while a machine boots or an image saves. | 30 | above 0, at most 600 |
 | `ORLY_BURST_SNAPSHOT_KEEP` | Snapshots `--prune` keeps. | 2 | 1 to 20 |
 | `ORLY_BURST_OUT` | Directory for each run's key, log and results. | the system temporary directory's `orly-burst` | any path |
 | `ORLY_BURST_REGION` | AWS region. | `us-east-1` | an AWS region name |
 | `ORLY_BURST_INSTANCE_TYPES` | x86 types tried in order until one has Spot capacity. | `c7i.4xlarge c7a.4xlarge c6i.4xlarge m7i.4xlarge` | any instance types |
-| `ORLY_BURST_AWS_IMAGE` | An AMI ID or `resolve:ssm:` parameter used instead of a snapshot. | none: the newest snapshot, then Debian 13 amd64 | none |
+| `ORLY_BURST_AWS_IMAGE` | An Amazon Machine Image (AMI) ID or `resolve:ssm:` parameter used instead of a snapshot. | none: the newest snapshot, then Debian 13 amd64 | none |
 | `ORLY_BURST_SUBNET` | Subnet for the instances; the security group joins its network. | the default network | a subnet ID |
 | `ORLY_BURST_AWS_USER` | Login user of the AWS image. | `admin`, Debian's | a user name |
 | `ORLY_BURST_E2E_LOCATION` | E2E location. | `Delhi` | `Delhi`, `Chennai` |
 | `ORLY_BURST_E2E_PLAN` | E2E plan name, resolved to the location's plan for the image. | `C3.32GB`, 16 vCPU and 32 GB | an E2E plan name |
 | `ORLY_BURST_E2E_IMAGE` | A saved image name, or an OS image name, used instead of a snapshot. | none: the newest snapshot, then `Ubuntu-24.04-Distro` | none |
 | `ORLY_BURST_E2E_USER` | Login user of the E2E image. | `root` | a user name |
+
+The machine's own shutdown is a backstop for a caller that died, and what it saves differs by provider:
+
+| Machine | At its scheduled shutdown | Still billed afterwards |
+|---|---|---|
+| AWS Spot lane | terminates | nothing |
+| AWS on-demand snapshot warm-up | stops | its 80 GB disk, until deleted |
+| E2E node | powers off | the node, until deleted |
+| Any machine under `--keep` | no shutdown is scheduled | everything, until deleted |
 
 ### Costs
 
@@ -168,7 +177,7 @@ AWS runs assume a warm run of 30 minutes at a Spot price of $0.30 per hour, whic
 | 50 | ₹1,475.00 | ₹472.00 | ₹1,947.00 | $7.50 | $8.00 at most | $15.50 |
 | 200 | ₹5,900.00 | ₹472.00 | ₹6,372.00 | $30.00 | $8.00 at most | $38.00 |
 
-AWS storage is $0.05 per GB each month for the EBS data an AMI keeps, at most its 80 GB volume.
+AWS storage is $0.05 per GB each month for the Elastic Block Store (EBS) data an AMI keeps, at most its 80 GB volume.
 Each snapshot capture costs one more run, and AWS adds about $0.005 per hour for each public IPv4 address.
 
 ## Steps
@@ -216,7 +225,8 @@ Each snapshot capture costs one more run, and AWS adds about $0.005 per hour for
    Each lane starts from the newest snapshot, fetches the ref into the warm checkout, runs setup again, then runs the lane.
    `--no-snapshot` starts from the base image instead, and `--ref <BRANCH>` runs a ref other than the current branch.
 
-4. Keep the two newest snapshots and delete the rest:
+4. Keep the two newest snapshots and delete the rest.
+   **Pruning deletes the older snapshots permanently, and no dry run exists.**
 
    ```bash
    orly burst snapshot --prune --provider e2e
@@ -228,7 +238,8 @@ Each snapshot capture costs one more run, and AWS adds about $0.005 per hour for
    ```
 
 The same steps work with `--provider aws-spot`.
-On AWS a snapshot is an Amazon Machine Image (AMI) with its Elastic Block Store (EBS) snapshots, tagged `orly-burst=<REPO>`.
+On AWS a snapshot is an AMI with its EBS snapshots, tagged `orly-burst=<REPO>`.
+`<REPO>` is the origin remote's owner and name, such as `agentsfleet-orly`.
 
 A volume made from an EBS snapshot loads each block on its first read.
 The first reads of a warm cache are therefore slower than reads from a stopped disk.
@@ -304,7 +315,11 @@ Only a number after `exit=` is evidence about the code.
 `interrupted`, `deadline`, `cancelled`, `unlaunched` and `not_run` mean the lane never finished.
 The command exits with the first failing lane's code, or 1 when no failing lane has one.
 
-The evidence directory holds `run.log` and the declared results that existed on the machine.
+For a cloud lane, the evidence directory holds `run.log` and the declared results that existed on the machine.
+For `--provider here`, the evidence is the checkout itself, and the log is the command's own output.
+
+Setup and warm run without `burst.secrets`, `OP_SERVICE_ACCOUNT_TOKEN` or the AWS and E2E credentials orly reads.
+A cloud lane gets only its declared secrets; a lane under `here` also keeps the rest of the caller's environment.
 
 ## Common problems
 

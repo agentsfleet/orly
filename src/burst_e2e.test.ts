@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { burst } from "./burst";
-import { burstDependencies, burstEnvironment, burstRepository, fakeBin, FakeE2e, recordedCalls, REPOSITORY, SECRET_VALUE } from "./burst_test_support";
+import { burstDependencies, burstEnvironment, burstRepository, fakeBin, FakeE2e, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./burst_test_support";
 import { cleanupTemporaryDirectories } from "./gates_test_support";
 
 const API_KEY = "e2e_test_key_00000000";
@@ -42,12 +42,12 @@ describe("e2e lanes", () => {
     expect(deletes).toHaveLength(2);
     expect(run.api.calls.indexOf(creates[1]!)).toBeLessThan(run.api.calls.indexOf(deletes[0]!));
     expect(run.api.nodes.size).toBe(0);
-    const body = creates[0]?.body as Record<string, unknown>;
+    const body = fields(creates[0]?.body);
     expect(body.plan).toBe("C3-16vCPU-32RAM-200DISK-C3-Onetemplate-Ubuntu24.04-Delhi");
     expect(body.image).toBe("Ubuntu-24.04-Distro");
     expect(body.is_saved_image).toBe(false);
     expect(body.label).toBe("orly-burst");
-    expect(String((body.ssh_keys as string[])[0])).toStartWith("ssh-ed25519 ");
+    expect(Array.isArray(body.ssh_keys) ? String(body.ssh_keys[0]) : "").toStartWith("ssh-ed25519 ");
     expect(creates[0]?.query).toEqual({ project_id: "12345", apikey: API_KEY, location: "Delhi" });
     expect(creates[0]?.authorization).toBe(`Bearer ${AUTH_TOKEN}`);
     const text = run.output.text();
@@ -187,7 +187,7 @@ describe("e2e snapshots", () => {
     expect(job).not.toContain("export API_TOKEN");
     expect(job).not.toContain("export CI=");
     expect(existsSync(join(run.state, "op-calls.txt"))).toBe(false);
-    const actions = run.api.callsTo("PUT", /\/actions\/$/).map((call) => call.body as Record<string, unknown>);
+    const actions = run.api.callsTo("PUT", /\/actions\/$/).map((call) => fields(call.body));
     expect(actions.map((action) => action.type)).toEqual(["power_off", "save_images"]);
     expect(String(actions[1]?.name)).toMatch(SNAPSHOT_NAME);
     const order = run.api.calls.map((call) => `${call.method} ${call.path}`);
@@ -202,11 +202,13 @@ describe("e2e snapshots", () => {
     run.api.savedImage(`orly-burst-${REPOSITORY}-202611150000`, 7002);
     run.api.savedImage(`orly-burst-${REPOSITORY}-202611160000`, 7003, "Creating");
     run.api.savedImage("orly-burst-other-202612010000", 7004);
+    // Another repository whose name starts with this one's sorts first.
+    run.api.savedImage(`orly-burst-${REPOSITORY}-app-202612010000`, 7005);
 
     await burst(["acceptance", "--provider", "e2e"], run.dependencies);
     await burst(["acceptance", "--provider", "e2e", "--no-snapshot"], run.dependencies);
 
-    const bodies = run.api.callsTo("POST", /^\/nodes\/$/).map((call) => call.body as Record<string, unknown>);
+    const bodies = run.api.callsTo("POST", /^\/nodes\/$/).map((call) => fields(call.body));
     expect(bodies[0]).toMatchObject({ is_saved_image: true, saved_image_template_id: 7002, image: "Ubuntu-24.04-Distro" });
     expect(bodies[1]).toMatchObject({ is_saved_image: false, saved_image_template_id: null });
   });
@@ -226,12 +228,15 @@ describe("e2e snapshots", () => {
       run.api.savedImage(`orly-burst-${REPOSITORY}-${stamp}`, template);
     }
     run.api.savedImage("orly-burst-other-202611010000", 7005);
+    run.api.savedImage(`orly-burst-${REPOSITORY}-app-202612010000`, 7006);
 
     const code = await burst(["snapshot", "--prune", "--provider", "e2e"], run.dependencies);
 
     expect(code).toBe(0);
     expect(run.api.callsTo("DELETE", /^\/images\//).map((call) => call.path)).toEqual(["/images/8002/", "/images/8001/"]);
-    expect(run.api.images.map((image) => image.name).sort()).toEqual(["orly-burst-other-202611010000", `orly-burst-${REPOSITORY}-202611030000`, `orly-burst-${REPOSITORY}-202611040000`]);
+    expect(run.api.images.map((image) => image.name).sort()).toEqual([
+      `orly-burst-${REPOSITORY}-202611030000`, `orly-burst-${REPOSITORY}-202611040000`, `orly-burst-${REPOSITORY}-app-202612010000`, "orly-burst-other-202611010000",
+    ]);
     expect(run.api.callsTo("POST", /^\/nodes\/$/)).toHaveLength(0);
   });
 });

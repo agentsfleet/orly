@@ -5,9 +5,11 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-type Instance = { id: string; type: string; state: string; address: string };
+type Instance = { id: string; type: string; state: string; address: string; run: string };
 type Image = { id: string; name: string; repo: string; snapshots: string[]; size: number };
-type Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean };
+// lostReply: the instance launches but the caller never hears its identifier.
+// describeFails: every describe-instances call fails with this error.
+type Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lostReply?: boolean; describeFails?: string };
 
 const state = process.env.FAKE_AWS_STATE ?? "";
 const args = Bun.argv.slice(2);
@@ -23,8 +25,11 @@ function dispatch(command: string[]): number {
   if (verb === "describe-subnets") return print("vpc-0123456789abcdef0");
   if (verb === "create-security-group") return print("sg-0123456789abcdef0");
   if (verb === "run-instances") return launch(command);
-  if (verb === "describe-instances") return describe(option(command, "--instance-ids"));
-  if (verb === "terminate-instances") return setState(option(command, "--instance-ids"), "terminated");
+  if (verb === "describe-instances") return describe(command);
+  if (verb === "terminate-instances") {
+    for (const id of command.slice(command.indexOf("--instance-ids") + 1).filter((argument) => argument.startsWith("i-"))) setState(id, "terminated");
+    return 0;
+  }
   if (verb === "stop-instances") return setState(option(command, "--instance-ids"), "stopped");
   if (verb === "describe-spot-price-history") return print("0.2345");
   if (verb === "create-image") return createImage(command);
@@ -47,13 +52,28 @@ function launch(command: string[]): number {
   let number = 1;
   while (!claim(`instance-${number}`)) number += 1;
   const id = `i-${String(number).padStart(17, "0")}`;
-  const instance: Instance = { id, type, state: scenario.vanish ? "terminated" : "running", address: `198.51.100.${number}` };
+  const run = option(command, "--tag-specifications").match(/Key=orly-burst,Value=([^}]+)\}/)?.[1] ?? "";
+  const instance: Instance = { id, type, state: scenario.vanish ? "terminated" : "running", address: `198.51.100.${number}`, run };
   writeFileSync(join(state, `${id}.json`), JSON.stringify(instance));
+  if (scenario.lostReply) {
+    process.stderr.write("Connection was closed before we received a valid response from endpoint URL\n");
+    return 255;
+  }
   return print(id);
 }
 
-function describe(id: string): number {
-  const found = instance(id);
+// By identifier, the state and address; by run tag, the run's live instances.
+function describe(command: string[]): number {
+  if (scenario.describeFails) {
+    process.stderr.write(`An error occurred (${scenario.describeFails}) when calling the DescribeInstances operation\n`);
+    return 254;
+  }
+  const run = command.find((argument) => argument.startsWith("Name=tag:orly-burst,Values="))?.split("=").pop();
+  if (run) {
+    const live = [...new Bun.Glob("i-*.json").scanSync(state)].map((file) => instance(file.replace(".json", ""))).filter((found) => found?.run === run && found.state !== "terminated");
+    return print(live.map((found) => found?.id).join("\t"));
+  }
+  const found = instance(option(command, "--instance-ids"));
   return print(found ? `${found.state}\t${found.address}` : "None\tNone");
 }
 

@@ -7,7 +7,9 @@ import { resolveSecrets } from "./burst_secrets";
 
 export type HereRequest = Io & { root: string; config: RepoConfig; settings: BurstSettings };
 
-const OP_TOKEN = "OP_SERVICE_ACCOUNT_TOKEN";
+// Credentials setup and warm never see: the 1Password token and the cloud
+// credentials `orly burst` itself reads, which a CI job sets on the same step.
+const LAUNCHER_CREDENTIALS = ["OP_SERVICE_ACCOUNT_TOKEN", "E2E_API_KEY", "E2E_AUTH_TOKEN", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_SECURITY_TOKEN"];
 const MINUTE_MS = 60_000;
 const LANE_PREFIX = "burst.";
 // A lane is a CI run whether or not the caller says so, which is what makes
@@ -15,9 +17,10 @@ const LANE_PREFIX = "burst.";
 const LANE_DEFAULTS = Object.freeze({ CI: "1" });
 
 // `--provider here`: this machine is the burst machine, which is how a CI job
-// runs a lane itself. Setup runs without any secret, or even the 1Password
-// token, so a dependency install cannot read one. Secrets are resolved after
-// it, into the lanes' process environment only.
+// runs a lane itself. Setup runs without any secret, the 1Password token or a
+// cloud credential, so a dependency install cannot read one. Secrets are
+// resolved after it, into the lanes' process environment only; a lane here
+// keeps the rest of the caller's environment.
 export async function hereLanes(request: HereRequest, lanes: string[]): Promise<LaneResult[]> {
   const deadline = Date.now() + request.settings.deadlineMs;
   const burst = request.config.burst ?? {};
@@ -49,7 +52,7 @@ export async function hereWarm(request: HereRequest): Promise<Status> {
 }
 
 function withoutSecrets(env: Environment, config: RepoConfig): Environment {
-  const names = new Set([OP_TOKEN, ...Object.keys(config.burst?.secrets ?? {})]);
+  const names = new Set([...LAUNCHER_CREDENTIALS, ...Object.keys(config.burst?.secrets ?? {})]);
   return Object.fromEntries(Object.entries(env).filter(([name]) => !names.has(name)));
 }
 
