@@ -218,7 +218,38 @@ describe("e2e snapshots", () => {
     const order = run.api.calls.map((call) => `${call.method} ${call.path}`);
     expect(order.indexOf("PUT /nodes/4001/actions/")).toBeLessThan(order.lastIndexOf("DELETE /nodes/4001/"));
     expect(run.api.nodes.size).toBe(0);
-    expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=e2e id=\\d+ name=orly-burst-${REPOSITORY}-\\d{12} size=40\\.0GB storage≈₹200/month \\+ GST`));
+    expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=e2e id=\\d+ name=orly-burst-${REPOSITORY}-\\d{12} state=ready size=40\\.0GB storage≈₹200/month \\+ GST`));
+  });
+
+  test("a saved image still Creating for several lists is waited out", async () => {
+    const run = e2eRun();
+    run.api.savingLists = 4;
+
+    const code = await burst(["snapshot", "--provider", "e2e"], run.dependencies);
+
+    expect(code).toBe(0);
+    expect(run.api.callsTo("GET", /^\/images\/saved-images\/$/).length).toBeGreaterThanOrEqual(5);
+    expect(run.output.text()).toMatch(/snapshot provider=e2e id=\d+ name=\S+ state=ready/);
+  });
+
+  test("a saved image that fails fails the capture, and the node still goes", async () => {
+    const run = e2eRun();
+    run.api.savedState = "Failed";
+
+    await expect(burst(["snapshot", "--provider", "e2e"], run.dependencies)).rejects.toThrow(/saved image orly-burst-\S+ is Failed/);
+    expect(run.api.nodes.size).toBe(0);
+  });
+
+  test("a saved image still Creating at the deadline is reported as pending", async () => {
+    const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.05" });
+    run.api.savingLists = 100_000;
+
+    const code = await burst(["snapshot", "--provider", "e2e"], run.dependencies);
+
+    expect(code).toBe(0);
+    expect(run.output.text()).toMatch(/snapshot provider=e2e id=\d+ name=\S+ state=pending/);
+    expect(run.output.text()).toContain("e2e is still saving");
+    expect(run.api.nodes.size).toBe(0);
   });
 
   test("lanes start from the repository's newest ready snapshot unless told otherwise", async () => {

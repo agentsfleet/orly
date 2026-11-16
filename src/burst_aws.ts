@@ -5,12 +5,18 @@ import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot } from "./b
 
 import { z } from "zod";
 
-import { captureProcess, until } from "./burst_process";
+import { captureProcess, pause, until } from "./burst_process";
 import { OrlyError } from "./model";
 
 type Call = { allowFailure?: boolean; signal?: AbortSignal };
 
+// Bounds one `aws` call. Nothing orly runs waits inside the call: every wait
+// is a loop of short describe calls, so this bound never cuts a wait short.
 const AWS_TIMEOUT_MS = 10 * 60_000;
+const CLEANUP_WAIT_MS = 15 * 60_000;
+// Image states that will never become available; `pending` and `transient`
+// are progress.
+const FAILED_IMAGE_STATES = new Set(["failed", "error", "invalid", "deregistered", "disabled"]);
 const BASE_IMAGE = Object.freeze({ id: "resolve:ssm:/aws/service/debian/release/13/latest/amd64", name: "Debian 13 amd64", snapshot: false });
 // The caller's public address as AWS sees it, over HTTPS; it answers on a
 // GitHub-hosted runner as it does on a workstation.
@@ -20,10 +26,14 @@ const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 // A type with no Spot capacity, or none at this price, falls through to the
 // next type in ORLY_BURST_INSTANCE_TYPES; any other refusal stops the lane.
 const CAPACITY_ERRORS = /InsufficientInstanceCapacity|SpotMaxPriceTooLow|MaxSpotInstanceCountExceeded|Unsupported/;
-// Failures a poll waits out: throttling, a service hiccup, an instance not yet
-// visible right after launch, and a waiter that ran out of its own attempts.
-// Anything else, such as expired credentials, stops the wait at once.
-const TRANSIENT_ERRORS = /RequestLimitExceeded|Throttling|ServiceUnavailable|InternalError|InvalidInstanceID\.NotFound|InvalidAMIID\.NotFound|Max attempts exceeded|Could not connect to the endpoint URL|Read timeout/;
+// An account's first Spot launch needs the Spot service-linked role, which
+// the launcher may not create: that is an administrator's one-time step.
+const SPOT_ROLE_MISSING = /ServiceLinkedRoleCreationNotPermitted/;
+const SPOT_ROLE_COMMAND = "aws iam create-service-linked-role --aws-service-name spot.amazonaws.com";
+// Failures a poll waits out: throttling, a service hiccup, and an instance or
+// image not yet visible right after it was created. Anything else, such as
+// expired credentials, stops the wait at once.
+const TRANSIENT_ERRORS = /RequestLimitExceeded|Throttling|ServiceUnavailable|InternalError|InvalidInstanceID\.NotFound|InvalidAMIID\.NotFound|Could not connect to the endpoint URL|Read timeout/;
 const GONE_STATES = new Set(["shutting-down", "terminated", "stopping", "stopped"]);
 const LIVE_STATES = "pending,running,shutting-down,stopping,stopped";
 // An AMI's EBS snapshots bill per GB-month of stored data; the volume size is
@@ -100,6 +110,7 @@ export class AwsSpot implements CloudProvider {
         run.write(`orly burst: lane=${job.name} ${id} (${type}${spot ? " spot" : " on-demand"}) started from ${job.image.name}`);
         return { id, label: type, address: undefined, hourly: spot ? await this.#spotPrice(type, run.signal) : undefined };
       }
+      if (SPOT_ROLE_MISSING.test(launch.stderr)) throw new OrlyError(`this account has never launched a Spot instance: an administrator runs \`${SPOT_ROLE_COMMAND}\` once (docs/BURST.md)`);
       if (!CAPACITY_ERRORS.test(launch.stderr)) throw new OrlyError(`run-instances refused: ${launch.stderr.trim()}`);
       run.write(`orly burst: lane=${job.name} no capacity for ${type}; trying the next type`);
     }
@@ -117,18 +128,30 @@ export class AwsSpot implements CloudProvider {
     return { ...machine, address };
   }
 
+  // Saving an 80 GB image outlasts any single `aws ec2 wait`, so every check
+  // is one short describe call, repeated within the run's own deadline. An
+  // image still pending at the deadline is left to finish, and said to be.
   async capture(run: BurstRun, job: Job, machine: Machine, name: string): Promise<Snapshot> {
+    const timing = { deadline: job.deadline, signal: run.signal, pollMs: this.#settings.pollMs };
     await this.#aws(["ec2", "stop-instances", "--instance-ids", machine.id], { signal: run.signal });
-    await this.#waitFor(["instance-stopped", "--instance-ids", machine.id], job, run);
+    await until(`${machine.id} to stop`, async () => (await this.#states([machine.id], run.signal))[0] === "stopped" || undefined, timing);
     const tags = `Tags=[{Key=owner,Value=agent},{Key=orly-burst,Value=${run.repo}}]`;
     const created = await this.#aws(["ec2", "create-image", "--instance-id", machine.id, "--name", name, "--description", `orly burst warm image of ${run.repo}`,
       "--tag-specifications", `ResourceType=image,${tags}`, `ResourceType=snapshot,${tags}`, "--query", "ImageId", "--output", "text"], { signal: run.signal });
     const id = created.stdout.trim();
     run.write(`orly burst: capturing ${name} as ${id}`);
-    await this.#waitFor(["image-available", "--image-ids", id], job, run);
-    const [snapshot] = await this.#describeImages(["--image-ids", id], run.signal);
-    if (!snapshot) throw new OrlyError(`image ${id} is not visible after it became available`);
-    return snapshot;
+    for (;;) {
+      const described = await this.#poll(["ec2", "describe-images", "--image-ids", id, "--query", "Images[0].[State,StateReason.Message]", "--output", "text"], run.signal);
+      const [state = "", ...reason] = described?.stdout.trim().split("\t") ?? [];
+      if (state === "available") {
+        const [snapshot] = await this.#describeImages(["--image-ids", id], run.signal);
+        if (!snapshot) throw new OrlyError(`image ${id} is not visible after it became available`);
+        return snapshot;
+      }
+      if (FAILED_IMAGE_STATES.has(state)) throw new OrlyError(`image ${id} is ${state}: ${reason.join(" ").trim() || "AWS gave no reason"}`);
+      if (run.signal.aborted || Date.now() >= job.deadline) return { id, name, sizeGb: undefined, launchId: id, parts: [], ready: false };
+      await pause(this.#settings.pollMs, run.signal);
+    }
   }
 
   // Cleanup takes no cancellation signal: it is what a cancellation runs.
@@ -154,8 +177,10 @@ export class AwsSpot implements CloudProvider {
     const tagged = await this.#aws(["ec2", "describe-instances", "--filters", `Name=tag:orly-burst,Values=${run.runId}`, `Name=instance-state-name,Values=${LIVE_STATES}`,
       "--query", "Reservations[].Instances[].InstanceId", "--output", "text"], { allowFailure: true });
     const strays = tagged.code === 0 ? tagged.stdout.split(/\s+/).filter((id) => id.startsWith("i-")) : [];
-    if (strays.length > 0) await this.#aws(["ec2", "terminate-instances", "--instance-ids", ...strays], { allowFailure: true });
-    if (strays.length > 0) await this.#aws(["ec2", "wait", "instance-terminated", "--instance-ids", ...strays], { allowFailure: true });
+    if (strays.length > 0) {
+      await this.#aws(["ec2", "terminate-instances", "--instance-ids", ...strays], { allowFailure: true });
+      await this.#awaitTerminated(strays).catch((error: unknown) => run.write(`orly burst: ${error instanceof Error ? error.message : String(error)}`));
+    }
     const cleanups = [...(this.#group ? [["ec2", "delete-security-group", "--group-id", this.#group]] : []), ["ec2", "delete-key-pair", "--key-name", name]];
     for (const cleanup of cleanups) {
       const done = await this.#aws(cleanup, { allowFailure: true });
@@ -191,11 +216,20 @@ export class AwsSpot implements CloudProvider {
     return price.code === 0 && Number.isFinite(value) && value > 0 ? value : undefined;
   }
 
-  // An `aws ec2 wait` gives up after its own fixed attempts; this repeats it
-  // until the job's deadline, which is the bound that matters here.
-  async #waitFor(waiter: string[], job: Job, run: BurstRun): Promise<void> {
-    await until(waiter.join(" "), async () => (await this.#poll(["ec2", "wait", ...waiter], run.signal)) ? true : undefined,
-      { deadline: job.deadline, signal: run.signal, pollMs: this.#settings.pollMs });
+  // The state of each instance, in the order AWS lists them; a transient
+  // failure reads as no answer yet.
+  async #states(ids: string[], signal: AbortSignal): Promise<string[]> {
+    const described = await this.#poll(["ec2", "describe-instances", "--instance-ids", ...ids, "--query", "Reservations[].Instances[].State.Name", "--output", "text"], signal);
+    return described?.stdout.trim().split(/\s+/).filter(Boolean) ?? [];
+  }
+
+  // Cleanup's own bound, apart from the run's deadline, which may have passed.
+  async #awaitTerminated(ids: string[]): Promise<void> {
+    const never = new AbortController().signal;
+    await until(`${ids.join(" ")} to terminate`, async () => {
+      const states = await this.#states(ids, never);
+      return states.length === ids.length && states.every((state) => state === "terminated") || undefined;
+    }, { deadline: Date.now() + CLEANUP_WAIT_MS, signal: never, pollMs: this.#settings.pollMs });
   }
 
   // One attempt of a poll: the answer, nothing for a transient failure worth
@@ -212,7 +246,7 @@ export class AwsSpot implements CloudProvider {
     return imagesSchema.parse(JSON.parse(listed.stdout || "[]")).map((image) => {
       const volumes = image.devices.flatMap((device) => device.Ebs ? [device.Ebs] : []);
       const sizes = volumes.flatMap((volume) => volume.VolumeSize === undefined ? [] : [volume.VolumeSize]);
-      return { id: image.id, name: image.name, launchId: image.id, sizeGb: sizes.length ? sizes.reduce((sum, size) => sum + size, 0) : undefined, parts: volumes.flatMap((volume) => volume.SnapshotId ? [volume.SnapshotId] : []) };
+      return { id: image.id, name: image.name, launchId: image.id, sizeGb: sizes.length ? sizes.reduce((sum, size) => sum + size, 0) : undefined, parts: volumes.flatMap((volume) => volume.SnapshotId ? [volume.SnapshotId] : []), ready: true };
     });
   }
 

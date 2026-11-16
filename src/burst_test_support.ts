@@ -95,13 +95,16 @@ export function recordedCalls(state: string): string[][] {
 }
 
 // The MyAccount API as orly uses it. A node runs after one status poll and
-// stops after one more once powered off; a saved image is Ready on the list
-// after the one that first shows it.
+// stops after one more once powered off. A saved image stays Creating for
+// `savingLists` list calls, then turns Ready, or `savedState` when set.
 export class FakeE2e {
   readonly calls: Call[] = [];
   readonly nodes = new Map<string, FakeNode>();
   images: FakeImage[] = [];
   createStatus = 200;
+  savingLists = 1;
+  savedState = "Ready";
+  #saving = new Map<string, number>();
   #nextNode = 4001;
 
   fetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
@@ -162,13 +165,20 @@ export class FakeE2e {
     const action = isObject(body) ? body : {};
     if (!node) return reply({}, 404);
     if (action.type === "power_off") node.status = "Stopping";
-    if (action.type === "save_images") this.savedImage(String(action.name), 9000 + this.images.length, "Creating");
+    if (action.type === "save_images") {
+      this.savedImage(String(action.name), 9000 + this.images.length, "Creating");
+      this.#saving.set(String(action.name), this.savingLists);
+    }
     return reply({ status: "done", action_type: action.type, image_id: "" });
   }
 
   private listImages(): Response {
     const listed = this.images.map((image) => ({ ...image }));
-    for (const image of this.images) image.image_state = "Ready";
+    for (const image of this.images) {
+      const left = this.#saving.get(image.name) ?? 0;
+      if (left > 1) this.#saving.set(image.name, left - 1);
+      else if (image.image_state === "Creating") image.image_state = this.#saving.has(image.name) ? this.savedState : "Ready";
+    }
     return reply(listed);
   }
 }

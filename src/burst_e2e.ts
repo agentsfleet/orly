@@ -3,12 +3,15 @@ import type { BurstSettings } from "./burst_settings";
 import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot } from "./burst_types";
 
 import { E2eApi, E2eRequestFailed } from "./burst_e2e_api";
-import { until } from "./burst_process";
+import { pause, until } from "./burst_process";
 import { OrlyError } from "./model";
 
 const BASE_IMAGE = Object.freeze({ id: "Ubuntu-24.04-Distro", name: "Ubuntu-24.04-Distro", snapshot: false });
 const NODE_LABEL = "orly-burst";
 const READY = "Ready";
+// The documented state is Ready; any of these, compared in lowercase, means
+// the save will not finish. unverified: the full state list.
+const FAILED_IMAGE_STATES = new Set(["failed", "error", "deleted"]);
 // The owner's planning figures (Nov 16, 2026), used in place of the rate card:
 // a run hour costs ₹25 before 18% GST, billed by the started hour, and each
 // stored snapshot ₹200 a month.
@@ -97,10 +100,20 @@ export class E2eNodes implements CloudProvider {
   async capture(run: BurstRun, job: Job, machine: Machine, name: string): Promise<Snapshot> {
     await this.#api.action(machine.id, "power_off");
     await this.#until(run, job, "the node to stop", async () => (await this.#api.node(machine.id)).status === "Stopped" || undefined);
-    await this.#api.action(machine.id, "save_images", name);
+    const imageId = await this.#api.action(machine.id, "save_images", name);
     run.write(`orly burst: saving ${name}`);
-    const saved = await this.#until(run, job, `saved image ${name}`, async () => (await this.#api.savedImages()).find((image) => image.name === name && image.state === READY));
-    return toSnapshot(saved);
+    // A save outlasts no deadline of its own: it is polled until Ready or a
+    // failed state, and one still saving at the run's deadline is left to
+    // finish and reported as pending.
+    for (;;) {
+      const saved = (await this.#api.savedImages()).find((image) => image.name === name);
+      if (saved?.state === READY) return toSnapshot(saved);
+      if (saved && FAILED_IMAGE_STATES.has(saved.state.toLowerCase())) throw new OrlyError(`saved image ${name} is ${saved.state}`);
+      if (run.signal.aborted || Date.now() >= job.deadline) {
+        return saved ? toSnapshot(saved) : { id: imageId ?? "unknown", name, sizeGb: undefined, launchId: "", parts: [], ready: false };
+      }
+      await pause(this.#settings.pollMs, run.signal);
+    }
   }
 
   async remove(_run: BurstRun, machine: Machine): Promise<void> {
@@ -136,5 +149,5 @@ export class E2eNodes implements CloudProvider {
 }
 
 function toSnapshot(image: SavedImage): Snapshot {
-  return { id: image.imageId, name: image.name, sizeGb: image.sizeGb, launchId: image.templateId, parts: [] };
+  return { id: image.imageId, name: image.name, sizeGb: image.sizeGb, launchId: image.templateId, parts: [], ready: image.state === READY };
 }

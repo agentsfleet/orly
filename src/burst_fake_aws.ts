@@ -6,10 +6,13 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { join } from "node:path";
 
 type Instance = { id: string; type: string; state: string; address: string; run: string };
-type Image = { id: string; name: string; repo: string; snapshots: string[]; size: number };
+// pendingPolls: how many more state reads answer `pending`; fails: the reason
+// the image ends `failed` instead of `available`.
+type Image = { id: string; name: string; repo: string; snapshots: string[]; size: number; pendingPolls?: number; fails?: string };
 // lostReply: the instance launches but the caller never hears its identifier.
 // describeFails: every describe-instances call fails with this error.
-type Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lostReply?: boolean; describeFails?: string };
+// imagePendingPolls and imageFails shape every image create-image makes.
+type Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lostReply?: boolean; describeFails?: string; imagePendingPolls?: number; imageFails?: string };
 
 const state = process.env.FAKE_AWS_STATE ?? "";
 const args = Bun.argv.slice(2);
@@ -73,22 +76,42 @@ function describe(command: string[]): number {
     const live = [...new Bun.Glob("i-*.json").scanSync(state)].map((file) => instance(file.replace(".json", ""))).filter((found) => found?.run === run && found.state !== "terminated");
     return print(live.map((found) => found?.id).join("\t"));
   }
-  const found = instance(option(command, "--instance-ids"));
-  return print(found ? `${found.state}\t${found.address}` : "None\tNone");
+  const ids = command.slice(command.indexOf("--instance-ids") + 1).filter((argument) => argument.startsWith("i-"));
+  if (option(command, "--query").includes("PublicIpAddress")) {
+    const found = instance(ids[0] ?? "");
+    return print(found ? `${found.state}\t${found.address}` : "None\tNone");
+  }
+  return print(ids.map((id) => instance(id)?.state ?? "unknown").join("\t"));
 }
 
 function createImage(command: string[]): number {
   const repo = option(command, "--tag-specifications").match(/Key=orly-burst,Value=([^}]+)\}/)?.[1] ?? "";
   const id = `ami-${String(images().length + 1).padStart(17, "0")}`;
-  saveImages([...images(), { id, name: option(command, "--name"), repo, snapshots: [`snap-${id.slice(4)}`], size: 80 }]);
+  const image: Image = { id, name: option(command, "--name"), repo, snapshots: [`snap-${id.slice(4)}`], size: 80, pendingPolls: scenario.imagePendingPolls ?? 0, ...(scenario.imageFails ? { fails: scenario.imageFails } : {}) };
+  saveImages([...images(), image]);
   return print(id);
 }
 
 function describeImages(command: string[]): number {
   const wanted = option(command, "--image-ids");
+  if (option(command, "--query").includes("State")) return imageState(wanted);
   const repo = command.find((argument) => argument.startsWith("Name=tag:orly-burst,Values="))?.split("=").pop();
   const listed = images().filter((image) => wanted ? image.id === wanted : image.repo === repo);
   return print(JSON.stringify(listed.map((image) => ({ id: image.id, name: image.name, devices: image.snapshots.map((snapshot) => ({ Ebs: { SnapshotId: snapshot, VolumeSize: image.size } })) }))));
+}
+
+// Each state read spends one pending poll, so a slow image turns available
+// after the number of reads the scenario set.
+function imageState(id: string): number {
+  const list = images();
+  const image = list.find((candidate) => candidate.id === id);
+  if (!image) return print("None\tNone");
+  if ((image.pendingPolls ?? 0) > 0) {
+    image.pendingPolls = (image.pendingPolls ?? 0) - 1;
+    saveImages(list);
+    return print("pending\tNone");
+  }
+  return print(image.fails ? `failed\t${image.fails}` : "available\tNone");
 }
 
 function claim(name: string): boolean {

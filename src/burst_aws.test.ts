@@ -125,6 +125,16 @@ describe("aws-spot lanes", () => {
     expect(aws(run.state, "delete-key-pair")).toHaveLength(1);
   });
 
+  test("an account's first Spot launch names the one-time service-linked role command", async () => {
+    const run = await awsRun({ refuse: "An error occurred (AuthFailure.ServiceLinkedRoleCreationNotPermitted) when calling the RunInstances operation" });
+
+    const code = await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
+
+    expect(code).toBe(1);
+    expect(run.output.text()).toContain("this account has never launched a Spot instance: an administrator runs `aws iam create-service-linked-role --aws-service-name spot.amazonaws.com` once (docs/BURST.md)");
+    expect(aws(run.state, "run-instances")).toHaveLength(1);
+  });
+
   test("an instance whose launch reply was lost is found by its run tag and terminated", async () => {
     const run = await awsRun({ lostReply: true });
 
@@ -137,7 +147,8 @@ describe("aws-spot lanes", () => {
     expect(terminated[0]).toContain("i-00000000000000001");
     const verbs = aws(run.state).map((call) => call[2]);
     expect(verbs.indexOf("terminate-instances")).toBeLessThan(verbs.indexOf("delete-security-group"));
-    expect(verbs.slice(-4)).toEqual(["terminate-instances", "wait", "delete-security-group", "delete-key-pair"]);
+    expect(verbs.slice(-4)).toEqual(["terminate-instances", "describe-instances", "delete-security-group", "delete-key-pair"]);
+    expect(verbs).not.toContain("wait");
   });
 
   test("a describe failure that is not transient ends the wait at once, and the instance is terminated", async () => {
@@ -200,7 +211,44 @@ describe("aws-spot snapshots", () => {
     const image = aws(run.state, "create-image")[0];
     expect(option(image, "--name")).toMatch(new RegExp(`^orly-burst-${REPOSITORY}-\\d{12}$`));
     expect(image).toContain(`ResourceType=image,Tags=[{Key=owner,Value=agent},{Key=orly-burst,Value=${REPOSITORY}}]`);
-    expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=aws-spot id=ami-\\d+ name=orly-burst-${REPOSITORY}-\\d{12} size=80\\.0GB storage≈\\$4\\.00/month at most`));
+    expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=aws-spot id=ami-\\d+ name=orly-burst-${REPOSITORY}-\\d{12} state=ready size=80\\.0GB storage≈\\$4\\.00/month at most`));
+  });
+
+  // The real capture outlasted `aws ec2 wait image-available` and orly killed
+  // the waiter; the image itself went on saving.
+  test("an image pending for several checks is waited out with short describe calls, never a waiter", async () => {
+    const run = await awsRun({ imagePendingPolls: 4 });
+
+    const code = await burst(["snapshot", "--provider", "aws-spot"], run.dependencies);
+
+    expect(code).toBe(0);
+    const stateReads = aws(run.state, "describe-images").filter((call) => option(call, "--query").includes("State"));
+    expect(stateReads).toHaveLength(5);
+    expect(aws(run.state, "wait")).toHaveLength(0);
+    expect(run.output.text()).toMatch(/snapshot provider=aws-spot id=ami-\d+ name=\S+ state=ready size=80\.0GB/);
+  });
+
+  test("a failed image fails the capture with AWS's reason, and the instance still goes", async () => {
+    const run = await awsRun({ imagePendingPolls: 2, imageFails: "Client.InternalError: Snapshot creation failed" });
+
+    await expect(burst(["snapshot", "--provider", "aws-spot"], run.dependencies)).rejects.toThrow("image ami-00000000000000001 is failed: Client.InternalError: Snapshot creation failed");
+    expect(aws(run.state, "terminate-instances")).toHaveLength(1);
+    expect(aws(run.state, "delete-key-pair")).toHaveLength(1);
+  });
+
+  test("an image still saving at the deadline is left to finish and reported as pending, not as nothing saved", async () => {
+    const root = burstRepository();
+    const { bin, state } = fakeBin();
+    await Bun.write(join(state, "scenario.json"), JSON.stringify({ imagePendingPolls: 100_000 }));
+    const { dependencies, output } = burstDependencies(root, burstEnvironment(bin, state, { ORLY_BURST_DEADLINE_MINUTES: "0.05" }), callerAddress);
+
+    const code = await burst(["snapshot", "--provider", "aws-spot"], dependencies);
+
+    expect(code).toBe(0);
+    expect(output.text()).toMatch(/snapshot provider=aws-spot id=ami-00000000000000001 name=\S+ state=pending size=unknown/);
+    expect(output.text()).toContain("aws-spot is still saving");
+    expect(aws(state, "deregister-image")).toHaveLength(0);
+    expect(aws(state, "terminate-instances")).toHaveLength(1);
   });
 
   test("lanes start from the newest snapshot, or the base image with --no-snapshot", async () => {

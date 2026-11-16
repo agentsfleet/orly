@@ -29,7 +29,9 @@ export type BurstRun = Io & {
 // One machine's work: a lane, or the warm-up a snapshot captures.
 export type Job = { kind: "lane" | "warm"; name: string; image: Image; evidence: string; deadline: number; started: number };
 export type Image = { id: string; name: string; snapshot: boolean };
-export type Snapshot = { id: string; name: string; sizeGb: number | undefined; launchId: string; parts: string[] };
+// `ready` is false only for a capture whose image was still saving when the
+// run's deadline came; the cloud finishes it, and lanes use it once it is.
+export type Snapshot = { id: string; name: string; sizeGb: number | undefined; launchId: string; parts: string[]; ready: boolean };
 export type Machine = { id: string; label: string; address: string | undefined; hourly: number | undefined };
 
 // The seam a cloud provider fills: how its machines start, become reachable,

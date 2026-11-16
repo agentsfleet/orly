@@ -121,7 +121,10 @@ async function cloud(request: Request, name: CloudProviderName, dependencies: Bu
   if (request.snapshot) {
     const snapshot = await cloudSnapshot(provider, run);
     if (!snapshot) return 1;
-    dependencies.write(`orly burst: snapshot provider=${name} id=${snapshot.id} name=${snapshot.name} size=${snapshot.sizeGb === undefined ? "unknown" : `${snapshot.sizeGb.toFixed(1)}GB`} storage≈${provider.storage(snapshot)}`);
+    dependencies.write(`orly burst: snapshot provider=${name} id=${snapshot.id} name=${snapshot.name} state=${snapshot.ready ? "ready" : "pending"} size=${snapshot.sizeGb === undefined ? "unknown" : `${snapshot.sizeGb.toFixed(1)}GB`} storage≈${provider.storage(snapshot)}`);
+    // The warm-up succeeded and the image exists; only its saving outlasted
+    // the run. Lanes and --prune see it once the cloud marks it ready.
+    if (!snapshot.ready) dependencies.write(`orly burst: ${name} is still saving ${snapshot.name}; lanes start from it once it is ready`);
     return 0;
   }
   const started = Date.now();

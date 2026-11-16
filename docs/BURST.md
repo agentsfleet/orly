@@ -96,6 +96,18 @@ Someone who can intercept the very first connection could stand in for the machi
 
 The account owner creates one Identity and Access Management (IAM) policy for whoever launches runs, and a monthly AWS Budgets alert.
 No instance role, bucket or stored secret is needed.
+
+An account's first Spot launch needs the Spot service-linked role, and the launcher may not create IAM roles.
+The account owner creates it once, with an administrator profile:
+
+```bash
+aws iam create-service-linked-role --aws-service-name spot.amazonaws.com
+```
+
+```text
+<varies: the new role, or an error that it already exists>
+```
+
 The policy lets the launcher create and remove only resources tagged `owner=agent`:
 
 ```json
@@ -208,11 +220,15 @@ Each snapshot capture costs one more run, and AWS adds about $0.005 per hour for
    ```
 
    ```text
-   orly burst: snapshot provider=e2e id=<IMAGE_ID> name=orly-burst-<REPO>-<UTC_MINUTE> size=<varies>GB storage≈₹200/month + GST
+   orly burst: snapshot provider=e2e id=<IMAGE_ID> name=orly-burst-<REPO>-<UTC_MINUTE> state=ready size=<varies>GB storage≈₹200/month + GST
    ```
 
    The capture machine starts from the base image and runs setup and warm with no secret.
    It then stops, becomes an image named for the repository and the minute, and is deleted.
+
+   Saving a large image can outlast the run's deadline.
+   orly then prints `state=pending` and exits 0, because the cloud goes on saving the image after the machine is deleted.
+   Lanes and `--prune` use the image once the cloud marks it ready; a failed image fails the capture with the cloud's reason.
 
 3. Run the lanes:
 
