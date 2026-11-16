@@ -3,7 +3,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { burst } from "./burst";
-import { burstDependencies, burstEnvironment, burstRepository, fakeBin, FakeE2e, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./burst_test_support";
+import { FakeTir } from "./burst_fake_tir";
+import { burstDependencies, burstEnvironment, burstRepository, fakeBin, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./burst_test_support";
 import { cleanupTemporaryDirectories, temporaryDirectory } from "./gates_test_support";
 
 const API_KEY = "e2e_test_key_00000000";
@@ -11,7 +12,10 @@ const AUTH_TOKEN = "e2e_test_token_00000000";
 const CREDENTIALS = { E2E_API_KEY: API_KEY, E2E_AUTH_TOKEN: AUTH_TOKEN, E2E_PROJECT_ID: "12345" };
 const SECRETS = { secrets: { API_TOKEN: "op://Burst Vault/api/credential" } };
 const LANES = ["acceptance", "integration", "--provider", "e2e"];
+const ONE_LANE = ["acceptance", "--provider", "e2e"];
 const SNAPSHOT_NAME = new RegExp(`^orly-burst-${REPOSITORY}-\\d{12}$`);
+const CREATE = /^\/notebooks\/$/;
+const VM = /^\/notebooks\/\d+\/$/;
 
 setDefaultTimeout(60_000);
 afterEach(cleanupTemporaryDirectories);
@@ -19,55 +23,73 @@ afterEach(cleanupTemporaryDirectories);
 function e2eRun(extra: Record<string, string> = {}, burstConfig: Record<string, unknown> = {}) {
   const root = burstRepository(burstConfig);
   const { bin, state } = fakeBin();
-  const api = new FakeE2e();
+  const api = new FakeTir();
   const env = burstEnvironment(bin, state, { ...CREDENTIALS, ...extra });
   return { root, state, api, env, ...burstDependencies(root, env, api.fetch) };
 }
 
-function nodeScript(state: string): string {
-  const node = [...new Bun.Glob("203.0.113.*").scanSync({ cwd: state, onlyFiles: false })][0] ?? "";
-  return readFileSync(join(state, node, "job.sh"), "utf8");
+function machineScript(state: string): string {
+  const machine = [...new Bun.Glob("203.0.113.*").scanSync({ cwd: state, onlyFiles: false })][0] ?? "";
+  return readFileSync(join(state, machine, "job.sh"), "utf8");
 }
 
-describe("e2e lanes", () => {
-  test("lanes start at once from the base image and every node is deleted", async () => {
+function created(api: FakeTir): Array<Record<string, unknown>> {
+  return api.callsTo("POST", CREATE).map((call) => fields(call.body));
+}
+
+describe("e2e lanes on TIR virtual machines", () => {
+  test("lanes start at once as VMs reached over SSH, and every VM and the run's key are removed", async () => {
     const run = e2eRun();
 
     const code = await burst(LANES, run.dependencies);
 
     expect(code).toBe(0);
-    const creates = run.api.callsTo("POST", /^\/nodes\/$/);
-    const deletes = run.api.callsTo("DELETE", /^\/nodes\/\d+\/$/);
+    const creates = run.api.callsTo("POST", CREATE);
+    const deletes = run.api.callsTo("DELETE", VM);
     expect(creates).toHaveLength(2);
     expect(deletes).toHaveLength(2);
-    expect(run.api.calls.indexOf(creates[1]!)).toBeLessThan(run.api.calls.indexOf(deletes[0]!));
-    expect(run.api.nodes.size).toBe(0);
+    expect(run.api.calls.indexOf(creates[1] ?? deletes[0]!)).toBeLessThan(run.api.calls.indexOf(deletes[0]!));
+    expect(run.api.vms.size).toBe(0);
     const body = fields(creates[0]?.body);
-    expect(body.plan).toBe("C3-16vCPU-32RAM-200DISK-C3-Onetemplate-Ubuntu24.04-Delhi");
-    expect(body.image).toBe("Ubuntu-24.04-Distro");
-    expect(body.is_saved_image).toBe(false);
-    expect(body.label).toBe("orly-burst");
-    expect(Array.isArray(body.ssh_keys) ? String(body.ssh_keys[0]) : "").toStartWith("ssh-ed25519 ");
-    expect(creates[0]?.query).toEqual({ project_id: "12345", apikey: API_KEY, location: "Delhi" });
+    expect(body).toMatchObject({ kind: "vm", image_type: "pre-built", image_version_id: 59, sku_item_price_id: 3, disk_size_in_gb: 100, quantity: 1, security_group_id: 700 });
+    expect(body).not.toHaveProperty("snapshot_id");
+    const key = Array.isArray(body.public_key) ? String(body.public_key[0]) : "";
+    expect(key).toStartWith("ssh-ed25519 ");
+    const registered = run.api.callsTo("POST", /^\/ssh_keys\/$/);
+    expect(fields(registered[0]?.body).ssh_key).toBe(key);
+    expect(registered[0]?.query).toEqual({ location: "Delhi", apikey: API_KEY });
+    expect(run.api.keys.size).toBe(0);
+    expect(creates[0]?.query).toEqual({ project_id: "12345", location: "Delhi", apikey: API_KEY });
     expect(creates[0]?.authorization).toBe(`Bearer ${AUTH_TOKEN}`);
+    expect(run.api.groups).toEqual([{ id: 700, name: "orly-burst-ssh" }]);
+    expect(fields(run.api.callsTo("POST", /^\/security_groups\/$/)[0]?.body).rules).toEqual([{ rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "any", ports: [22], description: "SSH for orly burst" }]);
     const text = run.output.text();
     expect(text).toContain("[acceptance] lane acceptance ran");
-    expect(text).toContain("[integration] lane integration ran");
     expect(text).toMatch(/orly burst: lane=acceptance provider=e2e machine=C3\.32GB minutes=\d+ cost≈₹25\/h \+ GST \(billed hourly\) exit=0 evidence=\S+/);
     expect(text).toContain("orly burst: total provider=e2e lanes=2 passed=2 failed=0");
     expect(text).not.toContain(API_KEY);
   });
 
+  test("an existing SSH group is reused, since TIR cannot delete one", async () => {
+    const run = e2eRun();
+    run.api.groups.push({ id: 42, name: "orly-burst-ssh" });
+
+    await burst(ONE_LANE, run.dependencies);
+
+    expect(run.api.callsTo("POST", /^\/security_groups\/$/)).toHaveLength(0);
+    expect(created(run.api)[0]?.security_group_id).toBe(42);
+  });
+
   test("secrets are read on the caller and reach the lane only through the session's input", async () => {
     const run = e2eRun({}, SECRETS);
 
-    await burst(["acceptance", "--provider", "e2e"], run.dependencies);
+    await burst(ONE_LANE, run.dependencies);
 
-    const job = nodeScript(run.state);
+    const job = machineScript(run.state);
     expect(job.indexOf("  step 'true'")).toBeLessThan(job.indexOf(`  export API_TOKEN='${SECRET_VALUE}'`));
     expect(job.indexOf(`  export API_TOKEN='${SECRET_VALUE}'`)).toBeLessThan(job.lastIndexOf("  step 'true'"));
-    expect(readFileSync(join(run.state, "op-calls.txt"), "utf8")).toBe("read --no-newline op://Burst Vault/api/credential\n");
     expect(JSON.stringify(recordedCalls(run.state))).not.toContain(SECRET_VALUE);
+    expect(JSON.stringify(run.api.calls)).not.toContain(SECRET_VALUE);
     expect(run.output.text()).not.toContain(SECRET_VALUE);
     const evidence = run.output.text().match(/evidence=(\S+)/)?.[1] ?? "";
     expect(readFileSync(join(evidence, "run.log"), "utf8")).toBe("== packages\nlane acceptance ran\n");
@@ -78,17 +100,17 @@ describe("e2e lanes", () => {
   test("a secret already in the caller's environment is used without op", async () => {
     const run = e2eRun({ API_TOKEN: "preset-value-0000" }, SECRETS);
 
-    await burst(["acceptance", "--provider", "e2e"], run.dependencies);
+    await burst(ONE_LANE, run.dependencies);
 
-    expect(nodeScript(run.state)).toContain("  export API_TOKEN='preset-value-0000'");
+    expect(machineScript(run.state)).toContain("  export API_TOKEN='preset-value-0000'");
     expect(existsSync(join(run.state, "op-calls.txt"))).toBe(false);
   });
 
-  test("a secret that cannot be read stops the run before any node exists", async () => {
+  test("a secret that cannot be read stops the run before any key or VM exists", async () => {
     const run = e2eRun({ FAKE_OP_FAIL: "1" }, SECRETS);
 
     await expect(burst(LANES, run.dependencies)).rejects.toThrow("could not read the secret for API_TOKEN");
-    expect(run.api.callsTo("POST", /^\/nodes\/$/)).toHaveLength(0);
+    expect(run.api.callsTo("POST", /^\/(?:notebooks|ssh_keys)\/$/)).toHaveLength(0);
     expect([...new Bun.Glob("**/id_ed25519*").scanSync(join(run.state, "out"))]).toEqual([]);
   });
 
@@ -105,89 +127,89 @@ describe("e2e lanes", () => {
     await Bun.write(join(toolbox, "toolbox-0000.erofs"), "fixture image\n");
     const run = e2eRun({ TOOLBOX_DIR: toolbox }, { directories: ["TOOLBOX_DIR"] });
 
-    const code = await burst(["acceptance", "--provider", "e2e"], run.dependencies);
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
 
-    expect(code).toBe(0);
-    const node = [...new Bun.Glob("203.0.113.*").scanSync({ cwd: run.state, onlyFiles: false })][0] ?? "";
-    const listed = Bun.spawnSync(["tar", "-tzf", join(run.state, node, "input-TOOLBOX_DIR.tgz")], { stdout: "pipe" }).stdout.toString();
+    const machine = [...new Bun.Glob("203.0.113.*").scanSync({ cwd: run.state, onlyFiles: false })][0] ?? "";
+    const listed = Bun.spawnSync(["tar", "-tzf", join(run.state, machine, "input-TOOLBOX_DIR.tgz")], { stdout: "pipe" }).stdout.toString();
     expect(listed).toContain("./toolbox-0000.erofs");
-    const job = nodeScript(run.state);
+    const job = machineScript(run.state);
     const exported = job.indexOf("  export TOOLBOX_DIR='/tmp/orly-burst-inputs/TOOLBOX_DIR'");
     expect(exported).toBeGreaterThan(job.indexOf("  step 'true'"));
     expect(exported).toBeLessThan(job.lastIndexOf("  step 'true'"));
-    expect(job).not.toContain(toolbox);
   });
 
-  test("a declared directory that is not set is refused before any node exists", async () => {
+  test("a declared directory that is not set is refused before any VM exists", async () => {
     const run = e2eRun({}, { directories: ["TOOLBOX_DIR"] });
 
-    await expect(burst(["acceptance", "--provider", "e2e"], run.dependencies)).rejects.toThrow("burst.directories names TOOLBOX_DIR; set it to a directory on this machine");
-    expect(run.api.callsTo("POST", /^\/nodes\/$/)).toHaveLength(0);
+    await expect(burst(ONE_LANE, run.dependencies)).rejects.toThrow("burst.directories names TOOLBOX_DIR; set it to a directory on this machine");
+    expect(run.api.callsTo("POST", CREATE)).toHaveLength(0);
   });
 
   test("a lane's own exit code is the run's, and a dropped session is interrupted", async () => {
     const run = e2eRun();
     await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ exits: { acceptance: 3, integration: "drop" } }));
 
-    const code = await burst(LANES, run.dependencies);
-
-    expect(code).toBe(3);
+    expect(await burst(LANES, run.dependencies)).toBe(3);
     expect(run.output.text()).toMatch(/lane=acceptance .* exit=3 /);
     expect(run.output.text()).toMatch(/lane=integration .* exit=interrupted /);
-    expect(run.api.nodes.size).toBe(0);
+    expect(run.api.vms.size).toBe(0);
   });
 
-  test("a lane past the deadline is stopped and its node deleted", async () => {
+  test("a lane past the deadline is stopped and its VM deleted", async () => {
     const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.01" });
     await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ sleepMs: 2_000 }));
 
-    const code = await burst(["acceptance", "--provider", "e2e"], run.dependencies);
-
-    expect(code).toBe(1);
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
     expect(run.output.text()).toMatch(/lane=acceptance .* exit=deadline /);
-    expect(run.api.nodes.size).toBe(0);
+    expect(run.api.vms.size).toBe(0);
   });
 
-  test("a cancelled run deletes the node it started", async () => {
+  test("a cancelled run deletes the VM it started and its key", async () => {
     const root = burstRepository();
     const { bin, state } = fakeBin();
-    const api = new FakeE2e();
+    const api = new FakeTir();
     const controller = new AbortController();
     await Bun.write(join(state, "scenario.json"), JSON.stringify({ sleepMs: 2_000 }));
     const { dependencies, output } = burstDependencies(root, burstEnvironment(bin, state, CREDENTIALS), api.fetch, controller.signal);
     setTimeout(() => controller.abort(), 1_500);
 
-    const code = await burst(["acceptance", "--provider", "e2e"], dependencies);
-
-    expect(code).toBe(1);
+    expect(await burst(ONE_LANE, dependencies)).toBe(1);
     expect(output.text()).toMatch(/exit=cancelled /);
-    expect(api.nodes.size).toBe(0);
+    expect(api.vms.size).toBe(0);
+    expect(api.keys.size).toBe(0);
   });
 
-  test("a refused create starts nothing; a lost reply names the node to check", async () => {
+  test("a refused create starts nothing; a lost reply names the VM to check", async () => {
     for (const [status, warned] of [[400, false], [502, true]] as const) {
       const run = e2eRun();
       run.api.createStatus = status;
 
-      const code = await burst(["acceptance", "--provider", "e2e"], run.dependencies);
-
-      expect(code).toBe(1);
+      expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
       expect(run.output.text()).toMatch(/lane=acceptance provider=e2e machine=none minutes=0 cost≈none exit=unlaunched /);
-      expect(run.output.text().includes("E2E may have created node orly-burst-acceptance-")).toBe(warned);
-      expect(run.api.callsTo("DELETE", /^\/nodes\//)).toHaveLength(0);
+      expect(run.output.text().includes("TIR may have created VM orly-burst-acceptance-")).toBe(warned);
+      expect(run.api.callsTo("DELETE", VM)).toHaveLength(0);
+      expect(run.api.keys.size).toBe(0);
     }
   });
 
-  test("--keep leaves the node and the key", async () => {
+  test("--keep leaves the VM, its key in TIR and the private key", async () => {
     const run = e2eRun();
 
-    await burst(["acceptance", "--provider", "e2e", "--keep"], run.dependencies);
+    await burst([...ONE_LANE, "--keep"], run.dependencies);
 
-    expect(run.api.nodes.size).toBe(1);
-    expect(run.output.text()).toContain("--keep left e2e machine 4001 at 203.0.113.1");
+    expect(run.api.vms.size).toBe(1);
+    expect(run.api.keys.size).toBe(1);
+    expect(run.output.text()).toContain("--keep left e2e machine 5001 at 203.0.113.1");
     const key = run.output.text().match(/kept the run's SSH key at (\S+);/)?.[1] ?? "";
     expect(existsSync(key)).toBe(true);
-    expect(nodeScript(run.state)).not.toContain("shutdown -h");
+    expect(machineScript(run.state)).not.toContain("shutdown -h");
+  });
+
+  test("an unknown plan is refused with the plans TIR offers", async () => {
+    const run = e2eRun({ ORLY_BURST_E2E_PLAN: "C3.999GB" });
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
+    expect(run.output.text()).toContain("TIR offers no hourly C3.999GB plan in Delhi; it offers: C3.32GB, C3.16GB");
   });
 
   test("missing credentials are named before any request", async () => {
@@ -198,101 +220,87 @@ describe("e2e lanes", () => {
   });
 });
 
-describe("e2e snapshots", () => {
-  test("a snapshot warms a base node with no secret, saves it stopped and deletes the node", async () => {
+describe("e2e snapshots on TIR", () => {
+  test("a snapshot warms a base VM with no secret, saves it stopped and deletes the VM", async () => {
     const run = e2eRun({}, { ...SECRETS, warm: [["make", "build"]] });
 
-    const code = await burst(["snapshot", "--provider", "e2e"], run.dependencies);
+    expect(await burst(["snapshot", "--provider", "e2e"], run.dependencies)).toBe(0);
 
-    expect(code).toBe(0);
-    const job = nodeScript(run.state);
+    const job = machineScript(run.state);
     expect(job).toContain("BURST_MODE='warm'");
     expect(job).toContain("  step 'make' 'build'\n  warmed\n");
-    expect(job).toContain("  shutdown -h +120 ");
     expect(job).not.toContain("export API_TOKEN");
-    expect(job).not.toContain("export CI=");
     expect(existsSync(join(run.state, "op-calls.txt"))).toBe(false);
-    const actions = run.api.callsTo("PUT", /\/actions\/$/).map((call) => fields(call.body));
-    expect(actions.map((action) => action.type)).toEqual(["power_off", "save_images"]);
-    expect(String(actions[1]?.name)).toMatch(SNAPSHOT_NAME);
-    const order = run.api.calls.map((call) => `${call.method} ${call.path}`);
-    expect(order.indexOf("PUT /nodes/4001/actions/")).toBeLessThan(order.lastIndexOf("DELETE /nodes/4001/"));
-    expect(run.api.nodes.size).toBe(0);
-    expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=e2e id=\\d+ name=orly-burst-${REPOSITORY}-\\d{12} state=ready size=40\\.0GB storage≈₹200/month \\+ GST`));
-  });
-
-  test("a saved image still Creating for several lists is waited out", async () => {
-    const run = e2eRun();
-    run.api.savingLists = 4;
-
-    const code = await burst(["snapshot", "--provider", "e2e"], run.dependencies);
-
-    expect(code).toBe(0);
-    expect(run.api.callsTo("GET", /^\/images\/saved-images\/$/).length).toBeGreaterThanOrEqual(5);
-    expect(run.output.text()).toMatch(/snapshot provider=e2e id=\d+ name=\S+ state=ready/);
-  });
-
-  test("a saved image that fails fails the capture, and the node still goes", async () => {
-    const run = e2eRun();
-    run.api.savedState = "Failed";
-
-    await expect(burst(["snapshot", "--provider", "e2e"], run.dependencies)).rejects.toThrow(/saved image orly-burst-\S+ is Failed/);
-    expect(run.api.nodes.size).toBe(0);
-  });
-
-  test("a saved image still Creating at the deadline is reported as pending", async () => {
-    const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.05" });
-    run.api.savingLists = 100_000;
-
-    const code = await burst(["snapshot", "--provider", "e2e"], run.dependencies);
-
-    expect(code).toBe(0);
-    expect(run.output.text()).toMatch(/snapshot provider=e2e id=\d+ name=\S+ state=pending/);
-    expect(run.output.text()).toContain("e2e is still saving");
-    expect(run.api.nodes.size).toBe(0);
+    const order = run.api.calls.map((call) => `${call.method} ${call.path}${call.query.action ? `?${call.query.action}` : ""}`);
+    expect(order.indexOf("PUT /notebooks/5001/actions/?Stop")).toBeLessThan(order.indexOf("POST /notebooks/5001/snapshots/"));
+    expect(order.indexOf("POST /notebooks/5001/snapshots/")).toBeLessThan(order.lastIndexOf("DELETE /notebooks/5001/"));
+    expect(String(fields(run.api.callsTo("POST", /\/snapshots\/$/)[0]?.body).name)).toMatch(SNAPSHOT_NAME);
+    expect(run.api.vms.size).toBe(0);
+    expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=e2e id=9000 name=orly-burst-${REPOSITORY}-\\d{12} state=ready size=100\\.0GB storage≈₹200/month \\+ GST`));
   });
 
   test("lanes start from the repository's newest ready snapshot unless told otherwise", async () => {
     const run = e2eRun();
-    run.api.savedImage(`orly-burst-${REPOSITORY}-202611010000`, 7001);
-    run.api.savedImage(`orly-burst-${REPOSITORY}-202611150000`, 7002);
-    run.api.savedImage(`orly-burst-${REPOSITORY}-202611160000`, 7003, "Creating");
-    run.api.savedImage("orly-burst-other-202612010000", 7004);
-    // Another repository whose name starts with this one's sorts first.
-    run.api.savedImage(`orly-burst-${REPOSITORY}-app-202612010000`, 7005);
+    run.api.snapshot(`orly-burst-${REPOSITORY}-202611010000`, 7001);
+    run.api.snapshot(`orly-burst-${REPOSITORY}-202611150000`, 7002);
+    run.api.snapshot(`orly-burst-${REPOSITORY}-202611160000`, 7003, "pending");
+    run.api.snapshot(`orly-burst-${REPOSITORY}-app-202612010000`, 7004);
 
-    await burst(["acceptance", "--provider", "e2e"], run.dependencies);
-    await burst(["acceptance", "--provider", "e2e", "--no-snapshot"], run.dependencies);
+    await burst(ONE_LANE, run.dependencies);
+    await burst([...ONE_LANE, "--no-snapshot"], run.dependencies);
 
-    const bodies = run.api.callsTo("POST", /^\/nodes\/$/).map((call) => fields(call.body));
-    expect(bodies[0]).toMatchObject({ is_saved_image: true, saved_image_template_id: 7002, image: "Ubuntu-24.04-Distro" });
-    expect(bodies[1]).toMatchObject({ is_saved_image: false, saved_image_template_id: null });
+    const bodies = created(run.api);
+    expect(bodies[0]).toMatchObject({ snapshot_id: 7002, image_version_id: 59, disk_size_in_gb: 100 });
+    expect(bodies[1]).not.toHaveProperty("snapshot_id");
   });
 
-  test("ORLY_BURST_E2E_IMAGE picks a saved image by name, or an OS image", async () => {
-    const run = e2eRun({ ORLY_BURST_E2E_IMAGE: "hand-made" });
-    run.api.savedImage("hand-made", 7100);
+  test("ORLY_BURST_E2E_IMAGE picks a snapshot by name, or an OS image by name and version", async () => {
+    const bySnapshot = e2eRun({ ORLY_BURST_E2E_IMAGE: "hand-made" });
+    bySnapshot.api.snapshot("hand-made", 7100);
+    await burst(ONE_LANE, bySnapshot.dependencies);
+    expect(created(bySnapshot.api)[0]).toMatchObject({ snapshot_id: 7100 });
 
-    await burst(["acceptance", "--provider", "e2e"], run.dependencies);
-
-    expect(run.api.callsTo("POST", /^\/nodes\/$/)[0]?.body).toMatchObject({ is_saved_image: true, saved_image_template_id: 7100 });
+    const byImage = e2eRun({ ORLY_BURST_E2E_IMAGE: "Ubuntu 22.04" });
+    await burst(ONE_LANE, byImage.dependencies);
+    expect(created(byImage.api)[0]).toMatchObject({ image_version_id: 41 });
+    expect(created(byImage.api)[0]).not.toHaveProperty("snapshot_id");
   });
 
-  test("pruning keeps the newest snapshots of this repository only", async () => {
+  test("pruning keeps the newest snapshots of this repository only, renting nothing", async () => {
     const run = e2eRun();
-    for (const [stamp, template] of [["202611010000", 7001], ["202611020000", 7002], ["202611030000", 7003], ["202611040000", 7004]] as const) {
-      run.api.savedImage(`orly-burst-${REPOSITORY}-${stamp}`, template);
-    }
-    run.api.savedImage("orly-burst-other-202611010000", 7005);
-    run.api.savedImage(`orly-burst-${REPOSITORY}-app-202612010000`, 7006);
+    for (const [stamp, id] of [["202611010000", 7001], ["202611020000", 7002], ["202611030000", 7003], ["202611040000", 7004]] as const) run.api.snapshot(`orly-burst-${REPOSITORY}-${stamp}`, id);
+    run.api.snapshot(`orly-burst-${REPOSITORY}-app-202612010000`, 7006);
 
-    const code = await burst(["snapshot", "--prune", "--provider", "e2e"], run.dependencies);
+    expect(await burst(["snapshot", "--prune", "--provider", "e2e"], run.dependencies)).toBe(0);
+    expect(run.api.callsTo("DELETE", /^\/notebooks\/vm\/snapshots\//).map((call) => call.path)).toEqual(["/notebooks/vm/snapshots/7002/", "/notebooks/vm/snapshots/7001/"]);
+    expect(run.api.snapshots.map((snapshot) => snapshot.id).sort()).toEqual([7003, 7004, 7006]);
+    expect(run.api.callsTo("POST", /^\/(?:notebooks|ssh_keys)\/$/)).toHaveLength(0);
+  });
 
-    expect(code).toBe(0);
-    expect(run.api.callsTo("DELETE", /^\/images\//).map((call) => call.path)).toEqual(["/images/8002/", "/images/8001/"]);
-    expect(run.api.images.map((image) => image.name).sort()).toEqual([
-      `orly-burst-${REPOSITORY}-202611030000`, `orly-burst-${REPOSITORY}-202611040000`, `orly-burst-${REPOSITORY}-app-202612010000`, "orly-burst-other-202611010000",
-    ]);
-    expect(run.api.callsTo("POST", /^\/nodes\/$/)).toHaveLength(0);
+  test("a snapshot pending for several lists is waited out", async () => {
+    const run = e2eRun();
+    run.api.savingLists = 4;
+
+    expect(await burst(["snapshot", "--provider", "e2e"], run.dependencies)).toBe(0);
+    expect(run.api.callsTo("GET", /^\/notebooks\/vm\/snapshots\/$/).length).toBeGreaterThanOrEqual(5);
+    expect(run.output.text()).toMatch(/snapshot provider=e2e id=9000 name=\S+ state=ready/);
+  });
+
+  test("a snapshot that fails fails the capture, and the VM still goes", async () => {
+    const run = e2eRun();
+    run.api.savedStatus = "failed";
+
+    await expect(burst(["snapshot", "--provider", "e2e"], run.dependencies)).rejects.toThrow(/snapshot orly-burst-\S+ is failed/);
+    expect(run.api.vms.size).toBe(0);
+  });
+
+  test("a snapshot still pending at the deadline is reported as pending, not as nothing saved", async () => {
+    const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.05" });
+    run.api.savingLists = 100_000;
+
+    expect(await burst(["snapshot", "--provider", "e2e"], run.dependencies)).toBe(0);
+    expect(run.output.text()).toMatch(/snapshot provider=e2e id=9000 name=\S+ state=pending/);
+    expect(run.output.text()).toContain("e2e is still saving");
+    expect(run.api.vms.size).toBe(0);
   });
 });

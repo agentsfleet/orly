@@ -49,6 +49,7 @@ costs are in orly's `docs/BURST.md`.
   environment, or reads it with `op read`, on the caller. The value reaches
   the machine only over the SSH session's standard input.
 - AWS credentials come from the caller's `aws` configuration or the job's
-  cloud login step. E2E credentials are `E2E_API_KEY`, `E2E_AUTH_TOKEN` and
-  `E2E_PROJECT_ID` in the environment.
+  cloud login step. E2E credentials are a TIR API token's `E2E_API_KEY`,
+  `E2E_AUTH_TOKEN` and `E2E_PROJECT_ID` in the environment; MyAccount keys do
+  not work.
 - A snapshot never receives a secret: setup and warm run without one.

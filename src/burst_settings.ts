@@ -40,7 +40,8 @@ const environmentSchema = z.object({
   E2E_PROJECT_ID: z.string().regex(/^\d+$/).optional(),
   ORLY_BURST_E2E_LOCATION: z.enum(["Delhi", "Chennai"]).default("Delhi"),
   ORLY_BURST_E2E_PLAN: z.string().regex(/^[A-Za-z0-9.-]+$/).default("C3.32GB"),
-  ORLY_BURST_E2E_IMAGE: z.string().regex(/^[A-Za-z0-9._-]+$/).optional(),
+  // A snapshot name, or an OS image as `<name> <version>`, such as `Ubuntu 22.04`.
+  ORLY_BURST_E2E_IMAGE: z.string().regex(/^[A-Za-z0-9._-]+(?: [A-Za-z0-9._-]+)?$/).optional(),
   ORLY_BURST_E2E_USER: z.string().regex(LOGIN_USER).default("root"),
 });
 

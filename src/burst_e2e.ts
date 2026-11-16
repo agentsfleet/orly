@@ -1,4 +1,4 @@
-import type { Fetch, Plan, SavedImage } from "./burst_e2e_api";
+import type { Fetch, OsImage, Plan, VmSnapshot } from "./burst_e2e_api";
 import type { BurstSettings } from "./burst_settings";
 import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot } from "./burst_types";
 
@@ -6,28 +6,31 @@ import { E2eApi, E2eRequestFailed } from "./burst_e2e_api";
 import { pause, until } from "./burst_process";
 import { OrlyError } from "./model";
 
-const BASE_IMAGE = Object.freeze({ id: "Ubuntu-24.04-Distro", name: "Ubuntu-24.04-Distro", snapshot: false });
-const NODE_LABEL = "orly-burst";
-const READY = "Ready";
-// The documented state is Ready; any of these, compared in lowercase, means
-// the save will not finish. unverified: the full state list.
-const FAILED_IMAGE_STATES = new Set(["failed", "error", "deleted"]);
+const DEFAULT_IMAGE = "Ubuntu 24.04";
+const SSH_GROUP = "orly-burst-ssh";
+// Root disk of every VM; a VM launched from a snapshot needs at least the
+// snapshot's source disk, so it never shrinks.
+const DISK_GB = 100;
+const READY = "ready";
+const FAILED = new Set(["failed", "error"]);
 // The owner's planning figures (Nov 16, 2026), used in place of the rate card:
 // a run hour costs ₹25 before 18% GST, billed by the started hour, and each
 // stored snapshot ₹200 a month.
 const RUPEES_PER_HOUR = 25;
 const RUPEES_PER_SNAPSHOT_MONTH = 200;
 
-// E2E Networks nodes through the MyAccount API. The run's public key is the
-// node's only credential, passed at creation and gone with the node; a start
-// script would be readable back through the node-details API, so none is
-// used, and the job travels on the SSH session instead.
+// E2E Networks TIR virtual machines: whole Linux machines with their own
+// kernel, reached as root over SSH. TIR accepts only a public key already
+// saved in the account, so each run saves its key and removes it after; TIR
+// cannot delete a security group, so the runs share one that admits SSH.
 export class E2eNodes implements CloudProvider {
   readonly name = "e2e";
   readonly user: string;
   readonly #settings: BurstSettings;
   readonly #api: E2eApi;
-  readonly #plans = new Map<string, Promise<Plan>>();
+  #plan: Promise<Plan> | undefined;
+  #group: string | undefined;
+  #keyLabel: string | undefined;
 
   constructor(settings: BurstSettings, fetcher: Fetch) {
     this.#settings = settings;
@@ -44,110 +47,121 @@ export class E2eNodes implements CloudProvider {
   }
 
   baseImage(): Image {
-    return BASE_IMAGE;
+    return { id: DEFAULT_IMAGE, name: DEFAULT_IMAGE, snapshot: false };
   }
 
-  // ORLY_BURST_E2E_IMAGE names a saved image when one has that name, and an
-  // OS image otherwise.
+  // ORLY_BURST_E2E_IMAGE names a ready snapshot when one has that name, and an
+  // OS image, such as `Ubuntu 22.04`, otherwise.
   async override(): Promise<Image | undefined> {
     const name = this.#settings.e2e.image;
     if (!name) return undefined;
-    const saved = (await this.#api.savedImages()).find((image) => image.name === name && image.state === READY);
-    return saved ? { id: saved.templateId, name, snapshot: true } : { id: name, name, snapshot: false };
+    const saved = (await this.#api.snapshots()).find((snapshot) => snapshot.name === name && snapshot.status === READY);
+    return saved ? { id: saved.id, name, snapshot: true } : { id: name, name, snapshot: false };
   }
 
   async snapshots(): Promise<Snapshot[]> {
-    return (await this.#api.savedImages()).filter((image) => image.state === READY).map(toSnapshot);
+    return (await this.#api.snapshots()).filter((snapshot) => snapshot.status === READY).map(toSnapshot);
   }
 
-  // Each node takes the run's public key at creation, so nothing is
-  // registered with the account ahead of it.
-  async prepare(): Promise<void> {
-    return undefined;
+  async prepare(run: BurstRun): Promise<void> {
+    const label = `orly-burst-${run.runId}`;
+    await this.#api.addKey(label, run.publicKey);
+    this.#keyLabel = label;
+    this.#group = (await this.#api.securityGroups()).find((group) => group.name === SSH_GROUP)?.id ?? await this.#api.createSshGroup(SSH_GROUP);
   }
 
   async create(run: BurstRun, job: Job): Promise<Machine> {
-    // A saved image launches on the plan of the OS image it was captured from.
-    const plan = await this.#plan(job.image.snapshot ? BASE_IMAGE.name : job.image.name);
+    const plan = await this.#resolvePlan();
+    const source = job.image.snapshot ? await this.#snapshotSource(job.image.id) : await this.#osImage(job.image.name);
     const name = `orly-burst-${job.name}-${run.runId.slice(-4)}`;
     let id: string;
     try {
-      id = await this.#api.createNode({
-        label: NODE_LABEL, name, plan: plan.plan, image: plan.image, ssh_keys: [run.publicKey], start_scripts: [],
-        disable_password: true, default_public_ip: true, backups: false, number_of_instances: 1,
-        is_saved_image: job.image.snapshot, saved_image_template_id: job.image.snapshot ? Number(job.image.id) : null,
+      id = await this.#api.createVm({
+        name, kind: "vm", cluster_type: "tir-cluster", image_type: "pre-built", image_version_id: source.versionId,
+        sku_item_price_id: plan.priceId, disk_size_in_gb: DISK_GB, quantity: 1,
+        public_key: [run.publicKey], security_group_id: Number(this.#group), ...(source.snapshotId ? { snapshot_id: Number(source.snapshotId) } : {}),
       });
     } catch (error) {
-      // A request that failed after reaching E2E may still have made the node.
-      if (!(error instanceof E2eRequestFailed && error.status < 500)) run.write(`orly burst: lane=${job.name} E2E may have created node ${name} (label ${NODE_LABEL}); check MyAccount, it bills until deleted`);
+      // A request that failed after reaching TIR may still have made the VM.
+      if (!(error instanceof E2eRequestFailed && error.status < 500)) run.write(`orly burst: lane=${job.name} TIR may have created VM ${name}; check TIR, it bills until deleted`);
       throw error;
     }
-    run.write(`orly burst: lane=${job.name} node ${id} (${this.#settings.e2e.plan}, ${job.image.name}) created`);
-    return { id, label: this.#settings.e2e.plan, address: undefined, hourly: RUPEES_PER_HOUR };
+    run.write(`orly burst: lane=${job.name} VM ${id} (${plan.sku}, ${job.image.name}) created`);
+    return { id, label: plan.sku, address: undefined, hourly: RUPEES_PER_HOUR };
   }
 
   async ready(run: BurstRun, job: Job, machine: Machine): Promise<Machine> {
-    const address = await this.#until(run, job, "a running node with a public address", async () => {
-      const node = await this.#api.node(machine.id);
-      if (node.status === "Failed") throw new OrlyError(`node ${machine.id} failed to start`);
-      return node.status === "Running" ? node.address : undefined;
+    const address = await this.#until(run, job, "a running VM with a public address", async () => {
+      const vm = await this.#api.vm(machine.id);
+      if (vm.status === "error") throw new OrlyError(`VM ${machine.id} failed to start`);
+      return vm.status === "running" ? vm.address : undefined;
     });
     return { ...machine, address };
   }
 
-  // A node is powered off before it is saved, so the image is of a disk at
-  // rest. Saving answers at once; the image is usable once it reads Ready.
+  // The VM is stopped first, so the snapshot is of a disk at rest. Saving is
+  // polled until ready or failed; one still saving at the run's deadline is
+  // left to finish and reported as pending.
   async capture(run: BurstRun, job: Job, machine: Machine, name: string): Promise<Snapshot> {
-    await this.#api.action(machine.id, "power_off");
-    await this.#until(run, job, "the node to stop", async () => (await this.#api.node(machine.id)).status === "Stopped" || undefined);
-    const imageId = await this.#api.action(machine.id, "save_images", name);
-    run.write(`orly burst: saving ${name}`);
-    // A save outlasts no deadline of its own: it is polled until Ready or a
-    // failed state, and one still saving at the run's deadline is left to
-    // finish and reported as pending.
+    await this.#api.stopVm(machine.id);
+    await this.#until(run, job, "the VM to stop", async () => (await this.#api.vm(machine.id)).status === "stopped" || undefined);
+    const created = await this.#api.createSnapshot(machine.id, name);
+    run.write(`orly burst: saving ${name} as snapshot ${created.id}`);
     for (;;) {
-      const saved = (await this.#api.savedImages()).find((image) => image.name === name);
-      if (saved?.state === READY) return toSnapshot(saved);
-      if (saved && FAILED_IMAGE_STATES.has(saved.state.toLowerCase())) throw new OrlyError(`saved image ${name} is ${saved.state}`);
-      if (run.signal.aborted || Date.now() >= job.deadline) {
-        return saved ? toSnapshot(saved) : { id: imageId ?? "unknown", name, sizeGb: undefined, launchId: "", parts: [], ready: false };
-      }
+      const saved = (await this.#api.snapshots()).find((snapshot) => snapshot.id === created.id) ?? created;
+      if (saved.status === READY) return toSnapshot(saved);
+      if (FAILED.has(saved.status)) throw new OrlyError(`snapshot ${name} is ${saved.status}`);
+      if (run.signal.aborted || Date.now() >= job.deadline) return toSnapshot(saved);
       await pause(this.#settings.pollMs, run.signal);
     }
   }
 
   async remove(_run: BurstRun, machine: Machine): Promise<void> {
-    await this.#api.deleteNode(machine.id);
+    await this.#api.deleteVm(machine.id);
   }
 
   async deleteSnapshot(_run: BurstRun, snapshot: Snapshot): Promise<void> {
-    await this.#api.deleteImage(snapshot.id);
+    await this.#api.deleteSnapshot(snapshot.id);
   }
 
-  async finish(): Promise<void> {
-    return undefined;
+  // The run's key leaves the account once its VMs are gone; --keep keeps it
+  // so the kept VMs stay reachable.
+  async finish(run: BurstRun): Promise<void> {
+    const label = this.#keyLabel;
+    if (!label || run.keep) return;
+    const pk = (await this.#api.keys()).find((key) => key.label === label)?.pk;
+    if (pk) await this.#api.deleteKey(pk);
   }
 
-  #plan(image: string): Promise<Plan> {
-    const cached = this.#plans.get(image);
-    if (cached) return cached;
+  #resolvePlan(): Promise<Plan> {
     const { plan: sku, location } = this.#settings.e2e;
-    const found = this.#api.plans().then((plans) => {
-      const match = plans.find((entry) => entry.sku === sku && entry.image === image);
+    this.#plan ??= this.#api.plans().then((plans) => {
+      const match = plans.find((entry) => entry.sku === sku);
       if (match) return match;
-      const offered = [...new Set(plans.filter((entry) => entry.image === image).map((entry) => entry.sku))].join(", ") || "none";
-      throw new OrlyError(`E2E offers no ${sku} plan for ${image} in ${location}; it offers: ${offered}`);
+      throw new OrlyError(`TIR offers no hourly ${sku} plan in ${location}; it offers: ${plans.map((entry) => entry.sku).join(", ") || "none"}`);
     });
-    this.#plans.set(image, found);
-    return found;
+    return this.#plan;
+  }
+
+  // `Ubuntu 24.04` is the image named Ubuntu at a version starting 24.04.
+  async #osImage(wanted: string): Promise<{ versionId: number; snapshotId?: string }> {
+    const [name = "", version = ""] = wanted.split(/\s+/, 2);
+    const images = await this.#api.images();
+    const match = images.find((image) => image.name.toLowerCase() === name.toLowerCase() && image.version.startsWith(version));
+    if (match) return { versionId: match.versionId };
+    throw new OrlyError(`TIR has no image ${wanted}; it has: ${images.slice(0, 20).map((image: OsImage) => `${image.name} ${image.version}`).join(", ") || "none"}`);
+  }
+
+  async #snapshotSource(id: string): Promise<{ versionId: number | undefined; snapshotId: string }> {
+    const snapshot = (await this.#api.snapshots()).find((candidate) => candidate.id === id);
+    return { versionId: snapshot?.versionId, snapshotId: id };
   }
 
   #until<T>(run: BurstRun, job: Job, what: string, probe: () => Promise<T | undefined>): Promise<T> {
     return until(what, probe, { deadline: job.deadline, signal: run.signal, pollMs: this.#settings.pollMs });
   }
-
 }
 
-function toSnapshot(image: SavedImage): Snapshot {
-  return { id: image.imageId, name: image.name, sizeGb: image.sizeGb, launchId: image.templateId, parts: [], ready: image.state === READY };
+function toSnapshot(snapshot: VmSnapshot): Snapshot {
+  return { id: snapshot.id, name: snapshot.name, sizeGb: snapshot.sizeGb, launchId: snapshot.id, parts: [], ready: snapshot.status === READY };
 }

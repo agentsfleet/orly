@@ -138,23 +138,29 @@ A CI job gets them from its own cloud login step.
 
 ### One-time setup for E2E Networks
 
-1. In MyAccount, open **Products → API → Create New Token**.
-2. Copy the API key and the auth token into the caller's secret store.
-3. Note the project ID from MyAccount.
+The `e2e` provider runs TIR virtual machines: whole Linux machines with their own kernel, reached as root over SSH.
 
-orly reads them from `E2E_API_KEY`, `E2E_AUTH_TOKEN` and `E2E_PROJECT_ID` only.
-The project's default security group allows all traffic, which includes inbound SSH.
-A node gets the run's public key at creation; no key is registered on the account.
+1. In TIR, create an API token for the project the runs bill to.
+2. Copy its API key, its auth token and the TIR project ID into the caller's secret store.
 
-| Operation | MyAccount API call |
+orly reads them from `E2E_API_KEY`, `E2E_AUTH_TOKEN` and `E2E_PROJECT_ID` only; MyAccount keys do not work here.
+TIR admits only a public key already saved in the account, so each run saves its key as `orly-burst-<RUN>` and deletes it after.
+TIR cannot delete a security group, so the first run creates `orly-burst-ssh`, which admits TCP 22 from any address, and later runs reuse it.
+
+| Operation | TIR API call, under `https://api.e2enetworks.com/myaccount/api/v1/gpu` |
 |---|---|
-| Plans for the location | [`GET /images/`](https://docs.e2enetworks.com/api/myaccount/operations/os-plans/) |
-| Create a node | [`POST /nodes/`](https://docs.e2enetworks.com/api/myaccount/compute/nodes/create-node/) |
-| Read a node's state and address | [`GET /nodes/{node_id}/`](https://docs.e2enetworks.com/api/myaccount/operations/get-node-details/) |
-| Power off, then save an image | [`PUT /nodes/{node_id}/actions/`](https://docs.e2enetworks.com/api/myaccount/operations/node-action/) |
-| Delete a node | [`DELETE /nodes/{node_id}/`](https://docs.e2enetworks.com/api/myaccount/operations/delete-node/) |
-| List saved images | [`GET /images/saved-images/`](https://docs.e2enetworks.com/api/myaccount/operations/get-images-saved-images/) |
-| Delete a saved image | [`DELETE /images/{image_id}/`](https://docs.e2enetworks.com/api/myaccount/operations/delete-images-image-id/) |
+| Hourly CPU plans | `GET /gpu_service/sku/?service=notebook` |
+| OS images | `GET /gpu_service/image/?category=notebook` |
+| Save and delete the run's key | `POST /ssh_keys/`, `GET /ssh_keys/`, `DELETE /ssh_keys/{pk}/` |
+| Find or create the SSH group | `GET /security_groups/`, `POST /security_groups/` |
+| Create a VM | [`POST /notebooks/` with `kind: "vm"`](https://docs.e2enetworks.com/api/tir/compute/instancevm/post-notebooks/) |
+| Read a VM's state and address, then delete it | `GET /notebooks/{id}/`, `DELETE /notebooks/{id}/` |
+| Stop a VM, then snapshot it | `PUT /notebooks/{id}/actions/?action=Stop`, `POST /notebooks/{id}/snapshots/` |
+| List and delete snapshots | `GET /notebooks/vm/snapshots/`, `DELETE /notebooks/vm/snapshots/{id}/` |
+
+Every call carries `apikey`, `location` and, outside `/ssh_keys/`, `project_id` in its query, and the token as `Authorization: Bearer`.
+The [TIR API reference](https://docs.e2enetworks.com/api/tir/) documents each operation.
+unverified: whether a TIR VM runs privileged Docker containers; the [virtual machine guide](https://docs.e2enetworks.com/docs/tir/VirtualMachines/virtual-machines/) does not say.
 
 ### Settings
 
@@ -169,9 +175,9 @@ A node gets the run's public key at creation; no key is registered on the accoun
 | `ORLY_BURST_AWS_IMAGE` | An Amazon Machine Image (AMI) ID or `resolve:ssm:` parameter used instead of a snapshot. | none: the newest snapshot, then Debian 13 amd64 | none |
 | `ORLY_BURST_SUBNET` | Subnet for the instances; the security group joins its network. | the default network | a subnet ID |
 | `ORLY_BURST_AWS_USER` | Login user of the AWS image. | `admin`, Debian's | a user name |
-| `ORLY_BURST_E2E_LOCATION` | E2E location. | `Delhi` | `Delhi`, `Chennai` |
-| `ORLY_BURST_E2E_PLAN` | E2E plan name, resolved to the location's plan for the image. | `C3.32GB`, 16 vCPU and 32 GB | an E2E plan name |
-| `ORLY_BURST_E2E_IMAGE` | A saved image name, or an OS image name, used instead of a snapshot. | none: the newest snapshot, then `Ubuntu-24.04-Distro` | none |
+| `ORLY_BURST_E2E_LOCATION` | TIR location. | `Delhi` | `Delhi`, `Chennai` |
+| `ORLY_BURST_E2E_PLAN` | TIR CPU plan name; orly uses its hourly price. | `C3.32GB`, 16 vCPU and 32 GB, listed at ₹18.6 an hour at Delhi on 2026-11-16 | a TIR CPU plan name |
+| `ORLY_BURST_E2E_IMAGE` | A snapshot name, or an OS image as `<name> <version>`, used instead of a snapshot. | none: the newest snapshot, then `Ubuntu 24.04` | none |
 | `ORLY_BURST_E2E_USER` | Login user of the E2E image. | `root` | a user name |
 
 The machine's own shutdown is a backstop for a caller that died, and what it saves differs by provider:
@@ -180,7 +186,7 @@ The machine's own shutdown is a backstop for a caller that died, and what it sav
 |---|---|---|
 | AWS Spot lane | terminates | nothing |
 | AWS on-demand snapshot warm-up | stops | its 80 GB disk, until deleted |
-| E2E node | powers off | the node, until deleted |
+| E2E TIR VM | stops | its disk keeps its files; unverified: what a stopped VM bills |
 | Any machine under `--keep` | no shutdown is scheduled | everything, until deleted |
 
 ### Costs
@@ -350,7 +356,8 @@ A cloud lane gets only its declared secrets; a lane under `here` also keeps the 
 - **The lane waits for SSH until the deadline**: port 22 is blocked between the caller and the machine. Run the lane from a CI job instead.
 - **`exit=interrupted` on AWS**: AWS took the Spot instance back, or the session dropped. Run the lane again.
 - **`run-instances refused`**: the launcher policy lacks a permission. The message names the operation AWS refused.
-- **`E2E may have created node <NAME>`**: the create request failed after reaching E2E. Delete that node in MyAccount, where its label is `orly-burst`.
+- **`TIR may have created VM <NAME>`**: the create request failed after reaching TIR. Delete that VM in TIR, where its name starts `orly-burst-`.
+- **`Access Denied Read..` from E2E**: the keys belong to MyAccount, not TIR. Create a TIR API token for the project and store it instead.
 
 ## Remove or undo
 
@@ -359,7 +366,9 @@ Ctrl-C or SIGTERM starts the same cleanup before orly exits.
 A CI runner that kills orly before the cleanup ends leaves the resources behind.
 
 `--keep` leaves the machines running for inspection, with no scheduled shutdown, and prints the key to log in with.
-They bill until someone deletes them: the instance and its `orly-burst-<RUN>` key pair and group on AWS, or the node in MyAccount on E2E.
+They bill until someone deletes them.
+
+On AWS that is the instance with its `orly-burst-<RUN>` key pair and group; in TIR, the VM and its saved key.
 A run that died without cleaning up leaves resources tagged or labelled `orly-burst`, which are safe to delete.
 
 **Deleting a snapshot is permanent; the next run starts cold from the base image.**

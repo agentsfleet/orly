@@ -6,30 +6,31 @@ import { required } from "./burst_settings";
 import { OrlyError } from "./model";
 
 export type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
-export type Plan = { plan: string; image: string; sku: string };
-export type NodeState = { status: string; address: string | undefined };
-export type SavedImage = { imageId: string; templateId: string; name: string; state: string; sizeGb: number | undefined };
-export type NodeBody = Record<string, unknown>;
+export type Plan = { sku: string; priceId: number; hourly: number };
+export type OsImage = { name: string; version: string; versionId: number };
+export type VmState = { status: string; address: string | undefined };
+export type VmSnapshot = { id: string; name: string; status: string; sizeGb: number | undefined; versionId: number | undefined };
+export type Body = Record<string, unknown>;
 
-// The MyAccount API: https://docs.e2enetworks.com/api/myaccount/
-const BASE_URL = "https://api.e2enetworks.com/myaccount/api/v1";
+// E2E Networks TIR: https://docs.e2enetworks.com/api/tir/ — a VM is an
+// Instance created with `kind: "vm"`, a whole Linux machine reached as root.
+const BASE_URL = "https://api.e2enetworks.com/myaccount/api/v1/gpu";
 const REQUEST_TIMEOUT_MS = 60_000;
-// The plan catalogue for a location is the largest answer; anything past this
-// is not a catalogue.
+// The image and plan catalogues are the largest answers; past this is not one.
 const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/;
-const SIZE_UNITS = new Map([["MB", 1 / 1024], ["GB", 1], ["TB", 1024]]);
 const identifier = z.union([z.number(), z.string()]).transform(String);
-const plansSchema = z.object({ data: z.array(z.object({
-  plan: z.string(), image: z.string(),
-  specs: z.object({ sku_name: z.string() }),
-})) });
-const createdSchema = z.object({ data: z.object({ id: identifier }) });
-const nodeSchema = z.object({ data: z.object({ status: z.string(), public_ip_address: z.string().nullish() }) });
-const actionSchema = z.object({ data: z.object({ image_id: identifier.optional() }).optional() });
-const savedSchema = z.object({ data: z.array(z.object({
-  image_id: identifier, template_id: identifier, name: z.string(), image_state: z.string(), image_size: z.string().nullish(),
-})) });
+const skusSchema = z.object({ data: z.object({ CPU: z.array(z.object({
+  name: z.string(), plans: z.array(z.object({ sku_item_price_id: z.number(), committed_days: z.number().nullish(), unit_price: z.coerce.number(), is_active: z.boolean().optional() })),
+})).default([]) }) });
+const imagesSchema = z.object({ data: z.array(z.object({ name: z.string(), versions: z.array(z.object({ image_version_id: z.number(), version: z.coerce.string() })).default([]) })) });
+const keysSchema = z.object({ data: z.array(z.object({ pk: identifier, label: z.string() })) });
+const groupsSchema = z.object({ data: z.array(z.object({ id: identifier, name: z.string() })) });
+const groupSchema = z.object({ data: z.object({ id: identifier }) });
+// One VM answers `data.id`; a quantity of them answers `data.created`.
+const createdSchema = z.object({ data: z.union([z.object({ id: identifier }), z.object({ created: z.array(z.object({ id: identifier })).min(1) })]) });
+const vmSchema = z.object({ data: z.object({ status: z.string(), public_ip: z.string().nullish() }) });
+const snapshotSchema = z.object({ id: identifier, name: z.string(), status: z.string(), size_gb: z.coerce.number().nullish(), image_details: z.object({ version_id: z.number().nullish() }).nullish() });
 
 export class E2eRequestFailed extends OrlyError {
   readonly status: number;
@@ -40,9 +41,9 @@ export class E2eRequestFailed extends OrlyError {
   }
 }
 
-// One method per MyAccount operation orly uses. The API key rides in the
-// query string and the token in the Authorization header, so no URL is ever
-// printed: a failure names the method, the path and E2E's own message.
+// One method per TIR operation orly uses. The API key rides in the query
+// string and the token in the Authorization header, so no URL is ever printed:
+// a failure names the method, the path and TIR's own message.
 export class E2eApi {
   readonly #fetch: Fetch;
   readonly #credentials: { apiKey: string; token: string; project: string; location: string };
@@ -55,69 +56,101 @@ export class E2eApi {
     };
   }
 
-  // GET /images/: every plan and OS image offered at the location.
+  // GET /gpu_service/sku/: the hourly plan of each CPU SKU.
   async plans(): Promise<Plan[]> {
-    const listed = plansSchema.parse(await this.#request("GET", "/images/"));
-    return listed.data.map((entry) => ({ plan: entry.plan, image: entry.image, sku: entry.specs.sku_name }));
+    const listed = skusSchema.parse(await this.#request("GET", "/gpu_service/sku/", { query: { service: "notebook" } }));
+    return listed.data.CPU.flatMap((sku) => sku.plans.filter((plan) => !plan.committed_days && plan.is_active !== false).slice(0, 1).map((plan) => ({ sku: sku.name, priceId: plan.sku_item_price_id, hourly: plan.unit_price })));
   }
 
-  // POST /nodes/: https://docs.e2enetworks.com/api/myaccount/compute/nodes/create-node/
-  async createNode(body: NodeBody): Promise<string> {
-    return createdSchema.parse(await this.#request("POST", "/nodes/", body)).data.id;
+  // GET /gpu_service/image/: the OS images and their versions.
+  async images(): Promise<OsImage[]> {
+    const listed = imagesSchema.parse(await this.#request("GET", "/gpu_service/image/", { query: { category: "notebook" } }));
+    return listed.data.flatMap((image) => image.versions.map((version) => ({ name: image.name, version: version.version, versionId: version.image_version_id })));
   }
 
-  async node(id: string): Promise<NodeState> {
-    const { data } = nodeSchema.parse(await this.#request("GET", `/nodes/${id}/`));
-    const address = data.public_ip_address?.trim() ?? "";
+  // SSH keys belong to the account, not a project: /ssh_keys/ takes no project.
+  async addKey(label: string, key: string): Promise<void> {
+    await this.#request("POST", "/ssh_keys/", { body: { label, ssh_key: key }, project: false });
+  }
+
+  async keys(): Promise<Array<{ pk: string; label: string }>> {
+    return keysSchema.parse(await this.#request("GET", "/ssh_keys/", { project: false })).data;
+  }
+
+  async deleteKey(pk: string): Promise<void> {
+    await this.#request("DELETE", `/ssh_keys/${pk}/`, { project: false });
+  }
+
+  async securityGroups(): Promise<Array<{ id: string; name: string }>> {
+    return groupsSchema.parse(await this.#request("GET", "/security_groups/")).data;
+  }
+
+  // TIR has no delete for a security group, so orly makes one SSH group per
+  // project, by name, and every later run reuses it.
+  async createSshGroup(name: string): Promise<string> {
+    const rules = [{ rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "any", ports: [22], description: "SSH for orly burst" }];
+    return groupSchema.parse(await this.#request("POST", "/security_groups/", { body: { name, description: "SSH for orly burst VMs", rules } })).data.id;
+  }
+
+  // POST /notebooks/: https://docs.e2enetworks.com/api/tir/compute/instancevm/post-notebooks/
+  async createVm(body: Body): Promise<string> {
+    const { data } = createdSchema.parse(await this.#request("POST", "/notebooks/", { body }));
+    return "id" in data ? data.id : data.created[0]?.id ?? "";
+  }
+
+  async vm(id: string): Promise<VmState> {
+    const { data } = vmSchema.parse(await this.#request("GET", `/notebooks/${id}/`));
+    const address = data.public_ip?.trim() ?? "";
     return { status: data.status, address: IPV4.test(address) ? address : undefined };
   }
 
-  async deleteNode(id: string): Promise<void> {
-    await this.#request("DELETE", `/nodes/${id}/`);
+  async stopVm(id: string): Promise<void> {
+    await this.#request("PUT", `/notebooks/${id}/actions/`, { query: { action: "Stop" } });
   }
 
-  // PUT /nodes/{id}/actions/: power_off, or save_images with the image name.
-  async action(id: string, type: "power_off" | "save_images", name?: string): Promise<string | undefined> {
-    return actionSchema.parse(await this.#request("PUT", `/nodes/${id}/actions/`, { type, ...(name ? { name } : {}) })).data?.image_id || undefined;
+  async deleteVm(id: string): Promise<void> {
+    await this.#request("DELETE", `/notebooks/${id}/`);
   }
 
-  async savedImages(): Promise<SavedImage[]> {
-    return savedSchema.parse(await this.#request("GET", "/images/saved-images/")).data.map((image) => ({
-      imageId: image.image_id, templateId: image.template_id, name: image.name, state: image.image_state,
-      sizeGb: sizeInGb(image.image_size ?? ""),
-    }));
+  async createSnapshot(vmId: string, name: string): Promise<VmSnapshot> {
+    const { data } = z.object({ data: snapshotSchema }).parse(await this.#request("POST", `/notebooks/${vmId}/snapshots/`, { body: { name } }));
+    return toSnapshot(data);
   }
 
-  async deleteImage(id: string): Promise<void> {
-    await this.#request("DELETE", `/images/${id}/`);
+  // GET /notebooks/vm/snapshots/: every VM snapshot in the project.
+  async snapshots(): Promise<VmSnapshot[]> {
+    return z.object({ data: z.array(snapshotSchema) }).parse(await this.#request("GET", "/notebooks/vm/snapshots/", { query: { per_page: "100" } })).data.map(toSnapshot);
   }
 
-  async #request(method: string, path: string, body?: NodeBody): Promise<unknown> {
+  async deleteSnapshot(id: string): Promise<void> {
+    await this.#request("DELETE", `/notebooks/vm/snapshots/${id}/`);
+  }
+
+  async #request(method: string, path: string, options: { body?: Body; query?: Record<string, string>; project?: boolean } = {}): Promise<unknown> {
     const url = new URL(`${BASE_URL}${path}`);
-    url.search = new URLSearchParams({ project_id: this.#credentials.project, apikey: this.#credentials.apiKey, location: this.#credentials.location }).toString();
+    url.search = new URLSearchParams({
+      ...(options.project === false ? {} : { project_id: this.#credentials.project }),
+      location: this.#credentials.location, ...options.query, apikey: this.#credentials.apiKey,
+    }).toString();
     const response = await this.#fetch(url, {
       method, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      headers: { Authorization: `Bearer ${this.#credentials.token}`, ...(body ? { "Content-Type": "application/json" } : {}) },
-      ...(body ? { body: JSON.stringify(body) } : {}),
+      headers: { Authorization: `Bearer ${this.#credentials.token}`, ...(options.body ? { "Content-Type": "application/json" } : {}) },
+      ...(options.body ? { body: JSON.stringify(options.body) } : {}),
     });
-    const text = await boundedText(response);
-    const parsed = parseJson(text);
-    if (!response.ok) throw new E2eRequestFailed(`E2E ${method} ${path} answered ${response.status}: ${errorMessage(parsed)}`, response.status);
+    const parsed = parseJson(await boundedText(response));
+    if (!response.ok) throw new E2eRequestFailed(`E2E TIR ${method} ${path} answered ${response.status}: ${errorMessage(parsed)}`, response.status);
     return parsed;
   }
+}
+
+function toSnapshot(data: z.infer<typeof snapshotSchema>): VmSnapshot {
+  return { id: data.id, name: data.name, status: data.status, sizeGb: data.size_gb ?? undefined, versionId: data.image_details?.version_id ?? undefined };
 }
 
 function errorMessage(body: unknown): string {
   const parsed = z.object({ message: z.string().optional(), errors: z.unknown().optional() }).safeParse(body);
   if (!parsed.success) return "no message";
   return [parsed.data.message, parsed.data.errors ? JSON.stringify(parsed.data.errors) : ""].filter(Boolean).join(" ") || "no message";
-}
-
-// "95.368 GB" is how the saved-images list states a size.
-function sizeInGb(text: string): number | undefined {
-  const match = /^([\d.]+)\s*([A-Z]+)$/i.exec(text.trim());
-  const scale = SIZE_UNITS.get(match?.[2]?.toUpperCase() ?? "");
-  return match?.[1] && scale !== undefined ? Number(match[1]) * scale : undefined;
 }
 
 // A gateway error page is HTML; it still fails by status, with no message.
@@ -135,7 +168,7 @@ async function boundedText(response: Response): Promise<string> {
   let size = 0;
   for await (const chunk of response.body) {
     size += chunk.byteLength;
-    if (size > MAX_RESPONSE_BYTES) throw new E2eRequestFailed(`E2E answered more than ${MAX_RESPONSE_BYTES} bytes`, response.status);
+    if (size > MAX_RESPONSE_BYTES) throw new E2eRequestFailed(`E2E TIR answered more than ${MAX_RESPONSE_BYTES} bytes`, response.status);
     chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString("utf8");

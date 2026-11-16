@@ -5,7 +5,7 @@
 `orly burst` runs a repository's slow lanes on a machine rented for the run, or on the current machine inside a CI job.
 
 - **Lanes** — `burst.<name>` commands and a `burst` object in `.orly/orly.json` declare setup, warm-up, secrets and result paths. The gates never run them.
-- **Providers** — `--provider aws-spot` and `--provider e2e` start one machine per lane, drive it over SSH and delete it after. `--provider here` runs the lanes in place.
+- **Providers** — `--provider aws-spot` and `--provider e2e`, which rents E2E Networks TIR virtual machines, start one machine per lane, drive it over SSH and delete it after. `--provider here` runs the lanes in place.
 - **Snapshots** — `orly burst snapshot` captures a warm image with no secrets, lanes start from the newest one, and `--prune` keeps the newest two.
 - **Skill** — `orly-burst` tells an agent when a paid run is warranted and how to report its summary lines.
 - **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.40.0 update`. One-time cloud setup is in `docs/BURST.md`.
