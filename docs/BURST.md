@@ -50,13 +50,17 @@ Declare the lanes as `burst.<name>` commands, and the `burst` object beside them
       "CLERK_SECRET_KEY": "op://<VAULT>/clerk-dev/secret-key",
       "FIREWORKS_API_KEY": "op://<VAULT>/fireworks/credential"
     },
-    "artifacts": ["ui/packages/app/playwright-acceptance-results", "ui/packages/app/playwright-acceptance-report"]
+    "artifacts": ["ui/packages/app/playwright-acceptance-results", "ui/packages/app/playwright-acceptance-report"],
+    "directories": ["ACCEPTANCE_LOCAL_TOOLBOX_DIR"]
   }
 }
 ```
 
 Replace `<VAULT>` with the 1Password vault that holds the items.
 An `agentsfleet` setup installs `lsof` for its readiness checks, then its own toolchains.
+
+The caller sets `ACCEPTANCE_LOCAL_TOOLBOX_DIR` to a signed toolbox it downloaded, for example with `gh run download`.
+orly sends that directory to each lane's machine; nothing is stored in the cloud.
 
 | Field | Effect | Default |
 |---|---|---|
@@ -65,6 +69,7 @@ An `agentsfleet` setup installs `lsof` for its readiness checks, then its own to
 | `burst.warm` | Runs after setup when a snapshot is captured, with no secret, to fill build caches. | none |
 | `burst.secrets` | Environment variable name to an `op://` reference, read on the caller. | none |
 | `burst.artifacts` | Paths below the checkout to bring back. A missing path is skipped. | none |
+| `burst.directories` | Variables that each name a directory on the caller. orly copies each one to the machine over SSH and points the variable at the copy, for lanes only. | none |
 
 Each machine installs Git, curl, unzip, Docker and the Docker Compose plugin on its first boot.
 A repository installs anything else it needs in `burst.setup`, which runs as root.

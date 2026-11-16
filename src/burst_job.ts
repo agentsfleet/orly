@@ -11,10 +11,14 @@ export type RemoteJob = {
   // Warm-up steps for a snapshot, or the lane's own steps.
   steps: readonly string[][];
   secrets: Readonly<Record<string, string | undefined>>;
+  // burst.directories names, each staged under INPUTS for a lane.
+  directories: readonly string[];
 };
 
 // The prelude every machine runs, shipped beside this module in src/.
 const PRELUDE = join(import.meta.dir, "burst_job.sh");
+// Where a lane's copied directories land; burst_ssh.ts stages them there.
+export const INPUTS = "/tmp/orly-burst-inputs";
 
 // The whole job, prelude first. Every value is single-quoted, so a ref, an
 // argument or a secret can never become shell syntax on the machine. Setup
@@ -25,6 +29,7 @@ export async function remoteScript(job: RemoteJob): Promise<string> {
     // A lane is a CI run, which is what makes test runners write reports.
     `  export CI="\${CI:-1}"`,
     ...Object.entries(job.secrets).map(([name, value]) => `  export ${name}=${shellQuote(value ?? "")}`),
+    ...job.directories.map((name) => `  export ${name}=${shellQuote(`${INPUTS}/${name}`)}`),
   ] : [];
   const main = [
     `BURST_MODE=${shellQuote(job.kind)}`,

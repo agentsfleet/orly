@@ -84,7 +84,7 @@ describe("burst settings", () => {
 });
 
 describe("the machine job script", () => {
-  const job = { kind: "lane" as const, name: "acceptance", ref: "it's$(touch pwned)", keep: false, deadlineMinutes: 120, setup: [["make", "setup"]], steps: [["make", "test", "SUITE=a b"]], secrets: { API_TOKEN: "va'lue" } };
+  const job = { kind: "lane" as const, name: "acceptance", ref: "it's$(touch pwned)", keep: false, deadlineMinutes: 120, setup: [["make", "setup"]], steps: [["make", "test", "SUITE=a b"]], secrets: { API_TOKEN: "va'lue" }, directories: ["TOOLBOX_DIR"] };
 
   test("every value is single-quoted, setup runs before the secrets exist, and the script parses", async () => {
     const script = await remoteScript(job);
@@ -95,6 +95,8 @@ describe("the machine job script", () => {
     expect(script.indexOf("  step 'make' 'setup'")).toBeLessThan(script.indexOf("  export API_TOKEN="));
     expect(script.indexOf("  export API_TOKEN=")).toBeLessThan(script.indexOf("  step 'make' 'test' 'SUITE=a b'"));
     expect(script).toContain('  export CI="${CI:-1}"');
+    expect(script.indexOf("  export TOOLBOX_DIR='/tmp/orly-burst-inputs/TOOLBOX_DIR'")).toBeLessThan(script.indexOf("  step 'make' 'test' 'SUITE=a b'"));
+    expect(script).toContain('export HOME=/root PATH="/root/.cargo/bin:/root/.bun/bin:/root/.local/bin:$PATH"');
     expect(script).toContain("  shutdown -h +120 >/dev/null 2>&1 || true\n");
     expect(script.trimEnd().endsWith("main </dev/null")).toBe(true);
     expect(Bun.spawnSync(["bash", "-n"], { stdin: new Blob([script]) }).exitCode).toBe(0);
@@ -105,6 +107,7 @@ describe("the machine job script", () => {
 
     expect(script).not.toContain("export API_TOKEN");
     expect(script).not.toContain("export CI=");
+    expect(script).not.toContain("export TOOLBOX_DIR");
     expect(script).not.toContain("shutdown -h");
     expect(script).toContain("  step 'make' 'build'\n  warmed\n}");
   });

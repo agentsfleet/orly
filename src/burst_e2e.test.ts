@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { burst } from "./burst";
 import { burstDependencies, burstEnvironment, burstRepository, fakeBin, FakeE2e, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./burst_test_support";
-import { cleanupTemporaryDirectories } from "./gates_test_support";
+import { cleanupTemporaryDirectories, temporaryDirectory } from "./gates_test_support";
 
 const API_KEY = "e2e_test_key_00000000";
 const AUTH_TOKEN = "e2e_test_token_00000000";
@@ -98,6 +98,31 @@ describe("e2e lanes", () => {
     await expect(burst(["smoke", "--provider", "e2e"], run.dependencies)).rejects.toThrow("unknown lane smoke");
     expect(existsSync(join(run.state, "out"))).toBe(false);
     expect(run.api.calls).toHaveLength(0);
+  });
+
+  test("a declared directory travels over the session and is pointed at for the lane only", async () => {
+    const toolbox = temporaryDirectory();
+    await Bun.write(join(toolbox, "toolbox-0000.erofs"), "fixture image\n");
+    const run = e2eRun({ TOOLBOX_DIR: toolbox }, { directories: ["TOOLBOX_DIR"] });
+
+    const code = await burst(["acceptance", "--provider", "e2e"], run.dependencies);
+
+    expect(code).toBe(0);
+    const node = [...new Bun.Glob("203.0.113.*").scanSync({ cwd: run.state, onlyFiles: false })][0] ?? "";
+    const listed = Bun.spawnSync(["tar", "-tzf", join(run.state, node, "input-TOOLBOX_DIR.tgz")], { stdout: "pipe" }).stdout.toString();
+    expect(listed).toContain("./toolbox-0000.erofs");
+    const job = nodeScript(run.state);
+    const exported = job.indexOf("  export TOOLBOX_DIR='/tmp/orly-burst-inputs/TOOLBOX_DIR'");
+    expect(exported).toBeGreaterThan(job.indexOf("  step 'true'"));
+    expect(exported).toBeLessThan(job.lastIndexOf("  step 'true'"));
+    expect(job).not.toContain(toolbox);
+  });
+
+  test("a declared directory that is not set is refused before any node exists", async () => {
+    const run = e2eRun({}, { directories: ["TOOLBOX_DIR"] });
+
+    await expect(burst(["acceptance", "--provider", "e2e"], run.dependencies)).rejects.toThrow("burst.directories names TOOLBOX_DIR; set it to a directory on this machine");
+    expect(run.api.callsTo("POST", /^\/nodes\/$/)).toHaveLength(0);
   });
 
   test("a lane's own exit code is the run's, and a dropped session is interrupted", async () => {

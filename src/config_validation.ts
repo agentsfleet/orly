@@ -29,6 +29,9 @@ export const burstSchema = z.object({
   warm: invocations.optional(),
   secrets: z.record(z.string().regex(ENVIRONMENT_NAME).refine((name) => name !== OP_TOKEN, `must not be ${OP_TOKEN}`), z.string().regex(OP_REFERENCE, "must be an op:// reference")).optional(),
   artifacts: z.array(input).optional(),
+  // Variables that name a directory on the caller, copied to the machine for
+  // the lane, such as a signed toolbox fetched just before the run.
+  directories: z.array(z.string().regex(ENVIRONMENT_NAME)).refine((names) => new Set(names).size === names.length, "must not repeat a name").optional(),
 }).strict();
 export type BurstConfig = z.infer<typeof burstSchema>;
 export const reusePoliciesSchema = z.record(nonempty, z.object({

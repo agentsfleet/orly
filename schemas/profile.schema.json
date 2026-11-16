@@ -46,7 +46,8 @@
           "propertyNames": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$", "not": {"const": "OP_SERVICE_ACCOUNT_TOKEN"}},
           "additionalProperties": {"type": "string", "pattern": "^op://[^/\\u0000-\\u001f]+/[^/\\u0000-\\u001f]+/[^\\u0000-\\u001f]+$"}
         },
-        "artifacts": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}}
+        "artifacts": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}},
+        "directories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"}}
       }
     },
     "limits": {

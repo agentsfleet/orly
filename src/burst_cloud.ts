@@ -1,4 +1,5 @@
 import type { Environment } from "./burst_settings";
+import type { StagedDirectory } from "./burst_ssh";
 import type { BurstRun, CloudProvider, Image, Job, LaneResult, Machine, Snapshot, Status } from "./burst_types";
 
 import { mkdirSync } from "node:fs";
@@ -6,8 +7,12 @@ import { join } from "node:path";
 
 import { remoteScript } from "./burst_job";
 import { resolveSecrets } from "./burst_secrets";
-import { forgetKeyPair, reachable, runOverSsh } from "./burst_ssh";
+import { archiveDirectories, forgetKeyPair, reachable, runOverSsh } from "./burst_ssh";
 
+// What only a lane receives: its secrets and its copied directories.
+type LaneInputs = { secrets: Environment; directories: readonly StagedDirectory[] };
+
+const NO_INPUTS: LaneInputs = Object.freeze({ secrets: {}, directories: [] });
 const MINUTE_MS = 60_000;
 const SNAPSHOT_JOB = "snapshot";
 const LANE_PREFIX = "burst.";
@@ -18,11 +23,14 @@ const LANE_PREFIX = "burst.";
 // machines shared goes when the last one has.
 export async function cloudLanes(provider: CloudProvider, run: BurstRun, lanes: string[], useSnapshot: boolean): Promise<LaneResult[]> {
   try {
-    const secrets = await resolveSecrets(run.config.burst?.secrets ?? {}, run.settings.env);
+    const inputs: LaneInputs = {
+      secrets: await resolveSecrets(run.config.burst?.secrets ?? {}, run.settings.env),
+      directories: await archiveDirectories(run, run.config.burst?.directories ?? []),
+    };
     const image = await chooseImage(provider, run, useSnapshot);
     run.write(`orly burst: ${provider.name} starts ${lanes.join(", ")} from ${image.snapshot ? "snapshot" : "base image"} ${image.name}`);
     await provider.prepare(run);
-    return await Promise.all(lanes.map((lane) => cloudLane(provider, run, newJob(run, "lane", lane, image), secrets)));
+    return await Promise.all(lanes.map((lane) => cloudLane(provider, run, newJob(run, "lane", lane, image), inputs)));
   } finally {
     await settle(provider, run);
   }
@@ -38,7 +46,7 @@ export async function cloudSnapshot(provider: CloudProvider, run: BurstRun): Pro
     machine = await provider.create(run, job);
     machine = await provider.ready(run, job, machine);
     await reachable(run, job, machine, provider.user);
-    const status = await runOverSsh(run, job, machine, provider.user, await script(run, job, {}));
+    const status = await runOverSsh(run, job, machine, provider.user, await script(run, job, NO_INPUTS), []);
     if (status !== 0) {
       run.write(`orly burst: the warm-up ended with exit=${status}; no snapshot was taken`);
       return undefined;
@@ -79,14 +87,14 @@ async function chooseImage(provider: CloudProvider, run: BurstRun, useSnapshot: 
   return newest ? { id: newest.launchId, name: newest.name, snapshot: true } : provider.baseImage();
 }
 
-async function cloudLane(provider: CloudProvider, run: BurstRun, job: Job, secrets: Environment): Promise<LaneResult> {
+async function cloudLane(provider: CloudProvider, run: BurstRun, job: Job, inputs: LaneInputs): Promise<LaneResult> {
   let machine: Machine | undefined;
   let status: Status = "unlaunched";
   try {
     machine = await provider.create(run, job);
     machine = await provider.ready(run, job, machine);
     await reachable(run, job, machine, provider.user);
-    status = await runOverSsh(run, job, machine, provider.user, await script(run, job, secrets));
+    status = await runOverSsh(run, job, machine, provider.user, await script(run, job, inputs), inputs.directories);
   } catch (error) {
     run.write(`orly burst: lane=${job.name} ${error instanceof Error ? error.message : String(error)}`);
     if (machine) status = run.signal.aborted ? "cancelled" : Date.now() >= job.deadline ? "deadline" : "interrupted";
@@ -97,12 +105,13 @@ async function cloudLane(provider: CloudProvider, run: BurstRun, job: Job, secre
   return { lane: job.name, provider: provider.name, machine: machine?.label ?? "none", minutes, cost: provider.cost(machine), status, evidence: job.evidence };
 }
 
-function script(run: BurstRun, job: Job, secrets: Environment): Promise<string> {
+function script(run: BurstRun, job: Job, inputs: LaneInputs): Promise<string> {
   const burst = run.config.burst ?? {};
+  const lane = job.kind === "lane" ? inputs : NO_INPUTS;
   return remoteScript({
     kind: job.kind, name: job.name, ref: run.ref, keep: run.keep, deadlineMinutes: Math.ceil(run.settings.deadlineMs / MINUTE_MS),
     setup: burst.setup ?? [], steps: job.kind === "warm" ? burst.warm ?? [] : run.config.commands[`${LANE_PREFIX}${job.name}`] ?? [],
-    secrets: job.kind === "lane" ? secrets : {},
+    secrets: lane.secrets, directories: lane.directories.map((directory) => directory.name),
   });
 }
 

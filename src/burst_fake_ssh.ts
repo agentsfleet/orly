@@ -25,6 +25,11 @@ async function dispatch(): Promise<number> {
     writeFileSync(join(node, "repo.bundle"), Buffer.from(await Bun.stdin.arrayBuffer()));
     return 0;
   }
+  const input = command.match(/^rm -rf \/tmp\/orly-burst-inputs\/(\w+) && mkdir -p \/tmp\/orly-burst-inputs\/\1 && tar -xzf - -C \/tmp\/orly-burst-inputs\/\1$/)?.[1];
+  if (input) {
+    writeFileSync(join(node, `input-${input}.tgz`), Buffer.from(await Bun.stdin.arrayBuffer()));
+    return 0;
+  }
   if (command === "bash -s" || command === "sudo -n bash -s") {
     const script = await Bun.stdin.text();
     return script.includes(RESULTS_MARKER) ? results() : job(script);

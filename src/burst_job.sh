@@ -7,6 +7,9 @@
 # shell's memory and the lane's environment, and on no disk.
 set -uo pipefail
 readonly WORK=/opt/orly-burst/work MARK=/var/lib/orly-burst/warm BUNDLE=/tmp/orly-burst.bundle
+# Each step is its own process, so a toolchain one step installs for root,
+# such as rustup's cargo or Bun, is on PATH for every later step.
+export HOME=/root PATH="/root/.cargo/bin:/root/.bun/bin:/root/.local/bin:$PATH"
 
 # What a cold machine lacks. A warm snapshot already has it, marked by $MARK.
 # Compose is part of Docker here: Ubuntu packages the plugin as

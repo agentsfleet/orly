@@ -2,12 +2,14 @@ import type { Outcome } from "./burst_process";
 import type { Environment } from "./burst_settings";
 import type { BurstRun, Job, Machine, Status } from "./burst_types";
 
-import { rmSync } from "node:fs";
+import { existsSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-import { resultsScript } from "./burst_job";
+import { INPUTS, resultsScript } from "./burst_job";
 import { captureProcess, streamProcess, until } from "./burst_process";
 import { OrlyError } from "./model";
+
+export type StagedDirectory = { name: string; archive: string };
 
 const KEY_FILE = "id_ed25519";
 const KEYGEN_TIMEOUT_MS = 60_000;
@@ -40,13 +42,31 @@ export async function reachable(run: BurstRun, job: Job, machine: Machine, user:
   await until(`SSH to ${machine.address ?? machine.id}`, probe, { deadline: job.deadline, signal: run.signal, pollMs: run.settings.pollMs });
 }
 
-// Stages the ref's bundle, runs the job script as the session's standard
-// input, streams its output with the job's name in front, and brings the
-// declared results back. The script carries a lane's secrets, so it exists
-// only as this process's memory and the remote shell's input.
-export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user: string, script: string): Promise<Status> {
-  const staged = await captureProcess(sshArgs(run, machine, user, "cat > /tmp/orly-burst.bundle"), { env: run.settings.env, stdin: Bun.file(run.bundle), timeoutMs: STAGE_TIMEOUT_MS, signal: run.signal });
-  if (staged.code !== 0) throw new OrlyError(`could not stage ${run.ref} on ${machine.id}: ${staged.stderr.trim()}`);
+// Each burst.directories variable must name a directory on this machine. It
+// is archived once per run, beside the bundle, for every lane to receive.
+export async function archiveDirectories(run: BurstRun, names: readonly string[]): Promise<StagedDirectory[]> {
+  const staged: StagedDirectory[] = [];
+  for (const name of names) {
+    const directory = run.settings.env[name];
+    if (!directory || !existsSync(directory) || !statSync(directory).isDirectory()) throw new OrlyError(`burst.directories names ${name}; set it to a directory on this machine`);
+    const archive = join(run.runDirectory, `${name}.tgz`);
+    const made = await captureProcess(["tar", "-czf", archive, "-C", directory, "."], { env: run.settings.env, timeoutMs: STAGE_TIMEOUT_MS, signal: run.signal });
+    if (made.code !== 0) throw new OrlyError(`could not archive ${name}: ${made.stderr.trim()}`);
+    staged.push({ name, archive });
+  }
+  return staged;
+}
+
+// Stages the ref's bundle and any copied directories, runs the job script as
+// the session's standard input, streams its output with the job's name in
+// front, and brings the declared results back. The script carries a lane's
+// secrets, so it exists only as this process's memory and the remote shell's
+// input.
+export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user: string, script: string, directories: readonly StagedDirectory[]): Promise<Status> {
+  await stage(run, machine, user, "cat > /tmp/orly-burst.bundle", run.bundle, run.ref);
+  for (const { name, archive } of directories) {
+    await stage(run, machine, user, `rm -rf ${INPUTS}/${name} && mkdir -p ${INPUTS}/${name} && tar -xzf - -C ${INPUTS}/${name}`, archive, name);
+  }
   const log = Bun.file(join(job.evidence, "run.log")).writer();
   let outcome: Outcome;
   try {
@@ -73,6 +93,11 @@ export function sshArgs(run: BurstRun, machine: Machine, user: string, command: 
     "-o", "StrictHostKeyChecking=accept-new", "-o", `UserKnownHostsFile=${run.knownHosts}`,
     "-o", "ConnectTimeout=15", "-o", "ServerAliveInterval=30", "-o", "ServerAliveCountMax=4", "-o", "LogLevel=ERROR",
     `${user}@${machine.address ?? ""}`, command];
+}
+
+async function stage(run: BurstRun, machine: Machine, user: string, command: string, file: string, what: string): Promise<void> {
+  const sent = await captureProcess(sshArgs(run, machine, user, command), { env: run.settings.env, stdin: Bun.file(file), timeoutMs: STAGE_TIMEOUT_MS, signal: run.signal });
+  if (sent.code !== 0) throw new OrlyError(`could not stage ${what} on ${machine.id}: ${sent.stderr.trim()}`);
 }
 
 async function collect(run: BurstRun, job: Job, machine: Machine, user: string): Promise<void> {
