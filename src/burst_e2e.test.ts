@@ -51,7 +51,7 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(run.api.calls.indexOf(creates[1] ?? deletes[0]!)).toBeLessThan(run.api.calls.indexOf(deletes[0]!));
     expect(run.api.vms.size).toBe(0);
     const body = fields(creates[0]?.body);
-    expect(body).toMatchObject({ kind: "vm", image_type: "pre-built", image_version_id: 59, sku_item_price_id: 3, disk_size_in_gb: 100, quantity: 1, security_group_id: 700 });
+    expect(body).toMatchObject({ kind: "vm", image_type: "pre-built", image_version_id: 106, sku_item_price_id: 3, disk_size_in_gb: 100, quantity: 1, security_group_id: 700 });
     expect(body).not.toHaveProperty("snapshot_id");
     const key = Array.isArray(body.public_key) ? String(body.public_key[0]) : "";
     expect(key).toStartWith("ssh-ed25519 ");
@@ -267,7 +267,7 @@ describe("e2e snapshots on TIR", () => {
     await burst([...ONE_LANE, "--no-snapshot"], run.dependencies);
 
     const bodies = created(run.api);
-    expect(bodies[0]).toMatchObject({ snapshot_id: 7002, image_version_id: 59, disk_size_in_gb: 100 });
+    expect(bodies[0]).toMatchObject({ snapshot_id: 7002, image_version_id: 106, disk_size_in_gb: 100 });
     expect(bodies[1]).not.toHaveProperty("snapshot_id");
   });
 
@@ -279,8 +279,17 @@ describe("e2e snapshots on TIR", () => {
 
     const byImage = e2eRun({ ORLY_BURST_E2E_IMAGE: "Ubuntu 22.04" });
     await burst(ONE_LANE, byImage.dependencies);
-    expect(created(byImage.api)[0]).toMatchObject({ image_version_id: 41 });
+    expect(created(byImage.api)[0]).toMatchObject({ image_version_id: 107 });
     expect(created(byImage.api)[0]).not.toHaveProperty("snapshot_id");
+  });
+
+  test("an image version TIR does not list is refused with the versions it has, before any VM", async () => {
+    const run = e2eRun({ ORLY_BURST_E2E_IMAGE: "Ubuntu 26.04" });
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
+    expect(run.output.text()).toContain("TIR has no image Ubuntu 26.04; it has: Ubuntu 24.04-cuda13.0, Ubuntu 22.04, Ubuntu 24.04, Ubuntu 22.04");
+    expect(run.api.callsTo("POST", CREATE)).toHaveLength(0);
+    expect(run.api.groups.size).toBe(0);
   });
 
   test("pruning keeps the newest snapshots of this repository only, renting nothing", async () => {

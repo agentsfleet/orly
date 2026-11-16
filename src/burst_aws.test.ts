@@ -71,7 +71,7 @@ describe("aws-spot lanes", () => {
     expect(ssh.every((call) => call.includes("admin@198.51.100.1") || call.includes("admin@198.51.100.2"))).toBe(true);
     expect(ssh.some((call) => call.at(-1) === "sudo -n bash -s")).toBe(true);
     const text = run.output.text();
-    expect(text).toContain("no capacity for c7i.4xlarge; trying the next type");
+    expect(text).toContain("no capacity for c7i.4xlarge (InsufficientInstanceCapacity); trying the next type");
     expect(text).toContain(`admits SSH from ${CALLER_ADDRESS} only`);
     expect(text).toMatch(/orly burst: lane=acceptance provider=aws-spot machine=c7a\.4xlarge minutes=\d+ cost≈\$0\.2345\/h \(spot\) exit=0 evidence=\S+/);
     expect(text).toContain("[integration] lane integration ran");
@@ -111,6 +111,17 @@ describe("aws-spot lanes", () => {
     expect(run.output.text()).toContain("is terminated before it was reachable (Spot interruption?)");
     expect(run.output.text()).toMatch(/exit=interrupted /);
     expect(aws(run.state, "terminate-instances")).toHaveLength(1);
+  });
+
+  test("when no type can start, the lane says what AWS last said, such as a Spot quota", async () => {
+    const quota = "An error occurred (MaxSpotInstanceCountExceeded) when calling the RunInstances operation: Max spot instance count exceeded";
+    const run = await awsRun({ refuse: quota });
+
+    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(1);
+    expect(aws(run.state, "run-instances")).toHaveLength(4);
+    expect(run.output.text()).toContain("no capacity for m7i.4xlarge (MaxSpotInstanceCountExceeded); trying the next type");
+    expect(run.output.text()).toContain(`no capacity for any of: c7i.4xlarge c7a.4xlarge c6i.4xlarge m7i.4xlarge; AWS last said: ${quota}`);
+    expect(run.output.text()).toMatch(/exit=unlaunched /);
   });
 
   test("a refusal that is not capacity stops the lane before any machine exists", async () => {

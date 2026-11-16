@@ -23,6 +23,8 @@ const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 // A type with no Spot capacity, or none at this price, falls through to the
 // next type in ORLY_BURST_INSTANCE_TYPES; any other refusal stops the lane.
 const CAPACITY_ERRORS = /InsufficientInstanceCapacity|SpotMaxPriceTooLow|MaxSpotInstanceCountExceeded|Unsupported/;
+// "An error occurred (InsufficientInstanceCapacity) when calling …"
+const AWS_ERROR_CODE = /\(([A-Za-z.]+)\)/;
 // An account's first Spot launch needs the Spot service-linked role, which
 // the launcher may not create: that is an administrator's one-time step.
 const SPOT_ROLE_MISSING = /ServiceLinkedRoleCreationNotPermitted/;
@@ -100,6 +102,7 @@ export class AwsSpot implements CloudProvider {
 
   async create(run: BurstRun, job: Job): Promise<Machine> {
     const spot = job.kind === "lane" && !run.keep;
+    let refusal = "";
     for (const type of this.#settings.aws.types) {
       const launch = await this.#aws(this.#runInstances(run, job, type, spot), { allowFailure: true, signal: run.signal });
       if (launch.code === 0) {
@@ -109,9 +112,12 @@ export class AwsSpot implements CloudProvider {
       }
       if (SPOT_ROLE_MISSING.test(launch.stderr)) throw new OrlyError(`this account has never launched a Spot instance: an administrator runs \`${SPOT_ROLE_COMMAND}\` once (docs/BURST.md)`);
       if (!CAPACITY_ERRORS.test(launch.stderr)) throw new OrlyError(`run-instances refused: ${launch.stderr.trim()}`);
-      run.write(`orly burst: lane=${job.name} no capacity for ${type}; trying the next type`);
+      // AWS's own words say which limit it was: capacity, a Spot quota or an
+      // unsupported type are fixed in different places.
+      refusal = launch.stderr.trim().replaceAll(/\s+/g, " ");
+      run.write(`orly burst: lane=${job.name} no capacity for ${type} (${refusal.match(AWS_ERROR_CODE)?.[1] ?? "unknown"}); trying the next type`);
     }
-    throw new OrlyError(`no capacity for any of: ${this.#settings.aws.types.join(" ")}`);
+    throw new OrlyError(`no capacity for any of: ${this.#settings.aws.types.join(" ")}; AWS last said: ${refusal}`);
   }
 
   // A Spot instance reclaimed while it boots is gone before it answers.

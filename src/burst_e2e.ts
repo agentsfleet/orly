@@ -162,13 +162,17 @@ export class E2eNodes implements CloudProvider {
     return this.#plan;
   }
 
-  // `Ubuntu 24.04` is the image named Ubuntu at a version starting 24.04.
+  // `Ubuntu 24.04` is the image named Ubuntu at exactly version 24.04, never
+  // `24.04-cuda13.0`. TIR lists some versions more than once; the highest
+  // identifier is the newest build.
   async #osImage(wanted: string): Promise<{ versionId: number; snapshotId?: string }> {
     const [name = "", version = ""] = wanted.split(/\s+/, 2);
     const images = await this.#api.images();
-    const match = images.find((image) => image.name.toLowerCase() === name.toLowerCase() && image.version.startsWith(version));
-    if (match) return { versionId: match.versionId };
-    throw new OrlyError(`TIR has no image ${wanted}; it has: ${images.slice(0, 20).map((image: OsImage) => `${image.name} ${image.version}`).join(", ") || "none"}`);
+    const matches = images.filter((image) => image.name.toLowerCase() === name.toLowerCase() && image.version === version);
+    if (matches.length > 0) return { versionId: Math.max(...matches.map((image) => image.versionId)) };
+    const named = images.filter((image) => image.name.toLowerCase() === name.toLowerCase());
+    const offered = (named.length > 0 ? named : images.slice(0, 20)).map((image: OsImage) => `${image.name} ${image.version}`);
+    throw new OrlyError(`TIR has no image ${wanted}; it has: ${offered.join(", ") || "none"}`);
   }
 
   async #snapshotSource(id: string): Promise<{ versionId: number | undefined; snapshotId: string }> {

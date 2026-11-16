@@ -10,7 +10,13 @@ type FakeVm = { id: string; name: string; status: string; polls: number; address
 type FakeSnapshot = { id: number; name: string; status: string; size_gb: number; image_details: { version_id: number } };
 
 const PREFIX = "/myaccount/api/v1/gpu";
-const UBUNTU_24 = 59;
+const UBUNTU_24 = 106;
+// The order and the repeats TIR really lists: a CUDA build before the plain
+// 24.04, and 22.04 more than once.
+const IMAGES = [
+  { name: "Transformers", versions: [{ image_version_id: 59, version: "v4.51.3" }] },
+  { name: "Ubuntu", versions: [{ image_version_id: 111, version: "24.04-cuda13.0" }, { image_version_id: 107, version: "22.04" }, { image_version_id: UBUNTU_24, version: "24.04" }, { image_version_id: 48, version: "22.04" }] },
+];
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
 export class FakeTir {
@@ -51,7 +57,7 @@ export class FakeTir {
     const route = `${method} ${path.replace(/\/\d+\//g, "/{id}/")}`;
     const id = path.match(/\/(\d+)\//)?.[1] ?? "";
     if (route === "GET /gpu_service/sku/") return reply({ CPU: [sku("C3.32GB", 3, 18.6), sku("C3.16GB", 6, 9.2)], GPU: [] });
-    if (route === "GET /gpu_service/image/") return reply([{ name: "Ubuntu", versions: [{ image_version_id: UBUNTU_24, version: "24.04" }, { image_version_id: 41, version: "22.04" }] }]);
+    if (route === "GET /gpu_service/image/") return reply(IMAGES);
     if (route === "POST /ssh_keys/") return this.addKey(body);
     if (route === "GET /ssh_keys/") return reply([...this.keys.values()]);
     if (route === "DELETE /ssh_keys/{id}/") return reply({}, [...this.keys].some(([label, key]) => String(key.pk) === id && this.keys.delete(label)) ? 200 : 404);
