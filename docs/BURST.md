@@ -40,7 +40,7 @@ Declare the lanes as `burst.<name>` commands, and the `burst` object beside them
 {
   "commands": {
     "verify.unit": [["make", "test-unit-all"]],
-    "burst.acceptance": [["make", "acceptance-codex", "SUITE=e2e"]],
+    "burst.acceptance": [["make", "acceptance", "SUITE=all"]],
     "burst.integration": [["make", "test-integration-rustd"]]
   },
   "burst": {
@@ -215,7 +215,7 @@ Each snapshot capture costs one more run, and AWS adds about $0.005 per hour for
    ```
 
    ```text
-   [acceptance] == make acceptance-codex SUITE=e2e
+   [acceptance] == make acceptance SUITE=all
    <varies>
    orly burst: lane=acceptance provider=e2e machine=C3.32GB minutes=<varies> cost≈₹25/h + GST (billed hourly) exit=0 evidence=<DIRECTORY>
    orly burst: lane=integration provider=e2e machine=C3.32GB minutes=<varies> cost≈₹25/h + GST (billed hourly) exit=0 evidence=<DIRECTORY>
