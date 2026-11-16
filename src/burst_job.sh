@@ -13,8 +13,9 @@ export HOME=/root PATH="/root/.cargo/bin:/root/.bun/bin:/root/.local/bin:$PATH"
 
 # What a cold machine lacks. A warm snapshot already has it, marked by $MARK.
 # Compose is part of Docker here: Ubuntu packages the plugin as
-# docker-compose-v2 and Debian as docker-compose. Anything else a repository
-# needs belongs in its burst.setup.
+# docker-compose-v2 and Debian as docker-compose. Debian 13 also moved the
+# docker command itself into docker-cli, which docker.io only recommends.
+# Anything else a repository needs belongs in its burst.setup.
 prepare() {
   export DEBIAN_FRONTEND=noninteractive
   if [ ! -e "$MARK" ]; then
@@ -23,6 +24,7 @@ prepare() {
     local compose=docker-compose
     if apt-cache show docker-compose-v2 >/dev/null 2>&1; then compose=docker-compose-v2; fi
     apt-get install -y -qq --no-install-recommends ca-certificates curl git unzip docker.io "$compose"
+    if ! command -v docker >/dev/null; then apt-get install -y -qq --no-install-recommends docker-cli; fi
     systemctl start docker
   fi
   echo "== docker probe"
