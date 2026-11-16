@@ -72,6 +72,11 @@ render, and compares every pack copy with its source.
 The `orly-build` and `orly-ship` skills carry the sequence. Full unit, integration,
 and memory suites run at the PR boundary.
 
+`burst.*` commands sit outside every gate. A burst lane rents a machine by the
+hour, and the gates run on every commit and push, so no gate selects one.
+`orly burst` runs them on request; [the burst page](BURST.md) covers setup and
+costs.
+
 Checks run fresh by default; only an explicit reviewed hermetic policy and invocation can reuse complete matching evidence. No assumption about a custom pre-push hook removes a check.
 
 Baselines come from
