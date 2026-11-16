@@ -17,9 +17,9 @@ prepare() {
   if [ ! -e "$MARK" ]; then
     echo "== packages"
     apt-get update -qq
-    apt-get install -y -qq --no-install-recommends ca-certificates curl git unzip docker.io
-    apt-get install -y -qq --no-install-recommends docker-compose-v2 \
-      || apt-get install -y -qq --no-install-recommends docker-compose
+    local compose=docker-compose
+    if apt-cache show docker-compose-v2 >/dev/null 2>&1; then compose=docker-compose-v2; fi
+    apt-get install -y -qq --no-install-recommends ca-certificates curl git unzip docker.io "$compose"
     systemctl start docker
   fi
   echo "== docker probe"

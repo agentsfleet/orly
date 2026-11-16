@@ -68,7 +68,9 @@ An `agentsfleet` setup installs `lsof` for its readiness checks, then its own to
 
 Each machine installs Git, curl, unzip, Docker and the Docker Compose plugin on its first boot.
 A repository installs anything else it needs in `burst.setup`, which runs as root.
-Every lane runs with `CI=1` unless the caller sets `CI` itself, so test runners write their reports.
+
+Every lane runs with `CI=1`, so test runners write their reports.
+Under `--provider here`, a `CI` value the caller already set wins.
 
 The caller needs `git`, `ssh`, `ssh-keygen` and `tar`, and the provider's credentials below.
 A secret already exported in the caller's environment is used as it is.
@@ -316,7 +318,8 @@ The evidence directory holds `run.log` and the declared results that existed on 
 ## Remove or undo
 
 Without `--keep`, a run deletes its machines, key pair and security group, and its private key, even when a lane fails.
-Ctrl-C or a CI cancellation deletes them too, before orly exits.
+Ctrl-C or SIGTERM starts the same cleanup before orly exits.
+A CI runner that kills orly before the cleanup ends leaves the resources behind.
 
 `--keep` leaves the machines running for inspection, with no scheduled shutdown, and prints the key to log in with.
 They bill until someone deletes them: the instance and its `orly-burst-<RUN>` key pair and group on AWS, or the node in MyAccount on E2E.
