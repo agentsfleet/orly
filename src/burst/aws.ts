@@ -1,4 +1,5 @@
 import type { Captured } from "./process";
+import { done, failed, ongoing } from "./progress";
 import type { BurstSettings } from "./settings";
 import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot, SnapshotScope } from "./types";
 
@@ -102,12 +103,12 @@ export class AwsSpot implements CloudProvider {
       ...(vpc ? ["--vpc-id", vpc] : []), "--tag-specifications", tags("security-group"), "--query", "GroupId", "--output", "text"], { signal });
     this.#group = group.stdout.trim();
     if (this.#settings.aws.access === "ssm") {
-      run.write(`orly burst: ${name} admits no inbound connection; SSH goes through Systems Manager`);
+      run.write(done(`${name} admits no inbound connection; SSH goes through Systems Manager`));
       return;
     }
     const caller = await callerAddress(this.#fetch);
     await this.#aws(["ec2", "authorize-security-group-ingress", "--group-id", this.#group, "--protocol", "tcp", "--port", "22", "--cidr", `${caller}/32`], { signal });
-    run.write(`orly burst: ${name} admits SSH from ${caller} only`);
+    run.write(done(`${name} admits SSH from ${caller} only`));
   }
 
   async create(run: BurstRun, job: Job): Promise<Machine> {
@@ -117,7 +118,7 @@ export class AwsSpot implements CloudProvider {
       const launch = await this.#aws(this.#runInstances(run, job, type, spot), { allowFailure: true, signal: run.signal });
       if (launch.code === 0) {
         const id = launch.stdout.trim();
-        run.write(`orly burst: lane=${job.name} ${id} (${type}${spot ? " spot" : " on-demand"}) started from ${job.image.name}`);
+        run.write(done(`lane=${job.name} ${id} (${type}${spot ? " spot" : " on-demand"}) started from ${job.image.name}`));
         return { id, label: type, address: undefined, market: spot ? "spot" : "on-demand", hourly: spot ? await this.#spotPrice(type, run.signal) : undefined };
       }
       if (SPOT_ROLE_MISSING.test(launch.stderr)) throw new OrlyError(`this account has never launched a Spot instance: an administrator runs \`${SPOT_ROLE_COMMAND}\` once (docs/BURST.md)`);
@@ -125,7 +126,7 @@ export class AwsSpot implements CloudProvider {
       // AWS's own words say which limit it was: capacity, a Spot quota or an
       // unsupported type are fixed in different places.
       refusal = launch.stderr.trim().replaceAll(/\s+/g, " ");
-      run.write(`orly burst: lane=${job.name} no capacity for ${type} (${refusal.match(AWS_ERROR_CODE)?.[1] ?? "unknown"}); trying the next type`);
+      run.write(ongoing(`lane=${job.name} no capacity for ${type} (${refusal.match(AWS_ERROR_CODE)?.[1] ?? "unknown"}); trying the next type`));
     }
     throw new OrlyError(`no capacity for any of: ${this.#settings.aws.types.join(" ")}; AWS last said: ${refusal}`);
   }
@@ -160,7 +161,7 @@ export class AwsSpot implements CloudProvider {
     const created = await this.#aws(["ec2", "create-image", "--instance-id", machine.id, "--name", name, "--description", `orly burst warm image of ${run.repo}`,
       "--tag-specifications", `ResourceType=image,${tags}`, `ResourceType=snapshot,${tags}`, "--query", "ImageId", "--output", "text"], { signal: run.signal });
     const id = created.stdout.trim();
-    run.write(`orly burst: capturing ${name} as ${id}`);
+    run.write(ongoing(`capturing ${name} as ${id}`));
     for (;;) {
       const described = await this.#poll(["ec2", "describe-images", "--image-ids", id, "--query", "Images[0].[State,StateReason.Message]", "--output", "text"], run.signal);
       const [state = "", ...reason] = described?.stdout.trim().split("\t") ?? [];
@@ -200,12 +201,12 @@ export class AwsSpot implements CloudProvider {
     const strays = tagged.code === 0 ? tagged.stdout.split(/\s+/).filter((id) => id.startsWith("i-")) : [];
     if (strays.length > 0) {
       await this.#aws(["ec2", "terminate-instances", "--instance-ids", ...strays], { allowFailure: true });
-      await this.#awaitTerminated(strays).catch((error: unknown) => run.write(`orly burst: ${messageOf(error)}`));
+      await this.#awaitTerminated(strays).catch((error: unknown) => run.write(failed(messageOf(error))));
     }
     const cleanups = [...(this.#group ? [["ec2", "delete-security-group", "--group-id", this.#group]] : []), ["ec2", "delete-key-pair", "--key-name", name]];
     for (const cleanup of cleanups) {
       const done = await this.#aws(cleanup, { allowFailure: true });
-      if (done.code !== 0) run.write(`orly burst: could not ${cleanup[1]} for ${name}: ${done.stderr.trim()}; delete it by hand`);
+      if (done.code !== 0) run.write(failed(`could not ${cleanup[1]} for ${name}: ${done.stderr.trim()}; delete it by hand`));
     }
   }
 

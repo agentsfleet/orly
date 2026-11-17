@@ -59,10 +59,12 @@ arrives, so a step that takes minutes, such as an upload, is never silent.
 After it, print one block: each `lane=` line, the `total` line, what was
 deleted, and anything left to delete by hand.
 
+orly marks each step: ⏳ under way, 🟢 done, 🔴 failed or left for a person.
+
 ```text
 burst  snapshot · e2e · Chennai · Debian 13 · feat/x · ₹25/h + GST
-  VM 30361 created → ready → sending bundle (70.1 MB) → setup → saved
-result saved orly-burst-…  ·  VM, key and group deleted  ·  nothing left
+  🟢 VM 30361 created → 🟢 ready → ⏳ sending bundle (70.1 MB)… → 🟢 saved
+result 🟢 saved orly-burst-…  ·  🟢 VM, key and group deleted  ·  nothing left
 ```
 
 ## Credentials

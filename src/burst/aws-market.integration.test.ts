@@ -46,7 +46,7 @@ describe("aws-spot retry policy", () => {
     expect(aws(run.state, "describe-instances").filter((call) => option(call, "--query").includes("StateReason"))).toHaveLength(1);
     expect(aws(run.state, "terminate-instances")).toHaveLength(2);
     const text = run.output.text();
-    expect(text).toContain("orly burst: lane=acceptance aws-spot took its machine back; running it once more on demand");
+    expect(text).toContain("orly burst: ⏳ lane=acceptance aws-spot took its machine back; running it once more on demand…");
     expect(text).toMatch(/lane=acceptance provider=aws-spot machine=c7i\.4xlarge minutes=\d+ cost≈\$0\.2345\/h \(spot\), then on-demand rate exit=0 evidence=\S+acceptance-on-demand/);
     expect(text).toContain("orly burst: total provider=aws-spot lanes=1 passed=1 failed=0");
   });

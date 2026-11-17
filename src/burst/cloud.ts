@@ -1,4 +1,5 @@
 import type { Environment } from "./settings";
+import { done, failed, ongoing } from "./progress";
 import type { StagedDirectory } from "./ssh";
 import type { BurstRun, CloudProvider, Image, Job, LaneResult, Machine, Snapshot, SnapshotScope, Status } from "./types";
 
@@ -30,7 +31,7 @@ export async function cloudLanes(provider: CloudProvider, run: BurstRun, lanes: 
       directories: await archiveDirectories(run, run.config.burst?.directories ?? []),
     };
     const image = await chooseImage(provider, run, useSnapshot);
-    run.write(`orly burst: ${provider.name} starts ${lanes.join(", ")} from ${image.snapshot ? "snapshot" : "base image"} ${image.name}`);
+    run.write(ongoing(`${provider.name} starts ${lanes.join(", ")} from ${image.snapshot ? "snapshot" : "base image"} ${image.name}`));
     requireActive(run);
     await provider.prepare(run);
     return await Promise.all(lanes.map((lane) => cloudLane(provider, run, newJob(run, "lane", lane, image), inputs)));
@@ -53,7 +54,7 @@ export async function cloudSnapshot(provider: CloudProvider, run: BurstRun): Pro
     await reachable(run, job, machine, provider.user);
     const status = await runOverSsh(run, job, machine, provider.user, await script(run, job, NO_INPUTS), []);
     if (status !== 0) {
-      run.write(`orly burst: the warm-up ended with exit=${status}; no snapshot was taken`);
+      run.write(failed(`the warm-up ended with exit=${status}; no snapshot was taken`));
       return undefined;
     }
     return await provider.capture(run, job, machine, snapshotName(run.repo, new Date()));
@@ -96,7 +97,7 @@ async function chooseImage(provider: CloudProvider, run: BurstRun, useSnapshot: 
 async function cloudLane(provider: CloudProvider, run: BurstRun, job: Job, inputs: LaneInputs): Promise<LaneResult> {
   const first = await laneAttempt(provider, run, job, inputs);
   if (!first.relaunch) return first.result;
-  run.write(`orly burst: lane=${job.name} ${provider.name} took its machine back; running it once more on demand`);
+  run.write(ongoing(`lane=${job.name} ${provider.name} took its machine back; running it once more on demand`));
   const again = await laneAttempt(provider, run, newJob(run, "lane", job.name, job.image, { onDemand: true, evidence: `${job.name}-on-demand` }), inputs);
   return { ...again.result, minutes: first.result.minutes + again.result.minutes, cost: `${first.result.cost}, then ${again.result.cost}` };
 }
@@ -112,7 +113,7 @@ async function laneAttempt(provider: CloudProvider, run: BurstRun, job: Job, inp
     await reachable(run, job, machine, provider.user);
     status = await runOverSsh(run, job, machine, provider.user, await script(run, job, inputs), inputs.directories);
   } catch (error) {
-    run.write(`orly burst: lane=${job.name} ${messageOf(error)}`);
+    run.write(failed(`lane=${job.name} ${messageOf(error)}`));
     if (machine) status = run.signal.aborted ? "cancelled" : Date.now() >= job.deadline ? "deadline" : "interrupted";
   } finally {
     if (machine && status === "interrupted" && !job.onDemand && provider.relaunchOnDemand) relaunch = await provider.relaunchOnDemand(run, machine).catch(() => false);
@@ -140,11 +141,11 @@ async function release(provider: CloudProvider, run: BurstRun, machine: Machine)
     return;
   }
   try {
-    run.write(`orly burst: deleting ${provider.name} machine ${machine.id}`);
+    run.write(ongoing(`deleting ${provider.name} machine ${machine.id}`));
     await provider.remove(machine);
-    run.write(`orly burst: ${provider.name} machine ${machine.id} is deleted`);
+    run.write(done(`${provider.name} machine ${machine.id} is deleted`));
   } catch (error) {
-    run.write(`orly burst: could not delete ${provider.name} machine ${machine.id}: ${messageOf(error)}; delete it by hand, it bills until then`);
+    run.write(failed(`could not delete ${provider.name} machine ${machine.id}: ${messageOf(error)}; delete it by hand, it bills until then`));
   }
 }
 

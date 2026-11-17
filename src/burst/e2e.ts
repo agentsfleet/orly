@@ -1,4 +1,5 @@
 import type { BurstSettings } from "./settings";
+import { done, failed, ongoing } from "./progress";
 import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot, SnapshotScope } from "./types";
 import type { OsImage, Plan, VmSnapshot } from "./tir";
 
@@ -84,7 +85,7 @@ export class E2eNodes implements CloudProvider {
     this.#keyLabel = name;
     const caller = await callerAddress(this.#fetch);
     this.#group = await this.#api.createSshGroup(name, caller, run.signal);
-    run.write(`orly burst: ${name} admits SSH from ${caller} only`);
+    run.write(done(`${name} admits SSH from ${caller} only`));
   }
 
   async create(run: BurstRun, job: Job): Promise<Machine> {
@@ -100,10 +101,10 @@ export class E2eNodes implements CloudProvider {
       }, run.signal);
     } catch (error) {
       // A request that failed after reaching TIR may still have made the VM.
-      if (!(error instanceof E2eRequestFailed && error.status < 500)) run.write(`orly burst: lane=${job.name} TIR may have created VM ${name}; check TIR, it bills until deleted`);
+      if (!(error instanceof E2eRequestFailed && error.status < 500)) run.write(failed(`lane=${job.name} TIR may have created VM ${name}; check TIR, it bills until deleted`));
       throw error;
     }
-    run.write(`orly burst: lane=${job.name} VM ${id} (${plan.sku}, ${job.image.name}) created`);
+    run.write(done(`lane=${job.name} VM ${id} (${plan.sku}, ${job.image.name}) created`));
     return { id, label: plan.sku, address: undefined, hourly: RUPEES_PER_HOUR };
   }
 
@@ -121,7 +122,7 @@ export class E2eNodes implements CloudProvider {
   // polled until ready or failed; one still saving at the run's deadline is
   // left to finish and reported as pending.
   async capture(run: BurstRun, job: Job, machine: Machine, name: string): Promise<Snapshot> {
-    run.write(`orly burst: stopping VM ${machine.id} to save it`);
+    run.write(ongoing(`stopping VM ${machine.id} to save it`));
     await this.#api.stopVm(machine.id, run.signal);
     await this.#until(run, job, "the VM to stop", async () => {
       const { status } = await this.#api.vm(machine.id, run.signal);
@@ -130,7 +131,7 @@ export class E2eNodes implements CloudProvider {
       return status === "stopped" || undefined;
     });
     const created = await this.#api.createSnapshot(machine.id, name, run.signal);
-    run.write(`orly burst: saving ${name} as snapshot ${created.id}`);
+    run.write(ongoing(`saving ${name} as snapshot ${created.id}`));
     for (;;) {
       const saved = (await this.#api.snapshots(run.signal)).find((snapshot) => snapshot.id === created.id) ?? created;
       if (saved.status === READY) return toSnapshot(saved);
@@ -157,7 +158,7 @@ export class E2eNodes implements CloudProvider {
   #seen(run: BurstRun, id: string, status: string): void {
     if (this.#statuses.get(id) === status) return;
     this.#statuses.set(id, status);
-    run.write(`orly burst: VM ${id} is ${status}`);
+    run.write(BOOTED.has(status) || status === "stopped" ? done(`VM ${id} is ${status}`) : FAILED_VM.has(status) ? failed(`VM ${id} is ${status}`) : ongoing(`VM ${id} is ${status}`));
   }
 
   async deleteSnapshot(snapshot: Snapshot, signal: AbortSignal): Promise<void> {
@@ -178,17 +179,17 @@ export class E2eNodes implements CloudProvider {
     try {
       const pk = (await this.#api.keys()).find((key) => key.label === label)?.pk;
       if (pk) await this.#api.deleteKey(pk);
-      run.write(`orly burst: deleted TIR key ${label}`);
+      run.write(done(`deleted TIR key ${label}`));
     } catch (error) {
-      run.write(`orly burst: could not delete TIR key ${label}: ${messageOf(error)}; delete it by hand`);
+      run.write(failed(`could not delete TIR key ${label}: ${messageOf(error)}; delete it by hand`));
     }
     const group = this.#group;
     if (!group) return;
     const never = new AbortController().signal;
     const deleted = async () => this.#api.deleteSecurityGroup(group).then(() => true, () => undefined);
     await until(`security group ${group} to delete`, deleted, { deadline: Date.now() + CLEANUP_MS, signal: never, pollMs: this.#settings.pollMs })
-      .then(() => run.write(`orly burst: deleted TIR security group ${group}`))
-      .catch(() => run.write(`orly burst: could not delete TIR security group ${group} (${label}); delete it by hand`));
+      .then(() => run.write(done(`deleted TIR security group ${group}`)))
+      .catch(() => run.write(failed(`could not delete TIR security group ${group} (${label}); delete it by hand`)));
   }
 
   #resolvePlan(signal: AbortSignal): Promise<Plan> {
