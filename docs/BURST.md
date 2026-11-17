@@ -241,7 +241,9 @@ AWS runs assume a warm run of 30 minutes at a Spot price of $0.30 per hour, whic
 
 AWS storage is $0.05 per GB each month for the Elastic Block Store (EBS) data an AMI keeps, at most its 80 GB volume.
 Each snapshot capture costs one more run, and AWS adds about $0.005 per hour for each public IPv4 address.
-An on-demand lane costs about ten times Spot: in `ap-south-2` on November 17, 2026, `c6a.4xlarge` cost $0.374 an hour on demand and $0.037 to $0.058 on Spot.
+
+An on-demand lane costs about ten times its Spot price.
+In `ap-south-2` on November 17, 2026, `c6a.4xlarge` cost $0.374 an hour on demand and $0.037 to $0.058 on Spot.
 
 ## Steps
 
