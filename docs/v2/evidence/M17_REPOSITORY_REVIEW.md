@@ -113,7 +113,10 @@ These are stated limits, not newly claimed guarantees.
 | Nested fixture Git isolation | Before: 1 assertion failure; after: 1 passed, 0 failed, 5 assertions | Scoped concurrent-edit test with injected disposable global signing configuration |
 | Packed installation before review repairs | 24 passed, 0 failed | `make install-evals`; migration changed afterward, so final distribution check remains due |
 | Work gate | Passed configuration, catalogue, render and pack parity | `bin/orly gate work` |
-| Final full gate, packed installation and final review | Not run yet | Updated after final candidate verification |
+| Repaired packed installation | 24 passed, 0 failed | `make install-evals` after mode-preservation repairs |
+| First pushed gate at `dd8930b` | Type check passed; 572 tests passed, 3 failed; 2,550 assertions | Generated size limit plus two process tests, investigated below |
+| Render size and ambiguous owner repair | 30 passed, 0 failed; 118 assertions | Ownership, render and installed guidance suites |
+| Final full gate and final review | Pending | Updated after final candidate verification |
 
 Earlier diagnostics found missing dependencies, a fixture missing its managed file, and an omitted test import.
 A blocked concurrent-edit result also retained proof metadata.
@@ -133,3 +136,20 @@ These findings were repaired in authored sources; generated instructions were re
 
 Outside structured and adversarial reviews were unavailable because the installed outside provider selected the active Codex harness. No outside or paid process ran.
 Native reviews do not substitute for that missing outside coverage.
+
+## Final-gate diagnostics
+
+The first pushed gate found generated instructions at 16,878 bytes, above the existing 16,384-byte limit.
+Authored wording was shortened; the generated file is now 16,299 bytes. The unchanged size and hard-safety tests pass.
+
+Two command-runner tests also failed on unchanged 0.42.0 in an isolated archive on this host. Both owned children were dead zombies adopted by process 1.
+The container's process manager did not reap them; the assertions and supervisor sources remain unchanged.
+
+Running under a Linux child subreaper restored normal orphan cleanup. The same baseline cases passed 2/2; the candidate command-runner suite passed 3/3.
+The final local gate uses that environment wrapper, which adopts and reaps only descendants of its command.
+
+The wrapper uses `prctl(PR_SET_CHILD_SUBREAPER, 1)` before spawning the unchanged command, then waits for its children and returns the command's exit status.
+Local command: `python3 /tmp/orly-m17-reap.py bin/orly gate pr`. Hosted checks use their own process manager.
+
+Standards reconciliation found one stale pruning example and home-relative origins lacking an explicit SSH account.
+The example now uses the current snapshot format; ambiguous owners are refused. Both new negative ownership cases failed before the repair and passed afterward.

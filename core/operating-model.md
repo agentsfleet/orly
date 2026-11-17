@@ -46,7 +46,8 @@ Never weaken a rule, add a suppression, or baseline findings to get green. Never
 
 Auto-memory is **disabled**; never write `**/memory/*.md` or any `MEMORY.md`. gstack `/learn` is not used either.
 
-Durable knowledge belongs in its source: rules → standards; working style → `SOUL.md` or `core/operating-model.md`; architecture → its owning page; in-flight state → the spec. Never edit generated instructions or managed consumer copies to retain a lesson.
+Durable knowledge: rules → standards; style → `SOUL.md` or `core/operating-model.md`; architecture → its page; in-flight state → the spec.
+Never store lessons in generated instructions or managed consumer copies.
 
 ---
 

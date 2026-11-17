@@ -302,7 +302,7 @@ In `ap-south-2` on November 17, 2026, `c6a.4xlarge` cost $0.374 an hour on deman
    ```
 
    ```text
-   orly burst: deleted snapshot orly-burst-<REPO>-<UTC_MINUTE> (<IMAGE_ID>)
+   orly burst: deleted snapshot orly-burst-<REPO>-<UTC_MILLISECOND>-<RANDOM> (<IMAGE_ID>)
    orly burst: e2e keeps 2 snapshot(s) of <REPO>
    ```
 
@@ -427,6 +427,8 @@ A run that died without cleaning up leaves resources tagged or labelled `orly-bu
 
 Snapshot names use a digest of the origin host, full repository path and any home-relative SSH account.
 Absolute paths retain ownership across transports; home-relative paths keep their account namespace. Repositories without an origin use their shared Git directory identity.
+
+A home-relative SSH origin must name its account, such as `alice@host:repo.git`. Orly refuses an omitted account because local SSH settings can select different owners.
 
 Snapshots named by older versions are neither selected nor pruned automatically. Inspect those resources before deleting them in the provider console; their shortened names cannot prove ownership.
 

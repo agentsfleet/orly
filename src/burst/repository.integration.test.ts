@@ -2,6 +2,7 @@ import { afterEach, expect, test } from "bun:test";
 
 import { cleanupTemporaryDirectories, git, newRepository } from "../gates_test_support";
 import { repositoryIdentity } from "./repository";
+import { OrlyError } from "../model";
 
 afterEach(cleanupTemporaryDirectories);
 
@@ -52,4 +53,11 @@ test("home-relative SSH repositories retain their account namespace", () => {
   expect(identities[2]).not.toBe(identities[3]);
   expect(identities[4]).not.toBe(identities[5]);
   expect(identities[0]).not.toBe(identities[6]);
+});
+
+test.each(["host.invalid:repo.git", "ssh://host.invalid/~/repo.git"])("ambiguous home-relative origins refuse snapshot ownership: %s", (remote) => {
+  const root = newRepository();
+  git(root, "remote", "add", "origin", remote);
+  expect(() => repositoryIdentity(root)).toThrow(OrlyError);
+  expect(() => repositoryIdentity(root)).toThrow("home-relative SSH origin needs an explicit account for snapshot ownership");
 });

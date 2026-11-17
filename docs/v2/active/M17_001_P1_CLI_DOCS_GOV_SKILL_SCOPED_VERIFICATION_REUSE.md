@@ -112,22 +112,22 @@ Derive the subset from the full tracked snapshot, without another file read. Kee
 
 Version the signed completion and record the original execution revision and the revision accepting it. Keep original output, execution time and origin across repeated reuse. Old completion formats require fresh execution. No remote evidence import or automatic reuse.
 
-- **Dimension 1.1** — Test `scoped policy round trips and rejects invalid selectors` (unit): a nonempty declaration survives serialization; empty, traversal, absolute and glob declarations fail structurally.
-- **Dimension 1.2** — Test `documentation commits reuse a scoped lane through the CLI` (integration): fresh execution, documentation commit, input commit produce native counts 1, 1, 2 with original output and revision provenance.
-- **Dimension 1.3** — Test `tracked changes invalidate scoped evidence` (integration): add/delete/rename/content/mode changes require fresh execution; directory boundaries do not match sibling names.
-- **Dimension 1.4** — Test `out of scope edits during execution still block completion` (integration): an unrelated tracked edit while the command runs blocks the result.
-- **Dimension 1.5** — Test `missing scoped inputs and newer failures cannot reuse older evidence` (integration): no matching input or a later failed attempt forces execution.
-- **Dimension 1.6** — Test `signed provenance rejects old formats and retains original age` (integration): unsupported format/tampering/expiry cannot pass; replay retains original execution facts.
-- **Dimension 1.7** — Test `scoped identity reuses the tracked snapshot and hashes overlapping extras once` (integration): counters prove one file read per identity collection despite overlapping declarations.
-- **Dimension 1.8** — Test `default gate executes fast verification only once at the final boundary` (integration): the default path runs work then pr; explicit verify remains available and checks run once per invocation.
+- **Dimension 1.1** — **DONE** — Test `scoped policy round trips and rejects invalid selectors` (unit): a nonempty declaration survives serialization; empty, traversal, absolute and glob declarations fail structurally.
+- **Dimension 1.2** — **DONE** — Test `documentation commits reuse a scoped lane through the CLI` (integration): fresh execution, documentation commit, input commit produce native counts 1, 1, 2 with original output and revision provenance.
+- **Dimension 1.3** — **DONE** — Test `tracked changes invalidate scoped evidence` (integration): add/delete/rename/content/mode changes require fresh execution; directory boundaries do not match sibling names.
+- **Dimension 1.4** — **DONE** — Test `out of scope edits during execution still block completion` (integration): an unrelated tracked edit while the command runs blocks the result.
+- **Dimension 1.5** — **DONE** — Test `missing scoped inputs and newer failures cannot reuse older evidence` (integration): no matching input or a later failed attempt forces execution.
+- **Dimension 1.6** — **DONE** — Test `signed provenance rejects old formats and retains original age` (integration): unsupported format/tampering/expiry cannot pass; replay retains original execution facts.
+- **Dimension 1.7** — **DONE** — Test `scoped identity reuses the tracked snapshot and hashes overlapping extras once` (integration): counters prove one file read per identity collection despite overlapping declarations.
+- **Dimension 1.8** — **DONE** — Test `default gate executes fast verification only once at the final boundary` (integration): the default path runs work then pr; explicit verify remains available and checks run once per invocation.
 
 ### §2 — Direct skill delivery and safe cleanup
 
 Write full filtered skill bodies directly to the registered runtime folders. Remove pointer construction and stop planning `.orly/skills/` copies. The transaction first writes valid replacements, then deletes only obsolete paths in the previous managed list, then prunes empty directories. Require obsolete files to remain tracked and clean at planning, recovery and deletion; ignored untracked files and mode-only edits also refuse deletion, even with force. Unmanaged files survive. Reference closure excludes scheduled deletions. No direct writes to consuming repositories in this workstream.
 
-- **Dimension 2.1** — Test `runtime skills contain their instructions without private copies` (integration): install and repeat-update yield full runtime bodies and no managed `.orly/skills`.
-- **Dimension 2.2** — Test `skill migration preserves owner content and refuses dirty copies` (integration): clean managed duplicates are removed; custom files stay; modified duplicates refuse migration.
-- **Dimension 2.3** — Test `interrupted skill migration resumes before removing private copies` (integration): interruption after replacement writes resumes through the existing journal with usable skills.
+- **Dimension 2.1** — **DONE** — Test `runtime skills contain their instructions without private copies` (integration): install and repeat-update yield full runtime bodies and no managed `.orly/skills`.
+- **Dimension 2.2** — **DONE** — Test `skill migration preserves owner content and refuses dirty copies` (integration): clean managed duplicates are removed; custom files stay; modified duplicates refuse migration.
+- **Dimension 2.3** — **DONE** — Test `interrupted skill migration resumes before removing private copies` (integration): interruption after replacement writes resumes through the existing journal with usable skills.
 
 ### §3 — Observable stages and approved learning
 
@@ -135,14 +135,14 @@ Shared operating guidance announces the skill, current stage and action in a few
 
 After publishing the PR, `orly-ship` presents an evidence-backed learning summary with proposed source files and asks the owner whether to apply those updates. Honor explicit prior approval; without it, do not change rules or consumer pins. Ask once per unchanged proposal, record the decision in Session Notes, and continue check/review follow-up while awaiting it. This step authorizes neither merging nor releasing.
 
-- **Dimension 3.1** — Test `shipping lessons require owner approval without stopping checks` (integration): source and installed guidance require evidence, exact targets, approval and continued follow-up; no automatic rule rewrite.
-- **Dimension 3.2** — Test `stage reporting survives filtered installation` (integration): root render and installed operating guidance retain stage, outcome and next-action requirements.
+- **Dimension 3.1** — **DONE** — Test `shipping lessons require owner approval without stopping checks` (integration): source and installed guidance require evidence, exact targets, approval and continued follow-up; no automatic rule rewrite.
+- **Dimension 3.2** — **DONE** — Test `stage reporting survives filtered installation` (integration): root render and installed operating guidance retain stage, outcome and next-action requirements.
 
 ### §4 — Whole repository review and delivery
 
 Read every tracked implementation, test, configuration and instruction file by subsystem, inventory generated copies and historical documents, and record findings with exact evidence. Remove proven redundancy and repair sources of nondeterminism within the authorized scope. Record why a proposed cleanup is unnecessary rather than churning working code. Run final checks after repairs and repeat only where changes or failures justify them.
 
-- **Dimension 4.1** — Test `repository review inventory and dispositions` (manual): compare the review inventory with tracked paths and inspect every finding's repair or rationale.
+- **Dimension 4.1** — **DONE** — Test `repository review inventory and dispositions` (manual): compare the review inventory with tracked paths and inspect every finding's repair or rationale.
 - **Dimension 4.2** — Test `version and installed behavior agree` (integration): package and root configuration name 0.50.0; installation and complete verification pass on the final pushed revision.
 
 ## Interfaces
@@ -241,3 +241,11 @@ Remote evidence trust, live observation caching, cloud machine launches, consume
 > Owner: "just move your version to 0.50"
 
 The current target is 0.50.0; the earlier version request above remains historical evidence.
+
+## Implementation verification
+
+Sections 1–3 and the repository inventory are done. Their cases passed in the focused runs and the first full-suite attempt.
+The first pushed gate passed types and 572 tests, but found three failures. Dimension 4.2 awaits the repaired full gate.
+
+The size failure was repaired without raising the limit. The two process failures reproduce at the exact base and pass under normal orphan reaping.
+[Repository review evidence](../evidence/M17_REPOSITORY_REVIEW.md) records the tests, environment diagnosis and review findings.
