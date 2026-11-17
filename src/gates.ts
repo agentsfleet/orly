@@ -6,7 +6,7 @@ import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { OrlyError } from "./model";
 import { defaultMergeBase } from "./surfaces";
 
-export type GateName = (typeof GATE_ORDER)[number];
+type GateName = (typeof GATE_ORDER)[number];
 export type GateReport = {
   gate: GateName;
   results: CriterionResult[];
@@ -15,7 +15,7 @@ export type GateReport = {
 
 export type Override = { criterion: string; reason: string };
 
-export const GATE_ORDER = ["work", "verify", "pr"] as const;
+const GATE_ORDER = ["work", "verify", "pr"] as const;
 
 const PIPE_OUTPUT = "pipe";
 const GIT = "git";

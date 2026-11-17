@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync } 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { cleanupTemporaryDirectories, git, gitOutput, newRepository, ROOT } from "./gates_test_support";
+import { cleanupTemporaryDirectories, gitOutput, newRepository, ROOT } from "./gates_test_support";
 import { install } from "./install";
 import { readConfig } from "./config";
 import { RulesModel } from "./model";

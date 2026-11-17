@@ -13,7 +13,7 @@ const REGISTRY_PACKS_LABEL = "registry packs";
 const AGENTS_FILENAME = "AGENTS.md";
 const DETAIL_SEPARATOR = "; ";
 
-export type VerificationCheck = {
+type VerificationCheck = {
   name: string;
   result: typeof PASS_RESULT | typeof FAIL_RESULT;
   detail?: string;

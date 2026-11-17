@@ -3,14 +3,13 @@ import { join, relative } from "node:path";
 
 import {
   isString,
-  JsonObject,
   objectArray,
   objectValue,
   OrlyError,
   RulesModel,
   stringArray,
 } from "./model";
-import { referenceClosureErrors, renderProfileText } from "./references";
+import { renderProfileText } from "./references";
 import { ruleBlocks, STANDARDS_DIRECTORY } from "./standards";
 
 const STANDARDS_PREFIX = `${STANDARDS_DIRECTORY}/`;

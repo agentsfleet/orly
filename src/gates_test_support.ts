@@ -18,7 +18,6 @@ const MESSAGE = "-m";
 const PIPE_OUTPUT = "pipe";
 const TRUE_COMMAND = "true";
 const ACCEPTANCE_RUBRIC_HEADING = "Acceptance Rubric";
-const FIXTURE = "fixture";
 
 export const ROOT = resolve(import.meta.dir, "..");
 const SPEC_RELATIVE = "docs/v1/active/M99_001_P2_CLI_FIXTURE.md";

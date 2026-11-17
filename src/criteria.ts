@@ -2,7 +2,7 @@ import {
   Criterion, CriterionContext, CriterionResult, criterion, gitOutput, runCommand, Verdict,
 } from "./criteria_support";
 import { scanChangedDocuments } from "./doc_changes";
-import { isObject, JsonObject, objectValue, OrlyError, RulesModel } from "./model";
+import { JsonObject } from "./model";
 import { readConfigSync, RepoConfig } from "./config";
 import { classifyBranch, SurfaceReport } from "./surfaces";
 import { commandSetupErrors } from "./validation";
@@ -15,15 +15,12 @@ export { runCommand };
 type CommandTier = typeof CONFORM_TIER | typeof FAST_TIER | typeof ALL_TIER;
 
 const DEFAULT_BRANCHES = ["master", "main"];
-const REPOSITORIES_LABEL = "repositories";
 const UNINSTALLED = "no .orly/orly.json here — run `orly init` first";
 const REV_PARSE = "rev-parse";
 const HEAD = "HEAD";
 const UPSTREAM = "@{upstream}";
 const DETAIL_SEPARATOR = "; ";
 const ABBREV_REF = "--abbrev-ref";
-const WORKTREE_LIST = ["worktree", "list", "--porcelain"];
-const WORKTREE_PREFIX = "worktree ";
 
 const GIT_BRANCH = "git.branch";
 const GIT_TREE = "git.tree";

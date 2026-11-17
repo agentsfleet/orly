@@ -93,7 +93,7 @@ export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user
 // first use and records it in the run's own known_hosts, never the user's;
 // every later connection of the run must match it. A machine reached through
 // a proxy is named by its identifier, which the proxy command receives as %h.
-export function sshArgs(run: BurstRun, machine: Machine, user: string, command: string): string[] {
+function sshArgs(run: BurstRun, machine: Machine, user: string, command: string): string[] {
   const proxy = machine.via ? ["-o", `ProxyCommand=${machine.via}`] : [];
   return ["ssh", "-i", run.key, "-o", "IdentitiesOnly=yes", "-o", "BatchMode=yes",
     "-o", "StrictHostKeyChecking=accept-new", "-o", `UserKnownHostsFile=${run.knownHosts}`,

@@ -22,13 +22,13 @@ export type BurstSettings = Readonly<{
 // What a lane's machine is rented as. Spot is about a tenth of the price and
 // AWS may take it back; spot-then-on-demand runs a lane AWS took back once
 // more on a machine it cannot.
-export const AWS_MARKETS = ["spot", "on-demand", "spot-then-on-demand"] as const;
-export type AwsMarket = (typeof AWS_MARKETS)[number];
+const AWS_MARKETS = ["spot", "on-demand", "spot-then-on-demand"] as const;
+type AwsMarket = (typeof AWS_MARKETS)[number];
 // How the caller reaches the machine: SSH on port 22 from the caller's address
 // alone, or SSH carried by Systems Manager over HTTPS, which needs no inbound
 // rule and survives a caller whose address changes.
-export const AWS_ACCESS = ["ssh", "ssm"] as const;
-export type AwsAccess = (typeof AWS_ACCESS)[number];
+const AWS_ACCESS = ["ssh", "ssm"] as const;
+type AwsAccess = (typeof AWS_ACCESS)[number];
 
 const SECOND_MS = 1_000;
 // x86 only: Spot capacity differs by type, so the launcher walks this list and

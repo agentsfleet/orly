@@ -37,7 +37,7 @@ const BRANCH_PREFIX = "refs/heads/";
 const REPOSITORY_NAME_CHARS = 40;
 const REF_NAME_CHARS = 24;
 
-export class InvalidBurstArguments extends OrlyError {}
+class InvalidBurstArguments extends OrlyError {}
 
 // `orly burst`: run declared lanes on a machine rented for the run, or here,
 // and capture or prune the warm snapshots those machines start from. The gate

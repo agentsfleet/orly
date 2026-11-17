@@ -5,7 +5,7 @@ import { join, resolve } from "node:path";
 import { burst } from "./burst/index";
 import { printHelp } from "./cli_help";
 import { selectPacks } from "./config_discovery";
-import { CONFIG_PATH, managedDrift, readConfig, RepoConfig, writeConfig } from "./config";
+import { CONFIG_PATH, managedDrift, readConfig } from "./config";
 import { GateReport, isGateName, recordOverride, runGate, runGates } from "./gates";
 import { agentRuntimes, defaultHomes, helperSources, missingHelpers } from "./helpers";
 import { install, InstallResult } from "./install";

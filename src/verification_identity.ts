@@ -16,7 +16,7 @@ import { objectValue, stringArray } from "./model";
 
 type InputEntry = { path: string; directory: true } | { path: string; mode: number; bytes: string } | { path: string; mode: number; link: string };
 
-export type VerificationIdentity = { source: string; binding: string } | { source: string; reason: string };
+type VerificationIdentity = { source: string; binding: string } | { source: string; reason: string };
 export type IdentityRequest = {
   root: string; engineRoot: string; config: RepoConfig; lane: string; policy: ReusePolicy;
   invocations: string[][]; limits: CommandLimits; key: Uint8Array;

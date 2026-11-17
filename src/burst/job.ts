@@ -1,7 +1,7 @@
 import { join } from "node:path";
 
 // One machine's job as data; remoteScript renders it as shell.
-export type RemoteJob = {
+type RemoteJob = {
   kind: "lane" | "warm";
   name: string;
   ref: string;
@@ -66,6 +66,6 @@ export function resultsScript(paths: readonly string[]): string {
   ].join("\n");
 }
 
-export function shellQuote(value: string): string {
+function shellQuote(value: string): string {
   return `'${value.replaceAll("'", `'\\''`)}'`;
 }

@@ -6,9 +6,9 @@ import { z } from "zod";
 // `### <ID> — <statement>` and carries the five fields below as
 // `- **<Field>:** <value>` lines. Anything else on the page (a template, a
 // table) is reference text, not a rule.
-export type RuleField = (typeof RULE_FIELDS)[number];
+type RuleField = (typeof RULE_FIELDS)[number];
 
-export type RuleBlock = {
+type RuleBlock = {
   id: string;
   statement: string;
   line: number;

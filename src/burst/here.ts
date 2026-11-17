@@ -6,7 +6,7 @@ import { streamProcess } from "./process";
 import { resolveSecrets } from "./process";
 import { LANE_PREFIX, MINUTE_MS } from "./types";
 
-export type HereRequest = Io & { root: string; config: RepoConfig; settings: BurstSettings };
+type HereRequest = Io & { root: string; config: RepoConfig; settings: BurstSettings };
 
 // Credentials setup and warm never see: the 1Password token and the cloud
 // credentials `orly burst` itself reads, which a CI job sets on the same step.

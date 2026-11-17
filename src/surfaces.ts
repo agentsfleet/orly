@@ -55,7 +55,7 @@ export function isDocs(path: string, prefixes: string[]): boolean {
   return prefixes.some((prefix) => path.startsWith(prefix));
 }
 
-export function branchDiff(root: string): string[] {
+function branchDiff(root: string): string[] {
   const base = defaultMergeBase(root);
   if (!base) return [];
   const output = gitOutput(root, ["diff", "--name-only", `${base}..HEAD`]);

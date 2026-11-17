@@ -1,7 +1,7 @@
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { UNSCOPED_ENVIRONMENT } from "../git_env";
-import { OrlyError } from "../model";
+import { EXECUTE_BITS, OrlyError } from "../model";
 import type { PlannedFile } from "./plan";
 
 export const HOOKS_DIRECTORY = ".orly/hooks";
@@ -9,7 +9,6 @@ const HOOKS_PATH_KEY = "core.hooksPath";
 const GIT_CONFIG = "config";
 const PIPE_OUTPUT = "pipe";
 const HOOK_GATES = [["pre-commit", "work"], ["pre-push", "verify"]] as const;
-const EXECUTABLE_BITS = 0o111;
 
 export function plannedHooks(version: string): PlannedFile[] {
   if (!/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(version)) throw new OrlyError("hook package version must be a release version");
@@ -24,7 +23,7 @@ export function checkHooks(root: string, force: boolean): void {
   const ownerHook = existsSync(directory) && readdirSync(directory).some((name) => {
     if (name.endsWith(".sample")) return false;
     const stat = statSync(join(directory, name));
-    return stat.isFile() && (stat.mode & EXECUTABLE_BITS) !== 0;
+    return stat.isFile() && (stat.mode & EXECUTE_BITS) !== 0;
   });
   if (!existing && !ownerHook) return;
   throw new OrlyError(`${HOOKS_PATH_KEY} uses '${previous}' with repository hooks; use --no-hooks to preserve repository hooks, or explicitly --force to retarget`);

@@ -4,10 +4,10 @@ import type { Environment } from "./settings";
 import { stopOwnedGroup } from "../command_process";
 import { OrlyError } from "../model";
 
-export type Stopped = "deadline" | "cancelled";
+type Stopped = "deadline" | "cancelled";
 export type Outcome = { code: number } | { stopped: Stopped };
 export type Captured = { code: number; stdout: string; stderr: string };
-export type StreamOptions = {
+type StreamOptions = {
   env: Environment;
   cwd?: string;
   stdin?: Blob | BunFile;

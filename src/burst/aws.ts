@@ -300,7 +300,7 @@ function runName(run: BurstRun): string {
 // Systems Manager reaches a machine through its agent, which Debian's image
 // does not carry: the first boot installs it from AWS's regional bucket. A
 // machine from a snapshot that already runs the agent skips the download.
-export function ssmAgentScript(region: string): string {
+function ssmAgentScript(region: string): string {
   return ["#!/bin/sh", "set -eu",
     "systemctl is-active --quiet amazon-ssm-agent && exit 0",
     `curl -fsSL -o /tmp/amazon-ssm-agent.deb https://s3.${region}.amazonaws.com/amazon-ssm-${region}/latest/debian_amd64/amazon-ssm-agent.deb`,

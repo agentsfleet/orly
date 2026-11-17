@@ -9,9 +9,9 @@ import { IPV4 } from "./types";
 
 export type Plan = { sku: string; priceId: number; hourly: number };
 export type OsImage = { name: string; version: string; versionId: number };
-export type VmState = { status: string; address: string | undefined };
+type VmState = { status: string; address: string | undefined };
 export type VmSnapshot = { id: string; name: string; status: string; sizeGb: number | undefined; versionId: number | undefined };
-export type Body = Record<string, unknown>;
+type Body = Record<string, unknown>;
 
 // E2E Networks TIR: https://docs.e2enetworks.com/api/tir/ — a VM is an
 // Instance created with `kind: "vm"`, a whole Linux machine reached as root.

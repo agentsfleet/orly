@@ -12,7 +12,7 @@ const CLAUDE_AGENTS = ".claude/agents/";
 const MODE_REGULAR = "0644";
 export type PlannedFile = { target: string; content: Uint8Array; mode: string };
 
-export function installedPath(target: string): string {
+function installedPath(target: string): string {
   if (target.startsWith(".orly/")) return target;
   // A runtime reads an agent definition where it is declared, so it is never
   // a stub pointing at a copy.

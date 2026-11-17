@@ -4,7 +4,7 @@ import type { SurfaceReport } from "./surfaces";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { DEFAULT_COMMAND_OUTPUT_BYTES, DEFAULT_COMMAND_TIMEOUT_MS } from "./command_limits";
 
-export type CriterionStatus = "passed" | "failed" | "blocked" | "cancelled" | "skipped" | "not_run";
+type CriterionStatus = "passed" | "failed" | "blocked" | "cancelled" | "skipped" | "not_run";
 export type Verdict = { ok: boolean; detail: string; status?: CriterionStatus; override?: string };
 export type CriterionResult = Verdict & { name: string; status: CriterionStatus };
 

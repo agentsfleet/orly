@@ -16,9 +16,9 @@ const INSTALL_DIRECTORY = ".orly";
 const MANAGED_KIND = "managed file";
 const PIPE_OUTPUT = "pipe";
 const HOOKS_PATH_KEY = "core.hooksPath";
-export type InstallError = { path: string; message: string; suggestion: string };
+type InstallError = { path: string; message: string; suggestion: string };
 export type InstallResult = { ok: boolean; packs: string[]; written: string[]; skipped: string[]; errors: InstallError[] };
-export type InstallOptions = { targetRoot: string; force: boolean; installHooks: boolean; orlyVersion: string; requestedPacks?: string[]; checkpoint?: InstallCheckpoint };
+type InstallOptions = { targetRoot: string; force: boolean; installHooks: boolean; orlyVersion: string; requestedPacks?: string[]; checkpoint?: InstallCheckpoint };
 
 export async function install(model: RulesModel, options: InstallOptions): Promise<InstallResult> {
   const root = resolve(options.targetRoot);
