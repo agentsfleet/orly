@@ -1,17 +1,16 @@
-import type { RepoConfig } from "./config";
-import type { BurstSettings, Environment } from "./burst_settings";
-import type { Io, LaneResult, Status } from "./burst_types";
+import type { RepoConfig } from "../config";
+import type { BurstSettings, Environment } from "./settings";
+import type { Io, LaneResult, Status } from "./types";
 
-import { streamProcess } from "./burst_process";
-import { resolveSecrets } from "./burst_secrets";
+import { resolveSecrets, streamProcess } from "./process";
+import { LANE_PREFIX, MINUTE_MS } from "./types";
+import { messageOf } from "../model";
 
-export type HereRequest = Io & { root: string; config: RepoConfig; settings: BurstSettings };
+type HereRequest = Io & { root: string; config: RepoConfig; settings: BurstSettings };
 
 // Credentials setup and warm never see: the 1Password token and the cloud
 // credentials `orly burst` itself reads, which a CI job sets on the same step.
 const LAUNCHER_CREDENTIALS = ["OP_SERVICE_ACCOUNT_TOKEN", "E2E_API_KEY", "E2E_AUTH_TOKEN", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "AWS_SECURITY_TOKEN"];
-const MINUTE_MS = 60_000;
-const LANE_PREFIX = "burst.";
 // A lane is a CI run whether or not the caller says so, which is what makes
 // test runners write their reports; the caller's own CI value wins.
 const LANE_DEFAULTS = Object.freeze({ CI: "1" });
@@ -30,7 +29,7 @@ export async function hereLanes(request: HereRequest, lanes: string[]): Promise<
   try {
     secrets = await resolveSecrets(burst.secrets ?? {}, request.settings.env);
   } catch (error) {
-    return refuse(request, lanes, error instanceof Error ? error.message : String(error));
+    return refuse(request, lanes, messageOf(error));
   }
   const results: LaneResult[] = [];
   for (const lane of lanes) {
@@ -64,7 +63,7 @@ async function runAll(request: HereRequest, invocations: string[][], env: Enviro
       const outcome = await streamProcess(argv, { env, cwd: request.root, lines: request.write, deadline, signal: request.signal });
       status = "code" in outcome ? outcome.code : outcome.stopped;
     } catch (error) {
-      request.write(`orly burst: ${error instanceof Error ? error.message : String(error)}`);
+      request.write(`orly burst: ${messageOf(error)}`);
       status = "not_run";
     }
     if (status !== 0) return status;

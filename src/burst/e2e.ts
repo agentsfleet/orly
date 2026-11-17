@@ -1,11 +1,11 @@
-import type { Fetch, OsImage, Plan, VmSnapshot } from "./burst_e2e_api";
-import type { BurstSettings } from "./burst_settings";
-import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot } from "./burst_types";
+import type { BurstSettings } from "./settings";
+import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot } from "./types";
+import type { OsImage, Plan, VmSnapshot } from "./tir";
 
-import { callerAddress } from "./burst_caller";
-import { E2eApi, E2eRequestFailed } from "./burst_e2e_api";
-import { pause, until } from "./burst_process";
-import { OrlyError } from "./model";
+import { OrlyError } from "../model";
+import { pause, until } from "./process";
+import { callerAddress } from "./ssh";
+import { E2eApi, E2eRequestFailed } from "./tir";
 
 const DEFAULT_IMAGE = "Ubuntu 24.04";
 // A deleted VM can hold its group briefly, so the group's delete is retried
@@ -44,8 +44,8 @@ export class E2eNodes implements CloudProvider {
     this.#api = new E2eApi(settings.e2e, fetcher);
   }
 
-  cost(machine: Machine | undefined): string {
-    return machine ? `₹${RUPEES_PER_HOUR}/h + GST (billed hourly)` : "none";
+  cost(): string {
+    return `₹${RUPEES_PER_HOUR}/h + GST (billed hourly)`;
   }
 
   storage(): string {
@@ -124,11 +124,11 @@ export class E2eNodes implements CloudProvider {
     }
   }
 
-  async remove(_run: BurstRun, machine: Machine): Promise<void> {
+  async remove(machine: Machine): Promise<void> {
     await this.#api.deleteVm(machine.id);
   }
 
-  async deleteSnapshot(_run: BurstRun, snapshot: Snapshot): Promise<void> {
+  async deleteSnapshot(snapshot: Snapshot): Promise<void> {
     await this.#api.deleteSnapshot(snapshot.id);
   }
 

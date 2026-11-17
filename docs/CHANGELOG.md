@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.42.0 (2026-11-17)
+
+AWS lanes can rent On-Demand machines, and can reach their machines through Systems Manager instead of SSH from one address.
+
+- **Market** — `ORLY_BURST_MARKET=on-demand` rents lanes On-Demand. `spot-then-on-demand` runs a lane AWS took back once more On-Demand, with its own evidence.
+- **Systems Manager** — `ORLY_BURST_AWS_ACCESS=ssm` opens no inbound port and carries SSH inside a Systems Manager session. A caller whose address changes keeps its lanes, and an HTTPS-only session can run them.
+- **Setup** — `ssm` needs the role, instance profile, launcher policy statements and Session Manager plugin in `docs/BURST.md`, and `ORLY_BURST_AWS_INSTANCE_PROFILE`.
+- **Branch check** — `git.branch` fails on a detached HEAD instead of passing it as a branch named `HEAD`.
+- **Unusual paths** — Changed-file classification and the ignored-managed-file check read Git's NUL-separated output, so a name such as `src/café.ts` is judged as written.
+- **Secrets** — A lane's `burst.secrets` are read from 1Password four at a time instead of one after another.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.42.0 update`.
+
 ## 0.40.1 (2026-11-16)
 
 `orly-ship` now requires a live readiness check before Pull Request (PR) handoff.

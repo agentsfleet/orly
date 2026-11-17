@@ -20,7 +20,7 @@ export type CommandResult = { exit_code: number | null; elapsed_ms: number; outp
 export function stopOwnedGroup(pid: number): void {
   if (!Number.isSafeInteger(pid) || pid <= 0) throw new Error("invalid owned process group");
   try { process.kill(-pid, KILL_SIGNAL); }
-  catch (error) { if ((error as NodeJS.ErrnoException).code !== MISSING_PROCESS) throw error; }
+  catch (error) { if (!hasErrorCode(error, MISSING_PROCESS)) throw error; }
 }
 
 async function capture(stream: ReadableStream<Uint8Array>, file: string, onBytes: (size: number) => void): Promise<void> {
@@ -39,23 +39,26 @@ async function run(request: Request): Promise<CommandResult> {
   try {
     child = Bun.spawn(request.command, { detached: true, stdin: "ignore", stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
   } catch (error) {
-    return { exit_code: null, elapsed_ms: Math.ceil(performance.now() - started), output_bytes: 0, failure_kind: "invocation", failure: `${request.command[0] ?? "command"} could not be run: ${error instanceof Error ? error.message : String(error)}` };
+    return { exit_code: null, elapsed_ms: Math.ceil(performance.now() - started), output_bytes: 0, failure_kind: "invocation", failure: `${request.command[0] ?? "command"} could not be run: ${messageOf(error)}` };
   }
   let stopped = false;
   try {
     writeFileSync(join(request.receipt, COMMAND_FILES.pid), String(child.pid), { mode: PRIVATE_FILE_MODE });
     let outputBytes = 0;
     let failure: string | undefined;
-    const stop = (reason: string) => {
+    let failureKind: "limit" | "cancelled" | undefined;
+    // The first reason to stop wins, and says whether a limit or a cancellation stopped it.
+    const stop = (reason: string, kind: "limit" | "cancelled" = "cancelled") => {
       failure ??= reason;
+      failureKind ??= kind;
       if (stopped) return;
       stopOwnedGroup(child.pid);
       stopped = true;
     };
-    const timer = setTimeout(() => stop("deadline exceeded"), request.limits.timeout_ms);
+    const timer = setTimeout(() => stop("deadline exceeded", "limit"), request.limits.timeout_ms);
     const owner = setInterval(() => {
       try { process.kill(request.parent_pid, 0); }
-      catch (error) { if ((error as NodeJS.ErrnoException).code === MISSING_PROCESS) stop("gate owner exited"); }
+      catch (error) { if (hasErrorCode(error, MISSING_PROCESS)) stop("gate owner exited"); }
     }, OWNER_POLL_MS);
     const signals = TERMINATION_SIGNALS.map((signal) => {
       const handler = () => stop(`supervisor received ${signal}`);
@@ -65,11 +68,11 @@ async function run(request: Request): Promise<CommandResult> {
     try {
       const onBytes = (size: number) => {
         outputBytes += size;
-        if (outputBytes > request.limits.output_bytes) stop("output limit exceeded");
+        if (outputBytes > request.limits.output_bytes) stop("output limit exceeded", "limit");
       };
       await Promise.all([capture(child.stdout, stdout, onBytes), capture(child.stderr, stderr, onBytes), child.exited]);
       if (child.signalCode) failure ??= `stopped by ${child.signalCode}`;
-      return { exit_code: child.exitCode, elapsed_ms: Math.ceil(performance.now() - started), output_bytes: outputBytes, ...(failure ? { failure, failure_kind: failure === "deadline exceeded" || failure === "output limit exceeded" ? "limit" : "cancelled" } : {}) };
+      return { exit_code: child.exitCode, elapsed_ms: Math.ceil(performance.now() - started), output_bytes: outputBytes, ...(failure ? { failure, failure_kind: failureKind ?? "cancelled" } : {}) };
     } finally {
       clearTimeout(timer);
       clearInterval(owner);
@@ -85,4 +88,14 @@ if (import.meta.main) {
   const request: Request = JSON.parse(readFileSync(Bun.argv[2]!, TEXT_ENCODING));
   const result = await run(request);
   writeFileSync(join(request.receipt, COMMAND_FILES.result), JSON.stringify(result), { mode: PRIVATE_FILE_MODE });
+}
+
+// This module also runs alone as the supervisor process, so it imports no
+// runtime value; model.ts's two error helpers are restated here for that reason.
+function hasErrorCode(error: unknown, code: string): boolean {
+  return error instanceof Error && "code" in error && error.code === code;
+}
+
+function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }

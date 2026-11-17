@@ -46,7 +46,7 @@ const CORE_PACK = "core";
 const PRODUCT_PREFIX = "product.";
 
 /** A file shipped by a pack, with the pack that ships it. */
-export interface ShippedFile {
+interface ShippedFile {
   readonly source: string;
   readonly pack: string;
 }

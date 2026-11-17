@@ -1,16 +1,18 @@
-import type { BurstSettings } from "./burst_settings";
+import type { BurstSettings } from "./settings";
+import type { Fetch } from "./types";
 
 import { z } from "zod";
 
-import { required } from "./burst_settings";
-import { OrlyError } from "./model";
+import { required } from "./settings";
+import { OrlyError } from "../model";
+import { IPV4 } from "./types";
+import { readBounded } from "./process";
 
-export type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 export type Plan = { sku: string; priceId: number; hourly: number };
 export type OsImage = { name: string; version: string; versionId: number };
-export type VmState = { status: string; address: string | undefined };
+type VmState = { status: string; address: string | undefined };
 export type VmSnapshot = { id: string; name: string; status: string; sizeGb: number | undefined; versionId: number | undefined };
-export type Body = Record<string, unknown>;
+type Body = Record<string, unknown>;
 
 // E2E Networks TIR: https://docs.e2enetworks.com/api/tir/ — a VM is an
 // Instance created with `kind: "vm"`, a whole Linux machine reached as root.
@@ -18,7 +20,6 @@ const BASE_URL = "https://api.e2enetworks.com/myaccount/api/v1/gpu";
 const REQUEST_TIMEOUT_MS = 60_000;
 // The image and plan catalogues are the largest answers; past this is not one.
 const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
-const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 const identifier = z.union([z.number(), z.string()]).transform(String);
 const skusSchema = z.object({ data: z.object({ CPU: z.array(z.object({
   name: z.string(), plans: z.array(z.object({ sku_item_price_id: z.number(), committed_days: z.number().nullish(), unit_price: z.coerce.number(), is_active: z.boolean().optional() })),
@@ -161,14 +162,7 @@ function parseJson(text: string): unknown {
   }
 }
 
-async function boundedText(response: Response): Promise<string> {
-  if (!response.body) return "";
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  for await (const chunk of response.body) {
-    size += chunk.byteLength;
-    if (size > MAX_RESPONSE_BYTES) throw new E2eRequestFailed(`E2E TIR answered more than ${MAX_RESPONSE_BYTES} bytes`, response.status);
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString("utf8");
+function boundedText(response: Response): Promise<string> {
+  if (!response.body) return Promise.resolve("");
+  return readBounded(response.body, MAX_RESPONSE_BYTES, () => new E2eRequestFailed(`E2E TIR answered more than ${MAX_RESPONSE_BYTES} bytes`, response.status));
 }

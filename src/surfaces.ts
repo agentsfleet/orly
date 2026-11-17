@@ -1,8 +1,7 @@
 import { isObject, JsonObject, stringArray } from "./model";
-import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { gitOutput } from "./git_env";
 
-const PIPE_OUTPUT = "pipe";
-const DEFAULT_BRANCHES = ["main", "master"];
+export const DEFAULT_BRANCHES = ["main", "master"];
 const ORIGIN_PREFIX = "origin/";
 const SURFACES_FIELD = "surfaces";
 const USER_FIELD = "user";
@@ -55,11 +54,10 @@ export function isDocs(path: string, prefixes: string[]): boolean {
   return prefixes.some((prefix) => path.startsWith(prefix));
 }
 
-export function branchDiff(root: string): string[] {
+function branchDiff(root: string): string[] {
   const base = defaultMergeBase(root);
   if (!base) return [];
-  const output = gitOutput(root, ["diff", "--name-only", `${base}..HEAD`]);
-  return output.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  return gitOutput(root, ["diff", "--name-only", "-z", `${base}..HEAD`]).split("\0").filter(Boolean);
 }
 
 export function defaultMergeBase(root: string): string {
@@ -83,7 +81,4 @@ function surfacePrefixes(surfaces: JsonObject | undefined, field: string): strin
   return stringArray(surfaces[field], `${SURFACES_FIELD}.${field}`);
 }
 
-function gitOutput(root: string, command: string[]): string {
-  const result = Bun.spawnSync(["git", ...command], { cwd: root, env: UNSCOPED_ENVIRONMENT, stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
-  return result.exitCode === 0 ? result.stdout.toString().trim() : "";
-}
+

@@ -2,9 +2,9 @@ import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { burst } from "./burst";
-import { burstDependencies, burstEnvironment, burstRepository, fakeBin, SECRET_VALUE } from "./burst_test_support";
-import { cleanupTemporaryDirectories } from "./gates_test_support";
+import { burst } from "./index";
+import { burstDependencies, burstEnvironment, burstRepository, fakeBin, SECRET_VALUE } from "./test_support";
+import { cleanupTemporaryDirectories } from "../gates_test_support";
 
 const REFERENCE = "op://Burst Vault/api/credential";
 const OP_TOKEN = "ops_test_00000000";

@@ -1,8 +1,8 @@
 ---
 type: explanation
 audience: contributor
-verified: 2026-11-02
-product_version: 0.28.0
+verified: 2026-11-17
+product_version: 0.42.0
 executable: false
 ---
 
@@ -10,47 +10,42 @@ executable: false
 
 ## What it is
 
-This page describes what orly 0.28.0 installs into a consuming repository, and how an update replaces it. Installation evaluations use disposable repositories.
+What `orly init` and `orly update` write into a consuming repository, and who owns each part.
 
-| Content | Consumer destination | Owner |
+| Content | Destination | Owner |
 |---|---|---|
-| Configuration and managed paths | `.orly/orly.json` | Repository settings plus installer metadata |
-| Generated operating model | `.orly/AGENTS.md` | orly |
-| Standards and supporting documents | `.orly/standards/`, `.orly/docs/` | orly |
-| Full skill instructions | `.orly/skills/<name>/SKILL.md` | orly |
+| Settings and the managed-path record | `.orly/orly.json` | the repository's settings; orly's version and `managed` list |
+| Operating model | `.orly/AGENTS.md` | orly |
+| Selected standards, and the docs they cite | `.orly/standards/`, `.orly/docs/` | orly |
+| Skill instructions | `.orly/skills/<name>/SKILL.md` | orly |
+| Host skill copies | `.claude/skills/`, `.agents/skills/`, `.opencode/skills/` | orly |
 | Reviewer agent | `.claude/agents/orly-standards-reviewer.md` | orly |
-| Hook implementations | `.orly/hooks/` | orly |
-| Agent discovery | `AGENTS.md`, `CLAUDE.md`, `opencode.json`, host skill discovery | Repository content plus thin managed entrypoints |
-| Interrupted installation | `.orly/install-journal.json` and private staging | Installer; removed after successful completion |
+| Hooks, unless `--no-hooks` | `.orly/hooks/` | orly |
+| Agent entrypoints | `AGENTS.md`, `CLAUDE.md`, `opencode.json` | the repository, plus one thin managed block |
+| An interrupted install | `.orly/install-journal.json` | the installer, until the install completes |
 
 ## Why it exists
 
-Installed rules must be distinguishable from repository-owned documentation and code. A recorded path alone does not authorize discarding a user's edit. Git holds every committed version, so update replaces only a managed path git reports as clean.
-
-The orly source checkout remains an authoring repository: root `core/`, `standards/`, `skills/`, `agents/`, `docs/` and its generated root operating model are source files.
-Consumer installation must never relocate or replace those authoritative sources.
+Installed rules must stay apart from the repository's own documentation and code, and a recorded path alone never licenses discarding someone's edit.
+Git holds every committed version, so an update replaces only managed paths Git reports clean.
+In the orly checkout itself, `core/`, `standards/`, `skills/`, `agents/` and `docs/` are sources that installation never replaces.
 
 ## How it behaves
 
-Installation validates every destination before replacing anything. A file outside `managed`, or a managed file with uncommitted changes, refuses the ordinary update. Explicit force replaces both; deleting an obsolete managed copy never uses force, and requires the copy to be clean in git.
+Installation checks every destination before it replaces anything.
+A path outside `managed`, or a managed file with uncommitted changes, refuses the update; `--force` replaces both.
+Deleting an obsolete managed copy never uses force, and needs the copy clean in Git.
 
-A committed hand edit to a managed file is replaced and shows in the update's diff. `orly doctor` does not detect it.
+A committed hand edit to a managed file is replaced and shows in the update's diff, and `orly doctor` does not report it.
+Each file is replaced atomically, and the journal covers an interruption between files.
+Recovery refuses an edited destination or an altered journal.
 
-Each operation retains the content hash from its original read or preflight. An owner save during staging refuses before writes begin. Recovery accepts only those states.
-
-An edited destination or altered journal refuses recovery.
-The installer uses same-filesystem atomic replacement for individual files; the journal covers interruption between files.
-
-Repository hook implementations remain repository-owned. Fresh consumers use `.orly/hooks/`; existing executable owner hooks require explicit integration or `--no-hooks`, including Git’s default hook directory.
-
-Generated hooks invoke the pinned published package through bunx.
-They do not require a global orly installation or a project dependency.
-
-Migration evaluations must cover fresh installation, populated upgrade, unchanged rerun, uncommitted edits, unowned destinations, escaping symlinks and each interruption boundary. Failure tests must assert preserved bytes and successful recovery, not only a returned error.
+Existing executable hooks stay the repository's: integrate them, or install with `--no-hooks`.
+Generated hooks run the pinned published package through `bunx`, so neither a global orly nor a project dependency is needed.
 
 ## Limits
 
-Disposable migration checks do not prove an upgrade in a live consuming repository. Published-package checks on both supported operating systems remain release work.
+Installation evaluations use disposable repositories, so they do not prove an upgrade of a live consuming repository.
 
 ## Related pages
 

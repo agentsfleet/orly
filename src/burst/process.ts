@@ -1,13 +1,13 @@
 import type { BunFile } from "bun";
-import type { Environment } from "./burst_settings";
+import type { Environment } from "./settings";
 
-import { stopOwnedGroup } from "./command_process";
-import { OrlyError } from "./model";
+import { stopOwnedGroup } from "../command_process";
+import { OrlyError } from "../model";
 
-export type Stopped = "deadline" | "cancelled";
+type Stopped = "deadline" | "cancelled";
 export type Outcome = { code: number } | { stopped: Stopped };
 export type Captured = { code: number; stdout: string; stderr: string };
-export type StreamOptions = {
+type StreamOptions = {
   env: Environment;
   cwd?: string;
   stdin?: Blob | BunFile;
@@ -26,6 +26,10 @@ const MAX_LINE_CHARS = 64 * 1024;
 // a misbehaving command, refused rather than buffered.
 const MAX_CAPTURE_BYTES = 16 * 1024 * 1024;
 const PIPE = "pipe";
+const OP_TIMEOUT_MS = 60_000;
+// 1Password reads run this many at a time: a lane's secrets resolve in parallel
+// without flooding the op daemon.
+const OP_READS_AT_ONCE = 4;
 
 // One long-running child, in its own process group so a deadline or a
 // cancellation stops everything it started, with output streamed line by line.
@@ -69,7 +73,7 @@ export async function captureProcess(argv: string[], options: { env: Environment
   if (options.signal?.aborted) cancel();
   else options.signal?.addEventListener("abort", cancel, { once: true });
   try {
-    const [stdout, stderr] = await Promise.all([readBounded(child.stdout), readBounded(child.stderr), child.exited]);
+    const [stdout, stderr] = await Promise.all([readBounded(child.stdout, MAX_CAPTURE_BYTES, outputTooLarge), readBounded(child.stderr, MAX_CAPTURE_BYTES, outputTooLarge), child.exited]);
     const stoppedBy = child.signalCode ? `\n${argv[0]} stopped by ${child.signalCode}` : "";
     return { code: child.exitCode ?? -1, stdout, stderr: `${stderr}${stoppedBy}` };
   } finally {
@@ -105,6 +109,37 @@ export async function until<T>(what: string, probe: () => Promise<T | undefined>
   }
 }
 
+// Each `burst.secrets` variable, on the machine that runs `orly burst`. A value
+// already in the environment is used as it is, which is how a CI job's secret
+// loader hands them over; anything else is read with `op read`, signed in or
+// through OP_SERVICE_ACCOUNT_TOKEN. The values live in the returned map and
+// nowhere else: never printed, never an argument, never a file. A failure
+// names the variable and op's complaint, which carries the reference only.
+export async function resolveSecrets(references: Record<string, string>, env: Environment): Promise<Environment> {
+  const reads = await mapBounded(Object.entries(references), OP_READS_AT_ONCE, async ([name, reference]) => {
+    const preset = env[name];
+    if (preset) return { name, value: preset };
+    const read = await captureProcess(["op", "read", "--no-newline", reference], { env, timeoutMs: OP_TIMEOUT_MS });
+    return read.code === 0 ? { name, value: read.stdout } : { name, error: `could not read the secret for ${name}: ${read.stderr.trim().split("\n")[0] ?? ""}` };
+  });
+  // The first failure in declaration order, so the message does not depend on timing.
+  const failed = reads.find((read) => "error" in read);
+  if (failed && "error" in failed) throw new OrlyError(failed.error);
+  return Object.fromEntries(reads.map((read) => [read.name, "value" in read ? read.value : undefined]));
+}
+
+// Reads a stream whole, refusing it past `limit` bytes with the caller's error.
+export async function readBounded(stream: ReadableStream<Uint8Array>, limit: number, tooLarge: () => Error): Promise<string> {
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for await (const chunk of stream) {
+    size += chunk.byteLength;
+    if (size > limit) throw tooLarge();
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
 // Bun.spawn resolves a bare name against this process's PATH, not the
 // environment handed to the child; resolving it here makes the two agree.
 function locate(argv: string[], env: Environment): string {
@@ -133,14 +168,19 @@ async function streamLines(stream: ReadableStream<Uint8Array>, write: (line: str
   if (pending) write(pending);
 }
 
-async function readBounded(stream: ReadableStream<Uint8Array>): Promise<string> {
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  for await (const chunk of stream) {
-    size += chunk.byteLength;
-    if (size > MAX_CAPTURE_BYTES) throw new OrlyError(`command output exceeded ${MAX_CAPTURE_BYTES} bytes`);
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString("utf8");
+
+
+// Runs `work` over `items` with at most `limit` in flight, results in input order.
+async function mapBounded<T, R>(items: readonly T[], limit: number, work: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = [];
+  const queue = items.map((item, index) => [index, item] as const);
+  const worker = async () => {
+    for (let entry = queue.shift(); entry; entry = queue.shift()) results[entry[0]] = await work(entry[1]);
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
 }
 
+function outputTooLarge(): Error {
+  return new OrlyError(`command output exceeded ${MAX_CAPTURE_BYTES} bytes`);
+}

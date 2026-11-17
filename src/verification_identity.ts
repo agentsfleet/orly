@@ -8,15 +8,14 @@ import { join, relative, resolve, sep } from "node:path";
 import { release } from "node:os";
 
 import { runCommand } from "./command_runner";
-import { DEFAULT_COMMAND_OUTPUT_BYTES } from "./command_limits";
 import { contentDigest } from "./config";
-import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { git, UNSCOPED_ENVIRONMENT } from "./git_env";
 import { defaultMergeBase } from "./surfaces";
 import { objectValue, stringArray } from "./model";
 
 type InputEntry = { path: string; directory: true } | { path: string; mode: number; bytes: string } | { path: string; mode: number; link: string };
 
-export type VerificationIdentity = { source: string; binding: string } | { source: string; reason: string };
+type VerificationIdentity = { source: string; binding: string } | { source: string; reason: string };
 export type IdentityRequest = {
   root: string; engineRoot: string; config: RepoConfig; lane: string; policy: ReusePolicy;
   invocations: string[][]; limits: CommandLimits; key: Uint8Array;
@@ -84,7 +83,7 @@ function trackedPaths(root: string): string[] {
 }
 
 function gitInput(root: string, args: string[]): string {
-  const result = Bun.spawnSync(["git", ...args], { cwd: root, env: UNSCOPED_ENVIRONMENT, stdout: "pipe", stderr: "pipe", timeout: PROBE_LIMITS.timeout_ms, maxBuffer: DEFAULT_COMMAND_OUTPUT_BYTES });
+  const result = git(root, args, { timeoutMs: PROBE_LIMITS.timeout_ms });
   if (result.exitCode !== 0 || result.signalCode) throw new Error("Git input identity is unavailable");
   return result.stdout.toString();
 }

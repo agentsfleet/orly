@@ -1,18 +1,16 @@
 import { realpathSync } from "node:fs";
 import { extname, join, resolve } from "node:path";
-import { isString, modeLabel, objectArray, objectValue, OrlyError, type RulesModel } from "../model";
+import { isString, MODE_REGULAR, modeLabel, objectArray, objectValue, OrlyError, type RulesModel } from "../model";
 import { AGENTS_FILENAME, ORLY_AGENTS_FILENAME, type Layout } from "../loaders";
 import { renderProfileText } from "../references";
 import { Renderer } from "../render";
 
-const REGISTRY_PACKS_LABEL = "registry packs";
 const MARKDOWN_EXTENSION = ".md";
 const SKILLS_SEGMENT = "/skills/";
 const CLAUDE_AGENTS = ".claude/agents/";
-const MODE_REGULAR = "0644";
 export type PlannedFile = { target: string; content: Uint8Array; mode: string };
 
-export function installedPath(target: string): string {
+function installedPath(target: string): string {
   if (target.startsWith(".orly/")) return target;
   // A runtime reads an agent definition where it is declared, so it is never
   // a stub pointing at a copy.
@@ -32,7 +30,7 @@ function installedReferences(text: string, paths: Set<string>): string {
 // racing. Two packs naming DIFFERENT sources for one target is a registry bug
 // and stops the install rather than letting pack order decide the winner.
 export async function planFiles(model: RulesModel, packs: string[], commands: Record<string, string[][]>, targetRoot: string, orlyFile: string): Promise<PlannedFile[]> {
-  const registryPacks = objectValue(model.registry.packs, REGISTRY_PACKS_LABEL);
+  const registryPacks = model.packs;
   const known = new Set(Object.keys(registryPacks));
   const paths = new Set(Object.values(registryPacks).flatMap((pack) => objectArray(objectValue(pack, "pack").managed_files, "managed files").map((entry) => String(entry.target))));
   const planned = new Map<string, PlannedFile>();

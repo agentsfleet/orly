@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { assertWritableInside, hashContent, isObject, isString, JsonObject, objectValue, OrlyError, readJsonObject, RulesModel, stringArray } from "./model";
-import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { git } from "./git_env";
 import { selectPacks, sniffCommands } from "./config_discovery";
 import { validateCommands, validateSurfaces } from "./validation";
 import { burstSchema, validateConfiguration, reusePoliciesSchema, type BurstConfig, type ReusePolicies } from "./config_validation";
@@ -10,6 +10,8 @@ import { commandLimitsSchema, type LaneLimits } from "./command_limits";
 
 const ORACLE_DIRECTORY = ".orly";
 export const CONFIG_PATH = `${ORACLE_DIRECTORY}/orly.json`;
+// What every command that needs an installed repository says without one.
+export const NOT_INSTALLED = `no ${CONFIG_PATH} here — run \`orly init\` first`;
 
 const CONFIG_SCHEMA_VERSION = 1;
 const JSON_INDENT = 2;
@@ -102,21 +104,14 @@ export function contentDigest(bytes: string | Uint8Array): string {
   return `${DIGEST_ALGORITHM}:${hashContent(bytes)}`;
 }
 
-const PIPE_OUTPUT = "pipe";
 
 // Which of these paths git refuses to track. `check-ignore` prints one ignored
 // path per line and exits 1 when none match, which is not an error here.
 function ignoredPaths(targetRoot: string, paths: string[]): Set<string> {
   if (paths.length === 0) return new Set();
-  const result = Bun.spawnSync(["git", "check-ignore", "--", ...paths], {
-    cwd: targetRoot,
-    env: UNSCOPED_ENVIRONMENT,
-    stdout: PIPE_OUTPUT,
-    stderr: PIPE_OUTPUT,
-  });
-  const printed = result.stdout.toString().trim();
-  if (printed.length === 0) return new Set();
-  return new Set(printed.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
+  // `-z` works only with --stdin: paths go in and come out NUL-separated (CODE-GITZ).
+  const printed = git(targetRoot, ["check-ignore", "--stdin", "-z"], { stdin: `${paths.join("\0")}\0` }).stdout.toString();
+  return new Set(printed.split("\0").filter(Boolean));
 }
 
 // A managed file that is gone, or one git will not carry. Edits are not drift:
@@ -129,7 +124,8 @@ function ignoredPaths(targetRoot: string, paths: string[]): Set<string> {
 // record exists to rule out.
 export function managedDrift(targetRoot: string, config: RepoConfig): string[] {
   const missing = config.managed.filter((relativePath) => !existsSync(join(targetRoot, relativePath)));
-  const present = config.managed.filter((relativePath) => !missing.includes(relativePath));
+  const absent = new Set(missing);
+  const present = config.managed.filter((relativePath) => !absent.has(relativePath));
   const ignored = ignoredPaths(targetRoot, present);
   return [
     ...missing.map((relativePath) => `managed file is missing: ${relativePath} — run \`orly update\` to restore it`),

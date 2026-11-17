@@ -2,17 +2,18 @@
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-import { burst } from "./burst";
+import { burst } from "./burst/index";
 import { printHelp } from "./cli_help";
 import { selectPacks } from "./config_discovery";
-import { CONFIG_PATH, managedDrift, readConfig, RepoConfig, writeConfig } from "./config";
+import { CONFIG_PATH, managedDrift, NOT_INSTALLED, readConfig } from "./config";
 import { GateReport, isGateName, recordOverride, runGate, runGates } from "./gates";
 import { agentRuntimes, defaultHomes, helperSources, missingHelpers } from "./helpers";
 import { install, InstallResult } from "./install";
-import { isString, OrlyError, readJsonObject, RulesModel } from "./model";
+import { isString, messageOf, OrlyError, readJsonObject, RulesModel } from "./model";
 import { Renderer } from "./render";
 import { verifyRuleset } from "./verify";
 import { commandSetupErrors } from "./validation";
+import { git } from "./git_env";
 
 const PASS_RESULT = "pass";
 const ACCEPT_DIRTY_FLAG = "--accept-dirty";
@@ -20,7 +21,6 @@ const REUSE_VERIFICATION_FLAG = "--reuse-verification";
 const HELP_FLAG = "--help";
 const SHORT_HELP_FLAG = "-h";
 const REASON_FLAG = "--reason";
-const PIPE_OUTPUT = "pipe";
 const PACKAGE_MANIFEST = "package.json";
 const FORCE_FLAG = "--force";
 const NO_HOOKS_FLAG = "--no-hooks";
@@ -46,7 +46,7 @@ async function execute(engineRoot: string, args: string[]): Promise<number> {
   try {
     return await run(await RulesModel.load(engineRoot), args);
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = messageOf(error);
     console.error(`orly: ${message}`);
     return 1;
   }
@@ -137,7 +137,7 @@ async function materialise(model: RulesModel, args: string[], isInit: boolean): 
   model.validate();
   const targetRoot = projectRoot();
   const existing = await readConfig(targetRoot);
-  if (!isInit && !existing) throw new OrlyError(`no ${CONFIG_PATH} here — run \`orly init\` first`);
+  if (!isInit && !existing) throw new OrlyError(NOT_INSTALLED);
   const requested = optionalValues(args, WITH_FLAG);
   // --dry-run changes nothing, and recording an opt-in pack is a change. It
   // still previews as though the pack were taken, so what you see is what the
@@ -176,7 +176,7 @@ function printGate(report: GateReport): void {
 }
 
 function projectRoot(): string {
-  const result = Bun.spawnSync(["git", "rev-parse", "--show-toplevel"], { stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
+  const result = git(process.cwd(), ["rev-parse", "--show-toplevel"]);
   if (result.exitCode !== 0) throw new OrlyError(`not inside a Git repository: ${process.cwd()} — run \`git init\` first`);
   return result.stdout.toString().trim();
 }
@@ -194,7 +194,7 @@ async function doctorGlobal(model: RulesModel): Promise<number> {
     : `${PASS_GLYPH} gstack and EGM are installed for ${runtimes.join(" and ")}`);
   const config = await readConfig(projectRoot());
   if (!config) {
-    console.log(`${FAIL_GLYPH} no ${CONFIG_PATH} here — run \`orly init\` first`);
+    console.log(`${FAIL_GLYPH} ${NOT_INSTALLED}`);
     return 1;
   }
   const setupErrors = commandSetupErrors(config.commands);

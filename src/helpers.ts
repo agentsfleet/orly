@@ -21,7 +21,7 @@ const CODEX_EGM_CACHE = ["plugins", "cache", "egm", "egm"];
 const GITHUB_REPOSITORY = /github\.com[/:]([^/]+\/[^/.]+?)(?:\.git)?$/;
 
 export type HelperSources = { gstack: string; egm: string };
-export type HelperHomes = { home: string; codexHome: string };
+type HelperHomes = { home: string; codexHome: string };
 
 export function defaultHomes(): HelperHomes {
   const home = homedir();
@@ -36,8 +36,8 @@ export function helperSources(registry: JsonObject): HelperSources {
   return { gstack, egm };
 }
 
-export const CLAUDE_CODE = "Claude Code";
-export const CODEX = "Codex";
+const CLAUDE_CODE = "Claude Code";
+const CODEX = "Codex";
 
 export function agentRuntimes(homes: HelperHomes): string[] {
   return [

@@ -1,13 +1,14 @@
-import type { Outcome } from "./burst_process";
-import type { Environment } from "./burst_settings";
-import type { BurstRun, Job, Machine, Status } from "./burst_types";
+import type { Outcome } from "./process";
+import type { Environment } from "./settings";
+import type { BurstRun, Fetch, Job, Machine, Status } from "./types";
 
 import { existsSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-import { INPUTS, resultsScript } from "./burst_job";
-import { captureProcess, streamProcess, until } from "./burst_process";
-import { OrlyError } from "./model";
+import { OrlyError } from "../model";
+import { INPUTS, resultsScript } from "./job";
+import { captureProcess, streamProcess, until } from "./process";
+import { IPV4 } from "./types";
 
 export type StagedDirectory = { name: string; archive: string };
 
@@ -20,6 +21,9 @@ const TAR_TIMEOUT_MS = 5 * 60_000;
 // ssh exits 255 when the connection, not the remote command, failed.
 const SSH_LOST = 255;
 const NO_RESULTS = 3;
+// Each provider's SSH rule admits only the caller's public IPv4, learnt here.
+const CALLER_ADDRESS_URL = "https://checkip.amazonaws.com";
+const CALLER_TIMEOUT_MS = 15_000;
 
 // The run's own key pair, made in the run's private directory. ssh-keygen
 // writes the private half with mode 0600; only the public half leaves this
@@ -87,12 +91,21 @@ export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user
 
 // A fresh machine's host key is one nobody has seen, so the run trusts it on
 // first use and records it in the run's own known_hosts, never the user's;
-// every later connection of the run must match it.
-export function sshArgs(run: BurstRun, machine: Machine, user: string, command: string): string[] {
+// every later connection of the run must match it. A machine reached through
+// a proxy is named by its identifier, which the proxy command receives as %h.
+function sshArgs(run: BurstRun, machine: Machine, user: string, command: string): string[] {
+  const proxy = machine.via ? ["-o", `ProxyCommand=${machine.via}`] : [];
   return ["ssh", "-i", run.key, "-o", "IdentitiesOnly=yes", "-o", "BatchMode=yes",
     "-o", "StrictHostKeyChecking=accept-new", "-o", `UserKnownHostsFile=${run.knownHosts}`,
-    "-o", "ConnectTimeout=15", "-o", "ServerAliveInterval=30", "-o", "ServerAliveCountMax=4", "-o", "LogLevel=ERROR",
-    `${user}@${machine.address ?? ""}`, command];
+    "-o", "ConnectTimeout=15", "-o", "ServerAliveInterval=30", "-o", "ServerAliveCountMax=4", "-o", "LogLevel=ERROR", ...proxy,
+    `${user}@${machine.via ? machine.id : machine.address ?? ""}`, command];
+}
+
+export async function callerAddress(fetcher: Fetch): Promise<string> {
+  const response = await fetcher(CALLER_ADDRESS_URL, { signal: AbortSignal.timeout(CALLER_TIMEOUT_MS) });
+  const address = (await response.text()).trim();
+  if (!response.ok || !IPV4.test(address)) throw new OrlyError(`could not learn this machine's public IPv4 address from ${CALLER_ADDRESS_URL}`);
+  return address;
 }
 
 async function stage(run: BurstRun, machine: Machine, user: string, command: string, file: string, what: string): Promise<void> {

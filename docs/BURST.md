@@ -2,7 +2,7 @@
 type: how-to
 audience: operator
 verified: 2026-11-16
-product_version: 0.40.0
+product_version: 0.42.0
 executable: false
 ---
 
@@ -86,6 +86,8 @@ Any other secret is read with `op read`, so `op` must be signed in or have `OP_S
 > Claude Code and Codex cloud sessions, and other sessions behind an HTTP-only proxy, cannot.
 > Those sessions start the repository's CI workflow, and the workflow job runs `orly burst`.
 
+An AWS run with `ORLY_BURST_AWS_ACCESS=ssm` needs only outbound HTTPS on port 443, so those sessions can run it directly.
+
 ### Trust on first use
 
 A fresh machine's host key is unknown before its first connection.
@@ -136,6 +138,36 @@ The policy lets the launcher create and remove only resources tagged `owner=agen
 The caller's `aws` command-line tool supplies the credentials, from a profile or the `AWS_*` variables.
 A CI job gets them from its own cloud login step.
 
+### Reach AWS machines through Systems Manager
+
+By default a run's security group admits SSH from the caller's address alone, so a caller whose address changes loses its lanes.
+With `ORLY_BURST_AWS_ACCESS=ssm`, the group admits nothing, and SSH travels inside an AWS Systems Manager session to the instance.
+
+The account owner creates the machines' role and instance profile once:
+
+```bash
+aws iam create-role --role-name orly-burst-ssm --assume-role-policy-document \
+  '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ec2.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+aws iam attach-role-policy --role-name orly-burst-ssm --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+aws iam create-instance-profile --instance-profile-name orly-burst-ssm
+aws iam add-role-to-instance-profile --instance-profile-name orly-burst-ssm --role-name orly-burst-ssm
+```
+
+The launcher policy gains four statements: pass that role to EC2, and open and close sessions only on `owner=agent` instances.
+
+```json
+  {"Effect": "Allow", "Action": "iam:PassRole", "Resource": "arn:aws:iam::*:role/orly-burst-ssm",
+   "Condition": {"StringEquals": {"iam:PassedToService": "ec2.amazonaws.com"}}},
+  {"Effect": "Allow", "Action": "ssm:StartSession", "Resource": "arn:aws:ec2:*:*:instance/*",
+   "Condition": {"StringEquals": {"ssm:resourceTag/owner": "agent"}}},
+  {"Effect": "Allow", "Action": "ssm:StartSession", "Resource": "arn:aws:ssm:*::document/AWS-StartSSHSession"},
+  {"Effect": "Allow", "Action": "ssm:TerminateSession", "Resource": "arn:aws:ssm:*:*:session/${aws:username}-*"}
+```
+
+The caller installs AWS's Session Manager plugin, for example with `brew install --cask session-manager-plugin`, and sets `ORLY_BURST_AWS_INSTANCE_PROFILE=orly-burst-ssm`.
+Debian's image carries no Systems Manager agent, so each machine's first boot installs it from AWS's regional bucket.
+A snapshot captured this way already runs the agent, and its lanes skip the download.
+
 ### One-time setup for E2E Networks
 
 The `e2e` provider runs TIR virtual machines: whole Linux machines with their own kernel, reached as root over SSH.
@@ -178,6 +210,9 @@ unverified: whether a TIR VM runs privileged Docker containers; the [virtual mac
 | `ORLY_BURST_AWS_IMAGE` | An Amazon Machine Image (AMI) ID or `resolve:ssm:` parameter used instead of a snapshot. | none: the newest snapshot, then Debian 13 amd64 | none |
 | `ORLY_BURST_SUBNET` | Subnet for the instances; the security group joins its network. | the default network | a subnet ID |
 | `ORLY_BURST_AWS_USER` | Login user of the AWS image. | `admin`, Debian's | a user name |
+| `ORLY_BURST_MARKET` | How AWS lanes are rented. `spot-then-on-demand` runs a lane AWS took back once more on demand. | `spot` | `spot`, `on-demand`, `spot-then-on-demand` |
+| `ORLY_BURST_AWS_ACCESS` | How the caller reaches AWS machines: SSH from its address, or SSH inside a Systems Manager session. | `ssh` | `ssh`, `ssm` |
+| `ORLY_BURST_AWS_INSTANCE_PROFILE` | The instance profile AWS machines sign in to Systems Manager with; required by `ssm`. | none | an instance profile name |
 | `ORLY_BURST_E2E_LOCATION` | TIR location. | `Delhi` | `Delhi`, `Chennai` |
 | `ORLY_BURST_E2E_PLAN` | TIR CPU plan name; orly uses its hourly price. | `C3.32GB`, 16 vCPU and 32 GB, listed at ₹18.6 an hour at Delhi on 2026-11-16 | a TIR CPU plan name |
 | `ORLY_BURST_E2E_IMAGE` | A snapshot name, or an OS image as `<name> <version>`, used instead of a snapshot. | none: the newest snapshot, then `Ubuntu 24.04` | none |
@@ -187,7 +222,7 @@ The machine's own shutdown is a backstop for a caller that died, and what it sav
 
 | Machine | At its scheduled shutdown | Still billed afterwards |
 |---|---|---|
-| AWS Spot lane | terminates | nothing |
+| AWS lane, Spot or on demand | terminates | nothing |
 | AWS on-demand snapshot warm-up | stops | its 80 GB disk, until deleted |
 | E2E TIR VM | stops | its disk keeps its files; unverified: what a stopped VM bills |
 | Any machine under `--keep` | no shutdown is scheduled | everything, until deleted |
@@ -206,6 +241,9 @@ AWS runs assume a warm run of 30 minutes at a Spot price of $0.30 per hour, whic
 
 AWS storage is $0.05 per GB each month for the Elastic Block Store (EBS) data an AMI keeps, at most its 80 GB volume.
 Each snapshot capture costs one more run, and AWS adds about $0.005 per hour for each public IPv4 address.
+
+An on-demand lane costs about ten times its Spot price.
+In `ap-south-2` on November 17, 2026, `c6a.4xlarge` cost $0.374 an hour on demand and $0.037 to $0.058 on Spot.
 
 ## Steps
 
@@ -304,7 +342,7 @@ jobs:
       - if: inputs.provider == 'aws-spot'
         uses: aws-actions/configure-aws-credentials@v4
         with: {role-to-assume: "<LAUNCHER_ROLE_ARN>", aws-region: us-east-1}
-      - run: bunx --bun @agentsfleet/orly@0.40.0 burst "$LANE" --provider "$PROVIDER" --ref "$GITHUB_REF_NAME"
+      - run: bunx --bun @agentsfleet/orly@0.42.0 burst "$LANE" --provider "$PROVIDER" --ref "$GITHUB_REF_NAME"
         env:
           LANE: ${{ inputs.lane }}
           PROVIDER: ${{ inputs.provider }}
@@ -357,7 +395,8 @@ A cloud lane gets only its declared secrets; a lane under `here` also keeps the 
 - **`set E2E_AUTH_TOKEN for this provider`**: the variable is missing or empty. Export it and run again.
 - **`could not read the secret for <NAME>`**: `op` is not signed in, or the reference is wrong. Export the variable, or fix `op` and the reference.
 - **The lane waits for SSH until the deadline**: port 22 is blocked between the caller and the machine. Run the lane from a CI job instead.
-- **`exit=interrupted` on AWS**: AWS took the Spot instance back, or the session dropped. Run the lane again.
+- **`exit=interrupted` on AWS**: AWS took the Spot instance back, or the session dropped. Run the lane again, or set `ORLY_BURST_MARKET=spot-then-on-demand` and `ORLY_BURST_AWS_ACCESS=ssm`.
+- **The lane waits for SSH until the deadline under `ssm`**: the machine's agent never reached Systems Manager. Check the instance profile's role carries `AmazonSSMManagedInstanceCore`.
 - **`run-instances refused`**: the launcher policy lacks a permission. The message names the operation AWS refused.
 - **`TIR may have created VM <NAME>`**: the create request failed after reaching TIR. Delete that VM in TIR, where its name starts `orly-burst-`.
 - **`Access Denied Read..` from E2E**: the keys belong to MyAccount, not TIR. Create a TIR API token for the project and store it instead.

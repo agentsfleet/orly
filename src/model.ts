@@ -1,5 +1,5 @@
-import { chmodSync, existsSync, lstatSync, readdirSync, realpathSync } from "node:fs";
-import { basename, dirname, isAbsolute, join, relative, resolve } from "node:path";
+import { chmodSync, existsSync, lstatSync, realpathSync } from "node:fs";
+import { dirname, isAbsolute, join, relative } from "node:path";
 
 import { validateActiveRule, validateRelativePath } from "./validation";
 
@@ -9,18 +9,10 @@ const HASH_ALGORITHM = "sha256";
 const HASH_ENCODING = "hex";
 export const MODE_EXECUTABLE = "0755";
 export const MODE_REGULAR = "0644";
-const EXECUTABLE_BITS = 0o755;
+// Any of these set makes a file runnable; orly records only that much of its mode.
+export const EXECUTE_BITS = 0o111;
 const OCTAL = 8;
 
-const NON_EXECUTABLE_MODE = 0o644;
-const EXECUTABLE_MODE = 0o755;
-const JSON_EXTENSION = ".json";
-const REPOSITORIES_LABEL = "repositories";
-const REGISTRY_LABEL = "registry";
-const REGISTRY_PACKS_LABEL = "registry packs";
-const REGISTRY_RULES_LABEL = "registry rules";
-const CORE_DOCUMENTS_LABEL = "core documents";
-const MANAGED_FILES_LABEL = "managed files";
 const ACTIVE_STATE = "active";
 const PARENT_SEGMENT = "..";
 
@@ -38,7 +30,7 @@ export function isBelow(path: string, root: string): boolean {
 // A destination a caller has not yet written may not exist; find the nearest
 // ancestor that does, so its real (symlink-resolved) location can be checked
 // before anything is created under it.
-export function nearestExistingAncestor(path: string): string {
+function nearestExistingAncestor(path: string): string {
   let current = path;
   while (!existsSync(current)) {
     if (isSymbolicLink(current)) safeRealpath(current);
@@ -92,6 +84,11 @@ function safeRealpath(path: string): string {
 }
 
 export class RulesModel {
+  // The registry's packs, by name; every reader goes through here.
+  get packs(): JsonObject {
+    return objectValue(this.registry.packs, "registry packs");
+  }
+
   readonly root: string;
   readonly registry: JsonObject;
 
@@ -210,6 +207,16 @@ export function objectValue(value: unknown, label: string): JsonObject {
   return value;
 }
 
+// A thrown value's message, whatever was thrown.
+export function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+// Whether a thrown value is a system error with this code, such as EEXIST.
+export function hasErrorCode(error: unknown, code: string): boolean {
+  return error instanceof Error && "code" in error && error.code === code;
+}
+
 export function stringArray(value: unknown, label: string): string[] {
   if (!Array.isArray(value) || !value.every(isString)) throw new OrlyError(`${label} must be an array of strings`);
   return value;
@@ -227,18 +234,11 @@ export function hashContent(content: string | Uint8Array): string {
 }
 
 export function modeLabel(path: string): string {
-  return normalizedMode(path) === EXECUTABLE_BITS ? MODE_EXECUTABLE : MODE_REGULAR;
+  return (lstatSync(path).mode & EXECUTE_BITS) === 0 ? MODE_REGULAR : MODE_EXECUTABLE;
 }
 
 export function applyMode(path: string, mode: string): void {
   chmodSync(path, Number.parseInt(mode, OCTAL));
 }
 
-export function normalizedMode(path: string): number {
-  return (lstatSync(path).mode & 0o111) === 0 ? NON_EXECUTABLE_MODE : EXECUTABLE_MODE;
-}
 
-
-export function setNormalizedMode(path: string, source: string): void {
-  chmodSync(path, normalizedMode(source));
-}

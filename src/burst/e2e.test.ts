@@ -2,10 +2,10 @@ import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { burst } from "./burst";
-import { FakeTir } from "./burst_fake_tir";
-import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, fakeBin, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./burst_test_support";
-import { cleanupTemporaryDirectories, temporaryDirectory } from "./gates_test_support";
+import { burst } from "./index";
+import { FakeTir } from "./fake_tir";
+import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, fakeBin, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./test_support";
+import { cleanupTemporaryDirectories, temporaryDirectory } from "../gates_test_support";
 
 const API_KEY = "e2e_test_key_00000000";
 const AUTH_TOKEN = "e2e_test_token_00000000";

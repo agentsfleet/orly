@@ -1,6 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-import { isCode, isDocs, isUserSurface } from "./surfaces";
+import { cleanupTemporaryDirectories, git, newRepository } from "./gates_test_support";
+import { classifyBranch, isCode, isDocs, isUserSurface } from "./surfaces";
 
 const USER_PREFIXES = ["src/agentsfleetd/http/", "public/openapi/", "cli/src/", "ui/packages/app/"];
 const DOCS_PREFIXES = ["README.md", "docs/"];
@@ -43,3 +46,19 @@ describe("code classification", () => {
     expect(isCode("SOUL.md")).toBeFalse();
   });
 });
+
+describe("branch classification", () => {
+  afterEach(cleanupTemporaryDirectories);
+
+  // Without -z, git prints src/café.ts as a quoted escape that no classifier matches (CODE-GITZ).
+  test("a changed path with unusual bytes is classified by its real name", () => {
+    const project = newRepository();
+    git(project, "checkout", "--quiet", "-b", "feat/accent");
+    mkdirSync(join(project, "src"));
+    writeFileSync(join(project, "src/café.ts"), "export const accent = true;\n");
+    git(project, "add", ".");
+    git(project, "commit", "--quiet", "-m", "feat: accent");
+    expect(classifyBranch(project, undefined).code).toEqual(["src/café.ts"]);
+  });
+});
+

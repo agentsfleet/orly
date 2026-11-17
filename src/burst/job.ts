@@ -1,7 +1,7 @@
 import { join } from "node:path";
 
 // One machine's job as data; remoteScript renders it as shell.
-export type RemoteJob = {
+type RemoteJob = {
   kind: "lane" | "warm";
   name: string;
   ref: string;
@@ -16,8 +16,8 @@ export type RemoteJob = {
 };
 
 // The prelude every machine runs, shipped beside this module in src/.
-const PRELUDE = join(import.meta.dir, "burst_job.sh");
-// Where a lane's copied directories land; burst_ssh.ts stages them there.
+const PRELUDE = join(import.meta.dir, "job.sh");
+// Where a lane's copied directories land; ssh.ts stages them there.
 export const INPUTS = "/tmp/orly-burst-inputs";
 
 // The whole job, prelude first. Every value is single-quoted, so a ref, an
@@ -66,6 +66,6 @@ export function resultsScript(paths: readonly string[]): string {
   ].join("\n");
 }
 
-export function shellQuote(value: string): string {
+function shellQuote(value: string): string {
   return `'${value.replaceAll("'", `'\\''`)}'`;
 }

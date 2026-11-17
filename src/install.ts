@@ -1,24 +1,22 @@
 import { existsSync, mkdirSync, mkdtempSync, rmSync, copyFileSync, lstatSync, readlinkSync, symlinkSync, realpathSync, readdirSync, rmdirSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
-import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { git } from "./git_env";
 import { CONFIG_PATH, contentDigest, readConfig, seedConfig, serialiseConfig, type RepoConfig } from "./config";
 import { selectPacks } from "./config_discovery";
-import { assertWritableInside, applyMode, modeLabel, OrlyError, MODE_EXECUTABLE, MODE_REGULAR, type RulesModel } from "./model";
+import { applyMode, assertWritableInside, messageOf, MODE_EXECUTABLE, MODE_REGULAR, modeLabel, OrlyError, type RulesModel } from "./model";
 import { installLoaders, loaderTargets, type Layout } from "./loaders";
 import { referenceClosureErrors } from "./references";
 import { planFiles, resolveLayout, type PlannedFile } from "./installation/plan";
 import { migrationDeletes, uncommittedPaths } from "./installation/migration";
-import { plannedHooks, checkHooks, configureHooks, hooksPath, HOOKS_DIRECTORY } from "./installation/hooks";
+import { checkHooks, configureHooks, HOOKS_DIRECTORY, HOOKS_PATH_KEY, hooksPath, plannedHooks } from "./installation/hooks";
 import { diskDigest, InstallTransaction, type FileWrite, type InstallCheckpoint } from "./installation/transaction";
 import { installationLock } from "./installation/lock";
 
 const INSTALL_DIRECTORY = ".orly";
 const MANAGED_KIND = "managed file";
-const PIPE_OUTPUT = "pipe";
-const HOOKS_PATH_KEY = "core.hooksPath";
-export type InstallError = { path: string; message: string; suggestion: string };
+type InstallError = { path: string; message: string; suggestion: string };
 export type InstallResult = { ok: boolean; packs: string[]; written: string[]; skipped: string[]; errors: InstallError[] };
-export type InstallOptions = { targetRoot: string; force: boolean; installHooks: boolean; orlyVersion: string; requestedPacks?: string[]; checkpoint?: InstallCheckpoint };
+type InstallOptions = { targetRoot: string; force: boolean; installHooks: boolean; orlyVersion: string; requestedPacks?: string[]; checkpoint?: InstallCheckpoint };
 
 export async function install(model: RulesModel, options: InstallOptions): Promise<InstallResult> {
   const root = resolve(options.targetRoot);
@@ -102,9 +100,10 @@ async function preflight(root: string, planned: PlannedFile[], config: RepoConfi
     if (current !== null && current !== contentDigest(file.content)) changing.push(file);
   }
   if (force) return [];
-  const dirty = uncommittedPaths(root, changing.filter((file) => config.managed.includes(file.target)).map((file) => file.target));
+  const managed = new Set(config.managed);
+  const dirty = uncommittedPaths(root, changing.filter((file) => managed.has(file.target)).map((file) => file.target));
   return changing.flatMap((file) => {
-    if (!config.managed.includes(file.target)) return [{ path: file.target, message: "existing content is not managed by orly", suggestion: "move or rename your file; --force explicitly replaces it" }];
+    if (!managed.has(file.target)) return [{ path: file.target, message: "existing content is not managed by orly", suggestion: "move or rename your file; --force explicitly replaces it" }];
     if (dirty.has(file.target)) return [{ path: file.target, message: "managed file has uncommitted changes", suggestion: "commit or stash your change first; --force explicitly discards it" }];
     return [];
   });
@@ -145,11 +144,11 @@ function copyLoader(root: string, stage: string, target: string): void {
 
 function requireWorkTree(root: string): void {
   if (!existsSync(root)) throw new OrlyError(`target directory does not exist: ${root}`);
-  const result = Bun.spawnSync(["git", "-C", root, "rev-parse", "--show-toplevel"], { stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT, env: UNSCOPED_ENVIRONMENT });
+  const result = git(root, ["rev-parse", "--show-toplevel"]);
   if (result.exitCode !== 0) throw new OrlyError(`not a git repository: ${root} — run git init first`);
   if (realpathSync(root) !== realpathSync(result.stdout.toString().trim())) throw new OrlyError("install at the repository root, not a subdirectory");
 }
 
 function failure(packs: string[], path: string, error: unknown): InstallResult {
-  return { ok: false, packs, written: [], skipped: [], errors: [{ path, message: error instanceof Error ? error.message : String(error), suggestion: "reconcile the named conflict and repeat the same version's update" }] };
+  return { ok: false, packs, written: [], skipped: [], errors: [{ path, message: messageOf(error), suggestion: "reconcile the named conflict and repeat the same version's update" }] };
 }

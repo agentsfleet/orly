@@ -23,7 +23,7 @@ export function renderProfileText(
     .map(({ text }) => text).join(NEWLINE).trim();
 }
 
-export interface ProfileSourceLine {
+interface ProfileSourceLine {
   readonly text: string;
   readonly lineNumber: number;
 }

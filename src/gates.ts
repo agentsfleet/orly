@@ -1,12 +1,12 @@
-import type { Criterion, CriterionContext, CriterionResult } from "./criteria";
+import type { Criterion, CriterionContext, CriterionResult } from "./criteria_support";
 import type { RulesModel } from "./model";
 
 import { criteriaFor } from "./criteria";
-import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { git, gitOutput } from "./git_env";
 import { OrlyError } from "./model";
 import { defaultMergeBase } from "./surfaces";
 
-export type GateName = (typeof GATE_ORDER)[number];
+type GateName = (typeof GATE_ORDER)[number];
 export type GateReport = {
   gate: GateName;
   results: CriterionResult[];
@@ -15,10 +15,8 @@ export type GateReport = {
 
 export type Override = { criterion: string; reason: string };
 
-export const GATE_ORDER = ["work", "verify", "pr"] as const;
+const GATE_ORDER = ["work", "verify", "pr"] as const;
 
-const PIPE_OUTPUT = "pipe";
-const GIT = "git";
 // Strict trailer shape: "Orly-Override: <criterion> (<reason>)". A trailer
 // that does not parse is not an override — the gate stays red rather than
 // guessing what a malformed waiver meant.
@@ -71,7 +69,7 @@ export function recordOverride(root: string, criterion: string, reason: string):
   const trimmed = reason.trim();
   if (!trimmed) throw new OrlyError("an override without a reason is not a record");
   const message = `override: ${criterion}\n\n${OVERRIDE_PREFIX} ${criterion} (${trimmed.replaceAll(")", "]")})`;
-  const result = Bun.spawnSync([GIT, "commit", "--allow-empty", "-m", message], { cwd: root, env: UNSCOPED_ENVIRONMENT, stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
+  const result = git(root, ["commit", "--allow-empty", "-m", message]);
   if (result.exitCode !== 0) throw new OrlyError(`could not record the override commit: ${result.stderr.toString().trim()}`);
   return message;
 }
@@ -98,7 +96,3 @@ function evaluate(entry: Criterion, context: CriterionContext, overrides: Overri
   return override ? { ...result, ok: true, override: override.reason, detail: `${OVERRIDDEN_DETAIL} (${override.reason}) — ${result.detail}` } : result;
 }
 
-function gitOutput(root: string, command: string[]): string {
-  const result = Bun.spawnSync([GIT, ...command], { cwd: root, env: UNSCOPED_ENVIRONMENT, stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
-  return result.exitCode === 0 ? result.stdout.toString().trim() : "";
-}

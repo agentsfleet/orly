@@ -1,29 +1,23 @@
-import {
-  Criterion, CriterionContext, CriterionResult, criterion, gitOutput, runCommand, Verdict,
-} from "./criteria_support";
+import type { Criterion, CriterionContext } from "./criteria_support";
+import { criterion } from "./criteria_support";
+import { gitOutput } from "./git_env";
 import { scanChangedDocuments } from "./doc_changes";
-import { isObject, JsonObject, objectValue, OrlyError, RulesModel } from "./model";
-import { readConfigSync, RepoConfig } from "./config";
-import { classifyBranch, SurfaceReport } from "./surfaces";
+import { JsonObject, messageOf } from "./model";
+import { NOT_INSTALLED, readConfigSync, RepoConfig } from "./config";
+import { classifyBranch, DEFAULT_BRANCHES, SurfaceReport } from "./surfaces";
 import { commandSetupErrors } from "./validation";
 import { limitsFor } from "./command_limits";
 import { runVerification } from "./verification";
 
-export type { Criterion, CriterionContext, CriterionResult, Verdict };
-export { runCommand };
 
 type CommandTier = typeof CONFORM_TIER | typeof FAST_TIER | typeof ALL_TIER;
 
-const DEFAULT_BRANCHES = ["master", "main"];
-const REPOSITORIES_LABEL = "repositories";
-const UNINSTALLED = "no .orly/orly.json here — run `orly init` first";
 const REV_PARSE = "rev-parse";
 const HEAD = "HEAD";
 const UPSTREAM = "@{upstream}";
 const DETAIL_SEPARATOR = "; ";
 const ABBREV_REF = "--abbrev-ref";
-const WORKTREE_LIST = ["worktree", "list", "--porcelain"];
-const WORKTREE_PREFIX = "worktree ";
+const BRANCH_REF_PREFIX = "refs/heads/";
 
 const GIT_BRANCH = "git.branch";
 const GIT_TREE = "git.tree";
@@ -65,16 +59,20 @@ export function criteriaFor(gate: string, context: CriterionContext): Criterion[
 
 function gitBranch(): Criterion {
   return criterion(GIT_BRANCH, (context) => {
-    const branch = gitOutput(context.root, [REV_PARSE, ABBREV_REF, "HEAD"]);
-    const ok = branch.length > 0 && !DEFAULT_BRANCHES.includes(branch);
-    return { ok, detail: ok ? `on ${branch}` : `refusing to work on the default branch: ${branch || "unknown"}` };
+    // A non-zero exit means a detached HEAD, which names no branch (CODE-BRANCH).
+    const ref = gitOutput(context.root, ["symbolic-ref", "--quiet", "HEAD"]);
+    const branch = ref.startsWith(BRANCH_REF_PREFIX) ? ref.slice(BRANCH_REF_PREFIX.length) : "";
+    if (!branch) return { ok: false, detail: "HEAD is detached; work on a branch" };
+    const ok = !DEFAULT_BRANCHES.includes(branch);
+    return { ok, detail: ok ? `on ${branch}` : `refusing to work on the default branch: ${branch}` };
   });
 }
 
 function gitTree(): Criterion {
   return criterion(GIT_TREE, (context) => {
-    const dirty = gitOutput(context.root, ["status", "--porcelain=v1", "-uall"], true)
-      .split(/\r?\n/)
+    // NUL-separated with one entry per path, so an unusual name is read as it is (CODE-GITZ).
+    const dirty = gitOutput(context.root, ["status", "--porcelain=v1", "-z", "--no-renames", "-uall"], true)
+      .split("\0")
       .filter(Boolean);
     if (dirty.length === 0) return { ok: true, detail: "clean" };
     if (context.acceptDirty) return { ok: true, detail: `${dirty.length} dirty path(s) accepted` };
@@ -97,11 +95,11 @@ function repositoryConfig(): Criterion {
   return criterion(REPO_CONFIG, (context) => {
     try {
       const config = readConfigSync(context.root);
-      if (!config) return { ok: false, detail: UNINSTALLED };
+      if (!config) return { ok: false, detail: NOT_INSTALLED };
       const errors = commandSetupErrors(config.commands);
       return { ok: errors.length === 0, detail: errors.length > 0 ? errors.join(DETAIL_SEPARATOR) : `${Object.keys(config.commands).length} command(s) declared` };
     } catch (error) {
-      return { ok: false, detail: error instanceof Error ? error.message : String(error) };
+      return { ok: false, detail: messageOf(error) };
     }
   });
 }
@@ -159,7 +157,7 @@ function docsLanguage(): Criterion {
         `${finding.file}:${finding.line} ${finding.code}: ${finding.message}`);
       return { ok: false, detail: `${findings.length} finding(s): ${named.join(DETAIL_SEPARATOR)}` };
     } catch (error) {
-      return { ok: false, detail: error instanceof Error ? error.message : String(error) };
+      return { ok: false, detail: messageOf(error) };
     }
   });
 }

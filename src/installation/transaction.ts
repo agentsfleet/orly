@@ -19,7 +19,7 @@ const hooksSchema = z.object({ before: z.string().nullable(), after: z.string() 
 const journalSchema = z.object({ version: z.string(), writes: z.array(writeSchema), deletes: z.array(deleteSchema), hooks: hooksSchema }).strict();
 export type FileWrite = z.infer<typeof writeSchema>;
 export type FileDelete = z.infer<typeof deleteSchema>;
-export type HooksChange = z.infer<typeof hooksSchema>;
+type HooksChange = z.infer<typeof hooksSchema>;
 type Journal = z.infer<typeof journalSchema>;
 export type InstallCheckpoint = (stage: string, ordinal: number) => void;
 

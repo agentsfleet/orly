@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { cleanupTemporaryDirectories, git, gitOutput, newRepository, ROOT } from "./gates_test_support";

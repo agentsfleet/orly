@@ -5,14 +5,15 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-type Instance = { id: string; type: string; state: string; address: string; run: string };
+type Instance = { id: string; type: string; state: string; address: string; run: string; spot: boolean };
 // pendingPolls: how many more state reads answer `pending`; fails: the reason
 // the image ends `failed` instead of `available`.
 type Image = { id: string; name: string; repo: string; snapshots: string[]; size: number; pendingPolls?: number; fails?: string };
 // lostReply: the instance launches but the caller never hears its identifier.
 // describeFails: every describe-instances call fails with this error.
 // imagePendingPolls and imageFails shape every image create-image makes.
-type Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lostReply?: boolean; describeFails?: string; imagePendingPolls?: number; imageFails?: string };
+// reclaimSpot: every Spot instance's state reason says AWS took it back.
+type Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lostReply?: boolean; describeFails?: string; imagePendingPolls?: number; imageFails?: string; reclaimSpot?: boolean };
 
 const state = process.env.FAKE_AWS_STATE ?? "";
 const args = Bun.argv.slice(2);
@@ -56,7 +57,7 @@ function launch(command: string[]): number {
   while (!claim(`instance-${number}`)) number += 1;
   const id = `i-${String(number).padStart(17, "0")}`;
   const run = option(command, "--tag-specifications").match(/Key=orly-burst,Value=([^}]+)\}/)?.[1] ?? "";
-  const instance: Instance = { id, type, state: scenario.vanish ? "terminated" : "running", address: `198.51.100.${number}`, run };
+  const instance: Instance = { id, type, state: scenario.vanish ? "terminated" : "running", address: `198.51.100.${number}`, run, spot: command.includes("--instance-market-options") };
   writeFileSync(join(state, `${id}.json`), JSON.stringify(instance));
   if (scenario.lostReply) {
     process.stderr.write("Connection was closed before we received a valid response from endpoint URL\n");
@@ -77,6 +78,10 @@ function describe(command: string[]): number {
     return print(live.map((found) => found?.id).join("\t"));
   }
   const ids = command.slice(command.indexOf("--instance-ids") + 1).filter((argument) => argument.startsWith("i-"));
+  if (option(command, "--query").includes("StateReason")) {
+    const found = instance(ids[0] ?? "");
+    return print(found?.spot && scenario.reclaimSpot ? "Server.SpotInstanceTermination" : "None");
+  }
   if (option(command, "--query").includes("PublicIpAddress")) {
     const found = instance(ids[0] ?? "");
     return print(found ? `${found.state}\t${found.address}` : "None\tNone");

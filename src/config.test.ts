@@ -173,6 +173,17 @@ describe("managedDrift", () => {
   // .orly/orly.json declared four files under it managed. Every local
   // checkout passed `orly doctor` because the files sat on disk, and CI failed
   // against a clone that never received them.
+  // Without -z, check-ignore printed café as a quoted escape, so the ignored file went unreported.
+  test("an ignored managed file with an unusual name is reported by its real path", async () => {
+    const root = scratch();
+    Bun.spawnSync(["git", "init"], { cwd: root });
+    mkdirSync(join(root, "skills/café"), { recursive: true });
+    writeFileSync(join(root, "skills/café/SKILL.md"), "skill\n");
+    writeFileSync(join(root, ".gitignore"), "skills/\n");
+    const config = { ...(await seedConfig(root)), managed: ["skills/café/SKILL.md"] };
+    expect(managedDrift(root, config)).toEqual([expect.stringContaining("managed file is ignored by git: skills/café/SKILL.md")]);
+  });
+
   test("a managed file git refuses to track is drift, even though it is present", async () => {
     const root = scratch();
     Bun.spawnSync(["git", "init"], { cwd: root });
