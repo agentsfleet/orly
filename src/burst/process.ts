@@ -73,7 +73,7 @@ export async function captureProcess(argv: string[], options: { env: Environment
   if (options.signal?.aborted) cancel();
   else options.signal?.addEventListener("abort", cancel, { once: true });
   try {
-    const [stdout, stderr] = await Promise.all([readBounded(child.stdout), readBounded(child.stderr), child.exited]);
+    const [stdout, stderr] = await Promise.all([readBounded(child.stdout, MAX_CAPTURE_BYTES, outputTooLarge), readBounded(child.stderr, MAX_CAPTURE_BYTES, outputTooLarge), child.exited]);
     const stoppedBy = child.signalCode ? `\n${argv[0]} stopped by ${child.signalCode}` : "";
     return { code: child.exitCode ?? -1, stdout, stderr: `${stderr}${stoppedBy}` };
   } finally {
@@ -128,6 +128,18 @@ export async function resolveSecrets(references: Record<string, string>, env: En
   return Object.fromEntries(reads.map((read) => [read.name, "value" in read ? read.value : undefined]));
 }
 
+// Reads a stream whole, refusing it past `limit` bytes with the caller's error.
+export async function readBounded(stream: ReadableStream<Uint8Array>, limit: number, tooLarge: () => Error): Promise<string> {
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for await (const chunk of stream) {
+    size += chunk.byteLength;
+    if (size > limit) throw tooLarge();
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString("utf8");
+}
+
 // Bun.spawn resolves a bare name against this process's PATH, not the
 // environment handed to the child; resolving it here makes the two agree.
 function locate(argv: string[], env: Environment): string {
@@ -156,16 +168,7 @@ async function streamLines(stream: ReadableStream<Uint8Array>, write: (line: str
   if (pending) write(pending);
 }
 
-async function readBounded(stream: ReadableStream<Uint8Array>): Promise<string> {
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  for await (const chunk of stream) {
-    size += chunk.byteLength;
-    if (size > MAX_CAPTURE_BYTES) throw new OrlyError(`command output exceeded ${MAX_CAPTURE_BYTES} bytes`);
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString("utf8");
-}
+
 
 // Runs `work` over `items` with at most `limit` in flight, results in input order.
 async function mapBounded<T, R>(items: readonly T[], limit: number, work: (item: T) => Promise<R>): Promise<R[]> {
@@ -176,4 +179,8 @@ async function mapBounded<T, R>(items: readonly T[], limit: number, work: (item:
   };
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
   return results;
+}
+
+function outputTooLarge(): Error {
+  return new OrlyError(`command output exceeded ${MAX_CAPTURE_BYTES} bytes`);
 }

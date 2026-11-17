@@ -8,8 +8,11 @@ export const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 
 // The fetch a provider calls its cloud with, so tests can answer for it.
 export type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
-export type ProviderName = "aws-spot" | "e2e" | "here";
-export type CloudProviderName = Exclude<ProviderName, "here">;
+// Every cloud `--provider` can name; providers.ts maps each name to its class.
+export const CLOUD_PROVIDER_NAMES = ["aws-spot", "e2e"] as const;
+export type CloudProviderName = (typeof CLOUD_PROVIDER_NAMES)[number];
+export type ProviderName = CloudProviderName | "here";
+export const PROVIDER_NAMES: readonly ProviderName[] = [...CLOUD_PROVIDER_NAMES, "here"];
 // A lane's exit code, or why it has none. Only a number is evidence; the
 // words say the lane never finished.
 export type Status = number | "unlaunched" | "interrupted" | "deadline" | "cancelled" | "not_run";

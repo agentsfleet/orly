@@ -6,6 +6,7 @@ import { z } from "zod";
 import { required } from "./settings";
 import { OrlyError } from "../model";
 import { IPV4 } from "./types";
+import { readBounded } from "./process";
 
 export type Plan = { sku: string; priceId: number; hourly: number };
 export type OsImage = { name: string; version: string; versionId: number };
@@ -161,14 +162,7 @@ function parseJson(text: string): unknown {
   }
 }
 
-async function boundedText(response: Response): Promise<string> {
-  if (!response.body) return "";
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  for await (const chunk of response.body) {
-    size += chunk.byteLength;
-    if (size > MAX_RESPONSE_BYTES) throw new E2eRequestFailed(`E2E TIR answered more than ${MAX_RESPONSE_BYTES} bytes`, response.status);
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString("utf8");
+function boundedText(response: Response): Promise<string> {
+  if (!response.body) return Promise.resolve("");
+  return readBounded(response.body, MAX_RESPONSE_BYTES, () => new E2eRequestFailed(`E2E TIR answered more than ${MAX_RESPONSE_BYTES} bytes`, response.status));
 }

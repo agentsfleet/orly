@@ -1,3 +1,7 @@
+import { CLOUD_PROVIDER_NAMES, PROVIDER_NAMES } from "./burst/types";
+
+const PROVIDERS = PROVIDER_NAMES.join("|");
+const CLOUDS = CLOUD_PROVIDER_NAMES.join("|");
 const HELP_TEXT = `orly — prove the boundary; carry the rules
 
 Gates (working tree unchanged; required checks must pass or carry an owner override):
@@ -49,16 +53,16 @@ Install (the repository is the unit — no checkout of this package required):
 
 Burst (paid machines, run only when asked; the gates never run burst.* commands):
   orly burst                        list the burst.* lanes .orly/orly.json declares
-  orly burst <lane>... --provider aws-spot|e2e|here [--ref <REF>] [--keep] [--no-snapshot]
+  orly burst <lane>... --provider ${PROVIDERS} [--ref <REF>] [--keep] [--no-snapshot]
                                     run burst.setup, then each lane with burst.secrets,
                                     read here and sent over SSH: one machine per lane,
                                     in parallel, from the newest warm snapshot; here
                                     runs them on this machine, one after another
-  orly burst snapshot --provider aws-spot|e2e|here [--ref <REF>] [--keep]
+  orly burst snapshot --provider ${PROVIDERS} [--ref <REF>] [--keep]
                                     run burst.setup and burst.warm with no secrets on a
                                     base image, then save it as the repository's newest
                                     snapshot; here only warms this machine
-  orly burst snapshot --prune --provider aws-spot|e2e
+  orly burst snapshot --prune --provider ${CLOUDS}
                                     keep the newest ORLY_BURST_SNAPSHOT_KEEP (2) snapshots
   Setup and costs: docs/BURST.md.
 

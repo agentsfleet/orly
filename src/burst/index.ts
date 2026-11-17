@@ -15,17 +15,15 @@ import { captureProcess } from "./process";
 import { CLOUD_PROVIDERS } from "./providers";
 import { burstSettings } from "./settings";
 import { newKeyPair } from "./ssh";
-import { LANE_PREFIX, MINUTE_MS } from "./types";
+import { CLOUD_PROVIDER_NAMES, LANE_PREFIX, MINUTE_MS, PROVIDER_NAMES } from "./types";
 
 export type BurstDependencies = Io & { root: string; env: Environment; fetch: Fetch };
 type Request = { snapshot: boolean; prune: boolean; provider: ProviderName | undefined; ref: string | undefined; keep: boolean; useSnapshot: boolean; lanes: string[] };
 
-const CLOUDS = Object.keys(CLOUD_PROVIDERS) as CloudProviderName[];
-const PROVIDERS: readonly ProviderName[] = [...CLOUDS, "here"];
 export const BURST_USAGE = [
-  `usage: orly burst <lane>... --provider ${PROVIDERS.join("|")} [--ref <ref>] [--keep] [--no-snapshot]`,
-  `       orly burst snapshot --provider ${PROVIDERS.join("|")} [--ref <ref>] [--keep]`,
-  `       orly burst snapshot --prune --provider ${CLOUDS.join("|")}`,
+  `usage: orly burst <lane>... --provider ${PROVIDER_NAMES.join("|")} [--ref <ref>] [--keep] [--no-snapshot]`,
+  `       orly burst snapshot --provider ${PROVIDER_NAMES.join("|")} [--ref <ref>] [--keep]`,
+  `       orly burst snapshot --prune --provider ${CLOUD_PROVIDER_NAMES.join("|")}`,
 ].join("\n");
 const USAGE_EXIT = 2;
 // Each lane is a paid machine started at once; past this a run is refused
@@ -67,7 +65,7 @@ function parseArguments(args: string[]): Request {
       if (!value || value.startsWith("-")) throw new InvalidBurstArguments(`${argument} needs a value`);
       index += 1;
       if (argument === "--ref") request.ref = value;
-      else request.provider = PROVIDERS.find((name) => name === value) ?? refuseProvider(value);
+      else request.provider = PROVIDER_NAMES.find((name) => name === value) ?? refuseProvider(value);
     } else if (argument === "--keep") request.keep = true;
     else if (argument === "--no-snapshot") request.useSnapshot = false;
     else if (argument === "--prune") request.prune = true;
@@ -79,7 +77,7 @@ function parseArguments(args: string[]): Request {
 }
 
 function refuseProvider(value: string): never {
-  throw new InvalidBurstArguments(`unknown provider ${value} (${PROVIDERS.join(", ")})`);
+  throw new InvalidBurstArguments(`unknown provider ${value} (${PROVIDER_NAMES.join(", ")})`);
 }
 
 function checked(request: Request): Request {
