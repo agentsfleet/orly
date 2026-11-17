@@ -1,10 +1,10 @@
-import type { BurstSettings } from "../settings";
-import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot } from "../types";
+import type { BurstSettings } from "./settings";
+import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot } from "./types";
 import type { OsImage, Plan, VmSnapshot } from "./tir";
 
-import { OrlyError } from "../../model";
-import { pause, until } from "../process";
-import { callerAddress } from "../ssh";
+import { OrlyError } from "../model";
+import { pause, until } from "./process";
+import { callerAddress } from "./ssh";
 import { E2eApi, E2eRequestFailed } from "./tir";
 
 const DEFAULT_IMAGE = "Ubuntu 24.04";

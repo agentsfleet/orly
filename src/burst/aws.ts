@@ -1,14 +1,14 @@
-import type { Captured } from "../process";
-import type { BurstSettings } from "../settings";
-import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot } from "../types";
+import type { Captured } from "./process";
+import type { BurstSettings } from "./settings";
+import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot } from "./types";
 
 import { z } from "zod";
 
-import { OrlyError } from "../../model";
-import { captureProcess, pause, until } from "../process";
-import { required } from "../settings";
-import { callerAddress } from "../ssh";
-import { IPV4 } from "../types";
+import { OrlyError } from "../model";
+import { captureProcess, pause, until } from "./process";
+import { required } from "./settings";
+import { callerAddress } from "./ssh";
+import { IPV4 } from "./types";
 
 type Call = { allowFailure?: boolean; signal?: AbortSignal };
 

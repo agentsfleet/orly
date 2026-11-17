@@ -26,6 +26,7 @@ const MAX_LINE_CHARS = 64 * 1024;
 // a misbehaving command, refused rather than buffered.
 const MAX_CAPTURE_BYTES = 16 * 1024 * 1024;
 const PIPE = "pipe";
+const OP_TIMEOUT_MS = 60_000;
 
 // One long-running child, in its own process group so a deadline or a
 // cancellation stops everything it started, with output streamed line by line.
@@ -105,6 +106,27 @@ export async function until<T>(what: string, probe: () => Promise<T | undefined>
   }
 }
 
+// Each `burst.secrets` variable, on the machine that runs `orly burst`. A value
+// already in the environment is used as it is, which is how a CI job's secret
+// loader hands them over; anything else is read with `op read`, signed in or
+// through OP_SERVICE_ACCOUNT_TOKEN. The values live in the returned map and
+// nowhere else: never printed, never an argument, never a file. A failure
+// names the variable and op's complaint, which carries the reference only.
+export async function resolveSecrets(references: Record<string, string>, env: Environment): Promise<Environment> {
+  const values: Environment = {};
+  for (const [name, reference] of Object.entries(references)) {
+    const preset = env[name];
+    if (preset) {
+      values[name] = preset;
+      continue;
+    }
+    const read = await captureProcess(["op", "read", "--no-newline", reference], { env, timeoutMs: OP_TIMEOUT_MS });
+    if (read.code !== 0) throw new OrlyError(`could not read the secret for ${name}: ${read.stderr.trim().split("\n")[0] ?? ""}`);
+    values[name] = read.stdout;
+  }
+  return values;
+}
+
 // Bun.spawn resolves a bare name against this process's PATH, not the
 // environment handed to the child; resolving it here makes the two agree.
 function locate(argv: string[], env: Environment): string {
@@ -142,28 +164,4 @@ async function readBounded(stream: ReadableStream<Uint8Array>): Promise<string> 
     chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString("utf8");
-}
-
-
-const OP_TIMEOUT_MS = 60_000;
-
-// Each `burst.secrets` variable, on the machine that runs `orly burst`. A value
-// already in the environment is used as it is, which is how a CI job's secret
-// loader hands them over; anything else is read with `op read`, signed in or
-// through OP_SERVICE_ACCOUNT_TOKEN. The values live in the returned map and
-// nowhere else: never printed, never an argument, never a file. A failure
-// names the variable and op's complaint, which carries the reference only.
-export async function resolveSecrets(references: Record<string, string>, env: Environment): Promise<Environment> {
-  const values: Environment = {};
-  for (const [name, reference] of Object.entries(references)) {
-    const preset = env[name];
-    if (preset) {
-      values[name] = preset;
-      continue;
-    }
-    const read = await captureProcess(["op", "read", "--no-newline", reference], { env, timeoutMs: OP_TIMEOUT_MS });
-    if (read.code !== 0) throw new OrlyError(`could not read the secret for ${name}: ${read.stderr.trim().split("\n")[0] ?? ""}`);
-    values[name] = read.stdout;
-  }
-  return values;
 }

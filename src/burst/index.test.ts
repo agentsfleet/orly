@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { burst, BURST_USAGE } from "./index";
 import { remoteScript, resultsScript } from "./job";
 import { burstSettings } from "./settings";
-import { burstDependencies, burstEnvironment, burstRepository, fakeBin } from "./fakes/support";
+import { burstDependencies, burstEnvironment, burstRepository, fakeBin } from "./test_support";
 import { cleanupTemporaryDirectories, ROOT } from "../gates_test_support";
 import { UNSCOPED_ENVIRONMENT } from "../git_env";
 

@@ -3,7 +3,7 @@ import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { burst } from "./index";
-import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, callerAddress, fakeBin, recordedCalls, REPOSITORY, SECRET_VALUE } from "./fakes/support";
+import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, callerAddress, fakeBin, recordedCalls, REPOSITORY, SECRET_VALUE } from "./test_support";
 import { cleanupTemporaryDirectories } from "../gates_test_support";
 
 const BASE_IMAGE = "resolve:ssm:/aws/service/debian/release/13/latest/amd64";

@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { burst } from "./index";
-import { burstDependencies, burstEnvironment, burstRepository, fakeBin, SECRET_VALUE } from "./fakes/support";
+import { burstDependencies, burstEnvironment, burstRepository, fakeBin, SECRET_VALUE } from "./test_support";
 import { cleanupTemporaryDirectories } from "../gates_test_support";
 
 const REFERENCE = "op://Burst Vault/api/credential";

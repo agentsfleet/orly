@@ -1,17 +1,17 @@
 // Shared fixtures for the burst suites: a repository with lanes declared, a
 // directory of fake executables first on PATH, a line sink, and the
-// caller-address answer; fakes/tir.ts answers for E2E Networks TIR. No suite
+// caller-address answer; fake_tir.ts answers for E2E Networks TIR. No suite
 // reaches a real cloud: `aws`, `ssh` and `op` on the PATH they hand orly are
 // these fakes, and the only fetch they hand it is one of these.
-import type { BurstDependencies } from "../index";
-import type { Environment } from "../settings";
+import type { BurstDependencies } from "./index";
+import type { Environment } from "./settings";
 
 import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { CONFIG_PATH } from "../../config";
-import { git, newRepository, ROOT, temporaryDirectory } from "../../gates_test_support";
-import { isObject } from "../../model";
+import { CONFIG_PATH } from "../config";
+import { git, newRepository, ROOT, temporaryDirectory } from "../gates_test_support";
+import { isObject } from "../model";
 
 
 export const FIXTURE_BRANCH = "feat/burst-fixture";
@@ -42,8 +42,8 @@ export function fakeBin(): { bin: string; state: string } {
   const bin = temporaryDirectory();
   const state = temporaryDirectory();
   const tools = {
-    aws: `exec bun ${join(ROOT, "src/burst/fakes/aws.ts")} "$@"`,
-    ssh: `exec bun ${join(ROOT, "src/burst/fakes/ssh.ts")} "$@"`,
+    aws: `exec bun ${join(ROOT, "src/burst/fake_aws.ts")} "$@"`,
+    ssh: `exec bun ${join(ROOT, "src/burst/fake_ssh.ts")} "$@"`,
     "session-manager-plugin": `echo 1.2.707.0`,
     op: `printf '%s\\n' "$*" >> "${join(state, "op-calls.txt")}"\n[ -n "\${FAKE_OP_FAIL:-}" ] && { echo "[ERROR] could not read secret" >&2; exit 1; }\nprintf '%s' "${SECRET_VALUE}"`,
   };

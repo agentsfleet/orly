@@ -3,8 +3,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { burst } from "./index";
-import { FakeTir } from "./fakes/tir";
-import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, fakeBin, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./fakes/support";
+import { FakeTir } from "./fake_tir";
+import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, fakeBin, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./test_support";
 import { cleanupTemporaryDirectories, temporaryDirectory } from "../gates_test_support";
 
 const API_KEY = "e2e_test_key_00000000";

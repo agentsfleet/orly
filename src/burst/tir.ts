@@ -1,11 +1,11 @@
-import type { BurstSettings } from "../settings";
-import type { Fetch } from "../types";
+import type { BurstSettings } from "./settings";
+import type { Fetch } from "./types";
 
 import { z } from "zod";
 
-import { required } from "../settings";
-import { OrlyError } from "../../model";
-import { IPV4 } from "../types";
+import { required } from "./settings";
+import { OrlyError } from "../model";
+import { IPV4 } from "./types";
 
 export type Plan = { sku: string; priceId: number; hourly: number };
 export type OsImage = { name: string; version: string; versionId: number };

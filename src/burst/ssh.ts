@@ -21,6 +21,9 @@ const TAR_TIMEOUT_MS = 5 * 60_000;
 // ssh exits 255 when the connection, not the remote command, failed.
 const SSH_LOST = 255;
 const NO_RESULTS = 3;
+// Each provider's SSH rule admits only the caller's public IPv4, learnt here.
+const CALLER_ADDRESS_URL = "https://checkip.amazonaws.com";
+const CALLER_TIMEOUT_MS = 15_000;
 
 // The run's own key pair, made in the run's private directory. ssh-keygen
 // writes the private half with mode 0600; only the public half leaves this
@@ -98,6 +101,13 @@ export function sshArgs(run: BurstRun, machine: Machine, user: string, command: 
     `${user}@${machine.via ? machine.id : machine.address ?? ""}`, command];
 }
 
+export async function callerAddress(fetcher: Fetch): Promise<string> {
+  const response = await fetcher(CALLER_ADDRESS_URL, { signal: AbortSignal.timeout(CALLER_TIMEOUT_MS) });
+  const address = (await response.text()).trim();
+  if (!response.ok || !IPV4.test(address)) throw new OrlyError(`could not learn this machine's public IPv4 address from ${CALLER_ADDRESS_URL}`);
+  return address;
+}
+
 async function stage(run: BurstRun, machine: Machine, user: string, command: string, file: string, what: string): Promise<void> {
   const sent = await captureProcess(sshArgs(run, machine, user, command), { env: run.settings.env, stdin: Bun.file(file), timeoutMs: STAGE_TIMEOUT_MS, signal: run.signal });
   if (sent.code !== 0) throw new OrlyError(`could not stage ${what} on ${machine.id}: ${sent.stderr.trim()}`);
@@ -119,17 +129,4 @@ async function collect(run: BurstRun, job: Job, machine: Machine, user: string):
 
 function asRoot(user: string, command: string): string {
   return user === "root" ? command : `sudo -n ${command}`;
-}
-
-// The caller's public address as AWS sees it, over HTTPS; it answers on a
-// GitHub-hosted runner as it does on a workstation. Every provider's SSH
-// rule admits this one address.
-const CALLER_ADDRESS_URL = "https://checkip.amazonaws.com";
-const CALLER_TIMEOUT_MS = 15_000;
-
-export async function callerAddress(fetcher: Fetch): Promise<string> {
-  const response = await fetcher(CALLER_ADDRESS_URL, { signal: AbortSignal.timeout(CALLER_TIMEOUT_MS) });
-  const address = (await response.text()).trim();
-  if (!response.ok || !IPV4.test(address)) throw new OrlyError(`could not learn this machine's public IPv4 address from ${CALLER_ADDRESS_URL}`);
-  return address;
 }

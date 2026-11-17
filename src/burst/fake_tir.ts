@@ -2,8 +2,8 @@
 // caller-address lookup. A VM runs after one status poll and stops after one
 // more once stopped. A snapshot is pending for `savingLists` list calls, then
 // `ready`, or `savedStatus`. A group's delete fails `groupDeleteFailures` times.
-import { CALLER_ADDRESS } from "./support";
-import { isObject } from "../../model";
+import { CALLER_ADDRESS } from "./test_support";
+import { isObject } from "../model";
 
 type Call = { method: string; path: string; query: Record<string, string>; body: unknown; authorization: string | null };
 type FakeVm = { id: string; name: string; status: string; polls: number; address: string; body: Record<string, unknown> };
