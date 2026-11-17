@@ -15,7 +15,8 @@ import { objectValue, stringArray } from "./model";
 
 type InputEntry = { path: string; directory: true } | { path: string; mode: number; bytes: string } | { path: string; mode: number; link: string };
 
-type VerificationIdentity = { source: string; binding: string } | { source: string; reason: string };
+export type VerificationProof = { binding: string; revision: string; scope: string | null };
+type VerificationIdentity = { source: string } & (VerificationProof | { reason: string });
 export type IdentityRequest = {
   root: string; engineRoot: string; config: RepoConfig; lane: string; policy: ReusePolicy;
   invocations: string[][]; limits: CommandLimits; key: Uint8Array;
@@ -25,7 +26,10 @@ const PROBE_LIMITS = { timeout_ms: 10_000, output_bytes: 64 * 1024 };
 const HASH_CHUNK_BYTES = 64 * 1024;
 const MANIFEST_BYTES = 1024 * 1024;
 
-export function verificationIdentity(request: IdentityRequest): VerificationIdentity {
+export function verificationIdentity(request: IdentityRequest, observation: "before-probes" | "after-probes" = "before-probes"): VerificationIdentity {
+  // Bracket all executed probes with the two source snapshots, without hashing
+  // the full tree a second time within either identity collection.
+  const finalToolchain = observation === "after-probes" ? probeToolchain(request) : undefined;
   const root = realpathSync(request.root);
   const revision = gitInput(root, ["rev-parse", "HEAD"]).trim();
   const base = defaultMergeBase(root);
@@ -37,21 +41,38 @@ export function verificationIdentity(request: IdentityRequest): VerificationIden
     const upstream = gitInput(root, ["rev-parse", "@{upstream}"]).trim();
     if (!revision || revision !== upstream || dirty) return { source, reason: "reuse requires a clean, pushed worktree" };
     if (!base) return { source, reason: "reuse requires an exact merge base" };
-    const toolchain = toolchainIdentity(request);
+    const toolchain = observation === "after-probes" ? finalToolchain : probeToolchain(request);
     if (!toolchain) return { source, reason: "toolchain identity is unavailable" };
-    const environment = Object.entries(UNSCOPED_ENVIRONMENT).filter(([, value]) => value !== undefined).sort(([a], [b]) => a.localeCompare(b));
+    const scope = request.policy.tracked_inputs ? scopedDigest(files, request.policy.tracked_inputs) : null;
+    const environment = Object.entries(UNSCOPED_ENVIRONMENT).filter(([, value]) => value !== undefined).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
     const identity = {
-      root, source,
+      root, source: scope === null ? source : { base, scope },
       lane: request.lane, invocations: request.invocations, limits: request.limits, config: request.config,
       environment: createHmac("sha256", request.key).update(JSON.stringify(environment)).digest("hex"),
       engine: { root: realpathSync(request.engineRoot), inputs: inputIdentity(realpathSync(request.engineRoot), enginePaths(request.engineRoot)) },
       runtime: { versions: process.versions, platform: process.platform, arch: process.arch, release: release() },
       inputs: inputIdentity(root, request.policy.inputs), toolchain,
     };
-    return { source, binding: contentDigest(JSON.stringify(identity)) };
+    return { source, binding: contentDigest(JSON.stringify(identity)), revision, scope };
   } catch {
     return { source, reason: "verification inputs are missing, unsupported or unreadable" };
   }
+}
+
+function probeToolchain(request: IdentityRequest) {
+  try { return toolchainIdentity(request); }
+  catch { return undefined; }
+}
+
+function scopedDigest(files: InputEntry[], selectors: string[]): string {
+  const selected = new Set<InputEntry>();
+  for (const selector of selectors) {
+    const path = selector.replace(/\/$/, "");
+    const matches = files.filter((entry) => entry.path === path || entry.path.startsWith(`${path}${sep}`));
+    if (!matches.length) throw new Error("tracked input matches no tracked files");
+    for (const entry of matches) selected.add(entry);
+  }
+  return contentDigest(JSON.stringify(files.filter((entry) => selected.has(entry))));
 }
 
 function toolchainIdentity(request: IdentityRequest) {
@@ -61,7 +82,7 @@ function toolchainIdentity(request: IdentityRequest) {
     if (!result.ok) return undefined;
     probes.push({ argv, output: contentDigest(result.detail) });
   }
-  const commands = new Set([...request.policy.toolchain, ...request.invocations].map((argv) => argv[0]!));
+  const commands = new Set([...request.policy.toolchain, ...request.invocations].flatMap((argv) => argv.slice(0, 1)));
   return { probes, executables: [...commands].map((command) => executableIdentity(request.root, command)) };
 }
 
@@ -73,9 +94,9 @@ function executableIdentity(root: string, command: string): { path: string; byte
 }
 
 function inputIdentity(root: string, paths: string[], allowLinks = false): InputEntry[] {
-  const entries: InputEntry[] = [];
+  const entries = new Map<string, InputEntry>();
   for (const path of [...paths].sort()) collectInput(root, resolve(root, path), entries, allowLinks);
-  return entries;
+  return [...entries.values()];
 }
 
 function trackedPaths(root: string): string[] {
@@ -110,15 +131,16 @@ function fileDigest(path: string): string {
   } finally { closeSync(file); }
 }
 
-function collectInput(root: string, path: string, entries: InputEntry[], allowLinks: boolean): void {
+function collectInput(root: string, path: string, entries: Map<string, InputEntry>, allowLinks: boolean): void {
   const relativePath = relative(root, path);
+  if (entries.has(relativePath)) return;
   if (relativePath === ".." || relativePath.startsWith(`..${sep}`) || relativePath.split(sep).includes(".git")) throw new Error("input escapes the worktree");
   const stat = lstatSync(path);
-  if (stat.isSymbolicLink() && allowLinks) { entries.push({ path: relativePath, mode: stat.mode, link: readlinkSync(path) }); return; }
+  if (stat.isSymbolicLink() && allowLinks) { entries.set(relativePath, { path: relativePath, mode: stat.mode, link: readlinkSync(path) }); return; }
   if (realpathSync(path) !== path) throw new Error("symlink inputs are unsupported");
   if (stat.isDirectory()) {
-    entries.push({ path: relativePath, directory: true });
+    entries.set(relativePath, { path: relativePath, directory: true });
     for (const entry of readdirSync(path).sort()) collectInput(root, join(path, entry), entries, allowLinks);
-  } else if (stat.isFile()) entries.push({ path: relativePath, mode: stat.mode, bytes: fileDigest(path) });
+  } else if (stat.isFile()) entries.set(relativePath, { path: relativePath, mode: stat.mode, bytes: fileDigest(path) });
   else throw new Error("special inputs are unsupported");
 }

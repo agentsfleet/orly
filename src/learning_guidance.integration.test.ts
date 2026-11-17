@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { readConfig, localSelection } from "./config";
@@ -55,12 +55,40 @@ test("generated_learning_guidance_matches_sources", async () => {
   const pr = managed.find((path) => path.endsWith("standards/pr.md"))!;
   expect(readFileSync(join(root, pr), "utf8")).toBe(source("standards/pr.md"));
   for (const name of ["orly-build", "orly-ship"]) {
-    const canonical = `.orly/skills/${name}/SKILL.md`;
-    expect(managed).toContain(canonical);
+    expect(managed).not.toContain(`.orly/skills/${name}/SKILL.md`);
     const cloudGuidance = source(`skills/${name}/SKILL.md`).split("## Codex cloud tasks\n")[1]!.trim();
-    expect(readFileSync(join(root, canonical), "utf8")).toContain(cloudGuidance);
     const paths = managed.filter((path) => path.endsWith(`/${name}/SKILL.md`));
-    expect(paths.length).toBeGreaterThan(0);
-    for (const path of paths.filter((path) => path !== canonical)) expect(readFileSync(join(root, path), "utf8")).toContain(canonical);
+    expect(paths).toHaveLength(3);
+    for (const path of paths) expect(readFileSync(join(root, path), "utf8")).toContain(cloudGuidance);
+  }
+  expect(existsSync(join(root, ".orly/skills"))).toBeFalse();
+});
+
+test("shipping lessons require owner approval without stopping checks", async () => {
+  const model = await RulesModel.load(ROOT);
+  const root = newRepository();
+  expect((await install(model, { targetRoot: root, force: false, installHooks: false, orlyVersion: "0.50.0" })).errors).toEqual([]);
+  for (const text of [source("skills/orly-ship/SKILL.md"), readFileSync(join(root, ".agents/skills/orly-ship/SKILL.md"), "utf8")]) {
+    expect(text).toContain("evidence, exact source file and proposed change");
+    expect(text).toContain("approve updates not already authorized; honor existing approval");
+    expect(text).toContain("No reply is not approval");
+    expect(text).toContain("Continue checks and review follow-up");
+    expect(text).toContain("Do not edit generated copies or update consumer pins");
+    expect(text).toContain("A partial gstack review is not done");
+    expect(text.indexOf("**Propose lessons.**")).toBeGreaterThan(text.indexOf("**Publish for review.**"));
+  }
+  expect(source("skills/orly-burst/SKILL.md")).toContain("Only when the user explicitly authorizes the run");
+  expect(source("skills/orly-burst/SKILL.md")).not.toContain("or when a Pull Request needs acceptance evidence");
+});
+
+test("stage reporting survives filtered installation", async () => {
+  const model = await RulesModel.load(ROOT);
+  const root = newRepository();
+  expect((await install(model, { targetRoot: root, force: false, installHooks: false, orlyVersion: "0.50.0" })).errors).toEqual([]);
+  for (const text of [source("AGENTS.md"), readFileSync(join(root, ".orly/AGENTS.md"), "utf8")]) {
+    expect(text).toContain("name the skill, stage, state and current action");
+    expect(text).toContain("report the evidenced outcome or blocker and the next action");
+    expect(text).toContain("`not started`, `in progress`, `blocked` and `done`");
+    expect(text).toContain("Never call unrun work done");
   }
 });

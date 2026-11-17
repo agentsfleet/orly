@@ -267,11 +267,11 @@ In `ap-south-2` on November 17, 2026, `c6a.4xlarge` cost $0.374 an hour on deman
    ```
 
    ```text
-   orly burst: snapshot provider=e2e id=<IMAGE_ID> name=orly-burst-<REPO>-<UTC_MINUTE> state=ready size=<varies>GB storage≈₹200/month + GST
+   orly burst: snapshot provider=e2e id=<IMAGE_ID> name=orly-burst-<REPO>-<UTC_MILLISECOND>-<RANDOM> state=ready size=<varies>GB storage≈₹200/month + GST
    ```
 
    The capture machine starts from the base image and runs setup and warm with no secret.
-   It then stops, becomes an image named for the repository and the minute, and is deleted.
+   It then stops, becomes an image named for the repository, millisecond timestamp and random suffix, and is deleted.
 
    Saving a large image can outlast the run's deadline.
    orly then prints `state=pending` and exits 0, because the cloud goes on saving the image after the machine is deleted.
@@ -308,7 +308,9 @@ In `ap-south-2` on November 17, 2026, `c6a.4xlarge` cost $0.374 an hour on deman
 
 The same steps work with `--provider aws-spot`.
 On AWS a snapshot is an AMI with its EBS snapshots, tagged `orly-burst=<REPO>`.
-`<REPO>` is the origin remote's owner and name, such as `agentsfleet-orly`.
+
+`<REPO>` is a 24-character hexadecimal digest of the repository identity.
+The timestamp has 17 digits; the random suffix has eight hexadecimal characters.
 
 A volume made from an EBS snapshot loads each block on its first read.
 The first reads of a warm cache are therefore slower than reads from a stopped disk.
@@ -420,3 +422,13 @@ A run that died without cleaning up leaves resources tagged or labelled `orly-bu
 
 - [Architecture](ORLY_ARCHITECTURE.md) explains why the gates never run burst lanes.
 - The `orly-burst` skill tells an agent when to run a lane and how to report it.
+
+## Snapshot ownership in 0.50.0
+
+Snapshot names use a digest of the origin host, full repository path and any home-relative SSH account.
+Absolute paths retain ownership across transports; home-relative paths keep their account namespace. Repositories without an origin use their shared Git directory identity.
+
+Snapshots named by older versions are neither selected nor pruned automatically. Inspect those resources before deleting them in the provider console; their shortened names cannot prove ownership.
+
+Cancellation stops new mutations and cancels reads. In-flight mutations retain bounded replies so cleanup can identify their resources.
+Cleanup runs independently and reports resources that still need manual deletion.

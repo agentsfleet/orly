@@ -38,7 +38,9 @@ Declare the commands your repository already has in `.orly/orly.json`; at least 
 | `gate verify` | documentation and the non-test `verify.*` commands |
 | `gate pr` | branch, clean pushed revision, documentation and every `verify.*` command |
 
-Checks run fresh, and only the owner records an override.
+The default `gate` runs `work` then `pr`, with fast verification once. Checks run fresh unless reviewed policies explicitly permit evidence reuse.
+Only the owner records an override.
+
 [Architecture](docs/ORLY_ARCHITECTURE.md) covers limits, opt-in evidence reuse and overrides.
 
 ## Burst lanes

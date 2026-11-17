@@ -20,7 +20,8 @@ const GATE_ORDER = ["work", "verify", "pr"] as const;
 // Strict trailer shape: "Orly-Override: <criterion> (<reason>)". A trailer
 // that does not parse is not an override — the gate stays red rather than
 // guessing what a malformed waiver meant.
-const OVERRIDE_TRAILER = /^Orly-Override:\s*([a-z.]+[a-z])\s*\((.+)\)\s*$/;
+const CRITERION_NAME = /^[a-z][a-z0-9_.-]*$/;
+const OVERRIDE_TRAILER = /^Orly-Override:\s*([a-z][a-z0-9_.-]*)\s*\(([^\r\n]+)\)\s*$/;
 const OVERRIDE_PREFIX = "Orly-Override:";
 const OVERRIDDEN_DETAIL = "overridden";
 
@@ -51,7 +52,8 @@ export function runGate(model: RulesModel, root: string, gate: GateName, acceptD
 // branch that is not even clean.
 export function runGates(model: RulesModel, root: string, acceptDirty = false): GateReport[] {
   const reports: GateReport[] = [];
-  for (const gate of GATE_ORDER) {
+  // The final pr gate includes every verify criterion and lane.
+  for (const gate of ["work", "pr"] as const) {
     const report = runGate(model, root, gate, acceptDirty);
     reports.push(report);
     if (!report.ok) break;
@@ -68,8 +70,9 @@ export function isGateName(value: string): value is GateName {
 export function recordOverride(root: string, criterion: string, reason: string): string {
   const trimmed = reason.trim();
   if (!trimmed) throw new OrlyError("an override without a reason is not a record");
+  if (!CRITERION_NAME.test(criterion) || /[\r\n\0]/.test(trimmed)) throw new OrlyError("override requires a valid criterion name and a single-line reason");
   const message = `override: ${criterion}\n\n${OVERRIDE_PREFIX} ${criterion} (${trimmed.replaceAll(")", "]")})`;
-  const result = git(root, ["commit", "--allow-empty", "-m", message]);
+  const result = git(root, ["commit", "--only", "--allow-empty", "-m", message]);
   if (result.exitCode !== 0) throw new OrlyError(`could not record the override commit: ${result.stderr.toString().trim()}`);
   return message;
 }

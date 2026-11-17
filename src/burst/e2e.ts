@@ -1,8 +1,8 @@
 import type { BurstSettings } from "./settings";
-import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot } from "./types";
+import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot, SnapshotScope } from "./types";
 import type { OsImage, Plan, VmSnapshot } from "./tir";
 
-import { OrlyError } from "../model";
+import { messageOf, OrlyError } from "../model";
 import { pause, until } from "./process";
 import { callerAddress } from "./ssh";
 import { E2eApi, E2eRequestFailed } from "./tir";
@@ -58,29 +58,29 @@ export class E2eNodes implements CloudProvider {
 
   // ORLY_BURST_E2E_IMAGE names a ready snapshot when one has that name, and an
   // OS image, such as `Ubuntu 22.04`, otherwise.
-  async override(): Promise<Image | undefined> {
+  async override(signal?: AbortSignal): Promise<Image | undefined> {
     const name = this.#settings.e2e.image;
     if (!name) return undefined;
-    const saved = (await this.#api.snapshots()).find((snapshot) => snapshot.name === name && snapshot.status === READY);
+    const saved = (await this.#api.snapshots(signal)).find((snapshot) => snapshot.name === name && snapshot.status === READY);
     return saved ? { id: saved.id, name, snapshot: true } : { id: name, name, snapshot: false };
   }
 
-  async snapshots(): Promise<Snapshot[]> {
-    return (await this.#api.snapshots()).filter((snapshot) => snapshot.status === READY).map(toSnapshot);
+  async snapshots(scope: SnapshotScope): Promise<Snapshot[]> {
+    return (await this.#api.snapshots(scope.signal)).filter((snapshot) => snapshot.status === READY).map(toSnapshot);
   }
 
   async prepare(run: BurstRun): Promise<void> {
     const name = `orly-burst-${run.runId}`;
-    await this.#api.addKey(name, run.publicKey);
+    await this.#api.addKey(name, run.publicKey, run.signal);
     this.#keyLabel = name;
     const caller = await callerAddress(this.#fetch);
-    this.#group = await this.#api.createSshGroup(name, caller);
+    this.#group = await this.#api.createSshGroup(name, caller, run.signal);
     run.write(`orly burst: ${name} admits SSH from ${caller} only`);
   }
 
   async create(run: BurstRun, job: Job): Promise<Machine> {
-    const plan = await this.#resolvePlan();
-    const source = job.image.snapshot ? await this.#snapshotSource(job.image.id) : await this.#osImage(job.image.name);
+    const plan = await this.#resolvePlan(run.signal);
+    const source = job.image.snapshot ? await this.#snapshotSource(job.image.id, run.signal) : await this.#osImage(job.image.name, run.signal);
     const name = `orly-burst-${job.name}-${run.runId.slice(-4)}`;
     let id: string;
     try {
@@ -88,7 +88,7 @@ export class E2eNodes implements CloudProvider {
         name, kind: "vm", cluster_type: "tir-cluster", image_type: "pre-built", image_version_id: source.versionId,
         sku_item_price_id: plan.priceId, disk_size_in_gb: DISK_GB, quantity: 1,
         public_key: [run.publicKey], security_group_id: Number(this.#group), ...(source.snapshotId ? { snapshot_id: Number(source.snapshotId) } : {}),
-      });
+      }, run.signal);
     } catch (error) {
       // A request that failed after reaching TIR may still have made the VM.
       if (!(error instanceof E2eRequestFailed && error.status < 500)) run.write(`orly burst: lane=${job.name} TIR may have created VM ${name}; check TIR, it bills until deleted`);
@@ -100,7 +100,7 @@ export class E2eNodes implements CloudProvider {
 
   async ready(run: BurstRun, job: Job, machine: Machine): Promise<Machine> {
     const address = await this.#until(run, job, "a running VM with a public address", async () => {
-      const vm = await this.#api.vm(machine.id);
+      const vm = await this.#api.vm(machine.id, run.signal);
       if (vm.status === "error") throw new OrlyError(`VM ${machine.id} failed to start`);
       return vm.status === "running" ? vm.address : undefined;
     });
@@ -111,12 +111,12 @@ export class E2eNodes implements CloudProvider {
   // polled until ready or failed; one still saving at the run's deadline is
   // left to finish and reported as pending.
   async capture(run: BurstRun, job: Job, machine: Machine, name: string): Promise<Snapshot> {
-    await this.#api.stopVm(machine.id);
-    await this.#until(run, job, "the VM to stop", async () => (await this.#api.vm(machine.id)).status === "stopped" || undefined);
-    const created = await this.#api.createSnapshot(machine.id, name);
+    await this.#api.stopVm(machine.id, run.signal);
+    await this.#until(run, job, "the VM to stop", async () => (await this.#api.vm(machine.id, run.signal)).status === "stopped" || undefined);
+    const created = await this.#api.createSnapshot(machine.id, name, run.signal);
     run.write(`orly burst: saving ${name} as snapshot ${created.id}`);
     for (;;) {
-      const saved = (await this.#api.snapshots()).find((snapshot) => snapshot.id === created.id) ?? created;
+      const saved = (await this.#api.snapshots(run.signal)).find((snapshot) => snapshot.id === created.id) ?? created;
       if (saved.status === READY) return toSnapshot(saved);
       if (FAILED.has(saved.status)) throw new OrlyError(`snapshot ${name} is ${saved.status}`);
       if (run.signal.aborted || Date.now() >= job.deadline) return toSnapshot(saved);
@@ -128,8 +128,8 @@ export class E2eNodes implements CloudProvider {
     await this.#api.deleteVm(machine.id);
   }
 
-  async deleteSnapshot(snapshot: Snapshot): Promise<void> {
-    await this.#api.deleteSnapshot(snapshot.id);
+  async deleteSnapshot(snapshot: Snapshot, signal: AbortSignal): Promise<void> {
+    await this.#api.deleteSnapshot(snapshot.id, signal);
   }
 
   // The run's key and group leave once its VMs are gone; --keep keeps both so
@@ -142,8 +142,12 @@ export class E2eNodes implements CloudProvider {
       run.write(`orly burst: --keep left TIR key ${label} and security group ${this.#group ?? "none"}; delete them with the VMs`);
       return;
     }
-    const pk = (await this.#api.keys()).find((key) => key.label === label)?.pk;
-    if (pk) await this.#api.deleteKey(pk);
+    try {
+      const pk = (await this.#api.keys()).find((key) => key.label === label)?.pk;
+      if (pk) await this.#api.deleteKey(pk);
+    } catch (error) {
+      run.write(`orly burst: could not delete TIR key ${label}: ${messageOf(error)}; delete it by hand`);
+    }
     const group = this.#group;
     if (!group) return;
     const never = new AbortController().signal;
@@ -152,9 +156,9 @@ export class E2eNodes implements CloudProvider {
       .catch(() => run.write(`orly burst: could not delete TIR security group ${group} (${label}); delete it by hand`));
   }
 
-  #resolvePlan(): Promise<Plan> {
+  #resolvePlan(signal: AbortSignal): Promise<Plan> {
     const { plan: sku, location } = this.#settings.e2e;
-    this.#plan ??= this.#api.plans().then((plans) => {
+    this.#plan ??= this.#api.plans(signal).then((plans) => {
       const match = plans.find((entry) => entry.sku === sku);
       if (match) return match;
       throw new OrlyError(`TIR offers no hourly ${sku} plan in ${location}; it offers: ${plans.map((entry) => entry.sku).join(", ") || "none"}`);
@@ -165,9 +169,9 @@ export class E2eNodes implements CloudProvider {
   // `Ubuntu 24.04` is the image named Ubuntu at exactly version 24.04, never
   // `24.04-cuda13.0`. TIR lists some versions more than once; the highest
   // identifier is the newest build.
-  async #osImage(wanted: string): Promise<{ versionId: number; snapshotId?: string }> {
+  async #osImage(wanted: string, signal: AbortSignal): Promise<{ versionId: number; snapshotId?: string }> {
     const [name = "", version = ""] = wanted.split(/\s+/, 2);
-    const images = await this.#api.images();
+    const images = await this.#api.images(signal);
     const matches = images.filter((image) => image.name.toLowerCase() === name.toLowerCase() && image.version === version);
     if (matches.length > 0) return { versionId: Math.max(...matches.map((image) => image.versionId)) };
     const named = images.filter((image) => image.name.toLowerCase() === name.toLowerCase());
@@ -175,8 +179,8 @@ export class E2eNodes implements CloudProvider {
     throw new OrlyError(`TIR has no image ${wanted}; it has: ${offered.join(", ") || "none"}`);
   }
 
-  async #snapshotSource(id: string): Promise<{ versionId: number | undefined; snapshotId: string }> {
-    const snapshot = (await this.#api.snapshots()).find((candidate) => candidate.id === id);
+  async #snapshotSource(id: string, signal: AbortSignal): Promise<{ versionId: number | undefined; snapshotId: string }> {
+    const snapshot = (await this.#api.snapshots(signal)).find((candidate) => candidate.id === id);
     return { versionId: snapshot?.versionId, snapshotId: id };
   }
 

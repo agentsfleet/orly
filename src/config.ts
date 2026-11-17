@@ -110,8 +110,9 @@ export function contentDigest(bytes: string | Uint8Array): string {
 function ignoredPaths(targetRoot: string, paths: string[]): Set<string> {
   if (paths.length === 0) return new Set();
   // `-z` works only with --stdin: paths go in and come out NUL-separated (CODE-GITZ).
-  const printed = git(targetRoot, ["check-ignore", "--stdin", "-z"], { stdin: `${paths.join("\0")}\0` }).stdout.toString();
-  return new Set(printed.split("\0").filter(Boolean));
+  const result = git(targetRoot, ["check-ignore", "--stdin", "-z"], { stdin: `${paths.join("\0")}\0` });
+  if (result.signalCode || ![0, 1].includes(result.exitCode)) throw new OrlyError("cannot inspect ignored managed paths; Git inspection failed");
+  return new Set(result.stdout.toString().split("\0").filter(Boolean));
 }
 
 // A managed file that is gone, or one git will not carry. Edits are not drift:

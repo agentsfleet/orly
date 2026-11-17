@@ -30,6 +30,22 @@ describe("renderProfileText", () => {
 });
 
 describe("referenceClosureErrors", () => {
+  test("a scheduled deletion cannot satisfy a staged reference", async () => {
+    const output = mkdtempSync(join(tmpdir(), "orly-reference-stage-"));
+    const fallback = mkdtempSync(join(tmpdir(), "orly-reference-current-"));
+    try {
+      const page = join(output, "guide.md");
+      await Bun.write(page, "[Old instructions](obsolete.md)\n");
+      await Bun.write(join(fallback, "obsolete.md"), "old instructions\n");
+      expect(await referenceClosureErrors(output, [page], fallback)).toEqual([]);
+      expect(await referenceClosureErrors(output, [page], fallback, new Set(["obsolete.md"]))).toEqual([
+        "missing snapshot reference: guide.md:1 -> obsolete.md",
+      ]);
+    } finally {
+      rmSync(output, { recursive: true, force: true });
+      rmSync(fallback, { recursive: true, force: true });
+    }
+  });
   test("flags missing standard references in every rendered Markdown file", async () => {
     const output = mkdtempSync(join(tmpdir(), "orly-references-test-"));
     try {

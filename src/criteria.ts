@@ -51,6 +51,7 @@ export function criteriaFor(gate: string, context: CriterionContext): Criterion[
   if (gate === "pr") {
     return [
       gitBranch(), gitTree(), gitPushed(),
+      criterion("git.base", (inner) => { report(inner, resolvedConfig(inner)?.surfaces); return { ok: true, detail: "branch diff is available" }; }),
       repositoryConfig(), docsLanguage(), docsUpdated(), ...commandCriteria(context, ALL_TIER),
     ];
   }
@@ -63,7 +64,8 @@ function gitBranch(): Criterion {
     const ref = gitOutput(context.root, ["symbolic-ref", "--quiet", "HEAD"]);
     const branch = ref.startsWith(BRANCH_REF_PREFIX) ? ref.slice(BRANCH_REF_PREFIX.length) : "";
     if (!branch) return { ok: false, detail: "HEAD is detached; work on a branch" };
-    const ok = !DEFAULT_BRANCHES.includes(branch);
+    const remoteDefault = gitOutput(context.root, ["symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"]);
+    const ok = !DEFAULT_BRANCHES.includes(branch) && remoteDefault !== `refs/remotes/origin/${branch}`;
     return { ok, detail: ok ? `on ${branch}` : `refusing to work on the default branch: ${branch}` };
   });
 }

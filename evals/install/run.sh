@@ -81,8 +81,10 @@ mk_repo() {
   # Pack selection reads the repository's own sources, so the fixture carries
   # the languages its assertions expect to see materialised.
   mkdir -p "$sb/src"
-  printf 'pub fn main() {}\n' > "$sb/src/lib.rs"
-  printf '#!/usr/bin/env bash\necho fixture\n' > "$sb/run.sh"
+  if [[ "${1:-}" != "bare" ]]; then
+    printf 'pub fn main() {}\n' > "$sb/src/lib.rs"
+    printf '#!/usr/bin/env bash\necho fixture\n' > "$sb/run.sh"
+  fi
   git -C "$sb" add -A >/dev/null 2>&1
   git -C "$sb" commit -qm "fixture baseline" >/dev/null 2>&1
   printf '%s' "$sb"

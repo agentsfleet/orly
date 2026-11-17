@@ -304,7 +304,7 @@ describe("install", () => {
     }
   });
 
-  test("two packs disagreeing on one target's source is a registry error, not a silent pick", async () => {
+  test.each(["shared.md", ".orly/shared.md"])("two sources for the same installed target are refused: %s", async (target) => {
     const engineRoot = mkdtempSync(join(tmpdir(), "orly-install-conflict-engine-"));
     try {
       await Bun.write(join(engineRoot, "core.md"), "core\n");
@@ -316,14 +316,14 @@ describe("install", () => {
         core_documents: ["core.md"],
         packs: {
           a: { extensions: [], managed_files: [{ source: "a.md", target: "shared.md" }] },
-          b: { extensions: [], managed_files: [{ source: "b.md", target: "shared.md" }] },
+          b: { extensions: [], managed_files: [{ source: "b.md", target }] },
         },
         rules: [],
       };
       const model = new RulesModel(engineRoot, registry);
       const repo = newRepository();
 
-      await expect(install(model, { targetRoot: repo, force: false, installHooks: true, orlyVersion: "0.4.0" })).rejects.toThrow("packs disagree on shared.md");
+      await expect(install(model, { targetRoot: repo, force: false, installHooks: true, orlyVersion: "0.4.0" })).rejects.toThrow("packs disagree on .orly/shared.md");
     } finally {
       rmSync(engineRoot, { recursive: true, force: true });
     }

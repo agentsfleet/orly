@@ -3,13 +3,14 @@ import type { StagedDirectory } from "./ssh";
 import type { BurstRun, CloudProvider, Image, Job, LaneResult, Machine, Snapshot, SnapshotScope, Status } from "./types";
 
 import { mkdirSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 
 import { remoteScript } from "./job";
 import { resolveSecrets } from "./process";
 import { archiveDirectories, forgetKeyPair, reachable, runOverSsh } from "./ssh";
 import { LANE_PREFIX, MINUTE_MS } from "./types";
-import { messageOf } from "../model";
+import { messageOf, OrlyError } from "../model";
 
 // What only a lane receives: its secrets and its copied directories.
 type LaneInputs = { secrets: Environment; directories: readonly StagedDirectory[] };
@@ -23,12 +24,14 @@ const SNAPSHOT_JOB = "snapshot";
 // machines shared goes when the last one has.
 export async function cloudLanes(provider: CloudProvider, run: BurstRun, lanes: string[], useSnapshot: boolean): Promise<LaneResult[]> {
   try {
+    requireActive(run);
     const inputs: LaneInputs = {
       secrets: await resolveSecrets(run.config.burst?.secrets ?? {}, run.settings.env),
       directories: await archiveDirectories(run, run.config.burst?.directories ?? []),
     };
     const image = await chooseImage(provider, run, useSnapshot);
     run.write(`orly burst: ${provider.name} starts ${lanes.join(", ")} from ${image.snapshot ? "snapshot" : "base image"} ${image.name}`);
+    requireActive(run);
     await provider.prepare(run);
     return await Promise.all(lanes.map((lane) => cloudLane(provider, run, newJob(run, "lane", lane, image), inputs)));
   } finally {
@@ -42,7 +45,9 @@ export async function cloudSnapshot(provider: CloudProvider, run: BurstRun): Pro
   const job = newJob(run, "warm", SNAPSHOT_JOB, provider.baseImage());
   let machine: Machine | undefined;
   try {
+    requireActive(run);
     await provider.prepare(run);
+    requireActive(run);
     machine = await provider.create(run, job);
     machine = await provider.ready(run, job, machine);
     await reachable(run, job, machine, provider.user);
@@ -72,16 +77,14 @@ export async function cloudPrune(provider: CloudProvider, scope: SnapshotScope):
 }
 
 async function repositorySnapshots(provider: CloudProvider, scope: SnapshotScope): Promise<Snapshot[]> {
-  // The whole name, so repository `web` never claims `orly-burst-web-app-…`;
-  // the repository slug holds only lowercase letters, digits and hyphens.
-  const name = new RegExp(`^orly-burst-${scope.repo}-\\d{12}$`);
-  return (await provider.snapshots(scope)).filter((snapshot) => name.test(snapshot.name)).sort((left, right) => right.name.localeCompare(left.name));
+  const name = new RegExp(`^orly-burst-${scope.repo}-\\d{17}-[0-9a-f]{8}$`);
+  return (await provider.snapshots(scope)).filter((snapshot) => name.test(snapshot.name)).sort((left, right) => left.name < right.name ? 1 : left.name > right.name ? -1 : 0);
 }
 
 // An explicit image wins, then the newest snapshot unless --no-snapshot, and
 // the base image when the repository has none yet.
 async function chooseImage(provider: CloudProvider, run: BurstRun, useSnapshot: boolean): Promise<Image> {
-  const override = await provider.override();
+  const override = await provider.override(run.signal);
   if (override) return override;
   const newest = useSnapshot ? (await repositorySnapshots(provider, run))[0] : undefined;
   return newest ? { id: newest.launchId, name: newest.name, snapshot: true } : provider.baseImage();
@@ -103,6 +106,7 @@ async function laneAttempt(provider: CloudProvider, run: BurstRun, job: Job, inp
   let status: Status = "unlaunched";
   let relaunch = false;
   try {
+    requireActive(run);
     machine = await provider.create(run, job);
     machine = await provider.ready(run, job, machine);
     await reachable(run, job, machine, provider.user);
@@ -159,5 +163,9 @@ function newJob(run: BurstRun, kind: Job["kind"], name: string, image: Image, re
 }
 
 function snapshotName(repo: string, now: Date): string {
-  return `orly-burst-${repo}-${now.toISOString().replaceAll(/[-:T]/g, "").slice(0, 12)}`;
+  return `orly-burst-${repo}-${now.toISOString().replace(/\D/g, "")}-${randomUUID().slice(0, 8)}`;
+}
+
+function requireActive(run: BurstRun): void {
+  if (run.signal.aborted) throw new OrlyError("cancelled before cloud mutation");
 }

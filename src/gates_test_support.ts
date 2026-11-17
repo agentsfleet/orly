@@ -8,6 +8,7 @@ import { join, resolve } from "node:path";
 
 import { CONFIG_PATH } from "./config";
 import { RulesModel } from "./model";
+import { UNSCOPED_ENVIRONMENT } from "./git_env";
 
 const GIT = "git";
 const QUIET = "-q";
@@ -25,7 +26,6 @@ const FIXTURE_TEST = "fixture_test";
 export const FIXTURE_CONFIG = { schema_version: 1, packs: [], commands: { conform: [[TRUE_COMMAND]], "verify.unit": [[TRUE_COMMAND]] } };
 
 const temporaryDirectories: string[] = [];
-const GIT_SCOPE_VARIABLES = ["GIT_DIR", "GIT_INDEX_FILE", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_PREFIX", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES"];
 
 // git exports GIT_DIR and GIT_INDEX_FILE to its hooks, and .githooks/pre-commit
 // runs this suite through `make audit`. Inherited, they scope every git call at
@@ -33,7 +33,7 @@ const GIT_SCOPE_VARIABLES = ["GIT_DIR", "GIT_INDEX_FILE", "GIT_WORK_TREE", "GIT_
 // plain repository and fatally in a linked worktree, whose .git is a file, so
 // .git/index reads as "Not a directory". Bun does not propagate a deletion from
 // process.env to a spawned child, so the scrubbed copy is passed explicitly.
-const HERMETIC_ENVIRONMENT = hermeticEnvironment();
+const HERMETIC_ENVIRONMENT = { ...UNSCOPED_ENVIRONMENT, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" };
 
 // Each suite registers this in its own afterEach — the array is module state
 // shared by every importer, so a suite that skips it leaks its fixtures.
@@ -54,7 +54,7 @@ export function orly(project: string, registry: string, ...args: string[]): { co
 // never render, so the full pack inventory is not needed.
 export function fixtureRegistry(project: string): string {
   const root = temporaryDirectory();
-  Bun.write(join(root, "registry.json"), JSON.stringify({ schema_version: 1, core_documents: [], packs: {}, rules: [] }));
+  writeFileSync(join(root, "registry.json"), JSON.stringify({ schema_version: 1, core_documents: [], packs: {}, rules: [] }));
   writeFixtureConfig(project);
   return root;
 }
@@ -85,10 +85,10 @@ export async function modelFor(
 
 export function newRepository(): string {
   const project = temporaryDirectory();
-  git(project, "init", QUIET);
+  git(project, "init", "--initial-branch=main", QUIET);
   git(project, CONFIG, "user.email", "orly-tests@example.invalid");
   git(project, CONFIG, "user.name", "Orly Tests");
-  Bun.write(join(project, "README.md"), "fixture\n");
+  writeFileSync(join(project, "README.md"), "fixture\n");
   git(project, ADD, ".");
   git(project, COMMIT, QUIET, MESSAGE, "test: init");
   return project;
@@ -154,12 +154,6 @@ function specFixture(): string {
     "",
     ...sections,
   ].join("\n");
-}
-
-function hermeticEnvironment(): Record<string, string | undefined> {
-  const environment: Record<string, string | undefined> = { ...process.env };
-  for (const name of GIT_SCOPE_VARIABLES) delete environment[name];
-  return environment;
 }
 
 export function git(project: string, ...args: string[]): void {

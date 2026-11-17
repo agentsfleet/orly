@@ -13,7 +13,7 @@ type Image = { id: string; name: string; repo: string; snapshots: string[]; size
 // describeFails: every describe-instances call fails with this error.
 // imagePendingPolls and imageFails shape every image create-image makes.
 // reclaimSpot: every Spot instance's state reason says AWS took it back.
-type Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lostReply?: boolean; describeFails?: string; imagePendingPolls?: number; imageFails?: string; reclaimSpot?: boolean };
+type Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lostReply?: boolean; describeFails?: string; imagePendingPolls?: number; imageFails?: string; reclaimSpot?: boolean; priceUnavailable?: boolean };
 
 const state = process.env.FAKE_AWS_STATE ?? "";
 const args = Bun.argv.slice(2);
@@ -35,7 +35,7 @@ function dispatch(command: string[]): number {
     return 0;
   }
   if (verb === "stop-instances") return setState(option(command, "--instance-ids"), "stopped");
-  if (verb === "describe-spot-price-history") return print("0.2345");
+  if (verb === "describe-spot-price-history") return scenario.priceUnavailable ? 254 : print("0.2345");
   if (verb === "create-image") return createImage(command);
   if (verb === "describe-images") return describeImages(command);
   if (verb === "deregister-image") return saveImages(images().filter((image) => image.id !== option(command, "--image-id")));

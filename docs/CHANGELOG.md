@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.50.0 (2026-11-17)
+
+Reviewed input scopes can retain verification evidence across documentation commits. Default `orly gate` runs fast checks once.
+
+- **Reuse** — `tracked_inputs` declares tracked dependencies; `gate pr --reuse-verification` preserves original output, age and run revision. Live lanes stay fresh.
+- **Skills** — Full instructions live in runtime folders. Updates remove only tracked, clean obsolete managed copies; owner files remain.
+- **Shipping** — Skills report stages and outcomes, then propose evidenced lessons for owner approval after publication.
+- **Burst** — Cancellation stops new requests and command descendants. New snapshot names separate repository ownership; older snapshots require manual inspection and cleanup.
+- **Upgrade** — Commit managed edits before `bunx --bun @agentsfleet/orly@0.50.0 update`. Review dependencies before enabling [scoped reuse](ORLY_ARCHITECTURE.md#verification-evidence).
+
 ## 0.42.0 (2026-11-17)
 
 AWS lanes can rent On-Demand machines, and can reach their machines through Systems Manager instead of SSH from one address.

@@ -68,7 +68,7 @@ Optimise for one thing: he never has to ask twice.
 - **`orly gate pr` is the proof, once, on the final tree.** A lane run by hand
   diagnoses a red; it never pre-checks what the gate reruns.
   Reuse preserves counts and failed attempts; follow the tests standard.
-- **Fold-into-PR test: completes vs adds.** Fold what finishes an incoherence the
+- **Fold-into-PR test: closure or new scope.** Fold what resolves an incoherence the
   PR would otherwise merge; merely adjacent work is scope creep.
 
 ## Pre-send checklist

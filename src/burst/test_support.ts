@@ -15,8 +15,8 @@ import { isObject } from "../model";
 
 
 export const FIXTURE_BRANCH = "feat/burst-fixture";
-// The origin remote below is acme/widget; snapshots are named for both parts.
-export const REPOSITORY = "acme-widget";
+// Independently derived SHA-256 prefix of example.invalid/acme/widget.
+export const REPOSITORY = "de3cf852395d210d0d756297";
 export const SECRET_VALUE = "op-value-test-0000";
 export const CALLER_ADDRESS = "198.51.100.77";
 

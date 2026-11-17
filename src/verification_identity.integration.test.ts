@@ -1,4 +1,5 @@
-import { afterEach, expect, test } from "bun:test";
+import { afterEach, expect, spyOn, test } from "bun:test";
+import * as fs from "node:fs";
 import { randomBytes, randomUUID } from "node:crypto";
 import { chmodSync, cpSync, mkdirSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -110,4 +111,19 @@ test("before and after hashes do not assert detection of transient restored edit
   writeFileSync(join(request.root, "tracked-input.txt"), "transient");
   writeFileSync(join(request.root, "tracked-input.txt"), "original input");
   expect(binding(request)).toBe(original);
+});
+
+test("scoped identity reuses the tracked snapshot and hashes overlapping extras once", async () => {
+  const request = await requestFixture();
+  request.policy.tracked_inputs = ["tracked-input.txt", "verify-fixture.ts"];
+  mkdirSync(join(request.root, "extra-input"));
+  writeFileSync(join(request.root, "extra-input/data"), "extra");
+  request.policy.inputs = ["extra-input", "extra-input/data", "extra-input"];
+  const opened = spyOn(fs, "openSync");
+  try {
+    binding(request);
+    for (const path of ["tracked-input.txt", "extra-input/data"]) {
+      expect(opened.mock.calls.filter(([file]) => file === join(request.root, path))).toHaveLength(1);
+    }
+  } finally { opened.mockRestore(); }
 });

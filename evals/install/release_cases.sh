@@ -217,7 +217,7 @@ install_every_language_selection_installs_cleanly() {
 
   local sample broken=""
   for sample in "src/lib.rs" "src/main.go" "src/app.ts" "src/app.tsx" "src/app.js" "src/app.jsx" "src/app.py" "tool.sh" "docs/page.mdx" "schema/init.sql"; do
-    local repo; repo="$(mk_repo)"
+    local repo; repo="$(mk_repo bare)"
     local out code
     mkdir -p "$repo/$(dirname "$sample")"
     printf '// fixture\n' > "$repo/$sample"

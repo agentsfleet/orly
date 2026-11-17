@@ -13,7 +13,7 @@ const CREDENTIALS = { E2E_API_KEY: API_KEY, E2E_AUTH_TOKEN: AUTH_TOKEN, E2E_PROJ
 const SECRETS = { secrets: { API_TOKEN: "op://Burst Vault/api/credential" } };
 const LANES = ["acceptance", "integration", "--provider", "e2e"];
 const ONE_LANE = ["acceptance", "--provider", "e2e"];
-const SNAPSHOT_NAME = new RegExp(`^orly-burst-${REPOSITORY}-\\d{12}$`);
+const SNAPSHOT_NAME = new RegExp(`^orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8}$`);
 const CREATE = /^\/notebooks\/$/;
 const VM = /^\/notebooks\/\d+\/$/;
 
@@ -253,15 +253,15 @@ describe("e2e snapshots on TIR", () => {
     expect(order.indexOf("POST /notebooks/5001/snapshots/")).toBeLessThan(order.lastIndexOf("DELETE /notebooks/5001/"));
     expect(String(fields(run.api.callsTo("POST", /\/snapshots\/$/)[0]?.body).name)).toMatch(SNAPSHOT_NAME);
     expect(run.api.vms.size).toBe(0);
-    expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=e2e id=9000 name=orly-burst-${REPOSITORY}-\\d{12} state=ready size=100\\.0GB storage≈₹200/month \\+ GST`));
+    expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=e2e id=9000 name=orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8} state=ready size=100\\.0GB storage≈₹200/month \\+ GST`));
   });
 
   test("lanes start from the repository's newest ready snapshot unless told otherwise", async () => {
     const run = e2eRun();
-    run.api.snapshot(`orly-burst-${REPOSITORY}-202611010000`, 7001);
-    run.api.snapshot(`orly-burst-${REPOSITORY}-202611150000`, 7002);
-    run.api.snapshot(`orly-burst-${REPOSITORY}-202611160000`, 7003, "pending");
-    run.api.snapshot(`orly-burst-${REPOSITORY}-app-202612010000`, 7004);
+    run.api.snapshot(`orly-burst-${REPOSITORY}-20261101000000000-1234abcd`, 7001);
+    run.api.snapshot(`orly-burst-${REPOSITORY}-20261115000000000-1234abcd`, 7002);
+    run.api.snapshot(`orly-burst-${REPOSITORY}-20261116000000000-1234abcd`, 7003, "pending");
+    run.api.snapshot(`orly-burst-${REPOSITORY}-app-20261201000000000-1234abcd`, 7004);
 
     await burst(ONE_LANE, run.dependencies);
     await burst([...ONE_LANE, "--no-snapshot"], run.dependencies);
@@ -294,8 +294,8 @@ describe("e2e snapshots on TIR", () => {
 
   test("pruning keeps the newest snapshots of this repository only, renting nothing", async () => {
     const run = e2eRun();
-    for (const [stamp, id] of [["202611010000", 7001], ["202611020000", 7002], ["202611030000", 7003], ["202611040000", 7004]] as const) run.api.snapshot(`orly-burst-${REPOSITORY}-${stamp}`, id);
-    run.api.snapshot(`orly-burst-${REPOSITORY}-app-202612010000`, 7006);
+    for (const [stamp, id] of [["20261101000000000-1234abcd", 7001], ["20261102000000000-1234abcd", 7002], ["20261103000000000-1234abcd", 7003], ["20261104000000000-1234abcd", 7004]] as const) run.api.snapshot(`orly-burst-${REPOSITORY}-${stamp}`, id);
+    run.api.snapshot(`orly-burst-${REPOSITORY}-app-20261201000000000-1234abcd`, 7006);
 
     expect(await burst(["snapshot", "--prune", "--provider", "e2e"], run.dependencies)).toBe(0);
     expect(run.api.callsTo("DELETE", /^\/notebooks\/vm\/snapshots\//).map((call) => call.path)).toEqual(["/notebooks/vm/snapshots/7002/", "/notebooks/vm/snapshots/7001/"]);

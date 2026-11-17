@@ -26,9 +26,16 @@ if (await Bun.file(".git/poison-completion").exists()) {
   unlinkSync(".git/poison-completion");
 }
 if (await Bun.file(".git/change-verification-input").exists()) await Bun.write("tracked-input.txt", "changed during execution");
+if (await Bun.file(".git/commit-verification-edit").exists()) {
+  await Bun.write("README.md", "Documented during verification.\\n");
+  for (const args of [["add", "README.md"], ["commit", "-qm", "test: concurrent documentation"], ["push", "-q"]]) {
+    const result = Bun.spawnSync(["git", ...args], { env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" }, timeout: 10000 });
+    if (result.exitCode !== 0) throw new Error("fixture Git operation failed");
+  }
+}
 `;
 
-export async function verificationFixture() {
+export async function verificationFixture(trackedInputs?: string[]) {
   const root = newRepository();
   const model = await modelFor(root, undefined, { [VERIFICATION_LANE]: [[process.execPath, "verify-fixture.ts"]] });
   writeFileSync(join(root, "verify-fixture.ts"), FIXTURE_SCRIPT);
@@ -36,6 +43,7 @@ export async function verificationFixture() {
   writeFileSync(join(root, ".gitignore"), "extra-input/\n");
   const config = readConfigSync(root)!;
   config.reuse = { [VERIFICATION_LANE]: structuredClone(VERIFICATION_POLICY) };
+  if (trackedInputs) config.reuse[VERIFICATION_LANE] = { ...VERIFICATION_POLICY, tracked_inputs: trackedInputs };
   writeFileSync(join(root, CONFIG_PATH), JSON.stringify(config));
   git(root, "add", ".");
   git(root, "commit", "-q", "-m", "test: configure verification fixture");

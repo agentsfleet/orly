@@ -1,11 +1,10 @@
 ---
 name: orly-burst
 description: |
-  Run declared burst lanes on a machine rented for the run (AWS Spot or E2E
-  Networks) or in a CI job, and capture or prune their warm snapshots. Use on
-  "run acceptance on a burst box", "capture a snapshot", or when a Pull
-  Request needs acceptance evidence. It costs money: never run it unasked or
-  in `orly gate pr`.
+  Run requested burst lanes on AWS or E2E Networks, or on the current runner,
+  and manage their snapshots. Use on "run acceptance on a burst box" or
+  "capture a snapshot". Paid runs need explicit authorization; missing PR
+  evidence does not authorize a run. Never run from a gate or hook.
 ---
 
 # orly-burst
@@ -17,8 +16,9 @@ costs are in orly's `docs/BURST.md`.
 
 ## When
 
-- Only when the user asks, or when a Pull Request needs acceptance evidence
-  the gates cannot give. Every cloud run rents a machine by the hour.
+- Only when the user explicitly authorizes the run. Missing Pull Request
+  evidence is a reason to propose lanes, a provider and expected cost for
+  approval. It never authorizes a cloud run, snapshot or paid retention.
 - Never inside `orly gate pr`, a hook or a retry loop. The gates never run
   `burst.*` commands, and nothing runs them on the gates' behalf.
 

@@ -18,7 +18,7 @@
 
 **Problem:** The identity in `src/verification_identity.ts` includes the revision and every tracked file. Documentation commits invalidate all evidence. Installation also puts skill bodies in `.orly/skills/` and pointers in runtime folders. Shipping lacks a concise learning proposal for the owner and visible stage reporting.
 
-**Solution summary:** Add opt-in tracked input selection to the existing evidence mechanism, install full skills directly in runtime folders, and explain stage outcomes and proposed lessons to the owner. Target version: 0.43.0.
+**Solution summary:** Add opt-in tracked input selection to the existing evidence mechanism, install full skills directly in runtime folders, and explain stage outcomes and proposed lessons to the owner. Target version: 0.50.0.
 
 **Design flow:**
 
@@ -35,7 +35,7 @@ ship -> publish PR -> summarize evidenced lessons -> ask owner -> approved sourc
 
 ## PR Intent & comprehension handshake
 
-- **PR title (eventual):** feat: reuse scoped verification and simplify skill delivery (0.43.0)
+- **PR title (eventual):** feat: reuse scoped verification and simplify skill delivery (0.50.0)
 - **Intent:** Save repeated work while retaining explicit proof, direct skill delivery and owner control of learned rules.
 - **Authoring handshake:** ASSUMPTIONS I'M MAKING: reuse remains explicit; a scoped policy declares every tracked dependency; external observations remain fresh; managed-copy cleanup preserves uncommitted edits; no consumer update, merge or release is authorized.
 - **Implementer handshake:** Implement the approved source-bound reuse design on fetched 0.42.0, review the whole repository, remove redundant skill indirection, and add visible stages and an owner-approved learning step. Record this in the PR Session Notes.
@@ -58,13 +58,25 @@ ship -> publish PR -> summarize evidenced lessons -> ask owner -> approved sourc
 | `src/verification_policy.test.ts`, `src/verification_identity.integration.test.ts`, `src/verification_store.integration.test.ts`, `src/verification_test_support.ts` | EDIT | Defaults and rejection coverage |
 | `src/verification-scoped.integration.test.ts` | CREATE | Cross-revision execution and invalidation |
 | `src/installation/plan.ts` | EDIT | Full skill content at runtime destinations |
+| `src/installation/migration.ts`, `src/installation/transaction.ts` | EDIT | Require tracked, clean obsolete files through recovery |
+| `src/install.ts`, `src/references.ts`, `src/references.test.ts` | EDIT | Reject references to scheduled deletions |
+| `registry.json` | EDIT | Ship documentation dependencies with their owner |
+| `src/surfaces.ts`, `src/surfaces.test.ts`, `src/criteria.ts`, `src/criteria.test.ts`, `src/gates.ts`, `src/gates.test.ts`, `src/gates_test_support.ts` | EDIT | Refuse unavailable diff evidence, honor default branch and isolate override commits |
+| `src/gate-determinism.integration.test.ts` | CREATE | Count default verification, enforce prerequisites and preserve staged edits |
+| `src/cli.ts`, `src/config.ts`, `src/config.test.ts`, `src/render.ts` | EDIT | Reject misspelled write options and failed Git inspection; remove unused render branch |
+| `src/doc_rules.ts`, `src/doc_rules.test.ts`, `src/layout.test.ts`, `evals/install/run.sh`, `evals/install/release_cases.sh` | EDIT | Require reasoned paragraph exceptions, keep their scope local and isolate installation coverage |
+| `src/burst/process.ts`, `src/burst/process.integration.test.ts`, `src/burst/aws.ts`, `src/burst/aws.test.ts`, `src/burst/types.ts`, `src/burst/index.ts`, `src/burst/index.test.ts` | EDIT, CREATE | Repair proven process ownership and repository identity defects |
+| `src/burst/repository.ts`, `src/burst/repository.integration.test.ts`, `src/burst/cloud.ts`, `src/burst/test_support.ts`, `src/burst/fake_aws.ts`, `src/burst/aws-market.integration.test.ts`, `src/burst/aws-test-support.ts`, `src/burst/e2e.test.ts`, `docs/BURST.md` | EDIT, CREATE | Isolate snapshot ownership, preserve retry policy without price lookup and test provider behavior |
+| `src/burst/e2e.ts`, `src/burst/tir.ts`, `src/burst/cancellation.integration.test.ts` | EDIT, CREATE | Stop requests before cancelled mutations and attempt independent cleanup |
+| `agents/orly-standards-reviewer.md`, `standards/code.md`, `standards/pr.md`, `skills/orly-burst/SKILL.md` | EDIT | Reconcile actual checker coverage, source grounding and explicit paid-run approval |
 | `src/installation/skill-migration.integration.test.ts` | CREATE | Safe obsolete-copy removal and recovery |
 | `src/learning_guidance.integration.test.ts`, `src/installation/migration.test.ts`, `src/install.test.ts`, `src/install_packs.test.ts`, `src/install_loaders.test.ts` | EDIT | Update delivery assertions where needed |
-| `core/operating-model.md`, generated `AGENTS.md` | EDIT | Stage start, outcome and next action |
+| `core/operating-model.md`, `SOUL.md`, generated `AGENTS.md` | EDIT | Stage start, outcome and next action |
 | `skills/orly-ship/SKILL.md` | EDIT | Evidence-backed learning proposal and owner approval |
 | `README.md`, `docs/ORLY_ARCHITECTURE.md`, `docs/architecture/installation.md`, `standards/tests.md`, `src/cli_help.ts`, `llms.txt` | EDIT | Actual behavior, constraints and upgrade instructions |
 | `docs/v2/evidence/M17_REPOSITORY_REVIEW.md` | CREATE | Review inventory, findings, dispositions and measurements |
-| `package.json`, `.orly/orly.json` | EDIT | 0.43.0 version sources |
+| `package.json`, `.orly/orly.json` | EDIT | 0.50.0 version sources |
+| `docs/CHANGELOG.md` | EDIT | User-visible 0.50.0 changes and upgrade requirements |
 
 Additional review repairs amend this table before implementation. Review is repository-wide; edits require a reproducible benefit, not speculative rewrites.
 
@@ -106,10 +118,12 @@ Version the signed completion and record the original execution revision and the
 - **Dimension 1.4** — Test `out of scope edits during execution still block completion` (integration): an unrelated tracked edit while the command runs blocks the result.
 - **Dimension 1.5** — Test `missing scoped inputs and newer failures cannot reuse older evidence` (integration): no matching input or a later failed attempt forces execution.
 - **Dimension 1.6** — Test `signed provenance rejects old formats and retains original age` (integration): unsupported format/tampering/expiry cannot pass; replay retains original execution facts.
+- **Dimension 1.7** — Test `scoped identity reuses the tracked snapshot and hashes overlapping extras once` (integration): counters prove one file read per identity collection despite overlapping declarations.
+- **Dimension 1.8** — Test `default gate executes fast verification only once at the final boundary` (integration): the default path runs work then pr; explicit verify remains available and checks run once per invocation.
 
 ### §2 — Direct skill delivery and safe cleanup
 
-Write full filtered skill bodies directly to the registered runtime folders. Remove pointer construction and stop planning `.orly/skills/` copies. The existing transaction first writes valid replacements, then deletes only obsolete paths in the previous managed list, then prunes empty directories. Uncommitted edits block deletion even with force. Unmanaged files survive. No direct writes to consuming repositories in this workstream.
+Write full filtered skill bodies directly to the registered runtime folders. Remove pointer construction and stop planning `.orly/skills/` copies. The transaction first writes valid replacements, then deletes only obsolete paths in the previous managed list, then prunes empty directories. Require obsolete files to remain tracked and clean at planning, recovery and deletion; ignored untracked files and mode-only edits also refuse deletion, even with force. Unmanaged files survive. Reference closure excludes scheduled deletions. No direct writes to consuming repositories in this workstream.
 
 - **Dimension 2.1** — Test `runtime skills contain their instructions without private copies` (integration): install and repeat-update yield full runtime bodies and no managed `.orly/skills`.
 - **Dimension 2.2** — Test `skill migration preserves owner content and refuses dirty copies` (integration): clean managed duplicates are removed; custom files stay; modified duplicates refuse migration.
@@ -129,7 +143,7 @@ After publishing the PR, `orly-ship` presents an evidence-backed learning summar
 Read every tracked implementation, test, configuration and instruction file by subsystem, inventory generated copies and historical documents, and record findings with exact evidence. Remove proven redundancy and repair sources of nondeterminism within the authorized scope. Record why a proposed cleanup is unnecessary rather than churning working code. Run final checks after repairs and repeat only where changes or failures justify them.
 
 - **Dimension 4.1** — Test `repository review inventory and dispositions` (manual): compare the review inventory with tracked paths and inspect every finding's repair or rationale.
-- **Dimension 4.2** — Test `version and installed behavior agree` (integration): package and root configuration name 0.43.0; installation and complete verification pass on the final pushed revision.
+- **Dimension 4.2** — Test `version and installed behavior agree` (integration): package and root configuration name 0.50.0; installation and complete verification pass on the final pushed revision.
 
 ## Interfaces
 
@@ -208,7 +222,7 @@ Remote evidence trust, live observation caching, cloud machine launches, consume
 
 - Base: fetched `origin/main` at `9c177c333010b11fc83bb49bc2d00cadd549c6c3`, version 0.42.0. `bin/orly doctor` reports both setup lines green.
 - Existing review worktree reused; no second worktree or consumer mutation.
-- Model reviews: pending; record completed findings and provenance here.
+- Fresh-context design review completed: two Major migration findings, both accepted. Require positive tracked/clean deletion evidence and repeat it through recovery, including executable-mode changes. The inherited review model's exact version is unavailable; no named-model approval is claimed. Static review is separate from execution proof.
 - Open blockers: none identified at opening. Review and verification remain unverified.
 - Deferrals and transfers: none.
 
@@ -223,3 +237,7 @@ Remote evidence trust, live observation caching, cloud machine launches, consume
 > Owner: "Also i notice when you install you still have the skills in \~/.orly/skill in the repo example agentsfleet, i reckon you must nuke that upon install in the repo since you have spread it out in the .agents/skills and so on in other folders."
 
 > Owner: "when you invoke the skills right now i am not sure what you are doing, its better to add or display in few lines with  the state or stage you are on and doing. at the end of each stage you print the outcome, or what was acccomplished and your next step."
+
+> Owner: "just move your version to 0.50"
+
+The current target is 0.50.0; the earlier version request above remains historical evidence.

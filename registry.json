@@ -191,6 +191,14 @@
         {
           "source": "docs/ORLY_ARCHITECTURE.md",
           "target": "docs/ORLY_ARCHITECTURE.md"
+        },
+        {
+          "source": "docs/architecture/installation.md",
+          "target": "docs/architecture/installation.md"
+        },
+        {
+          "source": "docs/BURST.md",
+          "target": "docs/BURST.md"
         }
       ]
     },

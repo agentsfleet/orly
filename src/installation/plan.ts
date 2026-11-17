@@ -12,10 +12,7 @@ export type PlannedFile = { target: string; content: Uint8Array; mode: string };
 
 function installedPath(target: string): string {
   if (target.startsWith(".orly/")) return target;
-  // A runtime reads an agent definition where it is declared, so it is never
-  // a stub pointing at a copy.
-  if (target.startsWith(CLAUDE_AGENTS)) return target;
-  if (target.includes(SKILLS_SEGMENT)) return `.orly/skills/${target.split(SKILLS_SEGMENT)[1]}`;
+  if (target.startsWith(CLAUDE_AGENTS) || target.includes(SKILLS_SEGMENT)) return target;
   return `.orly/${target}`;
 }
 
@@ -39,20 +36,14 @@ export async function planFiles(model: RulesModel, packs: string[], commands: Re
     const pack = objectValue(registryPacks[name], `pack ${name}`);
     for (const entry of objectArray(pack.managed_files, `pack ${name} managed_files`)) {
       if (!isString(entry.source) || !isString(entry.target)) throw new OrlyError(`pack ${name} managed file must carry string source and target`);
-      const claimed = sources.get(entry.target);
-      if (claimed && claimed !== entry.source) throw new OrlyError(`packs disagree on ${entry.target}: ${claimed} and ${entry.source}`);
-      sources.set(entry.target, entry.source);
+      const target = installedPath(entry.target);
+      const claimed = sources.get(target);
+      if (claimed && claimed !== entry.source) throw new OrlyError(`packs disagree on ${target}: ${claimed} and ${entry.source}`);
+      sources.set(target, entry.source);
       const path = join(model.root, entry.source);
       // Never overwrite the engine's pack sources with filtered consumer copies.
       if (resolved(model.root) === resolved(targetRoot)) continue;
-      const target = installedPath(entry.target);
       planned.set(target, { target, content: await managedContent(path, target, entry.source, packs, known, orlyFile, paths), mode: modeLabel(path) });
-      if (entry.target.includes(SKILLS_SEGMENT)) {
-        const body = await Bun.file(path).text();
-        const frontmatter = body.match(/^---\n[\s\S]*?\n---/u)?.[0] ?? "";
-        const stub = `${frontmatter}\n\n# Skill instructions\n\nRead and follow \`${target}\` from the repository root before acting.\n`;
-        planned.set(entry.target, { target: entry.target, content: new TextEncoder().encode(stub), mode: MODE_REGULAR });
-      }
     }
   }
   const rendered = await new Renderer(model).renderText(packs, commands);
@@ -79,7 +70,7 @@ export async function managedContent(path: string, target: string, source: strin
   const bytes = await Bun.file(path).bytes();
   if (extname(target) !== MARKDOWN_EXTENSION) return bytes;
   const filtered = renderProfileText(new TextDecoder().decode(bytes), new Set(packs), known, source);
-  const retargeted = retargetRulesCitations(filtered, orlyFile);
+  const retargeted = target.startsWith(".orly/") ? retargetRulesCitations(filtered, orlyFile) : filtered;
   return new TextEncoder().encode(`${orlyFile === AGENTS_FILENAME ? retargeted : installedReferences(retargeted, paths)}\n`);
 }
 

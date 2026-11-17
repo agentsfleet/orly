@@ -38,6 +38,7 @@ const GATE_ERRORS = {
   options: "[ORLY-GATE-001] gate accepts one name and only --accept-dirty or --reuse-verification",
   reuse: "[ORLY-GATE-002] --reuse-verification requires the named pr gate",
 } as const;
+const INSTALL_OPTIONS_ERROR = "[ORLY-INSTALL-001] install accepts only --force, --no-hooks, --with <PACK>, --dry-run and --json";
 
 const { root, arguments: commandArguments } = parseRoot(Bun.argv.slice(2));
 process.exit(await execute(root, commandArguments));
@@ -134,6 +135,13 @@ async function packageVersion(model: RulesModel): Promise<string> {
 // Both verbs materialise the same way: the repository's own `.orly/orly.json`
 // names its packs and commands, so neither asks the caller who this repo is.
 async function materialise(model: RulesModel, args: string[], isInit: boolean): Promise<number> {
+  for (let index = 0; index < args.length; index++) {
+    const argument = args[index];
+    if (argument === WITH_FLAG) {
+      const value = args[++index];
+      if (!value || value.startsWith("-")) throw new OrlyError(`${WITH_FLAG} requires a pack name`);
+    } else if (!argument || ![FORCE_FLAG, NO_HOOKS_FLAG, DRY_RUN_FLAG, JSON_FLAG].includes(argument)) throw new OrlyError(INSTALL_OPTIONS_ERROR);
+  }
   model.validate();
   const targetRoot = projectRoot();
   const existing = await readConfig(targetRoot);

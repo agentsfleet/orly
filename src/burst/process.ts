@@ -34,6 +34,8 @@ const OP_READS_AT_ONCE = 4;
 // One long-running child, in its own process group so a deadline or a
 // cancellation stops everything it started, with output streamed line by line.
 export async function streamProcess(argv: string[], options: StreamOptions): Promise<Outcome> {
+  if (options.signal.aborted) return { stopped: "cancelled" };
+  if (Date.now() >= options.deadline) return { stopped: "deadline" };
   const child = Bun.spawn([locate(argv, options.env), ...argv.slice(1)], {
     env: options.env, stdin: options.stdin ?? "ignore", detached: true,
     stdout: options.stdoutFile ? Bun.file(options.stdoutFile) : PIPE, stderr: PIPE,
@@ -56,6 +58,7 @@ export async function streamProcess(argv: string[], options: StreamOptions): Pro
     options.signal.removeEventListener("abort", cancel);
     // Reaps anything the child left running in its group after it exited.
     stopOwnedGroup(child.pid);
+    await child.exited;
   }
   return stopped ? { stopped } : { code: child.exitCode ?? 1 };
 }
@@ -65,20 +68,29 @@ export async function streamProcess(argv: string[], options: StreamOptions): Pro
 // alone; only the signal passed here stops it, which is how cleanup commands,
 // handed no signal, still finish after a cancellation.
 export async function captureProcess(argv: string[], options: { env: Environment; timeoutMs: number; cwd?: string; stdin?: Blob | BunFile; signal?: AbortSignal }): Promise<Captured> {
+  if (options.signal?.aborted) throw new OrlyError("cancelled before command launch");
   const child = Bun.spawn([locate(argv, options.env), ...argv.slice(1)], {
     env: options.env, stdin: options.stdin ?? "ignore", stdout: PIPE, stderr: PIPE, detached: true,
-    timeout: options.timeoutMs, killSignal: "SIGKILL", ...(options.cwd ? { cwd: options.cwd } : {}),
+    ...(options.cwd ? { cwd: options.cwd } : {}),
   });
-  const cancel = () => child.kill("SIGKILL");
-  if (options.signal?.aborted) cancel();
-  else options.signal?.addEventListener("abort", cancel, { once: true });
+  let stopped: Stopped | undefined;
+  const stop = (reason: Stopped) => {
+    stopped ??= reason;
+    stopOwnedGroup(child.pid);
+  };
+  const timer = setTimeout(() => stop("deadline"), options.timeoutMs);
+  const cancel = () => stop("cancelled");
+  options.signal?.addEventListener("abort", cancel, { once: true });
   try {
-    const [stdout, stderr] = await Promise.all([readBounded(child.stdout, MAX_CAPTURE_BYTES, outputTooLarge), readBounded(child.stderr, MAX_CAPTURE_BYTES, outputTooLarge), child.exited]);
-    const stoppedBy = child.signalCode ? `\n${argv[0]} stopped by ${child.signalCode}` : "";
-    return { code: child.exitCode ?? -1, stdout, stderr: `${stderr}${stoppedBy}` };
+    const exited = child.exited.then(() => stopOwnedGroup(child.pid));
+    const [stdout, stderr] = await Promise.all([readBounded(child.stdout, MAX_CAPTURE_BYTES, outputTooLarge), readBounded(child.stderr, MAX_CAPTURE_BYTES, outputTooLarge), exited]);
+    const stoppedBy = stopped ?? child.signalCode;
+    return { code: stopped ? -1 : child.exitCode ?? -1, stdout, stderr: `${stderr}${stoppedBy ? `\n${argv[0]} stopped by ${stoppedBy}` : ""}` };
   } finally {
+    clearTimeout(timer);
     options.signal?.removeEventListener("abort", cancel);
-    child.kill("SIGKILL");
+    stopOwnedGroup(child.pid);
+    await child.exited;
   }
 }
 

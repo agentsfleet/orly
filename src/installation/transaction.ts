@@ -4,6 +4,7 @@ import { z } from "zod";
 import { assertWritableInside, applyMode, OrlyError, MODE_REGULAR, MODE_EXECUTABLE } from "../model";
 import { contentDigest } from "../config";
 import { hooksPath } from "./hooks";
+import { uncommittedPaths } from "./migration";
 
 const JOURNAL = ".orly/install-journal.json";
 const MAX_JOURNAL_BYTES = 16 * 1024 * 1024;
@@ -59,6 +60,7 @@ export class InstallTransaction {
 
   private validate(data: Journal): void {
     this.validateHooks(data.hooks);
+    this.validateDeletes(data.deletes);
     const paths = [...data.writes.map((file) => file.path), ...data.deletes.map((file) => file.path)];
     if (new Set(paths).size !== paths.length || paths.includes(JOURNAL)) throw new OrlyError("installation journal contains overlapping operations");
     for (const file of data.writes) {
@@ -72,6 +74,12 @@ export class InstallTransaction {
       const current = diskDigest(this.#root, file.path);
       if (current !== null && current !== file.before) throw new OrlyError(`migration conflict: ${file.path} changed before cleanup`);
     }
+  }
+
+  private validateDeletes(files: FileDelete[]): void {
+    const present = files.filter((file) => existsSync(join(this.#root, file.path))).map((file) => file.path);
+    const dirty = uncommittedPaths(this.#root, present);
+    if (dirty.size) throw new OrlyError(`migration conflict: ${[...dirty].join(", ")} must remain tracked and clean before cleanup`);
   }
 
   private validateHooks(hooks: HooksChange): void {
@@ -93,6 +101,7 @@ export class InstallTransaction {
     this.validateHooks(data.hooks);
     if (data.hooks) configureHooks();
     this.#checkpoint?.("metadata", 0);
+    this.validateDeletes(data.deletes);
     for (const [index, file] of data.deletes.entries()) {
       assertWritableInside(this.#root, file.path, OBSOLETE_FILE);
       const current = diskDigest(this.#root, file.path);

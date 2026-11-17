@@ -4,7 +4,7 @@ import type { BurstRun, CloudProviderName, Fetch, Io, LaneResult, ProviderName }
 
 import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
-import { basename, join } from "node:path";
+import { join } from "node:path";
 
 import { CONFIG_PATH, NOT_INSTALLED, parseConfig, readConfig } from "../config";
 import { UNSCOPED_ENVIRONMENT } from "../git_env";
@@ -12,6 +12,7 @@ import { isObject, OrlyError } from "../model";
 import { cloudLanes, cloudPrune, cloudSnapshot } from "./cloud";
 import { hereLanes, hereWarm } from "./here";
 import { captureProcess } from "./process";
+import { repositoryIdentity } from "./repository";
 import { CLOUD_PROVIDERS } from "./providers";
 import { burstSettings } from "./settings";
 import { newKeyPair } from "./ssh";
@@ -32,7 +33,6 @@ const MAX_LANES = 8;
 const MAX_EXIT = 255;
 const GIT_TIMEOUT_MS = 10 * 60_000;
 const BRANCH_PREFIX = "refs/heads/";
-const REPOSITORY_NAME_CHARS = 40;
 const REF_NAME_CHARS = 24;
 
 class InvalidBurstArguments extends OrlyError {}
@@ -117,7 +117,7 @@ async function here(request: Request, dependencies: BurstDependencies, settings:
 async function cloud(request: Request, name: CloudProviderName, dependencies: BurstDependencies, settings: BurstSettings): Promise<number> {
   const provider = new CLOUD_PROVIDERS[name](settings, dependencies.fetch);
   if (request.prune) {
-    await cloudPrune(provider, { repo: await repositoryName(dependencies.root), settings, write: dependencies.write, signal: dependencies.signal });
+    await cloudPrune(provider, { repo: repositoryIdentity(dependencies.root), settings, write: dependencies.write, signal: dependencies.signal });
     return 0;
   }
   const run = await stage(request, dependencies, settings);
@@ -137,7 +137,7 @@ async function cloud(request: Request, name: CloudProviderName, dependencies: Bu
 // Everything a cloud run reads before a machine exists.
 async function stage(request: Request, dependencies: BurstDependencies, settings: BurstSettings): Promise<BurstRun> {
   const { root } = dependencies;
-  const repo = await repositoryName(root);
+  const repo = repositoryIdentity(root);
   const io = { write: dependencies.write, signal: dependencies.signal };
   const ref = await resolveRef(root, request.ref);
   const config = await configAt(root, ref);
@@ -190,15 +190,6 @@ async function configAt(root: string, ref: string): Promise<RepoConfig> {
   const value: unknown = JSON.parse(shown.stdout);
   if (!isObject(value)) throw new OrlyError(`${ref}:${CONFIG_PATH} must be a JSON object`);
   return parseConfig(value);
-}
-
-// Snapshots are found by this name, so every worktree of one repository
-// shares them. It is the origin remote's owner and repository, such as
-// `agentsfleet-orly`, so two owners' `web` repositories in one account differ.
-async function repositoryName(root: string): Promise<string> {
-  const origin = await git(root, ["remote", "get-url", "origin"]);
-  const source = origin.code === 0 ? origin.stdout.trim().replace(/\/+$/, "").replace(/\.git$/, "").split(/[/:]/).slice(-2).join("-") : basename(root);
-  return slug(source, REPOSITORY_NAME_CHARS) || "repository";
 }
 
 function newRunId(ref: string, now: Date): string {

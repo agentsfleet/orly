@@ -5,7 +5,8 @@ import { join } from "node:path";
 import { CONFIG_PATH } from "./config";
 import { runCommand } from "./command_runner";
 import { criteriaFor } from "./criteria";
-import { cleanupTemporaryDirectories, git, modelFor, newRepository, newSpecRepository } from "./gates_test_support";
+import { cleanupTemporaryDirectories, git, modelFor, newRepository, newSpecRepository, pushFixture, ROOT } from "./gates_test_support";
+import { UNSCOPED_ENVIRONMENT } from "./git_env";
 
 const README = "README.md";
 const WORK = "work";
@@ -105,21 +106,18 @@ describe("criteriaFor", () => {
 // path is not even a directory and every criterion judged the wrong tree.
 describe("git scope leaking from a hook environment", () => {
   test("criteria judge the handed path even with GIT_DIR exported", async () => {
-    const project = newSpecRepository();
-    const model = await modelFor(project);
-    const context = { root: project, model, acceptDirty: false };
-    const clean = criteriaFor(WORK, context).map((c) => c.evaluate(context));
-
-    const saved = { ...process.env };
-    process.env.GIT_DIR = ".git";
-    process.env.GIT_INDEX_FILE = ".git/index";
-    try {
-      const polluted = criteriaFor(WORK, context).map((c) => c.evaluate(context));
-      expect(polluted.map((r) => `${r.name}:${r.ok}`)).toEqual(clean.map((r) => `${r.name}:${r.ok}`));
-    } finally {
-      delete process.env.GIT_DIR; delete process.env.GIT_INDEX_FILE;
-      Object.assign(process.env, saved);
-    }
+    const project = newRepository();
+    await modelFor(project);
+    pushFixture(project);
+    const other = newRepository();
+    const polluted = Bun.spawnSync([process.execPath, join(ROOT, "src/cli.ts"), "--root", ROOT, "gate", "pr"], {
+      cwd: project, stdout: "pipe", stderr: "pipe", timeout: 10_000,
+      env: { ...UNSCOPED_ENVIRONMENT, GIT_DIR: join(other, ".git"), GIT_INDEX_FILE: join(other, ".git/index") },
+    });
+    const output = polluted.stdout.toString() + polluted.stderr.toString();
+    expect(polluted.exitCode, output).toBe(0);
+    expect(output).toContain("git.pushed [passed]");
+    expect(output).not.toContain("refusing to work on the default branch");
   });
 });
 
