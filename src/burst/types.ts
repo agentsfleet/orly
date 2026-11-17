@@ -36,6 +36,9 @@ export type BurstRun = Io & {
   keep: boolean;
 };
 
+// What listing and pruning a repository's snapshots needs, which is less than a run.
+export type SnapshotScope = Pick<BurstRun, "repo" | "settings" | "write" | "signal">;
+
 // One machine's work: a lane, or the warm-up a snapshot captures. `onDemand`
 // marks a lane run again after the cloud took its first machine back.
 export type Job = { kind: "lane" | "warm"; name: string; image: Image; evidence: string; deadline: number; started: number; onDemand?: true };
@@ -56,23 +59,23 @@ export interface CloudProvider {
   // The login user the provider's base image accepts the run's key for.
   readonly user: string;
   // An hourly rate, and an image's monthly storage, as this cloud bills them.
-  cost(machine: Machine | undefined): string;
+  cost(machine: Machine): string;
   storage(snapshot: Snapshot): string;
   baseImage(): Image;
-  override(run: BurstRun): Promise<Image | undefined>;
-  snapshots(run: BurstRun): Promise<Snapshot[]>;
+  override(): Promise<Image | undefined>;
+  snapshots(scope: SnapshotScope): Promise<Snapshot[]>;
   // Registers whatever the run's machines share, such as the public key.
   prepare(run: BurstRun): Promise<void>;
   create(run: BurstRun, job: Job): Promise<Machine>;
   // Waits until the machine runs, and returns it with its public address.
   ready(run: BurstRun, job: Job, machine: Machine): Promise<Machine>;
   capture(run: BurstRun, job: Job, machine: Machine, name: string): Promise<Snapshot>;
-  remove(run: BurstRun, machine: Machine): Promise<void>;
+  remove(machine: Machine): Promise<void>;
   // True when the cloud took this machine back and the run asked for a lane
   // it took back to run once more on a machine it cannot. Asked before the
   // machine is removed.
   relaunchOnDemand?(run: BurstRun, machine: Machine): Promise<boolean>;
-  deleteSnapshot(run: BurstRun, snapshot: Snapshot): Promise<void>;
+  deleteSnapshot(snapshot: Snapshot, signal: AbortSignal): Promise<void>;
   // Removes what prepare registered, once every machine is gone.
   finish(run: BurstRun): Promise<void>;
 }

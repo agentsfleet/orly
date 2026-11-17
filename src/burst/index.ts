@@ -116,11 +116,11 @@ async function here(request: Request, dependencies: BurstDependencies, settings:
 
 async function cloud(request: Request, name: CloudProviderName, dependencies: BurstDependencies, settings: BurstSettings): Promise<number> {
   const provider = new CLOUD_PROVIDERS[name](settings, dependencies.fetch);
-  const run = await stage(request, dependencies, settings);
   if (request.prune) {
-    await cloudPrune(provider, run);
+    await cloudPrune(provider, { repo: await repositoryName(dependencies.root), settings, write: dependencies.write, signal: dependencies.signal });
     return 0;
   }
+  const run = await stage(request, dependencies, settings);
   if (request.snapshot) {
     const snapshot = await cloudSnapshot(provider, run);
     if (!snapshot) return 1;
@@ -134,16 +134,11 @@ async function cloud(request: Request, name: CloudProviderName, dependencies: Bu
   return report(await cloudLanes(provider, run, request.lanes, request.useSnapshot), started, dependencies.write);
 }
 
-// Everything a cloud run reads before a machine exists. Pruning needs only
-// the repository's name, so it stages nothing.
+// Everything a cloud run reads before a machine exists.
 async function stage(request: Request, dependencies: BurstDependencies, settings: BurstSettings): Promise<BurstRun> {
   const { root } = dependencies;
   const repo = await repositoryName(root);
   const io = { write: dependencies.write, signal: dependencies.signal };
-  if (request.prune) {
-    const config = await readConfig(root) ?? { schema_version: 1, orly_version: "", packs: [], commands: {}, surfaces: undefined, managed: [] };
-    return { ...io, root, config, settings, ref: "", repo, runId: "", runDirectory: "", bundle: "", key: "", publicKey: "", knownHosts: "", keep: false };
-  }
   const ref = await resolveRef(root, request.ref);
   const config = await configAt(root, ref);
   // Checked before the key pair exists, so a typo leaves no key behind.

@@ -46,13 +46,16 @@ async function run(request: Request): Promise<CommandResult> {
     writeFileSync(join(request.receipt, COMMAND_FILES.pid), String(child.pid), { mode: PRIVATE_FILE_MODE });
     let outputBytes = 0;
     let failure: string | undefined;
-    const stop = (reason: string) => {
+    let failureKind: "limit" | "cancelled" | undefined;
+    // The first reason to stop wins, and says whether a limit or a cancellation stopped it.
+    const stop = (reason: string, kind: "limit" | "cancelled" = "cancelled") => {
       failure ??= reason;
+      failureKind ??= kind;
       if (stopped) return;
       stopOwnedGroup(child.pid);
       stopped = true;
     };
-    const timer = setTimeout(() => stop("deadline exceeded"), request.limits.timeout_ms);
+    const timer = setTimeout(() => stop("deadline exceeded", "limit"), request.limits.timeout_ms);
     const owner = setInterval(() => {
       try { process.kill(request.parent_pid, 0); }
       catch (error) { if (hasErrorCode(error, MISSING_PROCESS)) stop("gate owner exited"); }
@@ -65,11 +68,11 @@ async function run(request: Request): Promise<CommandResult> {
     try {
       const onBytes = (size: number) => {
         outputBytes += size;
-        if (outputBytes > request.limits.output_bytes) stop("output limit exceeded");
+        if (outputBytes > request.limits.output_bytes) stop("output limit exceeded", "limit");
       };
       await Promise.all([capture(child.stdout, stdout, onBytes), capture(child.stderr, stderr, onBytes), child.exited]);
       if (child.signalCode) failure ??= `stopped by ${child.signalCode}`;
-      return { exit_code: child.exitCode, elapsed_ms: Math.ceil(performance.now() - started), output_bytes: outputBytes, ...(failure ? { failure, failure_kind: failure === "deadline exceeded" || failure === "output limit exceeded" ? "limit" : "cancelled" } : {}) };
+      return { exit_code: child.exitCode, elapsed_ms: Math.ceil(performance.now() - started), output_bytes: outputBytes, ...(failure ? { failure, failure_kind: failureKind ?? "cancelled" } : {}) };
     } finally {
       clearTimeout(timer);
       clearInterval(owner);

@@ -44,8 +44,8 @@ export class E2eNodes implements CloudProvider {
     this.#api = new E2eApi(settings.e2e, fetcher);
   }
 
-  cost(machine: Machine | undefined): string {
-    return machine ? `₹${RUPEES_PER_HOUR}/h + GST (billed hourly)` : "none";
+  cost(): string {
+    return `₹${RUPEES_PER_HOUR}/h + GST (billed hourly)`;
   }
 
   storage(): string {
@@ -124,11 +124,11 @@ export class E2eNodes implements CloudProvider {
     }
   }
 
-  async remove(_run: BurstRun, machine: Machine): Promise<void> {
+  async remove(machine: Machine): Promise<void> {
     await this.#api.deleteVm(machine.id);
   }
 
-  async deleteSnapshot(_run: BurstRun, snapshot: Snapshot): Promise<void> {
+  async deleteSnapshot(snapshot: Snapshot): Promise<void> {
     await this.#api.deleteSnapshot(snapshot.id);
   }
 

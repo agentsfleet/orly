@@ -1,6 +1,6 @@
 import type { Captured } from "./process";
 import type { BurstSettings } from "./settings";
-import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot } from "./types";
+import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot, SnapshotScope } from "./types";
 
 import { z } from "zod";
 
@@ -67,8 +67,7 @@ export class AwsSpot implements CloudProvider {
     this.user = settings.aws.user;
   }
 
-  cost(machine: Machine | undefined): string {
-    if (!machine) return "none";
+  cost(machine: Machine): string {
     return machine.hourly === undefined ? "on-demand rate" : `$${machine.hourly}/h (spot)`;
   }
 
@@ -85,8 +84,8 @@ export class AwsSpot implements CloudProvider {
     return image ? { id: image, name: image, snapshot: image.startsWith("ami-") } : undefined;
   }
 
-  async snapshots(run: BurstRun): Promise<Snapshot[]> {
-    return this.#describeImages(["--owners", "self", "--filters", `Name=tag:orly-burst,Values=${run.repo}`, "Name=state,Values=available"], run.signal);
+  async snapshots(scope: SnapshotScope): Promise<Snapshot[]> {
+    return this.#describeImages(["--owners", "self", "--filters", `Name=tag:orly-burst,Values=${scope.repo}`, "Name=state,Values=available"], scope.signal);
   }
 
   async prepare(run: BurstRun): Promise<void> {
@@ -176,13 +175,13 @@ export class AwsSpot implements CloudProvider {
   }
 
   // Cleanup takes no cancellation signal: it is what a cancellation runs.
-  async remove(_run: BurstRun, machine: Machine): Promise<void> {
+  async remove(machine: Machine): Promise<void> {
     await this.#aws(["ec2", "terminate-instances", "--instance-ids", machine.id]);
   }
 
-  async deleteSnapshot(run: BurstRun, snapshot: Snapshot): Promise<void> {
-    await this.#aws(["ec2", "deregister-image", "--image-id", snapshot.id], { signal: run.signal });
-    for (const part of snapshot.parts) await this.#aws(["ec2", "delete-snapshot", "--snapshot-id", part], { signal: run.signal });
+  async deleteSnapshot(snapshot: Snapshot, signal: AbortSignal): Promise<void> {
+    await this.#aws(["ec2", "deregister-image", "--image-id", snapshot.id], { signal });
+    for (const part of snapshot.parts) await this.#aws(["ec2", "delete-snapshot", "--snapshot-id", part], { signal });
   }
 
   // Every instance tagged with the run is terminated here, including one

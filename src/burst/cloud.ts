@@ -1,6 +1,6 @@
 import type { Environment } from "./settings";
 import type { StagedDirectory } from "./ssh";
-import type { BurstRun, CloudProvider, Image, Job, LaneResult, Machine, Snapshot, Status } from "./types";
+import type { BurstRun, CloudProvider, Image, Job, LaneResult, Machine, Snapshot, SnapshotScope, Status } from "./types";
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
@@ -60,28 +60,28 @@ export async function cloudSnapshot(provider: CloudProvider, run: BurstRun): Pro
 
 // Keeps the newest snapshots, by the timestamp their names carry, and
 // deletes the rest.
-export async function cloudPrune(provider: CloudProvider, run: BurstRun): Promise<Snapshot[]> {
-  const snapshots = await repositorySnapshots(provider, run);
-  const doomed = snapshots.slice(run.settings.snapshotKeep);
+export async function cloudPrune(provider: CloudProvider, scope: SnapshotScope): Promise<Snapshot[]> {
+  const snapshots = await repositorySnapshots(provider, scope);
+  const doomed = snapshots.slice(scope.settings.snapshotKeep);
   for (const snapshot of doomed) {
-    await provider.deleteSnapshot(run, snapshot);
-    run.write(`orly burst: deleted snapshot ${snapshot.name} (${snapshot.id})`);
+    await provider.deleteSnapshot(snapshot, scope.signal);
+    scope.write(`orly burst: deleted snapshot ${snapshot.name} (${snapshot.id})`);
   }
-  run.write(`orly burst: ${provider.name} keeps ${snapshots.length - doomed.length} snapshot(s) of ${run.repo}`);
+  scope.write(`orly burst: ${provider.name} keeps ${snapshots.length - doomed.length} snapshot(s) of ${scope.repo}`);
   return doomed;
 }
 
-async function repositorySnapshots(provider: CloudProvider, run: BurstRun): Promise<Snapshot[]> {
+async function repositorySnapshots(provider: CloudProvider, scope: SnapshotScope): Promise<Snapshot[]> {
   // The whole name, so repository `web` never claims `orly-burst-web-app-…`;
   // the repository slug holds only lowercase letters, digits and hyphens.
-  const name = new RegExp(`^orly-burst-${run.repo}-\\d{12}$`);
-  return (await provider.snapshots(run)).filter((snapshot) => name.test(snapshot.name)).sort((left, right) => right.name.localeCompare(left.name));
+  const name = new RegExp(`^orly-burst-${scope.repo}-\\d{12}$`);
+  return (await provider.snapshots(scope)).filter((snapshot) => name.test(snapshot.name)).sort((left, right) => right.name.localeCompare(left.name));
 }
 
 // An explicit image wins, then the newest snapshot unless --no-snapshot, and
 // the base image when the repository has none yet.
 async function chooseImage(provider: CloudProvider, run: BurstRun, useSnapshot: boolean): Promise<Image> {
-  const override = await provider.override(run);
+  const override = await provider.override();
   if (override) return override;
   const newest = useSnapshot ? (await repositorySnapshots(provider, run))[0] : undefined;
   return newest ? { id: newest.launchId, name: newest.name, snapshot: true } : provider.baseImage();
@@ -115,7 +115,7 @@ async function laneAttempt(provider: CloudProvider, run: BurstRun, job: Job, inp
     if (machine) await release(provider, run, machine);
   }
   const minutes = machine ? Math.ceil((Date.now() - job.started) / MINUTE_MS) : 0;
-  return { relaunch, result: { lane: job.name, provider: provider.name, machine: machine?.label ?? "none", minutes, cost: provider.cost(machine), status, evidence: job.evidence } };
+  return { relaunch, result: { lane: job.name, provider: provider.name, machine: machine?.label ?? "none", minutes, cost: machine ? provider.cost(machine) : "none", status, evidence: job.evidence } };
 }
 
 function script(run: BurstRun, job: Job, inputs: LaneInputs): Promise<string> {
@@ -136,7 +136,7 @@ async function release(provider: CloudProvider, run: BurstRun, machine: Machine)
     return;
   }
   try {
-    await provider.remove(run, machine);
+    await provider.remove(machine);
   } catch (error) {
     run.write(`orly burst: could not delete ${provider.name} machine ${machine.id}: ${messageOf(error)}; delete it by hand, it bills until then`);
   }
