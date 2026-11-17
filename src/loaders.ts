@@ -126,14 +126,8 @@ async function upsertPointer(targetRoot: string, host: string, orlyFile: string)
     return WRITTEN;
   }
   const current = await Bun.file(path).text();
-  const open = current.indexOf(POINTER_OPEN);
-  const close = current.indexOf(POINTER_CLOSE);
-  if (open >= 0 && close > open) {
-    const replaced = `${current.slice(0, open)}${block}${current.slice(close + POINTER_CLOSE.length)}`;
-    if (replaced === current) return CURRENT;
-    await Bun.write(path, replaced);
-    return WRITTEN;
-  }
+  const replaced = await replaceBlock(path, current, block);
+  if (replaced) return replaced;
   await Bun.write(path, `${current.replace(/\s*$/, "")}\n\n${block}\n`);
   return WRITTEN;
 }
@@ -165,14 +159,8 @@ async function upsertClaudeLoader(targetRoot: string, host: string): Promise<Ver
     await Bun.write(path, content);
     return WRITTEN;
   }
-  const start = current.indexOf(POINTER_OPEN);
-  const end = current.indexOf(POINTER_CLOSE);
-  if (start >= 0 && end > start) {
-    const updated = `${current.slice(0, start)}${claudeBlock(host)}${current.slice(end + POINTER_CLOSE.length)}`;
-    if (updated === current) return CURRENT;
-    await Bun.write(path, updated);
-    return WRITTEN;
-  }
+  const replaced = await replaceBlock(path, current, claudeBlock(host));
+  if (replaced) return replaced;
   if (current !== previousClaudeLoader(host) && current !== previousClaudeLoader(PREVIOUS_AGENTS_FILENAME)) return THEIRS;
   await Bun.write(path, content);
   return WRITTEN;
@@ -264,4 +252,15 @@ async function upsertOpencodeLoader(targetRoot: string, entries: string[], obsol
 
 function serialise(config: object): string {
   return `${JSON.stringify(config, undefined, JSON_INDENT)}\n`;
+}
+
+// Swaps the delimited block in `current` for `block`; undefined when the file has none.
+async function replaceBlock(path: string, current: string, block: string): Promise<Verdict | undefined> {
+  const open = current.indexOf(POINTER_OPEN);
+  const close = current.indexOf(POINTER_CLOSE);
+  if (open < 0 || close <= open) return undefined;
+  const replaced = `${current.slice(0, open)}${block}${current.slice(close + POINTER_CLOSE.length)}`;
+  if (replaced === current) return CURRENT;
+  await Bun.write(path, replaced);
+  return WRITTEN;
 }

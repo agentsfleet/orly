@@ -8,7 +8,7 @@ import { DEFAULT_COMMAND_OUTPUT_BYTES, DEFAULT_COMMAND_TIMEOUT_MS } from "./comm
 // the path they were handed, so every spawn in orly passes this scrubbed copy.
 // Bun does not propagate a delete from process.env to a child, so the copy is
 // explicit rather than a mutation.
-const GIT_SCOPE_VARIABLES = [
+export const GIT_SCOPE_VARIABLES = [
   "GIT_DIR", "GIT_INDEX_FILE", "GIT_WORK_TREE", "GIT_COMMON_DIR",
   "GIT_PREFIX", "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES",
 ];
