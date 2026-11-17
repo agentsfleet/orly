@@ -1,17 +1,17 @@
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { git } from "../git_env";
-import { EXECUTE_BITS, OrlyError } from "../model";
+import { EXECUTE_BITS, MODE_EXECUTABLE, OrlyError } from "../model";
 import type { PlannedFile } from "./plan";
 
 export const HOOKS_DIRECTORY = ".orly/hooks";
-const HOOKS_PATH_KEY = "core.hooksPath";
+export const HOOKS_PATH_KEY = "core.hooksPath";
 const GIT_CONFIG = "config";
 const HOOK_GATES = [["pre-commit", "work"], ["pre-push", "verify"]] as const;
 
 export function plannedHooks(version: string): PlannedFile[] {
   if (!/^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?$/.test(version)) throw new OrlyError("hook package version must be a release version");
-  return HOOK_GATES.map(([name, gate]) => ({ target: `${HOOKS_DIRECTORY}/${name}`, content: Buffer.from(hookScript(gate, version)), mode: "0755" }));
+  return HOOK_GATES.map(([name, gate]) => ({ target: `${HOOKS_DIRECTORY}/${name}`, content: Buffer.from(hookScript(gate, version)), mode: MODE_EXECUTABLE }));
 }
 
 export function checkHooks(root: string, force: boolean): void {

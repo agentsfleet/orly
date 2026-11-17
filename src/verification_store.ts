@@ -8,6 +8,7 @@ import { z } from "zod";
 import { contentDigest } from "./config";
 import { DEFAULT_COMMAND_OUTPUT_BYTES } from "./command_limits";
 import { gitOutput } from "./git_env";
+import { hasErrorCode, hashContent } from "./model";
 
 type Completion = z.infer<typeof completionSchema>;
 export type Attempt = { path: string; id: string; key: Uint8Array; previous?: string };
@@ -35,7 +36,7 @@ export function verificationState(root: string): string {
 }
 
 export function beginAttempt(state: string, lane: string): Attempt {
-  const parent = join(state, contentDigest(lane).slice("sha256:".length));
+  const parent = join(state, hashContent(lane));
   privateDirectory(parent);
   syncDirectory(state);
   const names = readdirSync(parent).sort();
@@ -98,7 +99,7 @@ export class VerificationLock {
     this.#path = join(state, "lock");
     try { mkdirSync(this.#path, { mode: 0o700 }); }
     catch (error) {
-      if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error;
+      if (!hasErrorCode(error, "EEXIST")) throw error;
       throw new Error(`verification is already running or interrupted; confirm workloads stopped before clearing ${state}`);
     }
     this.#owner = join(this.#path, `${process.pid}.${randomUUID()}`);
@@ -144,7 +145,7 @@ function syncDirectory(path: string): void {
 
 function privateDirectory(path: string): void {
   try { mkdirSync(path, { mode: 0o700 }); }
-  catch (error) { if (!(error instanceof Error && "code" in error && error.code === "EEXIST")) throw error; }
+  catch (error) { if (!hasErrorCode(error, "EEXIST")) throw error; }
   const stat = lstatSync(path);
   if (!stat.isDirectory() || stat.isSymbolicLink() || (stat.mode & 0o077) !== 0) throw new Error("verification state must be a private directory");
 }

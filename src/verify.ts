@@ -6,11 +6,10 @@ import { managedContent } from "./installation/plan";
 import { hashContent, isString, objectArray, objectValue, RulesModel } from "./model";
 import { Renderer } from "./render";
 import { catalogueFindings } from "./standards";
+import { AGENTS_FILENAME } from "./loaders";
 
 const PASS_RESULT = "pass";
 const FAIL_RESULT = "fail";
-const REGISTRY_PACKS_LABEL = "registry packs";
-const AGENTS_FILENAME = "AGENTS.md";
 const DETAIL_SEPARATOR = "; ";
 
 type VerificationCheck = {
@@ -50,7 +49,7 @@ function check(name: string, findings: string[]): VerificationCheck {
 // A target the checkout does not carry is silence, not drift: a consumer-only
 // path (a skill copied into `.claude/skills/`) is absent here by design.
 export async function packSourceErrors(model: RulesModel, packs: string[]): Promise<string[]> {
-  const registryPacks = objectValue(model.registry.packs, REGISTRY_PACKS_LABEL);
+  const registryPacks = model.packs;
   const known = new Set(Object.keys(registryPacks));
   const findings = new Set<string>();
   for (const name of packs) {

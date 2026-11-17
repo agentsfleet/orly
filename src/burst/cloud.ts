@@ -9,6 +9,7 @@ import { remoteScript } from "./job";
 import { resolveSecrets } from "./process";
 import { archiveDirectories, forgetKeyPair, reachable, runOverSsh } from "./ssh";
 import { LANE_PREFIX, MINUTE_MS } from "./types";
+import { messageOf } from "../model";
 
 // What only a lane receives: its secrets and its copied directories.
 type LaneInputs = { secrets: Environment; directories: readonly StagedDirectory[] };
@@ -107,7 +108,7 @@ async function laneAttempt(provider: CloudProvider, run: BurstRun, job: Job, inp
     await reachable(run, job, machine, provider.user);
     status = await runOverSsh(run, job, machine, provider.user, await script(run, job, inputs), inputs.directories);
   } catch (error) {
-    run.write(`orly burst: lane=${job.name} ${error instanceof Error ? error.message : String(error)}`);
+    run.write(`orly burst: lane=${job.name} ${messageOf(error)}`);
     if (machine) status = run.signal.aborted ? "cancelled" : Date.now() >= job.deadline ? "deadline" : "interrupted";
   } finally {
     if (machine && status === "interrupted" && !job.onDemand && provider.relaunchOnDemand) relaunch = await provider.relaunchOnDemand(run, machine).catch(() => false);
@@ -137,7 +138,7 @@ async function release(provider: CloudProvider, run: BurstRun, machine: Machine)
   try {
     await provider.remove(run, machine);
   } catch (error) {
-    run.write(`orly burst: could not delete ${provider.name} machine ${machine.id}: ${error instanceof Error ? error.message : String(error)}; delete it by hand, it bills until then`);
+    run.write(`orly burst: could not delete ${provider.name} machine ${machine.id}: ${messageOf(error)}; delete it by hand, it bills until then`);
   }
 }
 

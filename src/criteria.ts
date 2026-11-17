@@ -2,9 +2,9 @@ import type { Criterion, CriterionContext } from "./criteria_support";
 import { criterion } from "./criteria_support";
 import { gitOutput } from "./git_env";
 import { scanChangedDocuments } from "./doc_changes";
-import { JsonObject } from "./model";
-import { readConfigSync, RepoConfig } from "./config";
-import { classifyBranch, SurfaceReport } from "./surfaces";
+import { JsonObject, messageOf } from "./model";
+import { NOT_INSTALLED, readConfigSync, RepoConfig } from "./config";
+import { classifyBranch, DEFAULT_BRANCHES, SurfaceReport } from "./surfaces";
 import { commandSetupErrors } from "./validation";
 import { limitsFor } from "./command_limits";
 import { runVerification } from "./verification";
@@ -12,8 +12,6 @@ import { runVerification } from "./verification";
 
 type CommandTier = typeof CONFORM_TIER | typeof FAST_TIER | typeof ALL_TIER;
 
-const DEFAULT_BRANCHES = ["master", "main"];
-const UNINSTALLED = "no .orly/orly.json here — run `orly init` first";
 const REV_PARSE = "rev-parse";
 const HEAD = "HEAD";
 const UPSTREAM = "@{upstream}";
@@ -92,11 +90,11 @@ function repositoryConfig(): Criterion {
   return criterion(REPO_CONFIG, (context) => {
     try {
       const config = readConfigSync(context.root);
-      if (!config) return { ok: false, detail: UNINSTALLED };
+      if (!config) return { ok: false, detail: NOT_INSTALLED };
       const errors = commandSetupErrors(config.commands);
       return { ok: errors.length === 0, detail: errors.length > 0 ? errors.join(DETAIL_SEPARATOR) : `${Object.keys(config.commands).length} command(s) declared` };
     } catch (error) {
-      return { ok: false, detail: error instanceof Error ? error.message : String(error) };
+      return { ok: false, detail: messageOf(error) };
     }
   });
 }
@@ -154,7 +152,7 @@ function docsLanguage(): Criterion {
         `${finding.file}:${finding.line} ${finding.code}: ${finding.message}`);
       return { ok: false, detail: `${findings.length} finding(s): ${named.join(DETAIL_SEPARATOR)}` };
     } catch (error) {
-      return { ok: false, detail: error instanceof Error ? error.message : String(error) };
+      return { ok: false, detail: messageOf(error) };
     }
   });
 }

@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { basename, join } from "node:path";
 
-import { CONFIG_PATH, parseConfig, readConfig } from "../config";
+import { CONFIG_PATH, NOT_INSTALLED, parseConfig, readConfig } from "../config";
 import { UNSCOPED_ENVIRONMENT } from "../git_env";
 import { isObject, OrlyError } from "../model";
 import { cloudLanes, cloudPrune, cloudSnapshot } from "./cloud";
@@ -104,7 +104,7 @@ async function listLanes(dependencies: BurstDependencies): Promise<number> {
 
 async function here(request: Request, dependencies: BurstDependencies, settings: BurstSettings): Promise<number> {
   const config = await readConfig(dependencies.root);
-  if (!config) throw new OrlyError(`no ${CONFIG_PATH} here — run \`orly init\` first`);
+  if (!config) throw new OrlyError(NOT_INSTALLED);
   const context = { root: dependencies.root, config, settings, write: dependencies.write, signal: dependencies.signal };
   if (request.snapshot) {
     const status = await hereWarm(context);

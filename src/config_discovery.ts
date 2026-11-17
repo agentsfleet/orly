@@ -1,10 +1,9 @@
 import { existsSync, readdirSync } from "node:fs";
 import { extname, join, relative } from "node:path";
-import { isObject, objectValue, OrlyError, readJsonObject, stringArray, type RulesModel } from "./model";
+import { isObject, OrlyError, readJsonObject, stringArray, type RulesModel } from "./model";
 import { CONFIG_PATH } from "./config";
 
 const NEWLINE = "\n";
-const REGISTRY_PACKS_LABEL = "registry packs";
 const EXTENSIONS_FIELD = "extensions";
 const CONFORM_COMMAND = "conform";
 const MAKE_COMMAND = "make";
@@ -46,7 +45,7 @@ const VERIFY_TARGETS: Array<[string, string[]]> = [
 // No profile name, no central registry — the repository decides by its own
 // contents, so a fresh clone installs correctly with nothing to look up.
 export function selectPacks(model: RulesModel, targetRoot: string, requested: string[], managed: Set<string> = new Set()): string[] {
-  const packs = objectValue(model.registry.packs, REGISTRY_PACKS_LABEL);
+  const packs = model.packs;
   const present = scanExtensions(targetRoot, managed);
   const selected = new Set<string>();
   for (const [name, value] of Object.entries(packs)) {

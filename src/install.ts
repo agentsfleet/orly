@@ -3,18 +3,17 @@ import { dirname, extname, join, resolve } from "node:path";
 import { git } from "./git_env";
 import { CONFIG_PATH, contentDigest, readConfig, seedConfig, serialiseConfig, type RepoConfig } from "./config";
 import { selectPacks } from "./config_discovery";
-import { assertWritableInside, applyMode, modeLabel, OrlyError, MODE_EXECUTABLE, MODE_REGULAR, type RulesModel } from "./model";
+import { applyMode, assertWritableInside, messageOf, MODE_EXECUTABLE, MODE_REGULAR, modeLabel, OrlyError, type RulesModel } from "./model";
 import { installLoaders, loaderTargets, type Layout } from "./loaders";
 import { referenceClosureErrors } from "./references";
 import { planFiles, resolveLayout, type PlannedFile } from "./installation/plan";
 import { migrationDeletes, uncommittedPaths } from "./installation/migration";
-import { plannedHooks, checkHooks, configureHooks, hooksPath, HOOKS_DIRECTORY } from "./installation/hooks";
+import { checkHooks, configureHooks, HOOKS_DIRECTORY, HOOKS_PATH_KEY, hooksPath, plannedHooks } from "./installation/hooks";
 import { diskDigest, InstallTransaction, type FileWrite, type InstallCheckpoint } from "./installation/transaction";
 import { installationLock } from "./installation/lock";
 
 const INSTALL_DIRECTORY = ".orly";
 const MANAGED_KIND = "managed file";
-const HOOKS_PATH_KEY = "core.hooksPath";
 type InstallError = { path: string; message: string; suggestion: string };
 export type InstallResult = { ok: boolean; packs: string[]; written: string[]; skipped: string[]; errors: InstallError[] };
 type InstallOptions = { targetRoot: string; force: boolean; installHooks: boolean; orlyVersion: string; requestedPacks?: string[]; checkpoint?: InstallCheckpoint };
@@ -150,5 +149,5 @@ function requireWorkTree(root: string): void {
 }
 
 function failure(packs: string[], path: string, error: unknown): InstallResult {
-  return { ok: false, packs, written: [], skipped: [], errors: [{ path, message: error instanceof Error ? error.message : String(error), suggestion: "reconcile the named conflict and repeat the same version's update" }] };
+  return { ok: false, packs, written: [], skipped: [], errors: [{ path, message: messageOf(error), suggestion: "reconcile the named conflict and repeat the same version's update" }] };
 }

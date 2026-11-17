@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { z } from "zod";
+import { messageOf } from "./model";
 
 // A standard is a Markdown page of rule blocks. Each block opens with
 // `### <ID> — <statement>` and carries the five fields below as
@@ -127,7 +128,7 @@ function readInventory(root: string): Inventory | string {
   try {
     text = readFileSync(path, UTF8);
   } catch (error) {
-    return `${RULE_INVENTORY}: cannot be read: ${error instanceof Error ? error.message : String(error)}`;
+    return `${RULE_INVENTORY}: cannot be read: ${messageOf(error)}`;
   }
   try {
     const parsed = inventorySchema.safeParse(JSON.parse(text));

@@ -1,7 +1,7 @@
 import { isObject, JsonObject, stringArray } from "./model";
 import { gitOutput } from "./git_env";
 
-const DEFAULT_BRANCHES = ["main", "master"];
+export const DEFAULT_BRANCHES = ["main", "master"];
 const ORIGIN_PREFIX = "origin/";
 const SURFACES_FIELD = "surfaces";
 const USER_FIELD = "user";

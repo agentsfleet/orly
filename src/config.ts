@@ -10,6 +10,8 @@ import { commandLimitsSchema, type LaneLimits } from "./command_limits";
 
 const ORACLE_DIRECTORY = ".orly";
 export const CONFIG_PATH = `${ORACLE_DIRECTORY}/orly.json`;
+// What every command that needs an installed repository says without one.
+export const NOT_INSTALLED = `no ${CONFIG_PATH} here — run \`orly init\` first`;
 
 const CONFIG_SCHEMA_VERSION = 1;
 const JSON_INDENT = 2;

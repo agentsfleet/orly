@@ -84,6 +84,11 @@ function safeRealpath(path: string): string {
 }
 
 export class RulesModel {
+  // The registry's packs, by name; every reader goes through here.
+  get packs(): JsonObject {
+    return objectValue(this.registry.packs, "registry packs");
+  }
+
   readonly root: string;
   readonly registry: JsonObject;
 
@@ -200,6 +205,16 @@ export function isString(value: unknown): value is string {
 export function objectValue(value: unknown, label: string): JsonObject {
   if (!isObject(value)) throw new OrlyError(`${label} must be an object`);
   return value;
+}
+
+// A thrown value's message, whatever was thrown.
+export function messageOf(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+// Whether a thrown value is a system error with this code, such as EEXIST.
+export function hasErrorCode(error: unknown, code: string): boolean {
+  return error instanceof Error && "code" in error && error.code === code;
 }
 
 export function stringArray(value: unknown, label: string): string[] {

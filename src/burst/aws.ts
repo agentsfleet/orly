@@ -4,7 +4,7 @@ import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot } fr
 
 import { z } from "zod";
 
-import { OrlyError } from "../model";
+import { messageOf, OrlyError } from "../model";
 import { captureProcess, pause, until } from "./process";
 import { required } from "./settings";
 import { callerAddress } from "./ssh";
@@ -200,7 +200,7 @@ export class AwsSpot implements CloudProvider {
     const strays = tagged.code === 0 ? tagged.stdout.split(/\s+/).filter((id) => id.startsWith("i-")) : [];
     if (strays.length > 0) {
       await this.#aws(["ec2", "terminate-instances", "--instance-ids", ...strays], { allowFailure: true });
-      await this.#awaitTerminated(strays).catch((error: unknown) => run.write(`orly burst: ${error instanceof Error ? error.message : String(error)}`));
+      await this.#awaitTerminated(strays).catch((error: unknown) => run.write(`orly burst: ${messageOf(error)}`));
     }
     const cleanups = [...(this.#group ? [["ec2", "delete-security-group", "--group-id", this.#group]] : []), ["ec2", "delete-key-pair", "--key-name", name]];
     for (const cleanup of cleanups) {

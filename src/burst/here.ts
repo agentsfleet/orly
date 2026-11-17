@@ -2,9 +2,9 @@ import type { RepoConfig } from "../config";
 import type { BurstSettings, Environment } from "./settings";
 import type { Io, LaneResult, Status } from "./types";
 
-import { streamProcess } from "./process";
-import { resolveSecrets } from "./process";
+import { resolveSecrets, streamProcess } from "./process";
 import { LANE_PREFIX, MINUTE_MS } from "./types";
+import { messageOf } from "../model";
 
 type HereRequest = Io & { root: string; config: RepoConfig; settings: BurstSettings };
 
@@ -29,7 +29,7 @@ export async function hereLanes(request: HereRequest, lanes: string[]): Promise<
   try {
     secrets = await resolveSecrets(burst.secrets ?? {}, request.settings.env);
   } catch (error) {
-    return refuse(request, lanes, error instanceof Error ? error.message : String(error));
+    return refuse(request, lanes, messageOf(error));
   }
   const results: LaneResult[] = [];
   for (const lane of lanes) {
@@ -63,7 +63,7 @@ async function runAll(request: HereRequest, invocations: string[][], env: Enviro
       const outcome = await streamProcess(argv, { env, cwd: request.root, lines: request.write, deadline, signal: request.signal });
       status = "code" in outcome ? outcome.code : outcome.stopped;
     } catch (error) {
-      request.write(`orly burst: ${error instanceof Error ? error.message : String(error)}`);
+      request.write(`orly burst: ${messageOf(error)}`);
       status = "not_run";
     }
     if (status !== 0) return status;
