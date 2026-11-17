@@ -1,63 +1,25 @@
 # Orly architecture
 
-Orly does two jobs. It renders one rules file, and it proves the boundary
-before a Pull Request (PR) opens. Where it stores things changed after this
-document was first written; "Why it's materialised" explains it.
+Orly does two jobs. It materialises one repository's rules from shared sources, and it proves the boundary before a Pull Request (PR) opens.
 
-## Topology
+## How rules reach a repository
 
 ```text
-core/operating-model.md   standards/**   skills/**   registry.json
-                              │
-                         bin/orly
-                              │
-          ┌───────────────────┴───────────────────┐
-          │                                       │
-   orly update                              orly gate
-          │                                       │
-   AGENTS.md (repo root)                  reads git + the tree,
-          │                               runs the declared commands,
-   ~/.claude/CLAUDE.md ─┐                 prints green or red
-   ~/.codex/AGENTS.md  ─┼─ symlinks              │
-   opencode, amp       ─┘                  exit 0 or 1
+core/operating-model.md   standards/**   skills/**   agents/**   registry.json
+                                   │
+                    orly init / orly update  (packs the repository selects)
+                                   │
+   .orly/AGENTS.md   .orly/standards/   .orly/skills/   host skill copies   reviewer agent
+                                   │
+                  .orly/orly.json records the version and every managed path
 ```
 
-On this machine one file is generated: the root `AGENTS.md`. Every agent home
-here links to it, so a rule edit is one commit and reaches every session in
-this checkout at once. That property is local to Kishore's own machine.
+`orly init` writes the selected packs into the repository and records them in `.orly/orly.json`.
+`orly update` re-materialises at the installed engine version, and `orly doctor` reports drift between the record and the files.
+A repository needs no orly checkout to read its rules or run its gates; [installed content](architecture/installation.md) lists what is managed.
 
-Every other repository gets its rules a different way. `orly init` materialises
-the packs its own sources select into that repository: the rendered `AGENTS.md`,
-the standards, the skills, the reviewer agent and the hooks. It writes
-`.orly/orly.json` with the engine version, every file it wrote, and the
-repository's own packs, commands and surfaces.
-
-`orly update` re-materialises against the installed engine version, and
-`orly doctor` reports drift between the lock and disk. A materialised
-repository needs no checkout of this one to read its rules or run its gates.
-
-## Why it's materialised
-
-An earlier model (M01) refused per-repository copies. They had cost a
-re-baseline commit per edit and a manifest that broke when the tool
-changed. Drift went unseen: three of four consumers were stale.
-
-M01 derived instead: one rendered `AGENTS.md`, symlinked into every agent
-home, with gate scripts read live through `$ORLY_ROOT`. That needs this
-checkout at a known path, which a fresh machine, a Continuous Integration (CI)
-runner or a remote fleet container does not have.
-
-`orly init` (M03) restored storage without the old failure. `orly update`
-turns a rule change into one command per repository, and `orly doctor`
-reports drift between the lock and the files on disk.
-
-cache-kit.rs showed both failures in one repository. Its `.orly/` snapshot sat
-frozen for four weeks with no update path. Its generated `AGENTS.md` named a
-Rust crate `agentsfleet`, a product leak M03 closed with opt-in packs.
-
-`orly verify` checks the ruleset in an orly checkout. It validates the
-standards catalogue, compares the committed root `AGENTS.md` with a fresh
-render, and compares every pack copy with its source.
+Copies won over a shared live checkout because a fresh machine, a Continuous Integration (CI) runner or a cloud task has no such checkout.
+In an orly checkout, `orly verify` validates the standards catalogue and compares the root `AGENTS.md` and every pack copy with its source.
 
 ## Gates
 
@@ -65,190 +27,72 @@ render, and compares every pack copy with its source.
 
 | Gate | Proves |
 |---|---|
-| `work` | repository configuration and the declared `conform` command over the working tree |
-| `verify` | documentation checks and non-test `verify.*` commands; unfinished Sections may be pushed |
-| `pr` | branch, clean tree, exact pushed revision, docs surface, and every declared `verify.*` command |
+| `work` | repository configuration and the declared `conform` command |
+| `verify` | documentation checks and the non-test `verify.*` commands |
+| `pr` | branch, clean tree, exact pushed revision, documentation, and every declared `verify.*` command |
 
-The `orly-build` and `orly-ship` skills carry the sequence. Full unit, integration,
-and memory suites run at the PR boundary.
+Every criterion reads an exit code or a file. Prerequisite failures block commands, and blocked or unrun groups never count as passes.
 
-`burst.*` commands sit outside every gate. A burst lane rents a machine by the
-hour, and the gates run on every commit and push, so no gate selects one.
-`orly burst` runs them on request; [the burst page](BURST.md) covers setup and
-costs.
+- **Slow lanes are conditional.** `verify.integration` and `verify.memory` run only when the branch diff carries code files.
+- **The docs gate follows the diff.** A change under `surfaces.user` with no change under `surfaces.docs` is red; tests and specs never count.
+- **`docs.language`** rejects mechanical language findings in changed Markdown and MDX paragraphs, and template slots left in a changed spec.
+- **A worktree is its repository.** Commands run in the worktree, which resolves to its primary checkout through Git's shared object store.
 
-Checks run fresh by default; only an explicit reviewed hermetic policy and invocation can reuse complete matching evidence. No assumption about a custom pre-push hook removes a check.
-
-Baselines come from
-the CI run of the branch's base commit and sit beside the branch counts in the
-Pull Request. A lane CI did not run on that commit is measured at the merge base.
-
-Every criterion is mechanical: it reads an exit code or a file. Claims that
-cannot be proven that way stay prose and are graded by the spec's rubric; they
-never become fake criteria.
-
-A spec is reviewed while it is written, by an Elephant-Goldfish Model (EGM)
-review. The gate checks one thing in a spec: `docs.language` reports a template
-slot or `tpl:` comment left on a changed spec line. Specs stay outside the
-prose rules.
-
-The `docs.language` criterion rejects mechanical language findings in changed
-Markdown and Markdown JSX (MDX) prose, including new pages and uncommitted edits.
-It checks complete edited paragraphs while leaving unchanged history alone.
-
-Installed `.orly/` snapshots are generated inputs; `doctor` checks their integrity.
-Readability and factual accuracy remain review judgments under DOC-43.
-
-Three behaviours worth knowing:
-
-- **A worktree is its repository.** `repositories.json` registers primary
-  checkouts only; a linked worktree resolves through the set of checkouts git
-  reports for the shared object store. Streams stay ephemeral and unregistered,
-  and the declared commands still run in the worktree, never in the checkout
-  that carries the registry entry.
-- **Slow suites are conditional.** `verify.integration` and `verify.memory` run
-  only when the branch diff carries code files.
-- **The docs gate is diff-shaped.** A change under the repository's `surfaces.user`
-  prefixes with no matching `surfaces.docs` change is red. Test files and the
-  spec tree never count.
+`burst.*` lanes rent machines by the hour, so no gate runs them; `orly burst` runs them on request ([Burst lanes](BURST.md)).
 
 ## Overrides
 
-`orly override <criterion> --reason <REASON>` writes an empty commit carrying an
-`Orly-Override: <criterion> (<reason>)` trailer. It is immutable once pushed,
-visible in the PR, scoped to the branch by merge-base, and dead after the merge.
-
-A failed criterion with a matching trailer retains its outcome and reports `overridden`.
-Blocked and not-run work cannot be waived. Malformed trailers leave the gate red.
+`orly override <criterion> --reason <REASON>` writes an empty commit carrying an `Orly-Override: <criterion> (<reason>)` trailer.
+It is visible in the PR, scoped to the branch by merge base, and dead after the merge.
+A matching trailer turns a failed criterion into `overridden`; blocked or unrun work cannot be waived, and a malformed trailer stays red.
 
 ## Profiles
 
-`.orly/orly.json` names any opt-in packs, the command surface, and optionally the diff
-surfaces:
+`.orly/orly.json` holds the repository's packs, commands, limits and diff surfaces:
 
 ```json
 {
   "schema_version": 1,
-  "commands": { "conform": [["make", "harness-verify"]],
-                "verify.unit": [["make", "test-unit-all"]] },
+  "commands": { "conform": [["make", "conform"]], "verify.unit": [["make", "test-unit-all"]] },
   "limits": { "verify.unit": { "timeout_ms": 1800000, "output_bytes": 67108864 } },
-  "surfaces": { "user": ["src/http/", "cli/src/"],
-                "docs": ["docs/"] }
+  "surfaces": { "user": ["src/", "cli/src/"], "docs": ["docs/"] }
 }
 ```
 
-Orly owns policy and invokes these commands. The repository owns what they do.
+At least one `verify.*` command is required; documentation repositories can declare only `verify.docs`.
+Orly decides when commands run, and the repository owns what they do. Unknown settings and malformed types are refused before any command runs.
 
-Setup requires at least one named `verify.*` command; `conform` is optional.
-
-Documentation repositories can use `verify.docs` for site validation and link
-checks without declaring application test suites. `init` reports missing
-commands; `doctor` rejects incomplete setup without running those commands.
-
-The final tree check includes the spec, so its evidence must be committed.
-
-`schemas/profile.schema.json` describes the repository file, including ownership records.
-Both configuration readers refuse unknown settings and malformed types before selecting commands.
-Each invocation defaults to 30 minutes and 64 mebibytes of combined output; `limits` supplies per-command overrides.
-
-The synchronous gate calls a Bun supervisor that reads both streams and stops the owned process group on either limit.
-Limited commands return a failure with measured duration, byte count and a private receipt directory containing all captured bytes.
-Normal commands remove their temporary files after the gate reads the complete output; limit receipts remain until the caller removes them.
-
-## Usage telemetry
-
-Orly 0.28 collects no usage telemetry: the consent prompt, the local event
-spool and the upload are gone. It never reads the files earlier versions left
-under `~/.config/agentsfleet/orly/`. Hooks still pinned to an earlier version do
-read them, so keep `{"telemetry":"off"}` there until every repository updates.
-
-## Standards, skills and the reviewer
-
-Rules live in `standards/`. Each standard is a page of rule blocks: an
-identifier, one statement, and the fields Applies to, Checked by, Bad, Good and
-Why. Packs select standards through `registry.json`, and install copies them to
-`.orly/standards/`.
-
-Steps live in three skills. `orly-spec` turns an idea into a reviewed spec,
-`orly-build` opens the stream and builds it, and `orly-ship` reviews, closes,
-gates and lands it. They call gstack and EGM where those already do the job.
-
-`orly-standards-reviewer` judges a diff against the standards with no session
-history. It reports only findings it can tie to a rule and a changed line.
-
-The rendered `AGENTS.md` carries only what applies on every turn, plus an
-index of the selected standards. A render test caps it at 16 KiB.
-
-The spec template is a skeleton. Its comments cite the spec standard's rule
-identifiers, and the standard holds the rules.
-
-## Changing a standard
-
-A rule change edits its standard and keeps the five fields. A new rule takes a
-new identifier; a removed one leaves the catalogue fixture with its reason.
-`orly verify` and the catalogue tests share one validator, which proves every
-identifier has one home.
-
-Every commit runs `orly gate work`, which runs `orly verify`. A push runs
-gitleaks only. CI runs `make audit` on every pull request, adding the typecheck
-and the unit suite.
-
-That suite covers the always-on size cap and the Hard Safety text.
-
-## Helper parity
-
-orly's skills hand work to gstack and EGM, so every agent runtime needs both.
-Their versions are the owner's, because both upgrade themselves.
-`registry.json` names only where each comes from.
-
-`orly doctor` checks every agent runtime present on the machine. A missing
-gstack `VERSION` or EGM plugin prints its install command. A machine with no
-agent runtime, such as a CI runner, skips the helper check.
-
-Doctor does not compare the orly that wrote `.orly/orly.json` with the one
-running, because one global orly serves repositories pinned to different versions.
-
-## Codex cloud environment
-
-A cloud task sees repository skills only, so the environment installs the rest.
-Its install script installs orly and gitleaks. It clones gstack and runs
-`./setup --host codex --no-browser`.
-
-The same script adds EGM with `codex plugin marketplace add
-google/elephant-goldfish-model` and `codex plugin add egm@egm`. It
-sets `core.hooksPath`, and the start skill ends with `orly doctor`.
-
-A cloud task follows explicit user authorization for feature-branch pushes and Pull Requests. Missing hooks require manual gate runs; runtime location does not waive checks.
-
-Without publishing authorization, return prepared work and evidence to the owner. Merge, release and consumer pin updates remain separate owner decisions.
+Each invocation defaults to 30 minutes and 64 mebibytes of combined output.
+A command over either limit is stopped with its process group, and fails with its duration, byte count and a private receipt of everything captured.
+`schemas/profile.schema.json` describes the file.
 
 ## Verification evidence
 
-Prerequisites precede commands; blocked or unrun groups never count as passes. Owner overrides retain the original status and reason.
-An unavailable command plan cannot be waived.
-
-`reuse.<verify-lane>` requires a hermetic declaration, maximum age, toolchain probes and optional input paths.
-The explicit `pr --reuse-verification` flag enables reuse; both opt-ins are required.
+Checks run fresh. `gate pr --reuse-verification` may reuse a lane's last pass only when `reuse.<verify-lane>` declares it hermetic, with a maximum age, toolchain probes and any extra inputs.
 Live integration and memory lanes always run fresh.
 
-Evidence binds actual source bytes, revision/base, native argv/limits, configuration and environment.
-It also binds engine/runtime, executable bytes, successful probes and declared extra inputs.
-Raw environment values are never saved.
+Evidence binds the source bytes, revision and base, commands and limits, configuration, environment, engine and toolchain, never raw environment values.
+Missing, dirty, unpushed or symlinked inputs disable reuse, and inputs must not change while a check runs.
 
-Hermeticity requires exclusively owned inputs and complete dependency identification, including ignored dependencies.
-Hashes cannot detect every temporary edit-and-restore; inputs must stay unchanged while a check runs.
-Missing, dirty, unpushed or unsupported symlink inputs disable reuse.
+One attempt per worktree holds a private lock, and only the latest attempt can be reused. A failed or unfinished attempt never falls back to an older pass.
 
-A private per-worktree lock allows one eligible attempt at a time.
-A numbered directory is saved before probes or commands, using directory synchronization to establish its start marker.
-Only the preceding attempt is a reuse candidate.
+An interrupted attempt keeps its lock: after the old workload has stopped, delete the private evidence directory beneath Git metadata and run fresh.
+Records protect local integrity only, not against another process running as the same user.
 
-Signed completion covers the input binding, original run time and complete output digest.
-Failed or unfinished attempts never fall back to an older pass; replay retains original time and counts.
-Records protect local integrity, with no attestation against another process using the same operating-system identity.
+## Standards, skills and the reviewer
 
-A start-marker write failure blocks the command. A completion-write failure retains the native result with a warning and keeps the lock.
-Interrupted locks also remain blocked; there is no automatic process recovery.
+Rules live in `standards/`, one page per standard, and packs select standards through `registry.json`.
+Each rule has an identifier, a statement, and the fields Applies to, Checked by, Bad, Good and Why.
 
-After confirming the old workload has stopped, callers may remove the private evidence directory and run fresh.
-History remains caller-managed beneath Git metadata; no automatic cleanup erases it.
+Three skills carry the steps: `orly-spec`, `orly-build` and `orly-ship`, plus `orly-burst` for paid lanes.
+`orly-standards-reviewer` judges a diff against the standards with no session history, and reports only findings tied to a rule and a changed line.
+The rendered `AGENTS.md` carries only what applies on every turn, and a render test caps it at 16 KiB.
+
+## Changing orly
+
+A rule change edits its standard; a new rule takes a new identifier, and `orly verify` proves each identifier has one home.
+Every commit runs `orly gate work`, which runs `orly verify`, and a push runs gitleaks.
+CI runs `make audit`, `make install-evals` and the unit suite with coverage on every pull request.
+
+`orly doctor` checks that every agent runtime on the machine has gstack and the Elephant-Goldfish Model (EGM), and prints the install command for a missing one.
+A machine with no agent runtime, such as a CI runner, skips that check. Orly collects no usage telemetry.
