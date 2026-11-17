@@ -108,9 +108,18 @@ export async function callerAddress(fetcher: Fetch): Promise<string> {
   return address;
 }
 
+// An upload of tens of megabytes over a slow link takes minutes, so it is
+// announced with its size and reported with its duration.
 async function stage(run: BurstRun, machine: Machine, user: string, command: string, file: string, what: string): Promise<void> {
+  const started = Date.now();
+  run.write(`orly burst: sending ${what} (${megabytes(Bun.file(file).size)} MB) to ${machine.id}`);
   const sent = await captureProcess(sshArgs(run, machine, user, command), { env: run.settings.env, stdin: Bun.file(file), timeoutMs: STAGE_TIMEOUT_MS, signal: run.signal });
   if (sent.code !== 0) throw new OrlyError(`could not stage ${what} on ${machine.id}: ${sent.stderr.trim()}`);
+  run.write(`orly burst: sent ${what} to ${machine.id} in ${Math.round((Date.now() - started) / 1000)}s`);
+}
+
+function megabytes(bytes: number): string {
+  return (bytes / 1_000_000).toFixed(1);
 }
 
 async function collect(run: BurstRun, job: Job, machine: Machine, user: string): Promise<void> {

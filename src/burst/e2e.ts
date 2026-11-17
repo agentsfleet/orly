@@ -121,6 +121,7 @@ export class E2eNodes implements CloudProvider {
   // polled until ready or failed; one still saving at the run's deadline is
   // left to finish and reported as pending.
   async capture(run: BurstRun, job: Job, machine: Machine, name: string): Promise<Snapshot> {
+    run.write(`orly burst: stopping VM ${machine.id} to save it`);
     await this.#api.stopVm(machine.id, run.signal);
     await this.#until(run, job, "the VM to stop", async () => {
       const { status } = await this.#api.vm(machine.id, run.signal);
@@ -177,6 +178,7 @@ export class E2eNodes implements CloudProvider {
     try {
       const pk = (await this.#api.keys()).find((key) => key.label === label)?.pk;
       if (pk) await this.#api.deleteKey(pk);
+      run.write(`orly burst: deleted TIR key ${label}`);
     } catch (error) {
       run.write(`orly burst: could not delete TIR key ${label}: ${messageOf(error)}; delete it by hand`);
     }
@@ -185,6 +187,7 @@ export class E2eNodes implements CloudProvider {
     const never = new AbortController().signal;
     const deleted = async () => this.#api.deleteSecurityGroup(group).then(() => true, () => undefined);
     await until(`security group ${group} to delete`, deleted, { deadline: Date.now() + CLEANUP_MS, signal: never, pollMs: this.#settings.pollMs })
+      .then(() => run.write(`orly burst: deleted TIR security group ${group}`))
       .catch(() => run.write(`orly burst: could not delete TIR security group ${group} (${label}); delete it by hand`));
   }
 

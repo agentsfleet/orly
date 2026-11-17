@@ -140,7 +140,9 @@ async function release(provider: CloudProvider, run: BurstRun, machine: Machine)
     return;
   }
   try {
+    run.write(`orly burst: deleting ${provider.name} machine ${machine.id}`);
     await provider.remove(machine);
+    run.write(`orly burst: ${provider.name} machine ${machine.id} is deleted`);
   } catch (error) {
     run.write(`orly burst: could not delete ${provider.name} machine ${machine.id}: ${messageOf(error)}; delete it by hand, it bills until then`);
   }

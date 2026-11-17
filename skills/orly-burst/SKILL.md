@@ -51,6 +51,20 @@ costs are in orly's `docs/BURST.md`.
    evidence. `exit=interrupted`, `deadline`, `cancelled`, `unlaunched` or
    `not_run` proves nothing about the code; report that lane as not run.
 
+## Progress
+
+Before a run, print one block: lanes or snapshot, provider, region, image,
+ref, and the hourly price. While it runs, relay each `orly burst:` line as it
+arrives, so a step that takes minutes, such as an upload, is never silent.
+After it, print one block: each `lane=` line, the `total` line, what was
+deleted, and anything left to delete by hand.
+
+```text
+burst  snapshot · e2e · Chennai · Debian 13 · feat/x · ₹25/h + GST
+  VM 30361 created → ready → sending bundle (70.1 MB) → setup → saved
+result saved orly-burst-…  ·  VM, key and group deleted  ·  nothing left
+```
+
 ## Credentials
 
 - Never print a credential, pass one as a command-line argument, or write one

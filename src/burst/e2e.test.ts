@@ -76,6 +76,11 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(text).toContain("[acceptance] lane acceptance ran");
     expect(text).toMatch(/orly burst: lane=acceptance provider=e2e machine=C3\.32GB minutes=\d+ cost≈₹25\/h \+ GST \(billed hourly\) exit=0 evidence=\S+/);
     expect(text).toContain("orly burst: total provider=e2e lanes=2 passed=2 failed=0");
+    expect(text).toMatch(/orly burst: sending feat\/burst-fixture \(\d+\.\d MB\) to 5001/);
+    expect(text).toMatch(/orly burst: sent feat\/burst-fixture to 5001 in \d+s/);
+    expect(text).toContain("orly burst: e2e machine 5001 is deleted");
+    expect(text).toMatch(/orly burst: deleted TIR key orly-burst-/);
+    expect(text).toContain("orly burst: deleted TIR security group 700");
     expect(text).not.toContain(API_KEY);
   });
 
