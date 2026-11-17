@@ -9,6 +9,16 @@ AWS lanes can rent On-Demand machines, and can reach their machines through Syst
 - **Setup** — `ssm` needs the role, instance profile, launcher policy statements and Session Manager plugin in `docs/BURST.md`, and `ORLY_BURST_AWS_INSTANCE_PROFILE`.
 - **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.42.0 update`.
 
+## 0.40.1 (2026-11-16)
+
+`orly-ship` now requires a live readiness check before Pull Request (PR) handoff.
+
+- **Review readiness** — An authorized PR is ready for review unless the owner explicitly requests a draft.
+- **Closure** — Completed specs move to `done/` and join the delivery commit; validation blockers stay visible.
+- **Handoff** — Check the fetched base, pushed revision, companion PRs and review threads before reporting completion.
+- **Evidence** — Classify failures as unrelated only with equivalent baseline evidence.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.40.1 update`.
+
 ## 0.40.0 (2026-11-16)
 
 `orly burst` runs a repository's slow lanes on a machine rented for the run, or on the current machine inside a CI job.
