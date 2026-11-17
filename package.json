@@ -57,7 +57,7 @@
   },
   "devDependencies": {
     "@types/bun": "1.4.4",
-    "tsrs": "0.20.0-ts7.1.0-beta"
+    "tsrs": "0.25.0-ts7.1.0-beta"
   },
   "dependencies": {
     "@babel/parser": "8.0.8",
