@@ -4,7 +4,7 @@
 **Milestone:** M17
 **Workstream:** 001
 **Date:** Nov 17, 2026
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P1, avoid repeated verification without hiding changed inputs
 **Categories:** CLI, DOCS, GOV, SKILL
 **Batch:** B1, one delivery on Orly 0.42.0
@@ -143,7 +143,7 @@ After publishing the PR, `orly-ship` presents an evidence-backed learning summar
 Read every tracked implementation, test, configuration and instruction file by subsystem, inventory generated copies and historical documents, and record findings with exact evidence. Remove proven redundancy and repair sources of nondeterminism within the authorized scope. Record why a proposed cleanup is unnecessary rather than churning working code. Run final checks after repairs and repeat only where changes or failures justify them.
 
 - **Dimension 4.1** — **DONE** — Test `repository review inventory and dispositions` (manual): compare the review inventory with tracked paths and inspect every finding's repair or rationale.
-- **Dimension 4.2** — Test `version and installed behavior agree` (integration): package and root configuration name 0.50.0; installation and complete verification pass on the final pushed revision.
+- **Dimension 4.2** — **DONE** — Test `version and installed behavior agree` (integration): package and root configuration name 0.50.0; installation and complete verification pass on the final pushed revision.
 
 ## Interfaces
 
@@ -174,15 +174,15 @@ No telemetry. Local evidence reports fresh/reused execution with original and ac
 
 | # | Criterion | Verify | Expected | Priority | Graded |
 |---|---|---|---|---|---|
-| R1 | Scoped execution and refusal | `bun test src/verification-scoped.integration.test.ts src/verification_policy.test.ts src/verification_store.integration.test.ts` | All pass | P0 | |
-| R2 | Safe skill migration | `bun test src/installation/skill-migration.integration.test.ts` | All pass | P0 | |
-| R3 | Installed workflow guidance | `bun test src/learning_guidance.integration.test.ts` | All pass | P0 | |
-| S1 | Catalogue and generated parity | `make conform` | Exit 0 | P0 | |
-| S2 | Types | `bun run typecheck` | Exit 0 | P0 | |
-| S3 | Full declared suite | `bun test src` | Exit 0 | P0 | |
-| S4 | Isolated installation | `make install-evals` | Exit 0 | P0 | |
-| S5 | Secrets | `gitleaks detect --redact --no-banner` | No leaks | P0 | |
-| S6 | Final pushed boundary | `bin/orly gate pr` | Every required criterion passes | P0 | |
+| R1 | Scoped execution and refusal | `bun test src/verification-scoped.integration.test.ts src/verification_policy.test.ts src/verification_store.integration.test.ts` | All pass | P0 | PASS |
+| R2 | Safe skill migration | `bun test src/installation/skill-migration.integration.test.ts` | All pass | P0 | PASS |
+| R3 | Installed workflow guidance | `bun test src/learning_guidance.integration.test.ts` | All pass | P0 | PASS |
+| S1 | Catalogue and generated parity | `make conform` | Exit 0 | P0 | PASS |
+| S2 | Types | `bun run typecheck` | Exit 0 | P0 | PASS |
+| S3 | Full declared suite | `bun test src` | Exit 0 | P0 | PASS |
+| S4 | Isolated installation | `make install-evals` | Exit 0 | P0 | PASS |
+| S5 | Secrets | `gitleaks detect --redact --no-banner` | No leaks | P0 | PASS |
+| S6 | Final pushed boundary | `bin/orly gate pr` | Every required criterion passes | P0 | PASS at `414e270`; closure revision gate follows |
 
 ### Behaviour evals
 
@@ -244,8 +244,8 @@ The current target is 0.50.0; the earlier version request above remains historic
 
 ## Implementation verification
 
-Sections 1–3 and the repository inventory are done. Their cases passed in the focused runs and the first full-suite attempt.
-The first pushed gate passed types and 572 tests, but found three failures. Dimension 4.2 awaits the repaired full gate.
+All Dimensions are done. The repaired pushed gate at `414e270` passed every criterion, types and all 577 tests with 2,554 assertions.
+Packed installation passed all 24 cases. Final review and the gate for this documentation closure are recorded separately in the PR.
 
 The size failure was repaired without raising the limit. The two process failures reproduce at the exact base and pass under normal orphan reaping.
 [Repository review evidence](../evidence/M17_REPOSITORY_REVIEW.md) records the tests, environment diagnosis and review findings.

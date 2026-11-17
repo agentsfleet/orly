@@ -116,7 +116,8 @@ These are stated limits, not newly claimed guarantees.
 | Repaired packed installation | 24 passed, 0 failed | `make install-evals` after mode-preservation repairs |
 | First pushed gate at `dd8930b` | Type check passed; 572 tests passed, 3 failed; 2,550 assertions | Generated size limit plus two process tests, investigated below |
 | Render size and ambiguous owner repair | 30 passed, 0 failed; 118 assertions | Ownership, render and installed guidance suites |
-| Final full gate and final review | Pending | Updated after final candidate verification |
+| Repaired pushed gate at `414e270` | Passed all criteria; 577 tests passed, 0 failed; 2,554 assertions; type check passed | `python3 /tmp/orly-m17-reap.py bin/orly gate pr`; 49 test files, 58.34 seconds |
+| Final documentation revision gate and review | Pending at closure commit | Forge description records final-head outcomes |
 
 Earlier diagnostics found missing dependencies, a fixture missing its managed file, and an omitted test import.
 A blocked concurrent-edit result also retained proof metadata.
@@ -129,7 +130,7 @@ The full gstack review read all 73 candidate paths, 250 tracked hunks and ten ne
 Its candidate digest was `3380c3ea42bb5c043b481f5af5e90d78ef75952e`.
 
 The review found seven defects: two imports, optional signal types, executable-mode preservation, cancellation ownership, home-relative account identity and nested fixture Git isolation.
-The repairs have focused regression evidence above. Final review of the repaired candidate remains due.
+The repairs have focused and full-gate evidence above. Final review of the closure revision remains due.
 
 The independent standards review read the same candidate and screened 326 rule blocks. It reported 16 findings covering imports, test assertions, size, source agreement and prose.
 These findings were repaired in authored sources; generated instructions were regenerated afterward.
@@ -153,3 +154,11 @@ Local command: `python3 /tmp/orly-m17-reap.py bin/orly gate pr`. Hosted checks u
 
 Standards reconciliation found one stale pruning example and home-relative origins lacking an explicit SSH account.
 The example now uses the current snapshot format; ambiguous owners are refused. Both new negative ownership cases failed before the repair and passed afterward.
+
+## Performance interpretation
+
+The full suite grew from 507 baseline tests to 577 candidate tests, an increase of 70. The local candidate run took 58.34 seconds.
+The hosted baseline took 33.09 seconds on different hardware; those times do not establish a speedup or regression.
+
+The proven savings are invocation counts: one default fast-check run instead of two, and scoped lane counts of 1, 1, 2 across three revisions.
+No workflow files changed, so this delivery claims no reduction in hosted duplicate jobs.
