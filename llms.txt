@@ -175,6 +175,9 @@ never with a placeholder reason.
 | `orly burst <lane>... --provider aws-spot\|e2e\|here` | run lanes on rented machines, one each, or on this machine (costs money; only when asked) |
 | `orly burst snapshot --provider aws-spot\|e2e` | capture a warm image the next lanes start from; `--prune` keeps the newest two |
 
+AWS lanes rent Spot machines unless `ORLY_BURST_MARKET` says `on-demand`, or `spot-then-on-demand` to rerun a lane AWS took back.
+`ORLY_BURST_AWS_ACCESS=ssm` reaches machines through Systems Manager with no inbound port; it needs `ORLY_BURST_AWS_INSTANCE_PROFILE` and the Session Manager plugin (docs/BURST.md).
+
 Gates inspect prerequisites before commands and report blocked or unrun groups explicitly. Fresh execution is the default; a reuse flag alone cannot skip any command.
 Repository-owned `reuse` policies require hermetic input ownership, a maximum age and toolchain identities. Original execution output stays visible, and failed or unfinished latest attempts prevent fallback to an older pass.
 Keep fixture evidence, live acceptance and injected-delay measurements separate. Reviewers that are unavailable remain incomplete, and final review follows the same pushed head through two quiet polls.

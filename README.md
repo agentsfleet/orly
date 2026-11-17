@@ -4,7 +4,6 @@
 
 # orly
 
-[![npm](https://img.shields.io/npm/v/@agentsfleet/orly)](https://www.npmjs.com/package/@agentsfleet/orly)
 [![Bun ≥1.4.4](https://img.shields.io/badge/Bun-%E2%89%A51.4.4-black)](https://bun.sh)
 [![MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
