@@ -22,7 +22,7 @@ bunx --bun @agentsfleet/orly init
 ```
 
 Commit what `init` writes, and run `init` in each checkout, because Git does not clone hooks.
-`bunx --bun @agentsfleet/orly doctor` checks the setup.
+Generated Git hooks invoke the pinned package through `bunx`, so no global install is needed; `bunx --bun @agentsfleet/orly doctor` checks the setup.
 
 Declare the commands your repository already has in `.orly/orly.json`; at least one `verify.*` is required:
 

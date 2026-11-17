@@ -18,7 +18,8 @@ core/operating-model.md   standards/**   skills/**   agents/**   registry.json
 `orly update` re-materialises at the installed engine version, and `orly doctor` reports drift between the record and the files.
 A repository needs no orly checkout to read its rules or run its gates; [installed content](architecture/installation.md) lists what is managed.
 
-Copies won over a shared live checkout because a fresh machine, a Continuous Integration (CI) runner or a cloud task has no such checkout.
+Copies replaced M01's model of one live checkout linked into every agent home.
+A fresh machine, a Continuous Integration (CI) runner or a cloud task has no such checkout.
 In an orly checkout, `orly verify` validates the standards catalogue and compares the root `AGENTS.md` and every pack copy with its source.
 
 ## Gates
