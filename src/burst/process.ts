@@ -27,6 +27,9 @@ const MAX_LINE_CHARS = 64 * 1024;
 const MAX_CAPTURE_BYTES = 16 * 1024 * 1024;
 const PIPE = "pipe";
 const OP_TIMEOUT_MS = 60_000;
+// 1Password reads run this many at a time: a lane's secrets resolve in parallel
+// without flooding the op daemon.
+const OP_READS_AT_ONCE = 4;
 
 // One long-running child, in its own process group so a deadline or a
 // cancellation stops everything it started, with output streamed line by line.
@@ -113,18 +116,16 @@ export async function until<T>(what: string, probe: () => Promise<T | undefined>
 // nowhere else: never printed, never an argument, never a file. A failure
 // names the variable and op's complaint, which carries the reference only.
 export async function resolveSecrets(references: Record<string, string>, env: Environment): Promise<Environment> {
-  const values: Environment = {};
-  for (const [name, reference] of Object.entries(references)) {
+  const reads = await mapBounded(Object.entries(references), OP_READS_AT_ONCE, async ([name, reference]) => {
     const preset = env[name];
-    if (preset) {
-      values[name] = preset;
-      continue;
-    }
+    if (preset) return { name, value: preset };
     const read = await captureProcess(["op", "read", "--no-newline", reference], { env, timeoutMs: OP_TIMEOUT_MS });
-    if (read.code !== 0) throw new OrlyError(`could not read the secret for ${name}: ${read.stderr.trim().split("\n")[0] ?? ""}`);
-    values[name] = read.stdout;
-  }
-  return values;
+    return read.code === 0 ? { name, value: read.stdout } : { name, error: `could not read the secret for ${name}: ${read.stderr.trim().split("\n")[0] ?? ""}` };
+  });
+  // The first failure in declaration order, so the message does not depend on timing.
+  const failed = reads.find((read) => "error" in read);
+  if (failed && "error" in failed) throw new OrlyError(failed.error);
+  return Object.fromEntries(reads.map((read) => [read.name, "value" in read ? read.value : undefined]));
 }
 
 // Bun.spawn resolves a bare name against this process's PATH, not the
@@ -164,4 +165,15 @@ async function readBounded(stream: ReadableStream<Uint8Array>): Promise<string> 
     chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString("utf8");
+}
+
+// Runs `work` over `items` with at most `limit` in flight, results in input order.
+async function mapBounded<T, R>(items: readonly T[], limit: number, work: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = [];
+  const queue = items.map((item, index) => [index, item] as const);
+  const worker = async () => {
+    for (let entry = queue.shift(); entry; entry = queue.shift()) results[entry[0]] = await work(entry[1]);
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
 }

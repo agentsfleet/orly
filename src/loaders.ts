@@ -253,8 +253,10 @@ async function upsertOpencodeLoader(targetRoot: string, entries: string[], obsol
   const instructions = config[INSTRUCTIONS_KEY];
   if (instructions !== undefined && (!Array.isArray(instructions) || instructions.some((entry) => typeof entry !== "string"))) return THEIRS;
   const original: string[] = Array.isArray(instructions) ? instructions : [];
-  const listed = original.filter((entry) => !obsolete.includes(entry));
-  const missing = entries.filter((entry) => !listed.includes(entry));
+  const retired = new Set(obsolete);
+  const listed = original.filter((entry) => !retired.has(entry));
+  const kept = new Set(listed);
+  const missing = entries.filter((entry) => !kept.has(entry));
   if (missing.length === 0 && listed.length === original.length) return CURRENT;
   await Bun.write(path, serialise({ ...config, [INSTRUCTIONS_KEY]: [...listed, ...missing] }));
   return WRITTEN;

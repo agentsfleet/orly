@@ -100,9 +100,10 @@ async function preflight(root: string, planned: PlannedFile[], config: RepoConfi
     if (current !== null && current !== contentDigest(file.content)) changing.push(file);
   }
   if (force) return [];
-  const dirty = uncommittedPaths(root, changing.filter((file) => config.managed.includes(file.target)).map((file) => file.target));
+  const managed = new Set(config.managed);
+  const dirty = uncommittedPaths(root, changing.filter((file) => managed.has(file.target)).map((file) => file.target));
   return changing.flatMap((file) => {
-    if (!config.managed.includes(file.target)) return [{ path: file.target, message: "existing content is not managed by orly", suggestion: "move or rename your file; --force explicitly replaces it" }];
+    if (!managed.has(file.target)) return [{ path: file.target, message: "existing content is not managed by orly", suggestion: "move or rename your file; --force explicitly replaces it" }];
     if (dirty.has(file.target)) return [{ path: file.target, message: "managed file has uncommitted changes", suggestion: "commit or stash your change first; --force explicitly discards it" }];
     return [];
   });

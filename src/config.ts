@@ -123,7 +123,8 @@ function ignoredPaths(targetRoot: string, paths: string[]): Set<string> {
 // record exists to rule out.
 export function managedDrift(targetRoot: string, config: RepoConfig): string[] {
   const missing = config.managed.filter((relativePath) => !existsSync(join(targetRoot, relativePath)));
-  const present = config.managed.filter((relativePath) => !missing.includes(relativePath));
+  const absent = new Set(missing);
+  const present = config.managed.filter((relativePath) => !absent.has(relativePath));
   const ignored = ignoredPaths(targetRoot, present);
   return [
     ...missing.map((relativePath) => `managed file is missing: ${relativePath} — run \`orly update\` to restore it`),
