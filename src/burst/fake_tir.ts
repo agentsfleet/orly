@@ -2,7 +2,8 @@
 // caller-address lookup. A VM runs after one status poll and stops after one
 // more once stopped. A snapshot is pending for `savingLists` list calls, then
 // `ready`, or `savedStatus`. A group's delete fails `groupDeleteFailures` times.
-import { CALLER_ADDRESS } from "./test_support";
+import { CALLER_ADDRESS, fields } from "./test_support";
+import { TIR_LABEL_LIMIT } from "./e2e";
 import { isObject } from "../model";
 
 type Call = { method: string; path: string; query: Record<string, string>; body: unknown; authorization: string | null };
@@ -11,10 +12,12 @@ type FakeSnapshot = { id: number; name: string; status: string; size_gb: number;
 
 const PREFIX = "/myaccount/api/v1/gpu";
 const UBUNTU_24 = 106;
+export const DEBIAN_13 = 121;
 // The order and the repeats TIR really lists: a CUDA build before the plain
 // 24.04, and 22.04 more than once.
 const IMAGES = [
   { name: "Transformers", versions: [{ image_version_id: 59, version: "v4.51.3" }] },
+  { name: "Debian", versions: [{ image_version_id: DEBIAN_13, version: "13" }, { image_version_id: 120, version: "12" }] },
   { name: "Ubuntu", versions: [{ image_version_id: 111, version: "24.04-cuda13.0" }, { image_version_id: 107, version: "22.04" }, { image_version_id: UBUNTU_24, version: "24.04" }, { image_version_id: 48, version: "22.04" }] },
 ];
 const JSON_HEADERS = { "Content-Type": "application/json" };
@@ -27,6 +30,10 @@ export class FakeTir {
   snapshots: FakeSnapshot[] = [];
   createStatus = 201;
   groupDeleteFailures = 0;
+  // Calls after a VM delete before TIR has removed it.
+  deleteLag = 2;
+  // What a booted VM reports; `error` is a VM that will not come up.
+  bootStatus = "ready";
   #nextGroup = 700;
   savingLists = 1;
   savedStatus = "ready";
@@ -42,6 +49,7 @@ export class FakeTir {
     const body: unknown = init?.body ? JSON.parse(String(init.body)) : undefined;
     const query = Object.fromEntries(url.searchParams);
     this.calls.push({ method, path, query, body, authorization: new Headers(init?.headers).get("Authorization") });
+    this.#settleDeletes();
     return this.answer(method, path, query, isObject(body) ? body : {});
   };
 
@@ -60,12 +68,12 @@ export class FakeTir {
     if (route === "GET /gpu_service/image/") return reply(IMAGES);
     if (route === "POST /ssh_keys/") return this.addKey(body);
     if (route === "GET /ssh_keys/") return reply([...this.keys.values()]);
-    if (route === "DELETE /ssh_keys/{id}/") return reply({}, [...this.keys].some(([label, key]) => String(key.pk) === id && this.keys.delete(label)) ? 200 : 404);
+    if (route === "DELETE /ssh_keys/{id}/") return this.deleteKey(id);
     if (route === "POST /security_groups/") return this.addGroup(body);
-    if (route === "DELETE /security_groups/{id}/rules/") return this.deleteGroup(id);
+    if (route === "DELETE /security_groups/{id}/") return this.deleteGroup(id);
     if (route === "POST /notebooks/") return this.create(body);
     if (route === "GET /notebooks/{id}/") return this.poll(id);
-    if (route === "DELETE /notebooks/{id}/") return reply({}, this.vms.delete(id) ? 200 : 404);
+    if (route === "DELETE /notebooks/{id}/") return this.deleteVm(id);
     if (route === "PUT /notebooks/{id}/actions/") return this.act(id, query.action ?? "");
     if (route === "POST /notebooks/{id}/snapshots/") return this.save(body);
     if (route === "GET /notebooks/vm/snapshots/") return this.listSnapshots();
@@ -76,14 +84,47 @@ export class FakeTir {
     return reply({}, 404);
   }
 
+  // TIR refuses a key label over 50 characters, as the real API does.
   private addKey(body: Record<string, unknown>): Response {
+    if (String(body.label).length > TIR_LABEL_LIMIT) return reply({ label: ["Ensure this field has no more than 50 characters."] }, 412);
     const pk = this.#nextKey;
     this.#nextKey += 1;
     this.keys.set(String(body.label), { pk, label: String(body.label), ssh_key: String(body.ssh_key) });
     return reply({ label: body.label, ssh_key: body.ssh_key });
   }
 
+  // TIR refuses a group without both an inbound and an outbound rule.
+  // TIR deletes a VM in the background: it is gone, and its key free, only
+  // after `deleteLag` more calls of any kind.
+  private deleteVm(id: string): Response {
+    const vm = this.vms.get(id);
+    if (!vm || vm.status === "terminating") return reply({}, 404);
+    vm.status = "terminating";
+    vm.polls = this.deleteLag;
+    return reply({});
+  }
+
+  #settleDeletes(): void {
+    for (const vm of [...this.vms.values()]) {
+      if (vm.status !== "terminating") continue;
+      vm.polls -= 1;
+      if (vm.polls <= 0) this.vms.delete(vm.id);
+    }
+  }
+
+  // A key a VM still holds is refused, as TIR does.
+  private deleteKey(id: string): Response {
+    const entry = [...this.keys].find(([, key]) => String(key.pk) === id);
+    if (!entry) return reply({}, 404);
+    const held = [...this.vms.values()].some((vm) => JSON.stringify(vm.body.public_key ?? "").includes(entry[1].ssh_key));
+    if (held) return reply("SSH Key is attached to one or more resources. Please detach the key from all resources before deleting it.", 412);
+    this.keys.delete(entry[0]);
+    return reply({});
+  }
+
   private addGroup(body: Record<string, unknown>): Response {
+    const kinds = new Set((Array.isArray(body.rules) ? body.rules : []).map((rule) => String(fields(rule).rule_type)));
+    if (!kinds.has("inbound") || !kinds.has("outbound")) return reply("Atleast one Inbound and one Outbound Rule is required in a Security Group", 400);
     const group = { id: this.#nextGroup, name: String(body.name), rules: body.rules };
     this.#nextGroup += 1;
     this.groups.set(String(group.id), group);
@@ -110,10 +151,11 @@ export class FakeTir {
   private poll(id: string): Response {
     const vm = this.vms.get(id);
     if (!vm) return reply({}, 404);
+    if (vm.status === "terminating") return reply({ id: Number(id), status: "terminating", public_ip: "" });
     vm.polls += 1;
-    if (vm.status === "waiting" && vm.polls > 1) vm.status = "running";
+    if (vm.status === "waiting" && vm.polls > 1) vm.status = this.bootStatus;
     else if (vm.status === "stopping") vm.status = "stopped";
-    return reply({ id: Number(id), status: vm.status === "stopping" ? "running" : vm.status, public_ip: vm.status === "waiting" ? "" : vm.address });
+    return reply({ id: Number(id), status: vm.status === "stopping" ? "ready" : vm.status, public_ip: vm.status === "waiting" ? "" : vm.address });
   }
 
   private act(id: string, action: string): Response {

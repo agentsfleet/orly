@@ -3,7 +3,8 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { burst } from "./index";
-import { FakeTir } from "./fake_tir";
+import { tirLabel } from "./e2e";
+import { DEBIAN_13, FakeTir } from "./fake_tir";
 import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, fakeBin, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./test_support";
 import { cleanupTemporaryDirectories, temporaryDirectory } from "../gates_test_support";
 
@@ -51,7 +52,7 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(run.api.calls.indexOf(creates[1] ?? deletes[0]!)).toBeLessThan(run.api.calls.indexOf(deletes[0]!));
     expect(run.api.vms.size).toBe(0);
     const body = fields(creates[0]?.body);
-    expect(body).toMatchObject({ kind: "vm", image_type: "pre-built", image_version_id: 106, sku_item_price_id: 3, disk_size_in_gb: 100, quantity: 1, security_group_id: 700 });
+    expect(body).toMatchObject({ kind: "vm", image_type: "pre-built", image_version_id: DEBIAN_13, sku_item_price_id: 3, disk_size_in_gb: 100, quantity: 1, security_group_id: 700 });
     expect(body).not.toHaveProperty("snapshot_id");
     const key = Array.isArray(body.public_key) ? String(body.public_key[0]) : "";
     expect(key).toStartWith("ssh-ed25519 ");
@@ -63,10 +64,13 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(creates[0]?.authorization).toBe(`Bearer ${AUTH_TOKEN}`);
     const group = fields(run.api.callsTo("POST", /^\/security_groups\/$/)[0]?.body);
     expect(String(group.name)).toMatch(/^orly-burst-feat-burst-fixture-\d{14}-[0-9a-f]{4}$/);
-    expect(group.rules).toEqual([{ rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "manual", cidr_ip: CALLER_ADDRESS, cidr_subnet: 32, ports: [22], description: "SSH from the orly burst caller" }]);
+    expect(group.rules).toEqual([
+      { rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "manual", cidr_ip: CALLER_ADDRESS, cidr_subnet: 32, ports: [22], description: "SSH from the orly burst caller" },
+      { rule_type: "outbound", protocol: "All", protocol_type: "AllTraffic", network_type: "any", ports: [], description: "All traffic from the orly burst machine" },
+    ]);
     expect(run.api.groups.size).toBe(0);
     const order = run.api.calls.map((call) => `${call.method} ${call.path}`);
-    expect(order.lastIndexOf("DELETE /notebooks/5002/")).toBeLessThan(order.indexOf("DELETE /security_groups/700/rules/"));
+    expect(order.lastIndexOf("DELETE /notebooks/5002/")).toBeLessThan(order.indexOf("DELETE /security_groups/700/"));
     const text = run.output.text();
     expect(text).toContain(`admits SSH from ${CALLER_ADDRESS} only`);
     expect(text).toContain("[acceptance] lane acceptance ran");
@@ -75,12 +79,65 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(text).not.toContain(API_KEY);
   });
 
+  test("a branch name past 19 characters still fits TIR's 50-character key label", async () => {
+    const run = e2eRun();
+    const branch = "feat/m246-tenant-owned-runners";
+    expect(Bun.spawnSync(["git", "-C", run.root, "branch", branch]).exitCode).toBe(0);
+
+    expect(await burst(["acceptance", "--provider", "e2e", "--ref", branch], run.dependencies)).toBe(0);
+    const label = String(fields(run.api.callsTo("POST", /^\/ssh_keys\/$/)[0]?.body).label);
+    expect(label).toMatch(/^orly-burst-feat-m246-tenant-ow-\d{14}-[0-9a-f]{4}$/);
+    expect(label.length).toBeLessThanOrEqual(50);
+    expect(run.api.keys.size).toBe(0);
+  });
+
+  test("tirLabel keeps the run id's stamp and suffix and never ends the ref part in a hyphen", () => {
+    expect(tirLabel("feat-burst-fixture-20261117120000-ab12")).toBe("orly-burst-feat-burst-fixture-20261117120000-ab12");
+    expect(tirLabel("feat-m246-tenant-owned-runners-20261117120000-ab12")).toBe("orly-burst-feat-m246-tenant-ow-20261117120000-ab12");
+    expect(tirLabel("feat-m246-tenant-o-x-20261117120000-ab12").length).toBeLessThanOrEqual(50);
+    expect(tirLabel("abcdefghijklmnopqr--20261117120000-ab12")).toBe("orly-burst-abcdefghijklmnopqr-20261117120000-ab12");
+  });
+
+  test("a VM TIR reports as ready is booted, and each status it passes through is written once", async () => {
+    const run = e2eRun();
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
+    const text = run.output.text();
+    expect(text).toContain("[acceptance] lane acceptance ran");
+    expect(text.match(/VM 5001 is waiting/g)).toHaveLength(1);
+    expect(text.match(/VM 5001 is ready/g)).toHaveLength(1);
+  });
+
+  test("a VM TIR reports as failed ends the lane at its first poll, and the VM still goes", async () => {
+    const run = e2eRun();
+    run.api.bootStatus = "error";
+
+    await burst(ONE_LANE, run.dependencies);
+    expect(run.output.text()).toContain("TIR reports error");
+    expect(run.api.callsTo("GET", VM).length).toBeLessThan(5);
+    expect(run.api.vms.size).toBe(0);
+    expect(run.api.keys.size).toBe(0);
+  });
+
+  test("removal waits for TIR to report the VM gone before the key is deleted", async () => {
+    const run = e2eRun();
+    run.api.deleteLag = 6;
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
+    const order = run.api.calls.map((call) => `${call.method} ${call.path}`);
+    const lastVmRead = order.lastIndexOf("GET /notebooks/5001/");
+    expect(lastVmRead).toBeGreaterThan(order.indexOf("DELETE /notebooks/5001/"));
+    expect(lastVmRead).toBeLessThan(order.findIndex((call) => call.startsWith("DELETE /ssh_keys/")));
+    expect(run.api.callsTo("DELETE", /^\/ssh_keys\/\d+\/$/)).toHaveLength(1);
+    expect(run.api.keys.size).toBe(0);
+  });
+
   test("a group delete that TIR refuses at first is retried until the group is gone", async () => {
     const run = e2eRun();
     run.api.groupDeleteFailures = 2;
 
     expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
-    expect(run.api.callsTo("DELETE", /^\/security_groups\/\d+\/rules\/$/)).toHaveLength(3);
+    expect(run.api.callsTo("DELETE", /^\/security_groups\/\d+\/$/)).toHaveLength(3);
     expect(run.api.groups.size).toBe(0);
   });
 

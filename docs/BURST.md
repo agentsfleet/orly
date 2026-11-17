@@ -215,7 +215,7 @@ unverified: whether a TIR VM runs privileged Docker containers; the [virtual mac
 | `ORLY_BURST_AWS_INSTANCE_PROFILE` | The instance profile AWS machines sign in to Systems Manager with; required by `ssm`. | none | an instance profile name |
 | `ORLY_BURST_E2E_LOCATION` | TIR location. | `Delhi` | `Delhi`, `Chennai` |
 | `ORLY_BURST_E2E_PLAN` | TIR CPU plan name; orly uses its hourly price. | `C3.32GB`, 16 vCPU and 32 GB, listed at ₹18.6 an hour at Delhi on 2026-11-16 | a TIR CPU plan name |
-| `ORLY_BURST_E2E_IMAGE` | A snapshot name, or an OS image as `<name> <version>`, used instead of a snapshot. | none: the newest snapshot, then `Ubuntu 24.04` | none |
+| `ORLY_BURST_E2E_IMAGE` | A snapshot name, or an OS image as `<name> <version>`, used instead of a snapshot. A snapshot capture warms from it too. | none: the newest snapshot, then `Debian 13` | none |
 | `ORLY_BURST_E2E_USER` | Login user of the E2E image. | `root` | a user name |
 
 The machine's own shutdown is a backstop for a caller that died, and what it saves differs by provider:

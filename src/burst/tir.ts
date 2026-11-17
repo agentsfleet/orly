@@ -83,13 +83,18 @@ export class E2eApi {
 
   // POST /security_groups/: a group whose one rule admits SSH from `address`.
   async createSshGroup(name: string, address: string, signal?: AbortSignal): Promise<string> {
-    const rules = [{ rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "manual", cidr_ip: address, cidr_subnet: 32, ports: [22], description: "SSH from the orly burst caller" }];
+    // TIR refuses a group without an outbound rule; the machine's own traffic,
+    // such as package installs, leaves through this one.
+    const rules = [
+      { rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "manual", cidr_ip: address, cidr_subnet: 32, ports: [22], description: "SSH from the orly burst caller" },
+      { rule_type: "outbound", protocol: "All", protocol_type: "AllTraffic", network_type: "any", ports: [], description: "All traffic from the orly burst machine" },
+    ];
     return groupSchema.parse(await this.#request("POST", "/security_groups/", { signal, body: { name, description: "SSH for one orly burst run", rules } })).data.id;
   }
 
-  // TIR files the group's delete under its rules path.
+  // DELETE /security_groups/{id}/; the `/rules/` path answers 405.
   async deleteSecurityGroup(id: string): Promise<void> {
-    await this.#request("DELETE", `/security_groups/${id}/rules/`);
+    await this.#request("DELETE", `/security_groups/${id}/`);
   }
 
   // POST /notebooks/: https://docs.e2enetworks.com/api/tir/compute/instancevm/post-notebooks/

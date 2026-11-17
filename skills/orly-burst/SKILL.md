@@ -29,14 +29,24 @@ costs are in orly's `docs/BURST.md`.
 2. **Pick the provider.** Use `aws-spot` or `e2e` where outbound SSH on port
    22 works, and the repository's burst workflow from an HTTP-only session.
    Inside a CI job, `--provider here` runs the lane on the runner itself.
-3. **Warm once.** A repository with no snapshot starts every lane cold from a
+3. **Warm once.** Set the image and region first: a snapshot serves only the
+   region and OS it was captured in, so `ORLY_BURST_E2E_IMAGE` and
+   `ORLY_BURST_E2E_LOCATION` match the repository's setup before the first
+   capture. The first run of a new provider path is one snapshot capture, not
+   a lane: tests against the fake API are not evidence about the real one.
+   A repository with no snapshot starts every lane cold from a
    base image. Run `orly burst snapshot --provider <P>` after setup changes,
    and `orly burst snapshot --prune --provider <P>` to keep the newest two.
 4. **Run.** Run `orly burst <lane>... --provider <P>`, with `--ref <branch>`
    for a ref other than the current branch. Lanes run in parallel, one machine
    each. `--keep` leaves machines running for inspection, and they keep
    billing.
-5. **Report.** Quote every `orly burst: lane=…` summary line and the `total`
+5. **Stop and clean up.** Record orly's PID from `$!` at launch and stop it
+   with `kill -INT <pid>`; never a `pgrep` pattern, which can match the
+   wrapping shell, and never `kill -9`, which skips cleanup. After any failed
+   or interrupted run, list the provider's machines, keys and security
+   groups, and delete what each "delete it by hand" line names.
+6. **Report.** Quote every `orly burst: lane=…` summary line and the `total`
    line verbatim, with the evidence directory. Only a numeric `exit=` is
    evidence. `exit=interrupted`, `deadline`, `cancelled`, `unlaunched` or
    `not_run` proves nothing about the code; report that lane as not run.
