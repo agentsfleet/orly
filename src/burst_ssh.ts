@@ -87,12 +87,14 @@ export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user
 
 // A fresh machine's host key is one nobody has seen, so the run trusts it on
 // first use and records it in the run's own known_hosts, never the user's;
-// every later connection of the run must match it.
+// every later connection of the run must match it. A machine reached through
+// a proxy is named by its identifier, which the proxy command receives as %h.
 export function sshArgs(run: BurstRun, machine: Machine, user: string, command: string): string[] {
+  const proxy = machine.via ? ["-o", `ProxyCommand=${machine.via}`] : [];
   return ["ssh", "-i", run.key, "-o", "IdentitiesOnly=yes", "-o", "BatchMode=yes",
     "-o", "StrictHostKeyChecking=accept-new", "-o", `UserKnownHostsFile=${run.knownHosts}`,
-    "-o", "ConnectTimeout=15", "-o", "ServerAliveInterval=30", "-o", "ServerAliveCountMax=4", "-o", "LogLevel=ERROR",
-    `${user}@${machine.address ?? ""}`, command];
+    "-o", "ConnectTimeout=15", "-o", "ServerAliveInterval=30", "-o", "ServerAliveCountMax=4", "-o", "LogLevel=ERROR", ...proxy,
+    `${user}@${machine.via ? machine.id : machine.address ?? ""}`, command];
 }
 
 async function stage(run: BurstRun, machine: Machine, user: string, command: string, file: string, what: string): Promise<void> {

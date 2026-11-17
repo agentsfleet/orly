@@ -66,13 +66,15 @@ describe("burst settings", () => {
     expect(settings.aws.region).toBe("us-east-1");
     expect(settings.aws.types).toEqual(["c7i.4xlarge", "c7a.4xlarge", "c6i.4xlarge", "m7i.4xlarge"]);
     expect(settings.aws.user).toBe("admin");
+    expect(settings.aws).toMatchObject({ market: "spot", access: "ssh", instanceProfile: undefined });
     expect(settings.e2e).toMatchObject({ location: "Delhi", plan: "C3.32GB", user: "root", image: undefined });
   });
 
   test.each([
     ["ORLY_BURST_DEADLINE_MINUTES", "-5"], ["ORLY_BURST_DEADLINE_MINUTES", "2000"], ["ORLY_BURST_SNAPSHOT_KEEP", "1.5"],
     ["ORLY_BURST_E2E_LOCATION", "Mumbai"], ["ORLY_BURST_INSTANCE_TYPES", "c7g 4xlarge"], ["E2E_PROJECT_ID", "proj-secret-42"],
-    ["ORLY_BURST_AWS_IMAGE", "ubuntu"], ["ORLY_BURST_AWS_USER", "Root User"],
+    ["ORLY_BURST_AWS_IMAGE", "ubuntu"], ["ORLY_BURST_AWS_USER", "Root User"], ["ORLY_BURST_MARKET", "reserved"],
+    ["ORLY_BURST_AWS_ACCESS", "telnet"], ["ORLY_BURST_AWS_INSTANCE_PROFILE", "role with spaces"],
   ])("%s=%s is refused by name, never echoing the value", (name, value) => {
     expect(() => burstSettings({ [name]: value })).toThrow(name);
     try {

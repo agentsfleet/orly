@@ -44,6 +44,7 @@ export function fakeBin(): { bin: string; state: string } {
   const tools = {
     aws: `exec bun ${join(ROOT, "src/burst_fake_aws.ts")} "$@"`,
     ssh: `exec bun ${join(ROOT, "src/burst_fake_ssh.ts")} "$@"`,
+    "session-manager-plugin": `echo 1.2.707.0`,
     op: `printf '%s\\n' "$*" >> "${join(state, "op-calls.txt")}"\n[ -n "\${FAKE_OP_FAIL:-}" ] && { echo "[ERROR] could not read secret" >&2; exit 1; }\nprintf '%s' "${SECRET_VALUE}"`,
   };
   for (const [name, body] of Object.entries(tools)) {

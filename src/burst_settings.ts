@@ -11,9 +11,23 @@ export type BurstSettings = Readonly<{
   pollMs: number;
   outRoot: string;
   snapshotKeep: number;
-  aws: Readonly<{ region: string; types: readonly string[]; image: string | undefined; subnet: string | undefined; user: string }>;
+  aws: Readonly<{
+    region: string; types: readonly string[]; image: string | undefined; subnet: string | undefined; user: string;
+    market: AwsMarket; access: AwsAccess; instanceProfile: string | undefined;
+  }>;
   e2e: Readonly<{ apiKey: string | undefined; authToken: string | undefined; projectId: string | undefined; location: string; plan: string; image: string | undefined; user: string }>;
 }>;
+
+// What a lane's machine is rented as. Spot is about a tenth of the price and
+// AWS may take it back; spot-then-on-demand runs a lane AWS took back once
+// more on a machine it cannot.
+export const AWS_MARKETS = ["spot", "on-demand", "spot-then-on-demand"] as const;
+export type AwsMarket = (typeof AWS_MARKETS)[number];
+// How the caller reaches the machine: SSH on port 22 from the caller's address
+// alone, or SSH carried by Systems Manager over HTTPS, which needs no inbound
+// rule and survives a caller whose address changes.
+export const AWS_ACCESS = ["ssh", "ssm"] as const;
+export type AwsAccess = (typeof AWS_ACCESS)[number];
 
 const MINUTE_MS = 60_000;
 const SECOND_MS = 1_000;
@@ -35,6 +49,10 @@ const environmentSchema = z.object({
   ORLY_BURST_SUBNET: z.string().regex(/^subnet-[0-9a-f]{8,17}$/).optional(),
   // The Debian AMI's login user; E2E's Linux images log in as root.
   ORLY_BURST_AWS_USER: z.string().regex(LOGIN_USER).default("admin"),
+  ORLY_BURST_MARKET: z.enum(AWS_MARKETS).default("spot"),
+  ORLY_BURST_AWS_ACCESS: z.enum(AWS_ACCESS).default("ssh"),
+  // The instance profile whose role carries AmazonSSMManagedInstanceCore.
+  ORLY_BURST_AWS_INSTANCE_PROFILE: z.string().regex(/^[\w+=,.@-]{1,128}$/).optional(),
   E2E_API_KEY: z.string().min(1).optional(),
   E2E_AUTH_TOKEN: z.string().min(1).optional(),
   E2E_PROJECT_ID: z.string().regex(/^\d+$/).optional(),
@@ -62,6 +80,7 @@ export function burstSettings(env: Environment): BurstSettings {
     aws: Object.freeze({
       region: value.ORLY_BURST_REGION, types: Object.freeze(value.ORLY_BURST_INSTANCE_TYPES), image: value.ORLY_BURST_AWS_IMAGE,
       subnet: value.ORLY_BURST_SUBNET, user: value.ORLY_BURST_AWS_USER,
+      market: value.ORLY_BURST_MARKET, access: value.ORLY_BURST_AWS_ACCESS, instanceProfile: value.ORLY_BURST_AWS_INSTANCE_PROFILE,
     }),
     e2e: Object.freeze({
       apiKey: value.E2E_API_KEY, authToken: value.E2E_AUTH_TOKEN, projectId: value.E2E_PROJECT_ID,

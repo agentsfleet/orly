@@ -87,9 +87,21 @@ async function chooseImage(provider: CloudProvider, run: BurstRun, useSnapshot: 
   return newest ? { id: newest.launchId, name: newest.name, snapshot: true } : provider.baseImage();
 }
 
+// A lane whose machine the cloud took back runs once more, on demand, when the
+// provider says the run asked for that; the second attempt keeps its own
+// evidence beside the first and its own deadline.
 async function cloudLane(provider: CloudProvider, run: BurstRun, job: Job, inputs: LaneInputs): Promise<LaneResult> {
+  const first = await laneAttempt(provider, run, job, inputs);
+  if (!first.relaunch) return first.result;
+  run.write(`orly burst: lane=${job.name} ${provider.name} took its machine back; running it once more on demand`);
+  const again = await laneAttempt(provider, run, newJob(run, "lane", job.name, job.image, { onDemand: true, evidence: `${job.name}-on-demand` }), inputs);
+  return { ...again.result, minutes: first.result.minutes + again.result.minutes, cost: `${first.result.cost}, then ${again.result.cost}` };
+}
+
+async function laneAttempt(provider: CloudProvider, run: BurstRun, job: Job, inputs: LaneInputs): Promise<{ result: LaneResult; relaunch: boolean }> {
   let machine: Machine | undefined;
   let status: Status = "unlaunched";
+  let relaunch = false;
   try {
     machine = await provider.create(run, job);
     machine = await provider.ready(run, job, machine);
@@ -99,10 +111,11 @@ async function cloudLane(provider: CloudProvider, run: BurstRun, job: Job, input
     run.write(`orly burst: lane=${job.name} ${error instanceof Error ? error.message : String(error)}`);
     if (machine) status = run.signal.aborted ? "cancelled" : Date.now() >= job.deadline ? "deadline" : "interrupted";
   } finally {
+    if (machine && status === "interrupted" && !job.onDemand && provider.relaunchOnDemand) relaunch = await provider.relaunchOnDemand(run, machine).catch(() => false);
     if (machine) await release(provider, run, machine);
   }
   const minutes = machine ? Math.ceil((Date.now() - job.started) / MINUTE_MS) : 0;
-  return { lane: job.name, provider: provider.name, machine: machine?.label ?? "none", minutes, cost: provider.cost(machine), status, evidence: job.evidence };
+  return { relaunch, result: { lane: job.name, provider: provider.name, machine: machine?.label ?? "none", minutes, cost: provider.cost(machine), status, evidence: job.evidence } };
 }
 
 function script(run: BurstRun, job: Job, inputs: LaneInputs): Promise<string> {
@@ -138,11 +151,11 @@ async function settle(provider: CloudProvider, run: BurstRun): Promise<void> {
   }
 }
 
-function newJob(run: BurstRun, kind: Job["kind"], name: string, image: Image): Job {
-  const evidence = join(run.runDirectory, name);
+function newJob(run: BurstRun, kind: Job["kind"], name: string, image: Image, retry?: { onDemand: true; evidence: string }): Job {
+  const evidence = join(run.runDirectory, retry?.evidence ?? name);
   mkdirSync(evidence, { recursive: true });
   const started = Date.now();
-  return { kind, name, image, evidence, started, deadline: started + run.settings.deadlineMs };
+  return { kind, name, image, evidence, started, deadline: started + run.settings.deadlineMs, ...(retry ? { onDemand: true } : {}) };
 }
 
 function snapshotName(repo: string, now: Date): string {

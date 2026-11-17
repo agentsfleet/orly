@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.42.0 (2026-11-17)
+
+AWS lanes can rent On-Demand machines, and can reach their machines through Systems Manager instead of SSH from one address.
+
+- **Market** — `ORLY_BURST_MARKET=on-demand` rents lanes On-Demand. `spot-then-on-demand` runs a lane AWS took back once more On-Demand, with its own evidence.
+- **Systems Manager** — `ORLY_BURST_AWS_ACCESS=ssm` opens no inbound port and carries SSH inside a Systems Manager session. A caller whose address changes keeps its lanes, and an HTTPS-only session can run them.
+- **Setup** — `ssm` needs the role, instance profile, launcher policy statements and Session Manager plugin in `docs/BURST.md`, and `ORLY_BURST_AWS_INSTANCE_PROFILE`.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.42.0 update`.
+
 ## 0.40.0 (2026-11-16)
 
 `orly burst` runs a repository's slow lanes on a machine rented for the run, or on the current machine inside a CI job.
