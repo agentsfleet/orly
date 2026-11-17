@@ -83,7 +83,7 @@ function trackedPaths(root: string): string[] {
 }
 
 function gitInput(root: string, args: string[]): string {
-  const result = git(root, args, PROBE_LIMITS.timeout_ms);
+  const result = git(root, args, { timeoutMs: PROBE_LIMITS.timeout_ms });
   if (result.exitCode !== 0 || result.signalCode) throw new Error("Git input identity is unavailable");
   return result.stdout.toString();
 }

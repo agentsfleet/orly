@@ -218,3 +218,16 @@ test("gate tiers select their declared commands", async () => {
   expect(commands(VERIFY)).toEqual(["cmd.verify.lint"]);
   expect(commands(PR)).toEqual(["cmd.verify.integration", "cmd.verify.lint", "cmd.verify.unit"]);
 });
+
+describe("git.branch", () => {
+  // rev-parse --abbrev-ref exits 0 with "HEAD" when detached, which passed as a branch (CODE-BRANCH).
+  test("a detached HEAD names no branch, so the criterion fails instead of passing as HEAD", async () => {
+    const project = newSpecRepository();
+    git(project, "checkout", "--quiet", "--detach");
+    const model = await modelFor(project);
+    const context = { root: project, model, acceptDirty: false };
+    const branch = criteriaFor(PR, context).find((entry) => entry.name === "git.branch")?.evaluate(context);
+    expect(branch).toMatchObject({ ok: false, detail: "HEAD is detached; work on a branch" });
+  });
+});
+

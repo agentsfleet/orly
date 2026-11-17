@@ -23,8 +23,11 @@ export const UNSCOPED_ENVIRONMENT = unscopedEnvironment();
 
 // Every git call orly makes: run in `root`, with the scrubbed environment and
 // the bounds a declared command gets.
-export function git(root: string, args: string[], timeoutMs = DEFAULT_COMMAND_TIMEOUT_MS) {
-  return Bun.spawnSync(["git", ...args], { cwd: root, env: UNSCOPED_ENVIRONMENT, timeout: timeoutMs, maxBuffer: DEFAULT_COMMAND_OUTPUT_BYTES });
+export function git(root: string, args: string[], options: { timeoutMs?: number; stdin?: string } = {}) {
+  return Bun.spawnSync(["git", ...args], {
+    cwd: root, env: UNSCOPED_ENVIRONMENT, timeout: options.timeoutMs ?? DEFAULT_COMMAND_TIMEOUT_MS, maxBuffer: DEFAULT_COMMAND_OUTPUT_BYTES,
+    ...(options.stdin === undefined ? {} : { stdin: Buffer.from(options.stdin) }),
+  });
 }
 
 // Trimmed output, or "" when git fails; `required` makes a failure an error.

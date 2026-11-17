@@ -109,8 +109,9 @@ export function contentDigest(bytes: string | Uint8Array): string {
 // path per line and exits 1 when none match, which is not an error here.
 function ignoredPaths(targetRoot: string, paths: string[]): Set<string> {
   if (paths.length === 0) return new Set();
-  const printed = git(targetRoot, ["check-ignore", "--", ...paths]).stdout.toString().trim();
-  return new Set(printed.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
+  // `-z` works only with --stdin: paths go in and come out NUL-separated (CODE-GITZ).
+  const printed = git(targetRoot, ["check-ignore", "--stdin", "-z"], { stdin: `${paths.join("\0")}\0` }).stdout.toString();
+  return new Set(printed.split("\0").filter(Boolean));
 }
 
 // A managed file that is gone, or one git will not carry. Edits are not drift:

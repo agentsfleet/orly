@@ -17,6 +17,7 @@ const HEAD = "HEAD";
 const UPSTREAM = "@{upstream}";
 const DETAIL_SEPARATOR = "; ";
 const ABBREV_REF = "--abbrev-ref";
+const BRANCH_REF_PREFIX = "refs/heads/";
 
 const GIT_BRANCH = "git.branch";
 const GIT_TREE = "git.tree";
@@ -58,16 +59,20 @@ export function criteriaFor(gate: string, context: CriterionContext): Criterion[
 
 function gitBranch(): Criterion {
   return criterion(GIT_BRANCH, (context) => {
-    const branch = gitOutput(context.root, [REV_PARSE, ABBREV_REF, "HEAD"]);
-    const ok = branch.length > 0 && !DEFAULT_BRANCHES.includes(branch);
-    return { ok, detail: ok ? `on ${branch}` : `refusing to work on the default branch: ${branch || "unknown"}` };
+    // A non-zero exit means a detached HEAD, which names no branch (CODE-BRANCH).
+    const ref = gitOutput(context.root, ["symbolic-ref", "--quiet", "HEAD"]);
+    const branch = ref.startsWith(BRANCH_REF_PREFIX) ? ref.slice(BRANCH_REF_PREFIX.length) : "";
+    if (!branch) return { ok: false, detail: "HEAD is detached; work on a branch" };
+    const ok = !DEFAULT_BRANCHES.includes(branch);
+    return { ok, detail: ok ? `on ${branch}` : `refusing to work on the default branch: ${branch}` };
   });
 }
 
 function gitTree(): Criterion {
   return criterion(GIT_TREE, (context) => {
-    const dirty = gitOutput(context.root, ["status", "--porcelain=v1", "-uall"], true)
-      .split(/\r?\n/)
+    // NUL-separated with one entry per path, so an unusual name is read as it is (CODE-GITZ).
+    const dirty = gitOutput(context.root, ["status", "--porcelain=v1", "-z", "--no-renames", "-uall"], true)
+      .split("\0")
       .filter(Boolean);
     if (dirty.length === 0) return { ok: true, detail: "clean" };
     if (context.acceptDirty) return { ok: true, detail: `${dirty.length} dirty path(s) accepted` };

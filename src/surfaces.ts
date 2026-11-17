@@ -57,8 +57,7 @@ export function isDocs(path: string, prefixes: string[]): boolean {
 function branchDiff(root: string): string[] {
   const base = defaultMergeBase(root);
   if (!base) return [];
-  const output = gitOutput(root, ["diff", "--name-only", `${base}..HEAD`]);
-  return output.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  return gitOutput(root, ["diff", "--name-only", "-z", `${base}..HEAD`]).split("\0").filter(Boolean);
 }
 
 export function defaultMergeBase(root: string): string {
