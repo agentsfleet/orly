@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
-import { existsSync, readFileSync, rmSync } from "node:fs";
+import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { burst } from "./burst";
@@ -369,7 +369,9 @@ describe("aws-spot over Systems Manager", () => {
 
   test("ssm without the Session Manager plugin stops before anything is rented", async () => {
     const run = await awsRunWith(SSM);
-    rmSync(join(run.bin, "session-manager-plugin"));
+    // A failing stand-in shadows any plugin the machine has, as CI runners do.
+    writeFileSync(join(run.bin, "session-manager-plugin"), "#!/bin/sh\nexit 127\n");
+    chmodSync(join(run.bin, "session-manager-plugin"), 0o755);
 
     await expect(burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).rejects.toThrow("ORLY_BURST_AWS_ACCESS=ssm needs AWS's session-manager-plugin on this machine (docs/BURST.md)");
     expect(aws(run.state, "import-key-pair")).toHaveLength(0);
