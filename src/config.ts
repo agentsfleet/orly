@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { assertWritableInside, hashContent, isObject, isString, JsonObject, objectValue, OrlyError, readJsonObject, RulesModel, stringArray } from "./model";
-import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { git } from "./git_env";
 import { selectPacks, sniffCommands } from "./config_discovery";
 import { validateCommands, validateSurfaces } from "./validation";
 import { burstSchema, validateConfiguration, reusePoliciesSchema, type BurstConfig, type ReusePolicies } from "./config_validation";
@@ -102,20 +102,12 @@ export function contentDigest(bytes: string | Uint8Array): string {
   return `${DIGEST_ALGORITHM}:${hashContent(bytes)}`;
 }
 
-const PIPE_OUTPUT = "pipe";
 
 // Which of these paths git refuses to track. `check-ignore` prints one ignored
 // path per line and exits 1 when none match, which is not an error here.
 function ignoredPaths(targetRoot: string, paths: string[]): Set<string> {
   if (paths.length === 0) return new Set();
-  const result = Bun.spawnSync(["git", "check-ignore", "--", ...paths], {
-    cwd: targetRoot,
-    env: UNSCOPED_ENVIRONMENT,
-    stdout: PIPE_OUTPUT,
-    stderr: PIPE_OUTPUT,
-  });
-  const printed = result.stdout.toString().trim();
-  if (printed.length === 0) return new Set();
+  const printed = git(targetRoot, ["check-ignore", "--", ...paths]).stdout.toString().trim();
   return new Set(printed.split(/\r?\n/).map((line) => line.trim()).filter(Boolean));
 }
 

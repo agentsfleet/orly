@@ -2,11 +2,10 @@ import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { scanDocument, type DocFinding, type DocScanOptions } from "./doc_rules";
-import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { git } from "./git_env";
 import { isSpecRecord, specFillFindings } from "./spec_fill";
 import { defaultMergeBase } from "./surfaces";
 
-const PIPE_OUTPUT = "pipe";
 const UTF8 = "utf8";
 const NUL = "\0";
 const REV_PARSE = "rev-parse";
@@ -70,9 +69,7 @@ function paths(output: string): Set<string> {
 }
 
 function gitText(root: string, args: string[], allowMissingHead = false): string {
-  const result = Bun.spawnSync(["git", ...args], {
-    cwd: root, env: UNSCOPED_ENVIRONMENT, stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT,
-  });
+  const result = git(root, args);
   if (result.exitCode === 0) return result.stdout.toString();
   if (allowMissingHead && result.exitCode === 128) return "";
   throw new Error(`git ${args[0]} failed: ${result.stderr.toString().trim()}`);

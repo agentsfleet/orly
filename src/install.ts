@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, mkdtempSync, rmSync, copyFileSync, lstatSync, readlinkSync, symlinkSync, realpathSync, readdirSync, rmdirSync } from "node:fs";
 import { dirname, extname, join, resolve } from "node:path";
-import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { git } from "./git_env";
 import { CONFIG_PATH, contentDigest, readConfig, seedConfig, serialiseConfig, type RepoConfig } from "./config";
 import { selectPacks } from "./config_discovery";
 import { assertWritableInside, applyMode, modeLabel, OrlyError, MODE_EXECUTABLE, MODE_REGULAR, type RulesModel } from "./model";
@@ -14,7 +14,6 @@ import { installationLock } from "./installation/lock";
 
 const INSTALL_DIRECTORY = ".orly";
 const MANAGED_KIND = "managed file";
-const PIPE_OUTPUT = "pipe";
 const HOOKS_PATH_KEY = "core.hooksPath";
 type InstallError = { path: string; message: string; suggestion: string };
 export type InstallResult = { ok: boolean; packs: string[]; written: string[]; skipped: string[]; errors: InstallError[] };
@@ -145,7 +144,7 @@ function copyLoader(root: string, stage: string, target: string): void {
 
 function requireWorkTree(root: string): void {
   if (!existsSync(root)) throw new OrlyError(`target directory does not exist: ${root}`);
-  const result = Bun.spawnSync(["git", "-C", root, "rev-parse", "--show-toplevel"], { stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT, env: UNSCOPED_ENVIRONMENT });
+  const result = git(root, ["rev-parse", "--show-toplevel"]);
   if (result.exitCode !== 0) throw new OrlyError(`not a git repository: ${root} — run git init first`);
   if (realpathSync(root) !== realpathSync(result.stdout.toString().trim())) throw new OrlyError("install at the repository root, not a subdirectory");
 }

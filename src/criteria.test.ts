@@ -3,7 +3,8 @@ import { rmSync } from "node:fs";
 import { join } from "node:path";
 
 import { CONFIG_PATH } from "./config";
-import { criteriaFor, runCommand } from "./criteria";
+import { runCommand } from "./command_runner";
+import { criteriaFor } from "./criteria";
 import { cleanupTemporaryDirectories, git, modelFor, newRepository, newSpecRepository } from "./gates_test_support";
 
 const README = "README.md";

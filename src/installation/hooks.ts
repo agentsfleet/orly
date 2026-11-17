@@ -1,13 +1,12 @@
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { UNSCOPED_ENVIRONMENT } from "../git_env";
+import { git } from "../git_env";
 import { EXECUTE_BITS, OrlyError } from "../model";
 import type { PlannedFile } from "./plan";
 
 export const HOOKS_DIRECTORY = ".orly/hooks";
 const HOOKS_PATH_KEY = "core.hooksPath";
 const GIT_CONFIG = "config";
-const PIPE_OUTPUT = "pipe";
 const HOOK_GATES = [["pre-commit", "work"], ["pre-push", "verify"]] as const;
 
 export function plannedHooks(version: string): PlannedFile[] {
@@ -41,9 +40,6 @@ export function configureHooks(root: string): void {
   if (result.exitCode !== 0) throw new OrlyError(`cannot configure ${HOOKS_PATH_KEY}: ${result.stderr.toString().trim()}`);
 }
 
-function git(root: string, args: string[]) {
-  return Bun.spawnSync(["git", "-C", root, ...args], { env: UNSCOPED_ENVIRONMENT, stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
-}
 
 function hookScript(gate: string, version: string): string {
   return [

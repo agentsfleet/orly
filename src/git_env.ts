@@ -1,3 +1,5 @@
+import { DEFAULT_COMMAND_OUTPUT_BYTES, DEFAULT_COMMAND_TIMEOUT_MS } from "./command_limits";
+
 // git exports these to every hook it runs. Inherited by a spawned git, they
 // pin it to the HOOK's repository instead of the directory we asked about: in
 // the main checkout a relative GIT_DIR resolves locally by luck, but a linked
@@ -18,3 +20,16 @@ function unscopedEnvironment(): Record<string, string | undefined> {
 }
 
 export const UNSCOPED_ENVIRONMENT = unscopedEnvironment();
+
+// Every git call orly makes: run in `root`, with the scrubbed environment and
+// the bounds a declared command gets.
+export function git(root: string, args: string[], timeoutMs = DEFAULT_COMMAND_TIMEOUT_MS) {
+  return Bun.spawnSync(["git", ...args], { cwd: root, env: UNSCOPED_ENVIRONMENT, timeout: timeoutMs, maxBuffer: DEFAULT_COMMAND_OUTPUT_BYTES });
+}
+
+// Trimmed output, or "" when git fails; `required` makes a failure an error.
+export function gitOutput(root: string, args: string[], required = false): string {
+  const result = git(root, args);
+  if (required && (result.exitCode !== 0 || result.signalCode)) throw new Error("[ORLY-GIT-001] required Git metadata could not be read");
+  return result.exitCode === 0 ? result.stdout.toString().trim() : "";
+}

@@ -13,6 +13,7 @@ import { isString, OrlyError, readJsonObject, RulesModel } from "./model";
 import { Renderer } from "./render";
 import { verifyRuleset } from "./verify";
 import { commandSetupErrors } from "./validation";
+import { git } from "./git_env";
 
 const PASS_RESULT = "pass";
 const ACCEPT_DIRTY_FLAG = "--accept-dirty";
@@ -20,7 +21,6 @@ const REUSE_VERIFICATION_FLAG = "--reuse-verification";
 const HELP_FLAG = "--help";
 const SHORT_HELP_FLAG = "-h";
 const REASON_FLAG = "--reason";
-const PIPE_OUTPUT = "pipe";
 const PACKAGE_MANIFEST = "package.json";
 const FORCE_FLAG = "--force";
 const NO_HOOKS_FLAG = "--no-hooks";
@@ -176,7 +176,7 @@ function printGate(report: GateReport): void {
 }
 
 function projectRoot(): string {
-  const result = Bun.spawnSync(["git", "rev-parse", "--show-toplevel"], { stdout: PIPE_OUTPUT, stderr: PIPE_OUTPUT });
+  const result = git(process.cwd(), ["rev-parse", "--show-toplevel"]);
   if (result.exitCode !== 0) throw new OrlyError(`not inside a Git repository: ${process.cwd()} — run \`git init\` first`);
   return result.stdout.toString().trim();
 }

@@ -5,9 +5,9 @@ import { closeSync, existsSync, fsyncSync, lstatSync, openSync, readFileSync, re
 import { join, resolve } from "node:path";
 import { z } from "zod";
 
-import { gitOutput } from "./criteria_support";
 import { contentDigest } from "./config";
 import { DEFAULT_COMMAND_OUTPUT_BYTES } from "./command_limits";
+import { gitOutput } from "./git_env";
 
 type Completion = z.infer<typeof completionSchema>;
 export type Attempt = { path: string; id: string; key: Uint8Array; previous?: string };

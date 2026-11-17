@@ -1,6 +1,6 @@
-import {
-  Criterion, CriterionContext, CriterionResult, criterion, gitOutput, runCommand, Verdict,
-} from "./criteria_support";
+import type { Criterion, CriterionContext } from "./criteria_support";
+import { criterion } from "./criteria_support";
+import { gitOutput } from "./git_env";
 import { scanChangedDocuments } from "./doc_changes";
 import { JsonObject } from "./model";
 import { readConfigSync, RepoConfig } from "./config";
@@ -9,8 +9,6 @@ import { commandSetupErrors } from "./validation";
 import { limitsFor } from "./command_limits";
 import { runVerification } from "./verification";
 
-export type { Criterion, CriterionContext, CriterionResult, Verdict };
-export { runCommand };
 
 type CommandTier = typeof CONFORM_TIER | typeof FAST_TIER | typeof ALL_TIER;
 
