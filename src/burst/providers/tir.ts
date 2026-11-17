@@ -1,11 +1,12 @@
-import type { BurstSettings } from "./burst_settings";
+import type { BurstSettings } from "../settings";
+import type { Fetch } from "../types";
 
 import { z } from "zod";
 
-import { required } from "./burst_settings";
-import { OrlyError } from "./model";
+import { required } from "../settings";
+import { OrlyError } from "../../model";
+import { IPV4 } from "../types";
 
-export type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 export type Plan = { sku: string; priceId: number; hourly: number };
 export type OsImage = { name: string; version: string; versionId: number };
 export type VmState = { status: string; address: string | undefined };
@@ -18,7 +19,6 @@ const BASE_URL = "https://api.e2enetworks.com/myaccount/api/v1/gpu";
 const REQUEST_TIMEOUT_MS = 60_000;
 // The image and plan catalogues are the largest answers; past this is not one.
 const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
-const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 const identifier = z.union([z.number(), z.string()]).transform(String);
 const skusSchema = z.object({ data: z.object({ CPU: z.array(z.object({
   name: z.string(), plans: z.array(z.object({ sku_item_price_id: z.number(), committed_days: z.number().nullish(), unit_price: z.coerce.number(), is_active: z.boolean().optional() })),

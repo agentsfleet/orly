@@ -2,9 +2,9 @@ import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { burst } from "./burst";
-import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, callerAddress, fakeBin, recordedCalls, REPOSITORY, SECRET_VALUE } from "./burst_test_support";
-import { cleanupTemporaryDirectories } from "./gates_test_support";
+import { burst } from "./index";
+import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, callerAddress, fakeBin, recordedCalls, REPOSITORY, SECRET_VALUE } from "./fakes/support";
+import { cleanupTemporaryDirectories } from "../gates_test_support";
 
 const BASE_IMAGE = "resolve:ssm:/aws/service/debian/release/13/latest/amd64";
 const LANES = ["acceptance", "integration", "--provider", "aws-spot"];

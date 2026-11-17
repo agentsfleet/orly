@@ -1,14 +1,14 @@
-import type { Fetch } from "./burst_e2e_api";
-import type { Captured } from "./burst_process";
-import type { BurstSettings } from "./burst_settings";
-import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot } from "./burst_types";
+import type { Captured } from "../process";
+import type { BurstSettings } from "../settings";
+import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot } from "../types";
 
 import { z } from "zod";
 
-import { callerAddress } from "./burst_caller";
-import { required } from "./burst_settings";
-import { captureProcess, pause, until } from "./burst_process";
-import { OrlyError } from "./model";
+import { OrlyError } from "../../model";
+import { captureProcess, pause, until } from "../process";
+import { required } from "../settings";
+import { callerAddress } from "../ssh";
+import { IPV4 } from "../types";
 
 type Call = { allowFailure?: boolean; signal?: AbortSignal };
 
@@ -20,7 +20,6 @@ const CLEANUP_WAIT_MS = 15 * 60_000;
 // are progress.
 const FAILED_IMAGE_STATES = new Set(["failed", "error", "invalid", "deregistered", "disabled"]);
 const BASE_IMAGE = Object.freeze({ id: "resolve:ssm:/aws/service/debian/release/13/latest/amd64", name: "Debian 13 amd64", snapshot: false });
-const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/;
 // A type with no Spot capacity, or none at this price, falls through to the
 // next type in ORLY_BURST_INSTANCE_TYPES; any other refusal stops the lane.
 const CAPACITY_ERRORS = /InsufficientInstanceCapacity|SpotMaxPriceTooLow|MaxSpotInstanceCountExceeded|Unsupported/;

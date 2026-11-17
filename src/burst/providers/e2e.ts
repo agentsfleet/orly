@@ -1,11 +1,11 @@
-import type { Fetch, OsImage, Plan, VmSnapshot } from "./burst_e2e_api";
-import type { BurstSettings } from "./burst_settings";
-import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot } from "./burst_types";
+import type { BurstSettings } from "../settings";
+import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot } from "../types";
+import type { OsImage, Plan, VmSnapshot } from "./tir";
 
-import { callerAddress } from "./burst_caller";
-import { E2eApi, E2eRequestFailed } from "./burst_e2e_api";
-import { pause, until } from "./burst_process";
-import { OrlyError } from "./model";
+import { OrlyError } from "../../model";
+import { pause, until } from "../process";
+import { callerAddress } from "../ssh";
+import { E2eApi, E2eRequestFailed } from "./tir";
 
 const DEFAULT_IMAGE = "Ubuntu 24.04";
 // A deleted VM can hold its group briefly, so the group's delete is retried

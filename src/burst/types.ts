@@ -1,6 +1,13 @@
-import type { RepoConfig } from "./config";
-import type { BurstSettings } from "./burst_settings";
+import type { RepoConfig } from "../config";
+import type { BurstSettings } from "./settings";
 
+// Shared by the command line, the cloud lifecycle and `--provider here`.
+export const LANE_PREFIX = "burst.";
+export const MINUTE_MS = 60_000;
+export const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/;
+
+// The fetch a provider calls its cloud with, so tests can answer for it.
+export type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 export type ProviderName = "aws-spot" | "e2e" | "here";
 export type CloudProviderName = Exclude<ProviderName, "here">;
 // A lane's exit code, or why it has none. Only a number is evidence; the
@@ -38,8 +45,8 @@ export type Snapshot = { id: string; name: string; sizeGb: number | undefined; l
 export type Machine = { id: string; label: string; address: string | undefined; hourly: number | undefined; via?: string };
 
 // The seam a cloud provider fills: how its machines start, become reachable,
-// stop and turn into images. The shared code in burst_cloud.ts owns the order,
-// the parallel lanes, the deadline and the cleanup, and burst_ssh.ts owns the
+// stop and turn into images. The shared code in cloud.ts owns the order,
+// the parallel lanes, the deadline and the cleanup, and ssh.ts owns the
 // one transport every provider's machines are driven through.
 export interface CloudProvider {
   readonly name: CloudProviderName;

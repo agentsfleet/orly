@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
 import { join } from "node:path";
 
-import { burst, BURST_USAGE } from "./burst";
-import { remoteScript, resultsScript } from "./burst_job";
-import { burstSettings } from "./burst_settings";
-import { burstDependencies, burstEnvironment, burstRepository, fakeBin } from "./burst_test_support";
-import { cleanupTemporaryDirectories, ROOT } from "./gates_test_support";
-import { UNSCOPED_ENVIRONMENT } from "./git_env";
+import { burst, BURST_USAGE } from "./index";
+import { remoteScript, resultsScript } from "./job";
+import { burstSettings } from "./settings";
+import { burstDependencies, burstEnvironment, burstRepository, fakeBin } from "./fakes/support";
+import { cleanupTemporaryDirectories, ROOT } from "../gates_test_support";
+import { UNSCOPED_ENVIRONMENT } from "../git_env";
 
 setDefaultTimeout(30_000);
 afterEach(cleanupTemporaryDirectories);

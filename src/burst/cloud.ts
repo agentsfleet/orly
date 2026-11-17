@@ -1,21 +1,20 @@
-import type { Environment } from "./burst_settings";
-import type { StagedDirectory } from "./burst_ssh";
-import type { BurstRun, CloudProvider, Image, Job, LaneResult, Machine, Snapshot, Status } from "./burst_types";
+import type { Environment } from "./settings";
+import type { StagedDirectory } from "./ssh";
+import type { BurstRun, CloudProvider, Image, Job, LaneResult, Machine, Snapshot, Status } from "./types";
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { remoteScript } from "./burst_job";
-import { resolveSecrets } from "./burst_secrets";
-import { archiveDirectories, forgetKeyPair, reachable, runOverSsh } from "./burst_ssh";
+import { remoteScript } from "./job";
+import { resolveSecrets } from "./process";
+import { archiveDirectories, forgetKeyPair, reachable, runOverSsh } from "./ssh";
+import { LANE_PREFIX, MINUTE_MS } from "./types";
 
 // What only a lane receives: its secrets and its copied directories.
 type LaneInputs = { secrets: Environment; directories: readonly StagedDirectory[] };
 
 const NO_INPUTS: LaneInputs = Object.freeze({ secrets: {}, directories: [] });
-const MINUTE_MS = 60_000;
 const SNAPSHOT_JOB = "snapshot";
-const LANE_PREFIX = "burst.";
 
 // Every lane gets its own machine, all at once. Secrets are resolved here,
 // on the caller, before anything is rented. A lane's machine is deleted when

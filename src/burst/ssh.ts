@@ -1,13 +1,14 @@
-import type { Outcome } from "./burst_process";
-import type { Environment } from "./burst_settings";
-import type { BurstRun, Job, Machine, Status } from "./burst_types";
+import type { Outcome } from "./process";
+import type { Environment } from "./settings";
+import type { BurstRun, Fetch, Job, Machine, Status } from "./types";
 
 import { existsSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 
-import { INPUTS, resultsScript } from "./burst_job";
-import { captureProcess, streamProcess, until } from "./burst_process";
-import { OrlyError } from "./model";
+import { OrlyError } from "../model";
+import { INPUTS, resultsScript } from "./job";
+import { captureProcess, streamProcess, until } from "./process";
+import { IPV4 } from "./types";
 
 export type StagedDirectory = { name: string; archive: string };
 
@@ -118,4 +119,17 @@ async function collect(run: BurstRun, job: Job, machine: Machine, user: string):
 
 function asRoot(user: string, command: string): string {
   return user === "root" ? command : `sudo -n ${command}`;
+}
+
+// The caller's public address as AWS sees it, over HTTPS; it answers on a
+// GitHub-hosted runner as it does on a workstation. Every provider's SSH
+// rule admits this one address.
+const CALLER_ADDRESS_URL = "https://checkip.amazonaws.com";
+const CALLER_TIMEOUT_MS = 15_000;
+
+export async function callerAddress(fetcher: Fetch): Promise<string> {
+  const response = await fetcher(CALLER_ADDRESS_URL, { signal: AbortSignal.timeout(CALLER_TIMEOUT_MS) });
+  const address = (await response.text()).trim();
+  if (!response.ok || !IPV4.test(address)) throw new OrlyError(`could not learn this machine's public IPv4 address from ${CALLER_ADDRESS_URL}`);
+  return address;
 }

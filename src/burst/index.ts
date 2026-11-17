@@ -1,32 +1,33 @@
-import type { Fetch } from "./burst_e2e_api";
-import type { BurstSettings, Environment } from "./burst_settings";
-import type { BurstRun, CloudProvider, CloudProviderName, Io, LaneResult, ProviderName } from "./burst_types";
-import type { RepoConfig } from "./config";
+import type { RepoConfig } from "../config";
+import type { BurstSettings, Environment } from "./settings";
+import type { BurstRun, CloudProviderName, Fetch, Io, LaneResult, ProviderName } from "./types";
 
-import { join } from "node:path";
+import { randomUUID } from "node:crypto";
+import { mkdirSync } from "node:fs";
+import { basename, join } from "node:path";
 
-import { AwsSpot } from "./burst_aws";
-import { cloudLanes, cloudPrune, cloudSnapshot } from "./burst_cloud";
-import { E2eNodes } from "./burst_e2e";
-import { hereLanes, hereWarm } from "./burst_here";
-import { burstSettings } from "./burst_settings";
-import { newKeyPair } from "./burst_ssh";
-import { bundleRef, configAt, newRunId, repositoryName, resolveRef, runDirectory } from "./burst_stage";
-import { CONFIG_PATH, readConfig } from "./config";
-import { OrlyError } from "./model";
+import { CONFIG_PATH, parseConfig, readConfig } from "../config";
+import { UNSCOPED_ENVIRONMENT } from "../git_env";
+import { isObject, OrlyError } from "../model";
+import { cloudLanes, cloudPrune, cloudSnapshot } from "./cloud";
+import { hereLanes, hereWarm } from "./here";
+import { captureProcess } from "./process";
+import { CLOUD_PROVIDERS } from "./providers/index";
+import { burstSettings } from "./settings";
+import { newKeyPair } from "./ssh";
+import { LANE_PREFIX, MINUTE_MS } from "./types";
 
 export type BurstDependencies = Io & { root: string; env: Environment; fetch: Fetch };
 type Request = { snapshot: boolean; prune: boolean; provider: ProviderName | undefined; ref: string | undefined; keep: boolean; useSnapshot: boolean; lanes: string[] };
 
+const CLOUDS = Object.keys(CLOUD_PROVIDERS) as CloudProviderName[];
+const PROVIDERS: readonly ProviderName[] = [...CLOUDS, "here"];
 export const BURST_USAGE = [
-  "usage: orly burst <lane>... --provider aws-spot|e2e|here [--ref <ref>] [--keep] [--no-snapshot]",
-  "       orly burst snapshot --provider aws-spot|e2e|here [--ref <ref>] [--keep]",
-  "       orly burst snapshot --prune --provider aws-spot|e2e",
+  `usage: orly burst <lane>... --provider ${PROVIDERS.join("|")} [--ref <ref>] [--keep] [--no-snapshot]`,
+  `       orly burst snapshot --provider ${PROVIDERS.join("|")} [--ref <ref>] [--keep]`,
+  `       orly burst snapshot --prune --provider ${CLOUDS.join("|")}`,
 ].join("\n");
-const PROVIDERS: readonly ProviderName[] = ["aws-spot", "e2e", "here"];
 const USAGE_EXIT = 2;
-const LANE_PREFIX = "burst.";
-const MINUTE_MS = 60_000;
 // Each lane is a paid machine started at once; past this a run is refused
 // rather than fanned out.
 const MAX_LANES = 8;
@@ -112,7 +113,7 @@ async function here(request: Request, dependencies: BurstDependencies, settings:
 }
 
 async function cloud(request: Request, name: CloudProviderName, dependencies: BurstDependencies, settings: BurstSettings): Promise<number> {
-  const provider: CloudProvider = name === "aws-spot" ? new AwsSpot(settings, dependencies.fetch) : new E2eNodes(settings, dependencies.fetch);
+  const provider = new CLOUD_PROVIDERS[name](settings, dependencies.fetch);
   const run = await stage(request, dependencies, settings);
   if (request.prune) {
     await cloudPrune(provider, run);
@@ -173,4 +174,63 @@ function report(results: LaneResult[], started: number, write: (line: string) =>
   write(`orly burst: total provider=${results[0]?.provider ?? "none"} lanes=${results.length} passed=${results.length - failed.length} failed=${failed.length} minutes=${Math.ceil((Date.now() - started) / MINUTE_MS)}`);
   const code = failed.map((result) => result.status).find((status) => typeof status === "number");
   return failed.length === 0 ? 0 : typeof code === "number" ? Math.min(Math.max(code, 1), MAX_EXIT) : 1;
+}
+
+const GIT_TIMEOUT_MS = 10 * 60_000;
+const BRANCH_PREFIX = "refs/heads/";
+const REPOSITORY_NAME_CHARS = 40;
+const REF_NAME_CHARS = 24;
+
+// The ref a cloud run ships: the named one, or the branch checked out here.
+export async function resolveRef(root: string, named: string | undefined): Promise<string> {
+  if (named) return named;
+  const head = await git(root, ["symbolic-ref", "--quiet", "HEAD"]);
+  if (head.code !== 0) throw new OrlyError("HEAD is detached; pass --ref <branch or tag>");
+  return head.stdout.trim().slice(BRANCH_PREFIX.length);
+}
+
+// The configuration the machine will read, which is the ref's committed one,
+// not this working tree's.
+export async function configAt(root: string, ref: string): Promise<RepoConfig> {
+  const shown = await git(root, ["show", `${ref}:${CONFIG_PATH}`]);
+  if (shown.code !== 0) throw new OrlyError(`${ref} has no committed ${CONFIG_PATH}: ${shown.stderr.trim()}`);
+  const value: unknown = JSON.parse(shown.stdout);
+  if (!isObject(value)) throw new OrlyError(`${ref}:${CONFIG_PATH} must be a JSON object`);
+  return parseConfig(value);
+}
+
+// Snapshots are found by this name, so every worktree of one repository
+// shares them. It is the origin remote's owner and repository, such as
+// `agentsfleet-orly`, so two owners' `web` repositories in one account differ.
+export async function repositoryName(root: string): Promise<string> {
+  const origin = await git(root, ["remote", "get-url", "origin"]);
+  const source = origin.code === 0 ? origin.stdout.trim().replace(/\/+$/, "").replace(/\.git$/, "").split(/[/:]/).slice(-2).join("-") : basename(root);
+  return slug(source, REPOSITORY_NAME_CHARS) || "repository";
+}
+
+export function newRunId(ref: string, now: Date): string {
+  const stamp = now.toISOString().replaceAll(/[-:T]/g, "").slice(0, 14);
+  return `${slug(ref, REF_NAME_CHARS) || "ref"}-${stamp}-${randomUUID().slice(0, 4)}`;
+}
+
+// Holds the run's private key, so only this user may read it.
+export function runDirectory(outRoot: string, runId: string): string {
+  const directory = join(outRoot, runId);
+  mkdirSync(directory, { recursive: true, mode: 0o700 });
+  return directory;
+}
+
+export async function bundleRef(root: string, ref: string, directory: string): Promise<string> {
+  const bundle = join(directory, "repo.bundle");
+  const made = await git(root, ["bundle", "create", bundle, ref]);
+  if (made.code !== 0) throw new OrlyError(`git bundle of ${ref} failed (a branch or tag name is required): ${made.stderr.trim()}`);
+  return bundle;
+}
+
+function slug(value: string, length: number): string {
+  return value.toLowerCase().replaceAll(/[^a-z0-9]+/g, "-").replaceAll(/^-+|-+$/g, "").slice(0, length).replace(/-+$/, "");
+}
+
+function git(root: string, args: string[]) {
+  return captureProcess(["git", "-C", root, ...args], { env: UNSCOPED_ENVIRONMENT, timeoutMs: GIT_TIMEOUT_MS });
 }

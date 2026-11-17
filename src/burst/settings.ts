@@ -2,7 +2,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 
-import { OrlyError } from "./model";
+import { OrlyError } from "../model";
+import { MINUTE_MS } from "./types";
 
 export type Environment = Record<string, string | undefined>;
 export type BurstSettings = Readonly<{
@@ -29,7 +30,6 @@ export type AwsMarket = (typeof AWS_MARKETS)[number];
 export const AWS_ACCESS = ["ssh", "ssm"] as const;
 export type AwsAccess = (typeof AWS_ACCESS)[number];
 
-const MINUTE_MS = 60_000;
 const SECOND_MS = 1_000;
 // x86 only: Spot capacity differs by type, so the launcher walks this list and
 // takes the first type that has any.

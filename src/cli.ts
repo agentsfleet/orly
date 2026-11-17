@@ -2,7 +2,7 @@
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-import { burst } from "./burst";
+import { burst } from "./burst/index";
 import { printHelp } from "./cli_help";
 import { selectPacks } from "./config_discovery";
 import { CONFIG_PATH, managedDrift, readConfig, RepoConfig, writeConfig } from "./config";
