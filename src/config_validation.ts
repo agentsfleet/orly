@@ -13,6 +13,7 @@ const SCHEMA_VERSION = 1;
 const VERSION_PATTERN = /^$|^\d+\.\d+\.\d+(?:-[a-zA-Z0-9.-]+)?(?:\+[a-zA-Z0-9.-]+)?$/;
 const nonempty = z.string().min(1).refine((value) => !value.includes("\0"));
 const input = nonempty.refine((value) => !isAbsolute(value) && !value.split(/[\\/]/).some((part) => part === ".." || part === ".git"), "input must stay beneath the worktree and outside Git metadata");
+const trackedInput = input.refine((value) => !/[\\*?\[\]{}]/.test(value) && !/^[A-Za-z]:/.test(value) && value.replace(/\/$/, "").split("/").every((part) => part !== "" && part !== "."), "tracked input must be a relative file or directory without globs or dot segments");
 // A burst lane name becomes part of a machine name, a cloud tag and a
 // directory, so it is held to the narrowest set all three accept.
 const BURST_LANE = /^burst\.[a-z0-9][a-z0-9-]{0,23}$/;
@@ -37,6 +38,7 @@ export type BurstConfig = z.infer<typeof burstSchema>;
 export const reusePoliciesSchema = z.record(nonempty, z.object({
   hermetic: z.literal(true), max_age_ms: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   toolchain: z.array(z.array(nonempty).min(1)).min(1), inputs: z.array(input).default([]),
+  tracked_inputs: z.array(trackedInput).min(1).optional(),
 }).strict());
 
 const configurationSchema = z.object({

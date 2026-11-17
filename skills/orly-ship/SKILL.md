@@ -21,19 +21,25 @@ This skill owns the steps from review to land. Pull Request rules live in
    Code). Then give `orly-standards-reviewer` the diff, the spec, the
    standards for the touched files and the repository's own instructions. Fix
    each finding, or record the owner's verbatim deferral quote.
+
+   Record each review's name, reviewed revision, findings and limits separately
+   in the PR's Review section. A partial gstack review is not done; another
+   review does not fill that gap.
+
+   Recheck affected changes after repairs.
 3. **Baselines.** Copy the baseline counts and run URL from CI on the base
    commit into the Session Notes, beside the branch counts. Measure any lane CI
    did not run on that commit at the merge base, in an isolated checkout; never
    borrow another branch's counts.
 4. **Close and commit (CHORE(close)).** Verify every Dimension against its
-   existing acceptance criteria, then move the completed spec to `done/` with
+   existing acceptance criteria, then move the done spec to `done/` with
    `Status: DONE`. Commit it with the implementation, changelog and affected
    docs, sweep stale references, and verify `git status --porcelain=v1 -uall`
    is empty.
 
-   Pending CI does not create unfinished implementation scope. Record failed
+   Pending CI does not reopen implementation that is done. Record failed
    verification separately; do not rewrite acceptance criteria to manufacture
-   completion or invent an owner-approved deferral.
+   a done status or invent an owner-approved deferral.
 5. **Push.** Push the branch. The gate checks that `HEAD` is the pushed
    revision, so it runs after this.
 6. **Gate.** Run `orly gate pr` once on the final pushed tree. With a reviewed
@@ -47,14 +53,25 @@ This skill owns the steps from review to land. Pull Request rules live in
 
    Read back its live draft flag and head revision after the mutation.
    Review readiness does not waive checks or authorize merging.
-8. **Babysit.** Poll CI checks and greptile threads, fix what this diff broke,
+8. **Propose lessons.** After the branch is pushed and the PR is published,
+   summarize the observed lessons in a few lines. For each proposed Orly
+   update, show the evidence, exact source file and proposed change. Ask the
+   owner to approve updates not already authorized; honor existing approval.
+
+   Ask once per unchanged proposal and record the decision in Session Notes.
+   No reply is not approval. With no actionable lesson, say so without
+   inventing a rule.
+
+   Do not edit generated copies or update consumer pins.
+   Continue checks and review follow-up while the proposal awaits an answer.
+9. **Babysit.** Poll CI checks and greptile threads, fix what this diff broke,
    and answer every thread. Stop after two consecutive quiet polls with CI
    green. Never use `gh pr checks --watch`.
-9. **Verify the handoff.** Read the final state from Git, the committed spec
-   and the forge before reporting completion:
+10. **Verify the handoff.** Read the final state from Git, the committed spec
+   and the forge before reporting done:
 
-   - the completed spec exists in `done/`, says `DONE`, has every Dimension
-     complete, and has no stale active copy or current plan link;
+   - the spec exists in `done/`, says `DONE`, has every Dimension
+     done, and has no stale active copy or current plan link;
    - the tree is clean and local HEAD, upstream and the PR head agree;
    - the branch contains the freshly fetched target base, and any release version follows that base;
    - the PR is ready for review, or carries the owner's explicit draft request;
@@ -83,13 +100,17 @@ This skill owns the steps from review to land. Pull Request rules live in
    successful push, a closed spec or an earlier PR snapshot.
 
    A pending check keeps follow-up running. A blocker report names the exact
-   failing check, evidence and required action; it is not a completion claim.
-10. **Land.** After the owner merges, pull the default branch. Delete the merged
+   failing check, evidence and required action; it does not claim done.
+11. **Land.** After the owner merges, pull the default branch. Delete the merged
    branch with `git branch -d` and remove its worktree without `--force`.
 
 ## Codex cloud tasks
 
 Follow the user's explicit publishing authorization in cloud runtimes. Opening the Pull Request includes the feature-branch push and required final gate.
 It does not authorize merge, release or a consumer pin update.
+
+Missing acceptance evidence does not authorize `orly-burst`. Propose the named
+lanes, provider and expected cost, and wait for explicit authorization before
+renting machines, capturing snapshots or retaining paid resources.
 
 When publishing is not authorized, stop with concrete prepared changes and verification evidence for the owner.

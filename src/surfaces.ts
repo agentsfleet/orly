@@ -1,4 +1,6 @@
-import { isObject, JsonObject, stringArray } from "./model";
+import type { JsonObject } from "./model";
+
+import { isObject, OrlyError, stringArray } from "./model";
 import { gitOutput } from "./git_env";
 
 export const DEFAULT_BRANCHES = ["main", "master"];
@@ -13,6 +15,7 @@ const MARKDOWN = /\.(md|mdx)$/;
 // UI TypeScript, OpenAPI YAML, scripts. A fixed set keeps the check identical
 // everywhere instead of drifting per repository.
 const SOURCE_EXTENSIONS = /\.(zig|ts|tsx|js|jsx|mjs|py|rs|go|sh|sql|yaml|yml|json|toml)$/;
+const BUILD_INPUT = /(^|\/)(?:Makefile|GNUmakefile|Dockerfile|Containerfile)(?:\.[^/]+)?$|(^|\/)bin\/[^/.]+$|\.(?:lock|mk)$/;
 
 export type SurfaceReport = {
   changed: string[];
@@ -36,7 +39,7 @@ export function classifyBranch(root: string, surfaces: JsonObject | undefined): 
 }
 
 export function isCode(path: string): boolean {
-  return !MARKDOWN.test(path) && (SOURCE_EXTENSIONS.test(path) || TEST_PATH.test(path));
+  return !MARKDOWN.test(path) && (SOURCE_EXTENSIONS.test(path) || TEST_PATH.test(path) || BUILD_INPUT.test(path));
 }
 
 // User surface: a repository-declared prefix, a real source file, and not a test —
@@ -44,7 +47,7 @@ export function isCode(path: string): boolean {
 // gate trains everyone to distrust it.
 export function isUserSurface(path: string, prefixes: string[]): boolean {
   if (!prefixes.some((prefix) => path.startsWith(prefix))) return false;
-  return SOURCE_EXTENSIONS.test(path) && !TEST_PATH.test(path) && !MARKDOWN.test(path);
+  return isCode(path) && !TEST_PATH.test(path);
 }
 
 // Docs: a repository-declared prefix, but never the spec tree — every milestone
@@ -56,8 +59,8 @@ export function isDocs(path: string, prefixes: string[]): boolean {
 
 function branchDiff(root: string): string[] {
   const base = defaultMergeBase(root);
-  if (!base) return [];
-  return gitOutput(root, ["diff", "--name-only", "-z", `${base}..HEAD`]).split("\0").filter(Boolean);
+  if (!base) throw new OrlyError("comparison base is unavailable; fetch the target branch and its history before verification");
+  return gitOutput(root, ["diff", "--no-ext-diff", "--name-only", "-z", `${base}..HEAD`], true).split("\0").filter(Boolean);
 }
 
 export function defaultMergeBase(root: string): string {

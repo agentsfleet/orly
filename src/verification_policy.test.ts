@@ -14,6 +14,16 @@ test("reuse_policy_is_strict_and_round_trips", () => {
   expect(parseConfig(BASE).reuse).toBeUndefined();
 });
 
+test("scoped policy round trips and rejects invalid selectors", () => {
+  const policy = { ...POLICY, tracked_inputs: ["src/", "bun.lock"] };
+  const config = parseConfig({ ...BASE, reuse: { "verify.unit": policy } });
+  expect(parseConfig(JSON.parse(serialiseConfig(config))).reuse?.["verify.unit"]).toEqual(policy);
+  for (const tracked_inputs of [[], [""], ["../src"], ["/src"], [".git/index"], ["src/../x"], ["src/*"], ["src/?"], ["src/[a]"], ["src/{a,b}"], ["src\\x"], ["C:/src"], ["./src"], ["src//x"], ["src\0x"]]) {
+    const error = rejected({ ...BASE, reuse: { "verify.unit": { ...POLICY, tracked_inputs } } });
+    expect(error.issues.some((issue) => issue.path.join(".").startsWith("reuse.verify.unit.tracked_inputs"))).toBeTrue();
+  }
+});
+
 test.each([
   ["invalid_value", { hermetic: false }], ["too_small", { max_age_ms: 0 }], ["too_small", { max_age_ms: -1 }], ["invalid_type", { max_age_ms: 1.5 }],
   ["too_small", { toolchain: [] }], ["too_small", { toolchain: [[]] }], ["too_small", { toolchain: [[""]] }],

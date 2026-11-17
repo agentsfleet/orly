@@ -121,7 +121,7 @@ async function stagePlan(root: string, layout: Layout, planned: PlannedFile[], o
       applyMode(path, file.mode);
     }
     const markdown = planned.filter((file) => extname(file.target) === ".md" && !file.target.includes("/skills/")).map((file) => join(stage, file.target));
-    const missing = await referenceClosureErrors(stage, markdown, root);
+    const missing = await referenceClosureErrors(stage, markdown, root, new Set(obsolete));
     if (missing.length) throw new OrlyError(missing.join("\n"));
     for (const [target] of loaderTargets(layout)) copyLoader(root, stage, target);
     const loaders = await installLoaders(stage, layout, obsolete);

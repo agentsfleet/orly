@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
-import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { burst } from "./index";
+import { aws, awsRun, machineScript, option, seedImages } from "./aws-test-support";
 import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, callerAddress, fakeBin, recordedCalls, REPOSITORY, SECRET_VALUE } from "./test_support";
 import { cleanupTemporaryDirectories } from "../gates_test_support";
 
@@ -13,38 +14,6 @@ const SECRETS = { secrets: { API_TOKEN: "op://Burst Vault/api/credential" } };
 
 setDefaultTimeout(60_000);
 afterEach(cleanupTemporaryDirectories);
-
-async function awsRun(scenario: Record<string, unknown> = {}, burstConfig: Record<string, unknown> = {}) {
-  const root = burstRepository(burstConfig);
-  const { bin, state } = fakeBin();
-  await Bun.write(join(state, "scenario.json"), JSON.stringify(scenario));
-  return { root, state, ...burstDependencies(root, burstEnvironment(bin, state), callerAddress) };
-}
-
-async function awsRunWith(extra: Record<string, string>, scenario: Record<string, unknown> = {}) {
-  const root = burstRepository();
-  const { bin, state } = fakeBin();
-  await Bun.write(join(state, "scenario.json"), JSON.stringify(scenario));
-  return { root, state, bin, ...burstDependencies(root, burstEnvironment(bin, state, extra), callerAddress) };
-}
-
-function aws(state: string, verb?: string): string[][] {
-  return recordedCalls(state).filter((call) => call[0] === "aws" && (verb === undefined || call[2] === verb));
-}
-
-function option(call: string[] | undefined, name: string): string {
-  const index = call?.indexOf(name) ?? -1;
-  return index < 0 ? "" : call?.[index + 1] ?? "";
-}
-
-function machineScript(state: string, address: string): string {
-  return readFileSync(join(state, address, "job.sh"), "utf8");
-}
-
-async function seedImages(state: string, names: string[]): Promise<void> {
-  const images = names.map((name, index) => ({ id: `ami-0000000000000000${index + 1}`, name, repo: REPOSITORY, snapshots: [`snap-${index + 1}`], size: 80 }));
-  await Bun.write(join(state, "images.json"), JSON.stringify(images));
-}
 
 describe("aws-spot lanes", () => {
   test("a run imports its key, opens SSH to the caller only, launches lanes at once and removes it all", async () => {
@@ -227,9 +196,9 @@ describe("aws-spot snapshots", () => {
     expect(verbs.indexOf("stop-instances")).toBeLessThan(verbs.indexOf("create-image"));
     expect(verbs.indexOf("create-image")).toBeLessThan(verbs.indexOf("terminate-instances"));
     const image = aws(run.state, "create-image")[0];
-    expect(option(image, "--name")).toMatch(new RegExp(`^orly-burst-${REPOSITORY}-\\d{12}$`));
+    expect(option(image, "--name")).toMatch(new RegExp(`^orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8}$`));
     expect(image).toContain(`ResourceType=image,Tags=[{Key=owner,Value=agent},{Key=orly-burst,Value=${REPOSITORY}}]`);
-    expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=aws-spot id=ami-\\d+ name=orly-burst-${REPOSITORY}-\\d{12} state=ready size=80\\.0GB storage≈\\$4\\.00/month at most`));
+    expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=aws-spot id=ami-\\d+ name=orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8} state=ready size=80\\.0GB storage≈\\$4\\.00/month at most`));
   });
 
   // The real capture outlasted `aws ec2 wait image-available` and orly killed
@@ -271,7 +240,7 @@ describe("aws-spot snapshots", () => {
 
   test("lanes start from the newest snapshot, or the base image with --no-snapshot", async () => {
     const run = await awsRun();
-    await seedImages(run.state, [`orly-burst-${REPOSITORY}-202611010000`, `orly-burst-${REPOSITORY}-202611150000`]);
+    await seedImages(run.state, [`orly-burst-${REPOSITORY}-20261101000000000-1234abcd`, `orly-burst-${REPOSITORY}-20261115000000000-1234abcd`]);
 
     await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
     await burst(["acceptance", "--provider", "aws-spot", "--no-snapshot"], run.dependencies);
@@ -281,7 +250,7 @@ describe("aws-spot snapshots", () => {
 
   test("pruning deregisters the older images and deletes their EBS snapshots, renting nothing", async () => {
     const run = await awsRun();
-    await seedImages(run.state, ["202611010000", "202611020000", "202611030000"].map((stamp) => `orly-burst-${REPOSITORY}-${stamp}`));
+    await seedImages(run.state, ["20261101000000000-1234abcd", "20261102000000000-1234abcd", "20261103000000000-1234abcd"].map((stamp) => `orly-burst-${REPOSITORY}-${stamp}`));
 
     const code = await burst(["snapshot", "--prune", "--provider", "aws-spot"], run.dependencies);
 
@@ -289,99 +258,6 @@ describe("aws-spot snapshots", () => {
     expect(aws(run.state, "deregister-image").map((call) => option(call, "--image-id"))).toEqual(["ami-00000000000000001"]);
     expect(aws(run.state, "delete-snapshot").map((call) => option(call, "--snapshot-id"))).toEqual(["snap-1"]);
     expect(aws(run.state, "run-instances")).toHaveLength(0);
-    expect(aws(run.state, "import-key-pair")).toHaveLength(0);
-  });
-});
-
-describe("aws-spot markets", () => {
-  test("ORLY_BURST_MARKET=on-demand rents a lane on demand that still terminates when it shuts down", async () => {
-    const run = await awsRunWith({ ORLY_BURST_MARKET: "on-demand" });
-
-    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(0);
-
-    const launch = aws(run.state, "run-instances")[0];
-    expect(launch).not.toContain("--instance-market-options");
-    expect(option(launch, "--instance-initiated-shutdown-behavior")).toBe("terminate");
-    expect(run.output.text()).toContain("(c7i.4xlarge on-demand) started");
-    expect(run.output.text()).toMatch(/lane=acceptance provider=aws-spot machine=c7i\.4xlarge minutes=\d+ cost≈on-demand rate exit=0 /);
-    expect(aws(run.state, "terminate-instances")).toHaveLength(1);
-  });
-
-  test("spot-then-on-demand runs a lane AWS took back once more on demand, with its own evidence", async () => {
-    const run = await awsRunWith({ ORLY_BURST_MARKET: "spot-then-on-demand" }, { reclaimSpot: true, dropAddresses: ["198.51.100.1"] });
-
-    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(0);
-
-    const launches = aws(run.state, "run-instances");
-    expect(launches).toHaveLength(2);
-    expect(launches[0]).toContain("--instance-market-options");
-    expect(launches[1]).not.toContain("--instance-market-options");
-    expect(aws(run.state, "describe-instances").filter((call) => option(call, "--query").includes("StateReason"))).toHaveLength(1);
-    expect(aws(run.state, "terminate-instances")).toHaveLength(2);
-    const text = run.output.text();
-    expect(text).toContain("orly burst: lane=acceptance aws-spot took its machine back; running it once more on demand");
-    expect(text).toMatch(/lane=acceptance provider=aws-spot machine=c7i\.4xlarge minutes=\d+ cost≈\$0\.2345\/h \(spot\), then on-demand rate exit=0 evidence=\S+acceptance-on-demand/);
-    expect(text).toContain("orly burst: total provider=aws-spot lanes=1 passed=1 failed=0");
-  });
-
-  test("a dropped session on a machine AWS did not take back is not run again", async () => {
-    const run = await awsRunWith({ ORLY_BURST_MARKET: "spot-then-on-demand" }, { dropAddresses: ["198.51.100.1"] });
-
-    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(1);
-
-    expect(aws(run.state, "run-instances")).toHaveLength(1);
-    expect(run.output.text()).toMatch(/lane=acceptance .* exit=interrupted /);
-    expect(run.output.text()).not.toContain("once more on demand");
-  });
-
-  test("on the default market a lane AWS took back is reported, and its state reason never read", async () => {
-    const run = await awsRunWith({}, { reclaimSpot: true, dropAddresses: ["198.51.100.1"] });
-
-    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(1);
-
-    expect(aws(run.state, "run-instances")).toHaveLength(1);
-    expect(aws(run.state, "describe-instances").filter((call) => option(call, "--query").includes("StateReason"))).toHaveLength(0);
-    expect(run.output.text()).toMatch(/exit=interrupted /);
-  });
-});
-
-describe("aws-spot over Systems Manager", () => {
-  const SSM = { ORLY_BURST_AWS_ACCESS: "ssm", ORLY_BURST_AWS_INSTANCE_PROFILE: "orly-burst-ssm" };
-  const PROXY = "ProxyCommand=aws --region us-east-1 ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p";
-
-  test("ssm opens no inbound rule, gives the machine its profile and agent, and reaches it by identifier", async () => {
-    const run = await awsRunWith(SSM);
-
-    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(0);
-
-    expect(aws(run.state, "authorize-security-group-ingress")).toHaveLength(0);
-    const launch = aws(run.state, "run-instances")[0];
-    expect(option(launch, "--iam-instance-profile")).toBe("Name=orly-burst-ssm");
-    expect(option(launch, "--user-data")).toContain("https://s3.us-east-1.amazonaws.com/amazon-ssm-us-east-1/latest/debian_amd64/amazon-ssm-agent.deb");
-    expect(option(launch, "--user-data")).toContain("systemctl is-active --quiet amazon-ssm-agent && exit 0");
-    const ssh = recordedCalls(run.state).filter((call) => call[0] === "ssh");
-    expect(ssh.length).toBeGreaterThan(0);
-    expect(ssh.every((call) => call.includes(PROXY) && call.includes("admin@i-00000000000000001"))).toBe(true);
-    expect(machineScript(run.state, "i-00000000000000001")).toContain("BURST_LANE='acceptance'");
-    expect(run.output.text()).toContain("admits no inbound connection; SSH goes through Systems Manager");
-    expect(aws(run.state, "delete-security-group")).toHaveLength(1);
-  });
-
-  test("ssm without the Session Manager plugin stops before anything is rented", async () => {
-    const run = await awsRunWith(SSM);
-    // A failing stand-in shadows any plugin the machine has, as CI runners do.
-    writeFileSync(join(run.bin, "session-manager-plugin"), "#!/bin/sh\nexit 127\n");
-    chmodSync(join(run.bin, "session-manager-plugin"), 0o755);
-
-    await expect(burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).rejects.toThrow("ORLY_BURST_AWS_ACCESS=ssm needs AWS's session-manager-plugin on this machine (docs/BURST.md)");
-    expect(aws(run.state, "import-key-pair")).toHaveLength(0);
-    expect(aws(run.state, "run-instances")).toHaveLength(0);
-  });
-
-  test("ssm without an instance profile names the variable before anything is rented", async () => {
-    const run = await awsRunWith({ ORLY_BURST_AWS_ACCESS: "ssm" });
-
-    await expect(burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).rejects.toThrow("set ORLY_BURST_AWS_INSTANCE_PROFILE for this provider (see docs/BURST.md)");
     expect(aws(run.state, "import-key-pair")).toHaveLength(0);
   });
 });

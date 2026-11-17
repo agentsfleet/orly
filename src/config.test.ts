@@ -6,6 +6,7 @@ import { join, resolve } from "node:path";
 import { selectPacks } from "./config_discovery";
 import { CONFIG_PATH, managedDrift, readConfig, readConfigSync, seedConfig, writeConfig } from "./config";
 import { RulesModel } from "./model";
+import { git } from "./gates_test_support";
 
 const ROOT = resolve(import.meta.dir, "..");
 const RUST_SOURCE = "src/lib.rs";
@@ -143,8 +144,21 @@ describe("readConfig", () => {
 });
 
 describe("managedDrift", () => {
-  test("every managed file present reports no drift", async () => {
+  function repository(): string {
     const root = scratch();
+    git(root, "init", "--initial-branch=main");
+    return root;
+  }
+
+  test("failed Git inspection is refused instead of reporting no ignored files", async () => {
+    const root = scratch();
+    writeFileSync(join(root, "AGENTS.md"), "managed rules\n");
+    const config = { ...(await seedConfig(root)), managed: ["AGENTS.md"] };
+    expect(() => managedDrift(root, config)).toThrow("Git inspection failed");
+  });
+
+  test("every managed file present reports no drift", async () => {
+    const root = repository();
     writeFileSync(join(root, "AGENTS.md"), "rules\n");
     const config = { ...(await seedConfig(root)), managed: ["AGENTS.md"] };
     expect(managedDrift(root, config)).toEqual([]);
@@ -153,14 +167,14 @@ describe("managedDrift", () => {
   // Edits are deliberately NOT drift: the tree is a git repository, so a hand
   // edit and `orly update` replacing it both show in `git diff` first.
   test("an edited managed file is not drift — git already shows it", async () => {
-    const root = scratch();
+    const root = repository();
     writeFileSync(join(root, "AGENTS.md"), "edited by hand\n");
     const config = { ...(await seedConfig(root)), managed: ["AGENTS.md"] };
     expect(managedDrift(root, config)).toEqual([]);
   });
 
   test("a deleted managed file is reported, sorted, with a recovery command", async () => {
-    const root = scratch();
+    const root = repository();
     const config = { ...(await seedConfig(root)), managed: ["zzz.md", "aaa.md"] };
     const findings = managedDrift(root, config);
     expect(findings).toHaveLength(2);
@@ -175,8 +189,7 @@ describe("managedDrift", () => {
   // against a clone that never received them.
   // Without -z, check-ignore printed café as a quoted escape, so the ignored file went unreported.
   test("an ignored managed file with an unusual name is reported by its real path", async () => {
-    const root = scratch();
-    Bun.spawnSync(["git", "init"], { cwd: root });
+    const root = repository();
     mkdirSync(join(root, "skills/café"), { recursive: true });
     writeFileSync(join(root, "skills/café/SKILL.md"), "skill\n");
     writeFileSync(join(root, ".gitignore"), "skills/\n");
@@ -185,8 +198,7 @@ describe("managedDrift", () => {
   });
 
   test("a managed file git refuses to track is drift, even though it is present", async () => {
-    const root = scratch();
-    Bun.spawnSync(["git", "init"], { cwd: root });
+    const root = repository();
     mkdirSync(join(root, ".claude/skills/orly-spec"), { recursive: true });
     writeFileSync(join(root, ".claude/skills/orly-spec/SKILL.md"), "skill\n");
     writeFileSync(join(root, ".gitignore"), ".claude/skills/\n");
@@ -198,8 +210,7 @@ describe("managedDrift", () => {
   });
 
   test("the same file reports nothing once the ignore is scoped to spare it", async () => {
-    const root = scratch();
-    Bun.spawnSync(["git", "init"], { cwd: root });
+    const root = repository();
     mkdirSync(join(root, ".claude/skills/orly-spec"), { recursive: true });
     writeFileSync(join(root, ".claude/skills/orly-spec/SKILL.md"), "skill\n");
     writeFileSync(join(root, ".gitignore"), ".claude/skills/*\n!.claude/skills/orly-spec/\n");

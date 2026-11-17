@@ -32,7 +32,7 @@ export class Renderer {
     this.model = model;
   }
 
-  async renderText(packs: string[], commands: Record<string, string[][]> = {}, projectRoot?: string): Promise<string> {
+  async renderText(packs: string[], commands: Record<string, string[][]> = {}): Promise<string> {
     const sections = [
       `${GENERATED_BANNER}\n> Do not edit. Update the source rule in \`core/\` or the pack it names,\n> then commit — every clone reads the committed rules.`,
     ];
@@ -44,10 +44,6 @@ export class Renderer {
     }
     sections.push(await this.standardsIndex(packs));
     sections.push(this.commandTable(commands));
-    if (projectRoot) {
-      const projectPath = join(projectRoot, "AGENTS.project.md");
-      if (await Bun.file(projectPath).exists()) sections.push((await Bun.file(projectPath).text()).trim());
-    }
     return `${sections.filter(Boolean).join("\n\n---\n\n")}\n`;
   }
 

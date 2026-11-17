@@ -1,4 +1,5 @@
 import type { Verdict } from "./criteria_support";
+import type { VerificationProof } from "./verification_identity";
 
 import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { closeSync, existsSync, fsyncSync, lstatSync, openSync, readFileSync, readdirSync, renameSync, writeFileSync, mkdirSync, rmdirSync, unlinkSync } from "node:fs";
@@ -12,7 +13,7 @@ import { hasErrorCode, hashContent } from "./model";
 
 type Completion = z.infer<typeof completionSchema>;
 export type Attempt = { path: string; id: string; key: Uint8Array; previous?: string };
-export type VerifiedPass = { detail: string; executedAt: number; origin: string };
+export type VerifiedPass = { detail: string; executedAt: number; origin: string; revision: string };
 
 const MANIFEST_BYTES = 64 * 1024;
 const KEY_BYTES = 32;
@@ -21,7 +22,9 @@ const COMPLETE = "complete.json";
 const OUTPUT = "output.log";
 const ATTEMPT_NAME = /^\d{12}-[0-9a-f-]{36}$/;
 const completionSchema = z.object({
+  format: z.literal(1),
   id: z.string(), binding: z.string().nullable(),
+  executed_revision: z.string().nullable(), accepted_revision: z.string().nullable(), scope: z.string().nullable(),
   executed_at: z.number().int().nonnegative(), origin: z.string(),
   status: z.enum(["passed", "failed", "blocked", "cancelled"]), output_digest: z.string(),
 }).strict();
@@ -65,20 +68,21 @@ export function previousPass(attempt: Attempt, binding: string, maxAge: number):
     const expected = signature(payload, attempt.key);
     if (record.signature.length !== expected.length || !timingSafeEqual(Buffer.from(record.signature), Buffer.from(expected))) return undefined;
     const now = Date.now();
-    if (payload.status !== "passed" || payload.binding !== binding || payload.id !== attempt.previous.split(/[\\/]/).at(-1)) return undefined;
+    if (payload.status !== "passed" || payload.binding !== binding || !payload.executed_revision || payload.id !== attempt.previous.split(/[\\/]/).at(-1)) return undefined;
     if (now < payload.executed_at || now - payload.executed_at > maxAge) return undefined;
     const output = join(attempt.previous, OUTPUT);
     requirePrivateFile(output);
     const detail = readFileSync(output, ENCODING);
     if (contentDigest(detail) !== payload.output_digest) return undefined;
-    return { detail, executedAt: payload.executed_at, origin: payload.origin };
+    return { detail, executedAt: payload.executed_at, origin: payload.origin, revision: payload.executed_revision };
   } catch { return undefined; }
 }
 
-export function completeAttempt(attempt: Attempt, binding: string | undefined, result: Verdict, reused?: VerifiedPass): void {
+export function completeAttempt(attempt: Attempt, proof: VerificationProof | undefined, result: Verdict, reused?: VerifiedPass): void {
   if (result.status && result.ok !== (result.status === "passed")) throw new Error("inconsistent native verification outcome");
   const payload = completionSchema.parse({
-    id: attempt.id, binding: binding ?? null, executed_at: reused?.executedAt ?? Date.now(),
+    format: 1, id: attempt.id, binding: proof?.binding ?? null, executed_at: reused?.executedAt ?? Date.now(),
+    executed_revision: reused?.revision ?? proof?.revision ?? null, accepted_revision: proof?.revision ?? null, scope: proof?.scope ?? null,
     origin: reused?.origin ?? attempt.id, status: result.status ?? (result.ok ? "passed" : "failed"),
     output_digest: contentDigest(result.detail),
   });

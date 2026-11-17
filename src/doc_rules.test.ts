@@ -193,6 +193,16 @@ describe("scanDocument", () => {
     ]);
   });
 
+  test.each(["`lint-ignore: DOCWORD`", "lint-ignore: DOCWORD", "<!-- lint-ignore: DOCWORD -->", "`<!-- lint-ignore: DOCWORD — example -->`"])("ordinary text or unreasoned exceptions cannot suppress findings: %s", (marker) => {
+    expect(codes(`# Guide\n\n${marker}\nWe leverage tools.\n`)).toContain(DOC_WORD);
+  });
+
+  test("a paragraph exception never disables the rest of the page's dash budget", () => {
+    const prefix = "# Guide\n\n<!-- lint-ignore: DOC-14b — quoted vocabulary -->\nUse a name — for this paragraph.\n\n";
+    expect(codes(prefix)).not.toContain(DOC_DASH);
+    expect(codes(prefix + "Read this — then retry.\n")).toContain(DOC_DASH);
+  });
+
   test("exempts HTML code blocks and resumes prose checks after them", () => {
     const text = "# Guide\n\n<pre>\nexecute robust\n</pre>\n\n<code>\nexecute robust\n</code>\n\nRead the guide.\n";
     expect(scanDocument(PAGE, text)).toEqual([]);

@@ -5,14 +5,14 @@ const CLOUDS = CLOUD_PROVIDER_NAMES.join("|");
 const HELP_TEXT = `orly — prove the boundary; carry the rules
 
 Gates (working tree unchanged; required checks must pass or carry an owner override):
-  orly gate [--accept-dirty]        run work → verify → pr; stop at first red
+  orly gate [--accept-dirty]        run work → pr; stop at first red
   orly gate <work|verify|pr>        run one gate
   orly gate pr --reuse-verification
                                    reuse only explicit hermetic policies with valid evidence
       work    does this commit conform? the declared conform command; no git
               state, so a commit hook's own dirty tree never blocks it
       verify  does the work hold up? configuration, docs language, and the
-              non-test verify.* set; unfinished Sections may be pushed
+              non-test verify.* set; Sections in progress may be pushed
       pr      can this ship? branch, tree, pushed, configuration, docs, and
               every declared verify.* command
   orly override <CRITERION> --reason <REASON>
@@ -24,6 +24,8 @@ Gates (working tree unchanged; required checks must pass or carry an owner overr
   Results distinguish passed, failed, blocked, cancelled, skipped and not_run.
   Reuse is off by default. A reviewed reuse.<verify-command> policy must declare
   hermetic: true, max_age_ms, toolchain probes and any extra input paths.
+  Optional tracked_inputs selects tracked dependencies for cross-revision reuse;
+  omit it to keep exact-revision evidence. Full-source mutation checks stay fresh.
   Invalid prior completion runs fresh; lock or start-marker failures block commands.
   Private attempt history stays beneath Git metadata.
 

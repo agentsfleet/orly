@@ -8,7 +8,7 @@ import { OrlyError } from "../model";
 import { IPV4 } from "./types";
 import { readBounded } from "./process";
 
-export type Plan = { sku: string; priceId: number; hourly: number };
+export type Plan = { sku: string; priceId: number };
 export type OsImage = { name: string; version: string; versionId: number };
 type VmState = { status: string; address: string | undefined };
 export type VmSnapshot = { id: string; name: string; status: string; sizeGb: number | undefined; versionId: number | undefined };
@@ -22,7 +22,7 @@ const REQUEST_TIMEOUT_MS = 60_000;
 const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 const identifier = z.union([z.number(), z.string()]).transform(String);
 const skusSchema = z.object({ data: z.object({ CPU: z.array(z.object({
-  name: z.string(), plans: z.array(z.object({ sku_item_price_id: z.number(), committed_days: z.number().nullish(), unit_price: z.coerce.number(), is_active: z.boolean().optional() })),
+  name: z.string(), plans: z.array(z.object({ sku_item_price_id: z.number(), committed_days: z.number().nullish(), is_active: z.boolean().optional() })),
 })).default([]) }) });
 const imagesSchema = z.object({ data: z.array(z.object({ name: z.string(), versions: z.array(z.object({ image_version_id: z.number(), version: z.coerce.string() })).default([]) })) });
 const keysSchema = z.object({ data: z.array(z.object({ pk: identifier, label: z.string() })) });
@@ -57,20 +57,20 @@ export class E2eApi {
   }
 
   // GET /gpu_service/sku/: the hourly plan of each CPU SKU.
-  async plans(): Promise<Plan[]> {
-    const listed = skusSchema.parse(await this.#request("GET", "/gpu_service/sku/", { query: { service: "notebook" } }));
-    return listed.data.CPU.flatMap((sku) => sku.plans.filter((plan) => !plan.committed_days && plan.is_active !== false).slice(0, 1).map((plan) => ({ sku: sku.name, priceId: plan.sku_item_price_id, hourly: plan.unit_price })));
+  async plans(signal?: AbortSignal): Promise<Plan[]> {
+    const listed = skusSchema.parse(await this.#request("GET", "/gpu_service/sku/", { signal, query: { service: "notebook" } }));
+    return listed.data.CPU.flatMap((sku) => sku.plans.filter((plan) => !plan.committed_days && plan.is_active !== false).slice(0, 1).map((plan) => ({ sku: sku.name, priceId: plan.sku_item_price_id })));
   }
 
   // GET /gpu_service/image/: the OS images and their versions.
-  async images(): Promise<OsImage[]> {
-    const listed = imagesSchema.parse(await this.#request("GET", "/gpu_service/image/", { query: { category: "notebook" } }));
+  async images(signal?: AbortSignal): Promise<OsImage[]> {
+    const listed = imagesSchema.parse(await this.#request("GET", "/gpu_service/image/", { signal, query: { category: "notebook" } }));
     return listed.data.flatMap((image) => image.versions.map((version) => ({ name: image.name, version: version.version, versionId: version.image_version_id })));
   }
 
   // SSH keys belong to the account, not a project: /ssh_keys/ takes no project.
-  async addKey(label: string, key: string): Promise<void> {
-    await this.#request("POST", "/ssh_keys/", { body: { label, ssh_key: key }, project: false });
+  async addKey(label: string, key: string, signal?: AbortSignal): Promise<void> {
+    await this.#request("POST", "/ssh_keys/", { signal, body: { label, ssh_key: key }, project: false });
   }
 
   async keys(): Promise<Array<{ pk: string; label: string }>> {
@@ -82,9 +82,9 @@ export class E2eApi {
   }
 
   // POST /security_groups/: a group whose one rule admits SSH from `address`.
-  async createSshGroup(name: string, address: string): Promise<string> {
+  async createSshGroup(name: string, address: string, signal?: AbortSignal): Promise<string> {
     const rules = [{ rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "manual", cidr_ip: address, cidr_subnet: 32, ports: [22], description: "SSH from the orly burst caller" }];
-    return groupSchema.parse(await this.#request("POST", "/security_groups/", { body: { name, description: "SSH for one orly burst run", rules } })).data.id;
+    return groupSchema.parse(await this.#request("POST", "/security_groups/", { signal, body: { name, description: "SSH for one orly burst run", rules } })).data.id;
   }
 
   // TIR files the group's delete under its rules path.
@@ -93,47 +93,52 @@ export class E2eApi {
   }
 
   // POST /notebooks/: https://docs.e2enetworks.com/api/tir/compute/instancevm/post-notebooks/
-  async createVm(body: Body): Promise<string> {
-    const { data } = createdSchema.parse(await this.#request("POST", "/notebooks/", { body }));
+  async createVm(body: Body, signal?: AbortSignal): Promise<string> {
+    const { data } = createdSchema.parse(await this.#request("POST", "/notebooks/", { signal, body }));
     return "id" in data ? data.id : data.created[0]?.id ?? "";
   }
 
-  async vm(id: string): Promise<VmState> {
-    const { data } = vmSchema.parse(await this.#request("GET", `/notebooks/${id}/`));
+  async vm(id: string, signal?: AbortSignal): Promise<VmState> {
+    const { data } = vmSchema.parse(await this.#request("GET", `/notebooks/${id}/`, { signal }));
     const address = data.public_ip?.trim() ?? "";
     return { status: data.status, address: IPV4.test(address) ? address : undefined };
   }
 
-  async stopVm(id: string): Promise<void> {
-    await this.#request("PUT", `/notebooks/${id}/actions/`, { query: { action: "Stop" } });
+  async stopVm(id: string, signal?: AbortSignal): Promise<void> {
+    await this.#request("PUT", `/notebooks/${id}/actions/`, { signal, query: { action: "Stop" } });
   }
 
   async deleteVm(id: string): Promise<void> {
     await this.#request("DELETE", `/notebooks/${id}/`);
   }
 
-  async createSnapshot(vmId: string, name: string): Promise<VmSnapshot> {
-    const { data } = z.object({ data: snapshotSchema }).parse(await this.#request("POST", `/notebooks/${vmId}/snapshots/`, { body: { name } }));
+  async createSnapshot(vmId: string, name: string, signal?: AbortSignal): Promise<VmSnapshot> {
+    const { data } = z.object({ data: snapshotSchema }).parse(await this.#request("POST", `/notebooks/${vmId}/snapshots/`, { signal, body: { name } }));
     return toSnapshot(data);
   }
 
   // GET /notebooks/vm/snapshots/: every VM snapshot in the project.
-  async snapshots(): Promise<VmSnapshot[]> {
-    return z.object({ data: z.array(snapshotSchema) }).parse(await this.#request("GET", "/notebooks/vm/snapshots/", { query: { per_page: "100" } })).data.map(toSnapshot);
+  async snapshots(signal?: AbortSignal): Promise<VmSnapshot[]> {
+    return z.object({ data: z.array(snapshotSchema) }).parse(await this.#request("GET", "/notebooks/vm/snapshots/", { signal, query: { per_page: "100" } })).data.map(toSnapshot);
   }
 
-  async deleteSnapshot(id: string): Promise<void> {
-    await this.#request("DELETE", `/notebooks/vm/snapshots/${id}/`);
+  async deleteSnapshot(id: string, signal?: AbortSignal): Promise<void> {
+    await this.#request("DELETE", `/notebooks/vm/snapshots/${id}/`, { signal });
   }
 
-  async #request(method: string, path: string, options: { body?: Body; query?: Record<string, string>; project?: boolean } = {}): Promise<unknown> {
+  async #request(method: string, path: string, options: { signal?: AbortSignal | undefined; body?: Body; query?: Record<string, string>; project?: boolean } = {}): Promise<unknown> {
+    options.signal?.throwIfAborted();
+    // Mutations may already have taken effect. Keep their bounded replies so
+    // callers retain the resource identifiers that cleanup needs.
+    const signal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
+    const requestSignal = method === "GET" && options.signal ? AbortSignal.any([signal, options.signal]) : signal;
     const url = new URL(`${BASE_URL}${path}`);
     url.search = new URLSearchParams({
       ...(options.project === false ? {} : { project_id: this.#credentials.project }),
       location: this.#credentials.location, ...options.query, apikey: this.#credentials.apiKey,
     }).toString();
     const response = await this.#fetch(url, {
-      method, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      method, signal: requestSignal,
       headers: { Authorization: `Bearer ${this.#credentials.token}`, ...(options.body ? { "Content-Type": "application/json" } : {}) },
       ...(options.body ? { body: JSON.stringify(options.body) } : {}),
     });

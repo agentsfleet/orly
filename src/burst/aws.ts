@@ -68,7 +68,8 @@ export class AwsSpot implements CloudProvider {
   }
 
   cost(machine: Machine): string {
-    return machine.hourly === undefined ? "on-demand rate" : `$${machine.hourly}/h (spot)`;
+    if (machine.market !== "spot") return "on-demand rate";
+    return machine.hourly === undefined ? "spot rate unavailable" : `$${machine.hourly}/h (spot)`;
   }
 
   storage(snapshot: Snapshot): string {
@@ -117,7 +118,7 @@ export class AwsSpot implements CloudProvider {
       if (launch.code === 0) {
         const id = launch.stdout.trim();
         run.write(`orly burst: lane=${job.name} ${id} (${type}${spot ? " spot" : " on-demand"}) started from ${job.image.name}`);
-        return { id, label: type, address: undefined, hourly: spot ? await this.#spotPrice(type, run.signal) : undefined };
+        return { id, label: type, address: undefined, market: spot ? "spot" : "on-demand", hourly: spot ? await this.#spotPrice(type, run.signal) : undefined };
       }
       if (SPOT_ROLE_MISSING.test(launch.stderr)) throw new OrlyError(`this account has never launched a Spot instance: an administrator runs \`${SPOT_ROLE_COMMAND}\` once (docs/BURST.md)`);
       if (!CAPACITY_ERRORS.test(launch.stderr)) throw new OrlyError(`run-instances refused: ${launch.stderr.trim()}`);
@@ -143,7 +144,7 @@ export class AwsSpot implements CloudProvider {
   // Only a Spot machine's state reason can say AWS took it back; anything
   // else that ended a lane, such as a dropped session, is not run again.
   async relaunchOnDemand(run: BurstRun, machine: Machine): Promise<boolean> {
-    if (this.#settings.aws.market !== "spot-then-on-demand" || machine.hourly === undefined) return false;
+    if (this.#settings.aws.market !== "spot-then-on-demand" || machine.market !== "spot") return false;
     const described = await this.#poll(["ec2", "describe-instances", "--instance-ids", machine.id, "--query", "Reservations[0].Instances[0].StateReason.Code", "--output", "text"], run.signal);
     return described?.stdout.trim() === SPOT_RECLAIMED;
   }

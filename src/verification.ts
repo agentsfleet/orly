@@ -34,18 +34,18 @@ function execute(context: CriterionContext, request: IdentityRequest, attempt: A
   let reused: VerifiedPass | undefined;
   if (!context.acceptDirty && context.reuseVerification && "binding" in before) reused = previousPass(attempt, before.binding, request.policy.max_age_ms);
   let result = reused ? { ok: true, status: "passed" as const, detail: reused.detail } : runCommandGroup(request.root, request.invocations, request.limits);
-  const after = verificationIdentity(request);
-  const unchanged = "binding" in before && "binding" in after && before.binding === after.binding;
+  const after = verificationIdentity(request, "after-probes");
+  const unchanged = before.source === after.source && "binding" in before && "binding" in after && before.binding === after.binding;
   if (before.source !== after.source || ("binding" in before && !unchanged)) {
     reused = undefined;
     result = { ok: false, status: "blocked", detail: `verification inputs changed during the attempt; result is not current-revision proof\n${result.detail}` };
   }
-  try { completeAttempt(attempt, !context.acceptDirty && unchanged ? before.binding : undefined, result, reused); }
+  try { completeAttempt(attempt, !context.acceptDirty && unchanged ? before : undefined, result, reused); }
   catch (error) {
     lock.abandon();
     return { ...result, detail: `${result.detail}\ncompletion could not be saved; reuse disabled: ${String(error)}` };
   }
-  const provenance = reused ? `reused run ${reused.origin}` : "fresh run";
+  const provenance = reused && "binding" in before ? `reused run ${reused.origin} from ${reused.revision} for ${before.revision}` : "fresh run";
   const eligibility = "reason" in before ? `; reuse unavailable: ${before.reason}` : "";
   return { ...result, detail: `${provenance}${eligibility}; evidence: ${attempt.path}\n${result.detail}` };
 }

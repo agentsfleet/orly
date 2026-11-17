@@ -37,7 +37,7 @@ describe("gate groups", () => {
     expect(names(runGate(model, project, "work"))).toEqual(["cmd.conform", "repo.config"]);
     expect(names(runGate(model, project, "verify"))).toEqual(["docs.language", "repo.config"]);
     expect(names(runGate(model, project, "pr"))).toEqual([
-      "cmd.verify.unit", "docs.language", "docs.updated", "git.branch", "git.pushed", "git.tree", "repo.config",
+      "cmd.verify.unit", "docs.language", "docs.updated", "git.base", "git.branch", "git.pushed", "git.tree", "repo.config",
     ]);
   });
 
@@ -82,7 +82,7 @@ describe("burst lanes", () => {
 
     const reports = runGates(model, project);
 
-    expect(reports.map((report) => report.gate)).toEqual(["work", "verify", "pr"]);
+    expect(reports.map((report) => report.gate)).toEqual(["work", "pr"]);
     expect(reports.flatMap((report) => report.results.map((result) => result.name)).filter((name) => name.includes("burst"))).toEqual([]);
     expect(await Bun.file(marker).exists()).toBeFalse();
   });

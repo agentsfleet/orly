@@ -12,11 +12,10 @@ Package: `@agentsfleet/orly` (npm)
 Source: https://github.com/agentsfleet/orly
 License: Massachusetts Institute of Technology (MIT)
 
-This guide describes orly 0.42.0. The `bunx` commands below fetch the
+This guide describes orly 0.50.0. The `bunx` commands below fetch the
 published package; available versions are listed at
 https://github.com/agentsfleet/orly/releases. Use an installed local tarball for
-candidate checks. orly collects no usage telemetry and makes no network request
-of its own.
+candidate checks. orly collects no usage telemetry. Authorized cloud burst runs call provider APIs; package installation may fetch dependencies.
 
 ---
 
@@ -46,7 +45,7 @@ non-zero exit.
 bunx --bun @agentsfleet/orly init --dry-run
 bunx --bun @agentsfleet/orly init
 
-# 3. complete any reported setup items, then check configuration and files
+# 3. resolve any reported setup items, then check configuration and files
 bunx --bun @agentsfleet/orly doctor
 ```
 
@@ -72,7 +71,7 @@ If a human reports that gates are not firing, this is the first thing to check.
 | `.orly/orly.json` | packs, gate commands, install record | shared — edit the commands |
 
 `orly init` seeds `.orly/orly.json` with gate commands found in `Makefile` or
-`package.json`. Read the repository's build files to complete missing commands;
+`package.json`. Read the repository's build files to fill missing commands;
 ask only when the repository does not define a check. Do not invent commands.
 Declare at least one named `verify.*` command; `conform` is optional. Documentation
 repositories can use `verify.docs` without application unit or integration
@@ -101,7 +100,7 @@ The spec is a file on disk. Its directory is the status. Only the named stages
 move it. The gates read one thing in it: a template slot left on a changed line.
 
 ```
-docs/v1/pending/   spec written, committed on the detected default branch
+docs/v1/pending/   spec reviewed on a docs branch, then landed through a Pull Request
       │
       │  CHORE(open)   branch cut, spec moved to active/ and committed
       ▼
@@ -120,6 +119,9 @@ Rules for you:
 - A red gate returns you to EXECUTE. Fix the cause; do not retry unchanged.
 
 ---
+
+Skills name their current stage and state: `not started`, `in progress`, `blocked` or `done`.
+Each stage reports its outcome and next action. After publication, shipping proposes evidenced Orly lessons and asks for any approval still needed while check follow-up continues.
 
 ## 6. Failure decision table
 
@@ -166,7 +168,7 @@ never with a placeholder reason.
 | `orly init --dry-run` | print what would be written; change nothing |
 | `orly update` | re-materialise at a newer engine version |
 | `orly update --with <pack>` | add an opt-in pack, recorded for every clone |
-| `orly gate` | run declared checks in order, stopping at the first failure |
+| `orly gate` | run work then pr, with fast verification once; stop at the first failure |
 | `orly gate pr` | the Pull Request criteria check |
 | `orly gate pr --reuse-verification` | reuse intact current-input evidence only for reviewed hermetic policies |
 | `orly override <criterion> --reason <why>` | record a gate exception (user-authorised only) |
@@ -179,8 +181,10 @@ AWS lanes rent Spot machines unless `ORLY_BURST_MARKET` says `on-demand`, or `sp
 `ORLY_BURST_AWS_ACCESS=ssm` reaches machines through Systems Manager with no inbound port; it needs `ORLY_BURST_AWS_INSTANCE_PROFILE` and the Session Manager plugin (docs/BURST.md).
 
 Gates inspect prerequisites before commands and report blocked or unrun groups explicitly. Fresh execution is the default; a reuse flag alone cannot skip any command.
-Repository-owned `reuse` policies require hermetic input ownership, a maximum age and toolchain identities. Original execution output stays visible, and failed or unfinished latest attempts prevent fallback to an older pass.
-Keep fixture evidence, live acceptance and injected-delay measurements separate. Reviewers that are unavailable remain incomplete, and final review follows the same pushed head through two quiet polls.
+Repository-owned `reuse` policies require hermetic input ownership, a maximum age and toolchain identities. Original execution output stays visible, and failed latest attempts or attempts without a completion record prevent fallback to an older pass.
+An optional `tracked_inputs` policy permits reuse across documentation commits only when every tracked dependency is declared and the command does not read Git history.
+Full-source observations still bracket the commands and toolchain probes.
+Keep fixture evidence, live acceptance and injected-delay measurements separate. Unavailable reviews remain blocked, and final review follows the same pushed head through two quiet polls.
 
 ---
 

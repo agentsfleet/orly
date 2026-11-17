@@ -77,11 +77,12 @@ export async function referenceClosureErrors(
   outputRoot: string,
   renderedPaths: string[],
   fallbackRoot?: string,
+  obsolete: ReadonlySet<string> = new Set(),
 ): Promise<string[]> {
   const errors = new Set<string>();
   const root = resolve(outputRoot);
   const present = (path: string): boolean =>
-    existsSync(path) || (fallbackRoot !== undefined && existsSync(join(fallbackRoot, relative(root, path))));
+    existsSync(path) || (fallbackRoot !== undefined && !obsolete.has(relative(root, path)) && existsSync(join(fallbackRoot, relative(root, path))));
   for (const sourcePath of renderedPaths.filter((path) => extname(path) === ".md").sort()) {
     const relativeSource = relative(outputRoot, sourcePath).replaceAll("\\", "/");
     const content = await Bun.file(sourcePath).text();
@@ -107,14 +108,7 @@ export async function referenceClosureErrors(
       // Grading those as live citations would force every repository to carry
       // every language pack just to satisfy a comment naming the alternatives.
       if (commented || inComment) continue;
-      for (const match of line.matchAll(MARKDOWN_LINK)) {
-        const rawTarget = match[1] ?? "";
-        const target = markdownTarget(rawTarget);
-        if (!target) continue;
-        const resolved = resolve(dirname(sourcePath), target);
-        if (!isBelow(resolved, root)) errors.add(`snapshot reference escapes repository: ${relativeSource}:${lineNumber} -> ${rawTarget}`);
-        else if (!present(resolved)) errors.add(`missing snapshot reference: ${relativeSource}:${lineNumber} -> ${rawTarget}`);
-      }
+      for (const error of markdownReferenceErrors(line, sourcePath, `${relativeSource}:${lineNumber}`, root, present)) errors.add(error);
       for (const target of line.matchAll(STANDARD_REFERENCE)) {
         const path = target[0];
         if (!present(join(outputRoot, path))) errors.add(`missing standard reference: ${relativeSource}:${lineNumber} -> ${path}`);
@@ -125,6 +119,19 @@ export async function referenceClosureErrors(
     if (inFence) errors.add(`unclosed code fence: ${relativeSource}:${fenceOpenedAt ?? 0} — every reference after it went ungraded`);
   }
   return [...errors].sort();
+}
+
+function markdownReferenceErrors(line: string, sourcePath: string, location: string, root: string, present: (path: string) => boolean): string[] {
+  const errors: string[] = [];
+  for (const match of line.matchAll(MARKDOWN_LINK)) {
+    const rawTarget = match[1] ?? "";
+    const target = markdownTarget(rawTarget);
+    if (!target) continue;
+    const resolved = resolve(dirname(sourcePath), target);
+    if (!isBelow(resolved, root)) errors.push(`snapshot reference escapes repository: ${location} -> ${rawTarget}`);
+    else if (!present(resolved)) errors.push(`missing snapshot reference: ${location} -> ${rawTarget}`);
+  }
+  return errors;
 }
 
 // Whether the line leaves the scanner inside an HTML comment. Pack markers open

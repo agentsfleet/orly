@@ -114,7 +114,6 @@ class Reader {
   // A pragma introduces the paragraph under it, so it outlives its own line
   // and dies with the paragraph it was written for.
   private pendingIgnore = EMPTY;
-  private readonly declared = new Set<string>();
   private proseWords = 0;
   private dashes = 0;
   private changedDashes = 0;
@@ -129,7 +128,6 @@ class Reader {
     // Mintlify renders the front-matter title as H1.
     const metadata = frontMatter(text);
     this.pageIgnores = metadata.ignores;
-    for (const code of this.pageIgnores) this.declared.add(code);
     if (/\.mdx$/i.test(file) && metadata.hasTitle) this.headingLevels = [1];
   }
 
@@ -150,9 +148,8 @@ class Reader {
     // the spelling DOC-35 already gives an exception. It clears that code for
     // the paragraph it introduces, and it is how a page that must NAME a
     // banned word says so out loud instead of silently.
-    const ignore = /lint-ignore:[ \t]*(DOC[A-Za-z0-9-]*)/.exec(raw)?.[1] ?? EMPTY;
+    const ignore = /^[ \t]*<!--[ \t]*lint-ignore:[ \t]*(DOC[A-Za-z0-9-]+)[ \t]+—[ \t]+\S[^\r\n]*-->[ \t]*$/.exec(raw)?.[1] ?? EMPTY;
     if (ignore) {
-      this.declared.add(ignore);
       this.pendingIgnore = ignore;
     }
     const active = this.pendingIgnore;
@@ -275,7 +272,7 @@ class Reader {
     if (!text) return;
     this.pendingIgnore = EMPTY;
     this.proseWords += words(text).length;
-    this.countDashes(text, line, end);
+    if (!allows(ignore, DOC_DASH)) this.countDashes(text, line, end);
     if (!this.isChanged(line, end)) return;
     this.scanWords(text, line, ignore, end);
     const parts = sentences(text);
@@ -324,7 +321,7 @@ class Reader {
   }
 
   private reportPage(code: string, message: string, weight: number): void {
-    for (const declared of this.declared) if (allows(declared, code)) return;
+    for (const declared of this.pageIgnores) if (allows(declared, code)) return;
     this.findings.push({ file: this.file, line: 0, code, message, weight });
   }
 }

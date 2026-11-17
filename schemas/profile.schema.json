@@ -32,7 +32,8 @@
           "hermetic": {"const": true},
           "max_age_ms": {"type": "integer", "minimum": 1, "maximum": 9007199254740991},
           "toolchain": {"type": "array", "minItems": 1, "items": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/nonempty"}}},
-          "inputs": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}}
+          "inputs": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}},
+          "tracked_inputs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/trackedInput"}}
         }
       }
     },
@@ -63,6 +64,7 @@
   },
   "additionalProperties": false,
   "$defs": {
+    "trackedInput": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)(?:\\.{1,2}|\\.git)(?:/|$))(?!.*//)[^\\u0000\\\\*?\\[\\]{}]+$"},
     "nonempty": {"type": "string", "minLength": 1, "pattern": "^[^\\u0000]+$"},
     "invocations": {"type": "array", "items": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/nonempty"}}}
   }

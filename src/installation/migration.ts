@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { contentDigest, type RepoConfig } from "../config";
 import { git } from "../git_env";
@@ -11,9 +11,20 @@ const STATUS_PREFIX_LENGTH = 3;
 // Git holds every committed version, so only an uncommitted change can be lost.
 export function uncommittedPaths(root: string, paths: string[]): Set<string> {
   if (paths.length === 0) return new Set();
-  const result = git(root, ["status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames", "--", ...paths]);
-  if (result.exitCode !== 0) throw new OrlyError(`cannot read git status: ${result.stderr.toString().trim()}`);
-  return new Set(result.stdout.toString().split("\0").filter(Boolean).map((entry) => entry.slice(STATUS_PREFIX_LENGTH)));
+  const tracked = git(root, ["--literal-pathspecs", "ls-files", "--cached", "--stage", "-v", "-z", "--", ...paths]);
+  if (tracked.exitCode !== 0 || tracked.signalCode) throw new OrlyError("cannot prove managed files are tracked");
+  const trackedPaths = new Set<string>();
+  for (const entry of tracked.stdout.toString().split("\0")) {
+    const match = /^H (100644|100755) [a-f0-9]+ 0\t([\s\S]+)$/.exec(entry);
+    const path = match?.[2];
+    if (!path || !existsSync(join(root, path))) continue;
+    const stat = lstatSync(join(root, path));
+    // core.fileMode=false hides executable edits from status; cleanup cannot.
+    if (stat.isFile() && ((stat.mode & 0o111) !== 0) === (match[1] === "100755")) trackedPaths.add(path);
+  }
+  const result = git(root, ["--literal-pathspecs", "status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames", "--", ...paths]);
+  if (result.exitCode !== 0 || result.signalCode) throw new OrlyError(`cannot read git status: ${result.stderr.toString().trim()}`);
+  return new Set([...paths.filter((path) => !trackedPaths.has(path)), ...result.stdout.toString().split("\0").filter(Boolean).map((entry) => entry.slice(STATUS_PREFIX_LENGTH))]);
 }
 
 // Managed paths this version no longer ships; clean ones are deleted.

@@ -48,7 +48,7 @@ export type Image = { id: string; name: string; snapshot: boolean };
 export type Snapshot = { id: string; name: string; sizeGb: number | undefined; launchId: string; parts: string[]; ready: boolean };
 // `via` is an ssh ProxyCommand: when set, ssh reaches the machine by its
 // identifier through that command instead of at its address.
-export type Machine = { id: string; label: string; address: string | undefined; hourly: number | undefined; via?: string };
+export type Machine = { id: string; label: string; address: string | undefined; hourly: number | undefined; market?: "spot" | "on-demand"; via?: string };
 
 // The seam a cloud provider fills: how its machines start, become reachable,
 // stop and turn into images. The shared code in cloud.ts owns the order,
@@ -62,7 +62,7 @@ export interface CloudProvider {
   cost(machine: Machine): string;
   storage(snapshot: Snapshot): string;
   baseImage(): Image;
-  override(): Promise<Image | undefined>;
+  override(signal?: AbortSignal): Promise<Image | undefined>;
   snapshots(scope: SnapshotScope): Promise<Snapshot[]>;
   // Registers whatever the run's machines share, such as the public key.
   prepare(run: BurstRun): Promise<void>;

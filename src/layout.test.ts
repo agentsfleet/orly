@@ -3,7 +3,7 @@ import { existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 import { readConfig, writeConfig } from "./config";
-import { cleanupTemporaryDirectories, git, newRepository, ROOT } from "./gates_test_support";
+import { cleanupTemporaryDirectories, git, gitOutput, newRepository, ROOT } from "./gates_test_support";
 import { install } from "./install";
 import { RulesModel } from "./model";
 
@@ -71,7 +71,7 @@ describe("install", () => {
 describe("the retired layout", () => {
   test("no reference to a retired file", async () => {
     for (const directory of ["audits", "dispatch", "packs"]) expect(existsSync(join(ROOT, directory))).toBe(false);
-    const tracked = Bun.spawnSync(["git", "ls-files"], { cwd: ROOT, stdout: "pipe" }).stdout.toString().split("\n").filter(Boolean);
+    const tracked = gitOutput(ROOT, "ls-files", "-z").split("\0").filter(Boolean);
     const citing: string[] = [];
     for (const path of tracked.filter((file) => !HISTORY.test(file) && existsSync(join(ROOT, file)))) {
       const text = await Bun.file(join(ROOT, path)).text();
