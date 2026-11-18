@@ -37,3 +37,57 @@ test("a noexec /tmp is remounted exec before setup runs", () => {
 test("an exec /tmp is left alone", () => {
   expect(execTmp("rw,nosuid,nodev,relatime")).toEqual({ stdout: "", mounted: undefined });
 });
+
+// checkout() against real Git, with the machine's paths moved into a temporary
+// directory: a warm checkout takes only what it lacks, a cold one clones.
+function checkout(fixture: { root: string; ref: string; commit: string }): { code: number; head: string; stderr: string } {
+  const prelude = readFileSync(PRELUDE, "utf8")
+    .replace("WORK=/opt/orly-burst/work", `WORK=${join(fixture.root, "work")}`)
+    .replace("BUNDLE=/tmp/orly-burst.bundle", `BUNDLE=${join(fixture.root, "sent.bundle")}`);
+  const script = join(fixture.root, "job.sh");
+  writeFileSync(script, prelude);
+  const run = Bun.spawnSync(["bash", "-c", `source '${script}' && BURST_REF='${fixture.ref}' BURST_COMMIT='${fixture.commit}' checkout && git rev-parse HEAD`], { env: { PATH: process.env.PATH ?? "", HOME: fixture.root } });
+  return { code: run.exitCode, head: run.stdout.toString().trim().split("\n").at(-1) ?? "", stderr: run.stderr.toString() };
+}
+
+function repository(root: string): { older: string; newer: string } {
+  const source = join(root, "source");
+  const git = (...args: string[]) => Bun.spawnSync(["git", "-C", source, ...args], { env: { PATH: process.env.PATH ?? "", HOME: root, GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@t", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@t" } }).stdout.toString().trim();
+  Bun.spawnSync(["git", "init", "-q", "-b", "lane", source]);
+  git("commit", "-q", "--allow-empty", "-m", "older");
+  const older = git("rev-parse", "HEAD");
+  git("commit", "-q", "--allow-empty", "-m", "newer");
+  return { older, newer: git("rev-parse", "HEAD") };
+}
+
+test("a warm checkout at an older commit takes the commits since it and lands on the exact commit", () => {
+  const root = mkdtempSync(join(tmpdir(), "orly-checkout-"));
+  try {
+    const { older, newer } = repository(root);
+    Bun.spawnSync(["git", "clone", "-q", join(root, "source"), join(root, "work")]);
+    Bun.spawnSync(["git", "-C", join(root, "work"), "checkout", "-q", "--detach", older]);
+    for (const args of [["branch", "-q", "-D", "lane"], ["update-ref", "-d", "refs/remotes/origin/lane"], ["reflog", "expire", "--expire=now", "--all"], ["gc", "-q", "--prune=now"]]) {
+      Bun.spawnSync(["git", "-C", join(root, "work"), ...args]);
+    }
+    expect(Bun.spawnSync(["git", "-C", join(root, "work"), "cat-file", "-e", `${newer}^{commit}`]).exitCode).not.toBe(0);
+    Bun.spawnSync(["git", "-C", join(root, "source"), "bundle", "create", join(root, "sent.bundle"), "lane", `^${older}`]);
+
+    expect(checkout({ root, ref: "lane", commit: newer })).toMatchObject({ code: 0, head: newer });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("a warm checkout that holds the commit needs no bundle, and a cold one clones the whole ref", () => {
+  const root = mkdtempSync(join(tmpdir(), "orly-checkout-"));
+  try {
+    const { older, newer } = repository(root);
+    Bun.spawnSync(["git", "-C", join(root, "source"), "bundle", "create", join(root, "sent.bundle"), "lane"]);
+    expect(checkout({ root, ref: "lane", commit: newer })).toMatchObject({ code: 0, head: newer });
+
+    expect(existsSync(join(root, "sent.bundle"))).toBeFalse();
+    expect(checkout({ root, ref: "lane", commit: older })).toMatchObject({ code: 0, head: older });
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});

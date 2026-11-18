@@ -104,13 +104,14 @@ describe("burst placement", () => {
 });
 
 describe("the machine job script", () => {
-  const job = { kind: "lane" as const, name: "acceptance", ref: "it's$(touch pwned)", keep: false, deadlineMinutes: 120, setup: [["make", "setup"]], steps: [["make", "test", "SUITE=a b"]], secrets: { API_TOKEN: "va'lue" }, directories: ["TOOLBOX_DIR"] };
+  const job = { kind: "lane" as const, name: "acceptance", ref: "it's$(touch pwned)", commit: "0123456789abcdef0123456789abcdef01234567", keep: false, deadlineMinutes: 120, setup: [["make", "setup"]], steps: [["make", "test", "SUITE=a b"]], secrets: { API_TOKEN: "va'lue" }, directories: ["TOOLBOX_DIR"] };
 
   test("every value is single-quoted, setup runs before the secrets exist, and the script parses", async () => {
     const script = await remoteScript(job);
 
     expect(script.split("\n")[0]).toBe("#!/bin/bash");
     expect(script).toContain("BURST_REF='it'\\''s$(touch pwned)'");
+    expect(script).toContain("BURST_COMMIT='0123456789abcdef0123456789abcdef01234567'");
     expect(script).toContain("  export API_TOKEN='va'\\''lue'");
     expect(script.indexOf("  step 'make' 'setup'")).toBeLessThan(script.indexOf("  export API_TOKEN="));
     expect(script.indexOf("  export API_TOKEN=")).toBeLessThan(script.indexOf("  step 'make' 'test' 'SUITE=a b'"));

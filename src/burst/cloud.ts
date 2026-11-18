@@ -125,7 +125,7 @@ function script(run: BurstRun, job: Job, inputs: LaneInputs): Promise<string> {
   const burst = run.config.burst ?? {};
   const lane = job.kind === "lane" ? inputs : NO_INPUTS;
   return remoteScript({
-    kind: job.kind, name: job.name, ref: run.ref, keep: run.keep, deadlineMinutes: Math.ceil(run.settings.deadlineMs / MINUTE_MS),
+    kind: job.kind, name: job.name, ref: run.ref, commit: run.commit, keep: run.keep, deadlineMinutes: Math.ceil(run.settings.deadlineMs / MINUTE_MS),
     setup: burst.setup ?? [], steps: job.kind === "warm" ? burst.warm ?? [] : run.config.commands[`${LANE_PREFIX}${job.name}`] ?? [],
     secrets: lane.secrets, directories: lane.directories.map((directory) => directory.name),
   });

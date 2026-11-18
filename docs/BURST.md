@@ -21,7 +21,7 @@ caller                                         rented machine
   1. read burst.secrets (environment or op)
   2. bundle the ref with git
   3. create the machine ------- cloud API ---> boots the newest snapshot
-  4. ssh: send the bundle ----- SSH ---------> /tmp/orly-burst.bundle
+  4. ssh: the commits it lacks  SSH ---------> /tmp/orly-burst.bundle
   5. ssh: bash -s ------------- SSH ---------> setup, then secrets, then lane
      [lane] log lines <-------- SSH ---------- standard output and errors
   6. ssh: tar of results <----- SSH ---------- burst.artifacts that exist

@@ -43,13 +43,14 @@ exec_tmp() {
   fi
 }
 
-# A warm checkout fetches the ref from the bundle and keeps its ignored build
-# output, which is what makes a warm run cheap; a cold one clones.
+# A warm checkout keeps its ignored build output, which is what makes a warm
+# run cheap. It fetches from the bundle only when it lacks the commit, and the
+# bundle then holds only the commits since its own; a cold one clones.
 checkout() {
   if [ -d "$WORK/.git" ]; then
     echo "== update the warm checkout to $BURST_REF"
-    git -C "$WORK" fetch --quiet "$BUNDLE" "$BURST_REF"
-    git -C "$WORK" checkout --quiet --force --detach FETCH_HEAD
+    git -C "$WORK" cat-file -e "$BURST_COMMIT^{commit}" 2>/dev/null || git -C "$WORK" fetch --quiet "$BUNDLE" "$BURST_REF"
+    git -C "$WORK" checkout --quiet --force --detach "$BURST_COMMIT"
   else
     echo "== checkout $BURST_REF"
     mkdir -p "$(dirname "$WORK")"

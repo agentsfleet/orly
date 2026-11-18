@@ -5,6 +5,7 @@ type RemoteJob = {
   kind: "lane" | "warm";
   name: string;
   ref: string;
+  commit: string;
   keep: boolean;
   deadlineMinutes: number;
   setup: readonly string[][];
@@ -19,6 +20,8 @@ type RemoteJob = {
 const PRELUDE = join(import.meta.dir, "job.sh");
 // Where a lane's copied directories land; ssh.ts stages them there.
 export const INPUTS = "/tmp/orly-burst-inputs";
+// The machine's checkout, as job.sh names it.
+export const WORK = "/opt/orly-burst/work";
 
 // The whole job, prelude first. Every value is single-quoted, so a ref, an
 // argument or a secret can never become shell syntax on the machine. Setup
@@ -35,6 +38,7 @@ export async function remoteScript(job: RemoteJob): Promise<string> {
     `BURST_MODE=${shellQuote(job.kind)}`,
     `BURST_LANE=${shellQuote(job.name)}`,
     `BURST_REF=${shellQuote(job.ref)}`,
+    `BURST_COMMIT=${shellQuote(job.commit)}`,
     "main() {",
     "  set -e",
     // The backstop for a caller that died. --keep asked for the machine to stay.

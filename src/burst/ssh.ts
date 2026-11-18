@@ -7,8 +7,9 @@ import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { OrlyError } from "../model";
-import { INPUTS, resultsScript } from "./job";
+import { INPUTS, resultsScript, WORK } from "./job";
 import { captureProcess, machineDeadline, streamProcess, until } from "./process";
+import { bundleFor } from "./repository";
 import { IPV4 } from "./types";
 
 export type StagedDirectory = { name: string; archive: string };
@@ -22,6 +23,8 @@ const TAR_TIMEOUT_MS = 5 * 60_000;
 // ssh exits 255 when the connection, not the remote command, failed.
 const SSH_LOST = 255;
 const NO_RESULTS = 3;
+const COMMIT = /^[0-9a-f]{40}$/;
+const SHORT = 7;
 // Each provider's SSH rule admits only the caller's public IPv4, learnt here.
 const CALLER_ADDRESS_URL = "https://checkip.amazonaws.com";
 const CALLER_TIMEOUT_MS = 15_000;
@@ -39,8 +42,8 @@ export async function newKeyPair(directory: string, comment: string, env: Enviro
 // A finished run keeps its evidence; the key, the bundle and the directory
 // archives are tens of megabytes each run and serve nothing after it.
 export function forgetRunFiles(run: BurstRun): void {
-  const archives = readdirSync(run.runDirectory).filter((name) => name.endsWith(".tgz")).map((name) => join(run.runDirectory, name));
-  for (const path of [run.key, `${run.key}.pub`, run.bundle, ...archives]) rmSync(path, { force: true });
+  const staged = readdirSync(run.runDirectory).filter((name) => name.endsWith(".tgz") || name.endsWith(".bundle")).map((name) => join(run.runDirectory, name));
+  for (const path of [run.key, `${run.key}.pub`, ...staged]) rmSync(path, { force: true });
 }
 
 // A booting machine refuses connections for a while, so the first connect is
@@ -101,7 +104,10 @@ export async function archiveDirectories(run: BurstRun, names: readonly string[]
 // secrets, so it exists only as this process's memory and the remote shell's
 // input.
 export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user: string, script: string, directories: readonly StagedDirectory[]): Promise<Status> {
-  await stage(run, machine, user, "cat > /tmp/orly-burst.bundle", run.bundle, run.ref);
+  const base = await warmCommit(run, machine, user);
+  const bundle = bundleFor(run.root, run.ref, run.commit, base, run.bundle);
+  if (bundle === undefined) run.write(done(`${machine.id} already holds ${run.commit.slice(0, SHORT)}; nothing to send`));
+  else await stage(run, machine, user, "cat > /tmp/orly-burst.bundle", bundle, bundle === run.bundle ? run.ref : `${run.ref} since ${base?.slice(0, SHORT)}`);
   for (const { name, archive } of directories) {
     await stage(run, machine, user, `rm -rf ${INPUTS}/${name} && mkdir -p ${INPUTS}/${name} && tar -xzf - -C ${INPUTS}/${name}`, archive, name);
   }
@@ -169,6 +175,13 @@ async function collect(run: BurstRun, job: Job, machine: Machine, user: string):
     && (await captureProcess(["tar", "-xzf", archive, "-C", job.evidence], { env: run.settings.env, timeoutMs: TAR_TIMEOUT_MS })).code === 0;
   if (!unpacked) rmSync(archive, { force: true });
   if ("code" in fetched && fetched.code === NO_RESULTS) run.write(`orly burst: lane=${job.name} none of the declared results exist: ${paths.join(", ")}`);
+}
+
+// The commit a warm machine's checkout holds; a cold machine has none.
+async function warmCommit(run: BurstRun, machine: Machine, user: string): Promise<string | undefined> {
+  const read = await captureProcess(sshArgs(run, machine, user, asRoot(user, `git -C ${WORK} rev-parse --verify --quiet HEAD`)), { env: run.settings.env, timeoutMs: PROBE_TIMEOUT_MS, signal: run.signal });
+  const commit = read.stdout.trim();
+  return read.code === 0 && COMMIT.test(commit) ? commit : undefined;
 }
 
 function asRoot(user: string, command: string): string {

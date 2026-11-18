@@ -1,5 +1,5 @@
-import { realpathSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, realpathSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { git } from "../git_env";
@@ -43,4 +43,17 @@ function homeIdentity(account: string | undefined, host: string, path: string): 
 
 function trimPath(path: string): string {
   return path.replace(/\/+$/, "").replace(/\.git$/, "");
+}
+
+// The bundle a machine needs, given the commit its warm checkout holds: none
+// when that checkout already contains `commit`, the commits since `base` when
+// this repository knows it, and the whole ref otherwise. Git answers each
+// test, so the same base always gets the same bundle.
+export function bundleFor(root: string, ref: string, commit: string, base: string | undefined, full: string): string | undefined {
+  if (!base) return full;
+  if (git(root, ["merge-base", "--is-ancestor", commit, base]).exitCode === 0) return undefined;
+  if (git(root, ["cat-file", "-e", `${base}^{commit}`]).exitCode !== 0) return full;
+  const since = join(dirname(full), `since-${base}.bundle`);
+  if (existsSync(since) || git(root, ["bundle", "create", since, ref, `^${base}`]).exitCode === 0) return since;
+  return full;
 }

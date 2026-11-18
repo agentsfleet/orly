@@ -7,7 +7,7 @@ import { tirLabel } from "./e2e";
 import { MACHINE_WAIT_MS, machineDeadline } from "./process";
 import { DEBIAN_13, FakeTir } from "./fake_tir";
 import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, fakeBin, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./test_support";
-import { cleanupTemporaryDirectories, temporaryDirectory } from "../gates_test_support";
+import { cleanupTemporaryDirectories, git, gitOutput, temporaryDirectory } from "../gates_test_support";
 
 const API_KEY = "e2e_test_key_00000000";
 const AUTH_TOKEN = "e2e_test_token_00000000";
@@ -263,6 +263,51 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(run.output.text()).toMatch(/🔴 lane=acceptance the deadline passed while waiting for SSH to 203\.0\.113\.\d+: ssh: connect to host 203\.0\.113\.\d+ port 22: Operation timed out/);
     expect(run.output.text()).not.toContain("answers");
     expect(run.api.vms.size).toBe(0);
+  });
+
+  describe("what a warm machine is sent", () => {
+    function sent(run: ReturnType<typeof e2eRun>): string | undefined {
+      const machine = [...new Bun.Glob("203.0.113.*").scanSync({ cwd: run.state, onlyFiles: false })][0] ?? "";
+      const bundle = join(run.state, machine, "repo.bundle");
+      return existsSync(bundle) ? bundle : undefined;
+    }
+
+    test("a checkout at an older commit receives only the commits since it", async () => {
+      const run = e2eRun();
+      const older = gitOutput(run.root, "rev-parse", "HEAD");
+      git(run.root, "commit", "-q", "--allow-empty", "-m", "test: a newer commit");
+      const newer = gitOutput(run.root, "rev-parse", "HEAD");
+      await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ warmCommit: older }));
+
+      expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
+
+      const bundle = sent(run) ?? "";
+      const verified = Bun.spawnSync(["git", "bundle", "verify", bundle], { cwd: run.root, stderr: "pipe", stdout: "pipe" });
+      expect(`${verified.stdout}${verified.stderr}`).toContain(`requires this ref:\n${older}`);
+      expect(run.output.text()).toContain(`sending feat/burst-fixture since ${older.slice(0, 7)}`);
+      expect(machineScript(run.state)).toContain(`BURST_COMMIT='${newer}'`);
+    });
+
+    test("a checkout that already holds the commit receives nothing", async () => {
+      const run = e2eRun();
+      const head = gitOutput(run.root, "rev-parse", "HEAD");
+      await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ warmCommit: head }));
+
+      expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
+      expect(sent(run)).toBeUndefined();
+      expect(run.output.text()).toContain(`🟢 5001 already holds ${head.slice(0, 7)}; nothing to send`);
+    });
+
+    test("a checkout at a commit this repository lacks, or a cold machine, receives the whole ref", async () => {
+      for (const scenario of [{ warmCommit: "f".repeat(40) }, {}]) {
+        const run = e2eRun();
+        await Bun.write(join(run.state, "scenario.json"), JSON.stringify(scenario));
+
+        expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
+        const verified = Bun.spawnSync(["git", "bundle", "verify", sent(run) ?? ""], { cwd: run.root, stderr: "pipe", stdout: "pipe" });
+        expect(`${verified.stdout}${verified.stderr}`).toContain("records a complete history");
+      }
+    });
   });
 
   test("a lane past the deadline is stopped and its VM deleted", async () => {

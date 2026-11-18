@@ -29,6 +29,8 @@ export type BurstRun = Io & {
   repo: string;
   runId: string;
   runDirectory: string;
+  // The ref's commit, which every machine checks out, and its whole bundle.
+  commit: string;
   bundle: string;
   key: string;
   publicKey: string;
