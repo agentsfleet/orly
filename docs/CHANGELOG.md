@@ -2,23 +2,17 @@
 
 ## 0.60.0 (2026-11-18)
 
-E2E Networks lanes launch, capture and tear down against the real TIR API, and every provider marks each step as under way, done or failed.
+Burst lanes run on E2E Networks for real, take their placement from `.orly/orly.json`, and end every step with one deterministic outcome.
 
-- **E2E launch** — Key labels fit TIR's 50-character limit, security groups carry the outbound rule TIR requires, and a VM reporting `ready` counts as booted. A VM reporting `failed` ends the lane at its first poll.
-- **E2E image** — The default base image is `Debian 13`, and a snapshot capture starts from the same image. Every job remounts a noexec `/tmp` as exec, so installers such as rustup run on it.
-- **E2E teardown** — Removal waits for TIR to report the VM gone before deleting its key, then deletes the security group through the path TIR accepts. Nothing is left on the account after a run.
-- **Progress** — Lines read `⏳ … ` while a step runs, `🟢` when it is done and `🔴` when it failed or needs deleting by hand. Uploads name their size and duration, and a capture reports the saved snapshot before its machine is deleted. A snapshot run no longer reports missing lane results. The `lane=` and `total` lines stay unmarked.
-- **Waits** — A run says when it waits for a machine to boot or answer SSH, and each wait ends after 10 minutes with the cloud's or ssh's own error. A caller whose address changed since launch ends the lane at once, naming both addresses. Closing the terminal cancels the run and deletes its machines, like Ctrl-C.
-- **Upload** — A warm machine reports the commit its checkout holds and receives only the commits since it, or nothing when it already has the ref. A cold machine, or one at a commit this repository lacks, receives the whole ref. Every machine checks out the exact commit the caller resolved.
-- **Run files** — A finished run deletes its bundle, directory archives and key, and keeps its evidence.
-- **Placement** — Region, plan, instance types, image and login user move from variables to `burst.e2e` and `burst.aws` in `.orly/orly.json`, read from the ref a run ships. A moved variable that is still set is refused, naming its key.
-- **Image** — The configured image is the base that snapshots warm from and cold lanes boot. It never replaces the newest snapshot; `--no-snapshot` does.
-- **Docs** — `docs/BURST.md` is shorter, and errors and the skill link to it on GitHub, since repositories without the governance pack lack a copy.
-- **Determinism** — TIR's busy answers (429, 5xx, timeouts) are waited out, and a VM whose create reply was lost is deleted by name. A failed `apt`, checkout or `burst.setup` reports `exit=not_run`, never an exit code. A cancelled image save fails the capture. A key TIR no longer lists is reported for a person.
-- **Checkout** — Cold and warm machines fetch the exact commit the caller resolved, then remove untracked files, so `--ref` takes any ref.
-- **Snapshots** — A snapshot's name records its base image, and lanes boot only a snapshot of the configured image. `--prune` keeps the newest one and accepts `--ref`. Snapshots taken by 0.50.0 do not match and are pruned.
-- **Removed** — `--provider here`, `--keep`, `spot-then-on-demand`, Systems Manager access, `ORLY_BURST_SUBNET` and `ORLY_BURST_SNAPSHOT_KEEP`; nothing called them. A removed variable that is still set is refused by name.
-- **Upgrade** — `bunx --bun @agentsfleet/orly@0.60.0 update`, then move any `ORLY_BURST_REGION`, `ORLY_BURST_INSTANCE_TYPES`, `ORLY_BURST_*_IMAGE`, `ORLY_BURST_*_USER`, `ORLY_BURST_E2E_LOCATION` or `ORLY_BURST_E2E_PLAN` value into `burst.aws` or `burst.e2e`.
+- **E2E** — Launch, capture and teardown work against the real TIR API, on `Debian 13` by default. Every job remounts a noexec `/tmp`. TIR's busy answers are waited out, and a VM whose create reply was lost is deleted by name.
+- **Placement** — Region, plan, instance types, image and login user move to `burst.e2e` and `burst.aws`, read from the ref a run ships. A moved or removed variable that is still set is refused by name.
+- **Snapshots** — A snapshot's name records its base image, and lanes boot only a snapshot of the configured image. `--prune` keeps the newest one and accepts `--ref`; snapshots taken by 0.50.0 no longer match.
+- **Upload** — A warm machine receives only the commits it lacks. Every machine checks out the exact commit the caller resolved, then removes untracked files.
+- **Outcomes** — A failed `apt`, checkout or `burst.setup` reports `exit=not_run`. An interrupted `ssh` reports `interrupted`, and a cancelled image save fails the capture.
+- **Waits** — Each wait says what it waits for, and a boot or SSH wait ends within 10 minutes. A caller whose address changed ends the lane at once, and a closed terminal cancels the run like Ctrl-C.
+- **Progress** — Lines read `⏳ …` while a step runs, `🟢` when done and `🔴` when it failed or needs a person. The `lane=` and `total` lines stay unmarked, and a finished run deletes its bundle and key.
+- **Removed** — `--provider here`, `--keep`, `spot-then-on-demand`, Systems Manager access, `ORLY_BURST_SUBNET` and `ORLY_BURST_SNAPSHOT_KEEP`; nothing called them.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.60.0 update`, move placement variables into `burst.e2e` or `burst.aws`, then capture a new snapshot.
 
 ## 0.50.0 (2026-11-17)
 

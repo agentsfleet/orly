@@ -286,8 +286,8 @@ A run deletes its machines, key, security group, bundle and private key, even wh
 A VM whose create reply TIR lost is found by name and deleted too.
 A process killed outright, such as by a CI runner, leaves them behind; they are tagged or labelled `orly-burst` and safe to delete.
 
-**Deleting a snapshot is permanent; the next run starts cold from the image.**
-A snapshot's name ends in a digest of the image it warmed from, so changing `burst.e2e.image` or `burst.aws.image` starts lanes cold until the next capture.
+**Deleting a snapshot is permanent**, and the next run starts cold from the image.
+A snapshot's name ends in a digest of its base image, so changing `burst.e2e.image` or `burst.aws.image` starts lanes cold until the next capture.
 Snapshots named by orly before 0.50.0 are never selected or pruned; inspect them in the provider console before deleting them.
 
 ## Related pages
