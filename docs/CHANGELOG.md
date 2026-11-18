@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.60.2 (2026-11-18)
+
+SQL identity guidance leaves Universally Unique Identifier (UUID) version validation in the application.
+
+- **Identity** — Applications mint UUID version 7 (UUIDv7) keys and decode them. The guidance removes database version checks, substring checks and UUID-version domains.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.60.2 update` after this version is published.
+
 ## 0.60.1 (2026-11-18)
 
 Agents draw before they ask.
