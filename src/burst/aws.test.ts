@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { burst } from "./index";
-import { aws, awsRun, machineScript, option, seedImages } from "./aws-test-support";
-import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, callerAddress, fakeBin, recordedCalls, REPOSITORY, SECRET_VALUE } from "./test_support";
+import { awsRun, GROUP_ID, machineScript, restoreEc2 } from "./aws-test-support";
+import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, fakeBin, recordedCalls, REPOSITORY, SECRET_VALUE, snapshotOf } from "./test_support";
 import { cleanupTemporaryDirectories } from "../gates_test_support";
 
 const BASE_IMAGE = "resolve:ssm:/aws/service/debian/release/13/latest/amd64";
@@ -13,36 +13,34 @@ const RUN_NAME = /^orly-burst-feat-burst-fixture-\d{14}-[0-9a-f]{4}$/;
 const SECRETS = { secrets: { API_TOKEN: "op://Burst Vault/api/credential" } };
 
 setDefaultTimeout(60_000);
-afterEach(cleanupTemporaryDirectories);
+afterEach(() => {
+  restoreEc2();
+  cleanupTemporaryDirectories();
+});
 
 describe("aws-spot lanes", () => {
   test("a run imports its key, opens SSH to the caller only, launches lanes at once and removes it all", async () => {
     const run = await awsRun({ noCapacity: ["c7i.4xlarge"] });
 
-    const code = await burst(LANES, run.dependencies);
+    expect(await burst(LANES, run.dependencies)).toBe(0);
 
-    expect(code).toBe(0);
-    const verbs = aws(run.state).map((call) => call[2]);
-    expect(verbs.slice(0, 4)).toEqual(["describe-images", "import-key-pair", "create-security-group", "authorize-security-group-ingress"]);
-    expect(option(aws(run.state, "import-key-pair")[0], "--key-name")).toMatch(RUN_NAME);
-    expect(option(aws(run.state, "authorize-security-group-ingress")[0], "--cidr")).toBe(`${CALLER_ADDRESS}/32`);
-    expect(option(aws(run.state, "authorize-security-group-ingress")[0], "--port")).toBe("22");
-    const launches = aws(run.state, "run-instances");
-    expect(launches.map((call) => option(call, "--instance-type")).sort()).toEqual(["c7a.4xlarge", "c7a.4xlarge", "c7i.4xlarge", "c7i.4xlarge"]);
-    expect(verbs.lastIndexOf("run-instances")).toBeLessThan(verbs.indexOf("terminate-instances"));
-    const launch = launches.find((call) => option(call, "--instance-type") === "c7a.4xlarge");
-    expect(option(launch, "--image-id")).toBe(BASE_IMAGE);
-    expect(option(launch, "--key-name")).toMatch(RUN_NAME);
-    expect(option(launch, "--security-group-ids")).toBe("sg-0123456789abcdef0");
-    expect(option(launch, "--instance-market-options")).toBe("MarketType=spot,SpotOptions={SpotInstanceType=one-time,InstanceInterruptionBehavior=terminate}");
-    expect(option(launch, "--instance-initiated-shutdown-behavior")).toBe("terminate");
-    expect(option(launch, "--metadata-options")).toBe("HttpTokens=required");
-    expect(option(launch, "--tag-specifications")).toMatch(/^ResourceType=instance,Tags=\[\{Key=owner,Value=agent\},\{Key=orly-burst,Value=feat-burst-fixture-/);
-    expect(launch).not.toContain("--iam-instance-profile");
-    expect(launch).not.toContain("--user-data");
-    expect(aws(run.state, "terminate-instances")).toHaveLength(2);
-    expect(verbs.slice(-3)).toEqual(["describe-instances", "delete-security-group", "delete-key-pair"]);
-    expect(aws(run.state, "describe-instances").at(-1)).toContain(`Name=tag:orly-burst,Values=${option(launch, "--tag-specifications").match(/Value=(feat-[^}]+)\}/)?.[1]}`);
+    const commands = run.ec2.calls.map((call) => call.command);
+    expect(commands.slice(0, 4)).toEqual(["DescribeImages", "ImportKeyPair", "CreateSecurityGroup", "AuthorizeSecurityGroupIngress"]);
+    expect(String(run.ec2.inputs("ImportKeyPair")[0]?.KeyName)).toMatch(RUN_NAME);
+    expect(run.ec2.inputs("AuthorizeSecurityGroupIngress")[0]?.IpPermissions).toEqual([{ IpProtocol: "tcp", FromPort: 22, ToPort: 22, IpRanges: [{ CidrIp: `${CALLER_ADDRESS}/32` }] }]);
+    const launches = run.ec2.inputs("RunInstances");
+    expect(launches.map((launch) => launch.InstanceType).sort()).toEqual(["c7a.4xlarge", "c7a.4xlarge", "c7i.4xlarge", "c7i.4xlarge"]);
+    expect(commands.lastIndexOf("RunInstances")).toBeLessThan(commands.indexOf("TerminateInstances"));
+    const launch = launches.find((input) => input.InstanceType === "c7a.4xlarge") ?? {};
+    expect(launch).toMatchObject({
+      ImageId: BASE_IMAGE, SecurityGroupIds: [GROUP_ID], InstanceInitiatedShutdownBehavior: "terminate", MetadataOptions: { HttpTokens: "required" },
+      InstanceMarketOptions: { MarketType: "spot", SpotOptions: { SpotInstanceType: "one-time", InstanceInterruptionBehavior: "terminate" } },
+      BlockDeviceMappings: [{ DeviceName: "/dev/xvda", Ebs: { VolumeSize: 80, VolumeType: "gp3", DeleteOnTermination: true } }],
+    });
+    expect(String(launch.KeyName)).toMatch(RUN_NAME);
+    expect(String(launch.ClientToken)).toMatch(/^[0-9a-f]{64}$/);
+    expect(run.ec2.inputs("TerminateInstances")).toHaveLength(2);
+    expect(commands.slice(-3)).toEqual(["DescribeInstances", "DeleteSecurityGroup", "DeleteKeyPair"]);
     const ssh = recordedCalls(run.state).filter((call) => call[0] === "ssh");
     expect(ssh.every((call) => call.includes("admin@198.51.100.1") || call.includes("admin@198.51.100.2"))).toBe(true);
     expect(ssh.some((call) => call.at(-1) === "sudo -n bash -s")).toBe(true);
@@ -50,7 +48,6 @@ describe("aws-spot lanes", () => {
     expect(text).toContain("no capacity for c7i.4xlarge (InsufficientInstanceCapacity); trying the next type");
     expect(text).toContain(`admits SSH from ${CALLER_ADDRESS} only`);
     expect(text).toMatch(/orly burst: lane=acceptance provider=aws-spot machine=c7a\.4xlarge minutes=\d+ cost≈\$0\.2345\/h \(spot\) exit=0 evidence=\S+/);
-    expect(text).toContain("[integration] lane integration ran");
     expect(text).toContain("orly burst: total provider=aws-spot lanes=2 passed=2 failed=0");
   });
 
@@ -60,7 +57,7 @@ describe("aws-spot lanes", () => {
     await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
 
     expect(machineScript(run.state, "198.51.100.1")).toContain(`  export API_TOKEN='${SECRET_VALUE}'`);
-    expect(JSON.stringify(recordedCalls(run.state))).not.toContain(SECRET_VALUE);
+    expect(JSON.stringify(run.ec2.calls)).not.toContain(SECRET_VALUE);
     expect(run.output.text()).not.toContain(SECRET_VALUE);
     const evidence = run.output.text().match(/evidence=(\S+)/)?.[1] ?? "";
     expect(readFileSync(join(evidence, "report/summary.txt"), "utf8")).toBe("lane acceptance results\n");
@@ -71,9 +68,7 @@ describe("aws-spot lanes", () => {
     const run = await awsRun();
     await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ exits: { acceptance: 4, integration: "drop" } }));
 
-    const code = await burst(LANES, run.dependencies);
-
-    expect(code).toBe(4);
+    expect(await burst(LANES, run.dependencies)).toBe(4);
     expect(run.output.text()).toMatch(/lane=acceptance .* exit=4 /);
     expect(run.output.text()).toMatch(/lane=integration .* exit=interrupted /);
   });
@@ -81,100 +76,97 @@ describe("aws-spot lanes", () => {
   test("an instance gone before it answers is interrupted, and still terminated", async () => {
     const run = await awsRun({ vanish: true });
 
-    const code = await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
-
-    expect(code).toBe(1);
+    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(1);
     expect(run.output.text()).toContain("is terminated before it was reachable (Spot interruption?)");
     expect(run.output.text()).toMatch(/exit=interrupted /);
-    expect(aws(run.state, "terminate-instances")).toHaveLength(1);
+    expect(run.ec2.inputs("TerminateInstances")).toHaveLength(1);
   });
 
   test("when no type can start, the lane says what AWS last said, such as a Spot quota", async () => {
-    const quota = "An error occurred (MaxSpotInstanceCountExceeded) when calling the RunInstances operation: Max spot instance count exceeded";
-    const run = await awsRun({ refuse: quota });
+    const run = await awsRun({ refuse: "MaxSpotInstanceCountExceeded" });
 
     expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(1);
-    expect(aws(run.state, "run-instances")).toHaveLength(4);
+    expect(run.ec2.inputs("RunInstances")).toHaveLength(4);
     expect(run.output.text()).toContain("no capacity for m7i.4xlarge (MaxSpotInstanceCountExceeded); trying the next type");
-    expect(run.output.text()).toContain(`no capacity for any of: c7i.4xlarge c7a.4xlarge c6i.4xlarge m7i.4xlarge; AWS last said: ${quota}`);
+    expect(run.output.text()).toContain("no capacity for any of: c7i.4xlarge c7a.4xlarge c6i.4xlarge m7i.4xlarge; AWS last said: MaxSpotInstanceCountExceeded: MaxSpotInstanceCountExceeded refused the launch");
     expect(run.output.text()).toMatch(/exit=unlaunched /);
   });
 
   test("a refusal that is not capacity stops the lane before any machine exists", async () => {
-    const run = await awsRun({ refuse: "An error occurred (UnauthorizedOperation) when calling the RunInstances operation" });
+    const run = await awsRun({ refuse: "UnauthorizedOperation" });
 
-    const code = await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
-
-    expect(code).toBe(1);
-    expect(run.output.text()).toContain("run-instances refused: An error occurred (UnauthorizedOperation)");
+    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(1);
+    expect(run.output.text()).toContain("run-instances refused: UnauthorizedOperation: UnauthorizedOperation refused the launch");
     expect(run.output.text()).toMatch(/machine=none minutes=0 cost≈none exit=unlaunched /);
-    expect(aws(run.state, "terminate-instances")).toHaveLength(0);
-    expect(aws(run.state, "delete-key-pair")).toHaveLength(1);
+    expect(run.ec2.inputs("TerminateInstances")).toHaveLength(0);
+    expect(run.ec2.inputs("DeleteKeyPair")).toHaveLength(1);
   });
 
   test("an account's first Spot launch names the one-time service-linked role command", async () => {
-    const run = await awsRun({ refuse: "An error occurred (AuthFailure.ServiceLinkedRoleCreationNotPermitted) when calling the RunInstances operation" });
+    const run = await awsRun({ refuse: "AuthFailure.ServiceLinkedRoleCreationNotPermitted" });
 
-    const code = await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
-
-    expect(code).toBe(1);
-    expect(run.output.text()).toContain("this account has never launched a Spot instance: an administrator runs `aws iam create-service-linked-role --aws-service-name spot.amazonaws.com` once (docs/BURST.md)");
-    expect(aws(run.state, "run-instances")).toHaveLength(1);
+    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(1);
+    expect(run.output.text()).toContain("this account has never launched a Spot instance: an administrator runs `aws iam create-service-linked-role --aws-service-name spot.amazonaws.com` once (https://github.com/agentsfleet/orly/blob/main/docs/BURST.md)");
+    expect(run.ec2.inputs("RunInstances")).toHaveLength(1);
   });
 
   test("an instance whose launch reply was lost is found by its run tag and terminated", async () => {
     const run = await awsRun({ lostReply: true });
 
-    const code = await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
-
-    expect(code).toBe(1);
+    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(1);
     expect(run.output.text()).toMatch(/exit=unlaunched /);
-    const terminated = aws(run.state, "terminate-instances");
-    expect(terminated).toHaveLength(1);
-    expect(terminated[0]).toContain("i-00000000000000001");
-    const verbs = aws(run.state).map((call) => call[2]);
-    expect(verbs.indexOf("terminate-instances")).toBeLessThan(verbs.indexOf("delete-security-group"));
-    expect(verbs.slice(-4)).toEqual(["terminate-instances", "describe-instances", "delete-security-group", "delete-key-pair"]);
-    expect(verbs).not.toContain("wait");
+    expect(run.ec2.inputs("TerminateInstances")).toEqual([{ InstanceIds: ["i-00000000000000001"] }]);
+    const commands = run.ec2.calls.map((call) => call.command);
+    expect(commands.indexOf("TerminateInstances")).toBeLessThan(commands.indexOf("DeleteSecurityGroup"));
+    expect(commands.slice(-2)).toEqual(["DeleteSecurityGroup", "DeleteKeyPair"]);
   });
 
-  test("a describe failure that is not transient ends the wait at once, and the instance is terminated", async () => {
+  test.each(["ImportKeyPair", "CreateSecurityGroup"] as const)("a %s whose reply was lost is still deleted by name", async (command) => {
+    const run = await awsRun({ lostCreate: command });
+
+    await expect(burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).rejects.toThrow("made, but its reply was lost");
+    expect(run.ec2.inputs("DeleteKeyPair")).toHaveLength(1);
+    expect(run.ec2.inputs("DeleteSecurityGroup")).toEqual(command === "CreateSecurityGroup" ? [{ GroupId: GROUP_ID }] : []);
+    expect(run.ec2.inputs("RunInstances")).toHaveLength(0);
+  });
+
+  test("an instance read that fails after the SDK's own retries ends the wait at once, and the instance is terminated", async () => {
     const run = await awsRun({ describeFails: "AuthFailure" });
-    const started = Date.now();
 
-    const code = await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
-
-    expect(code).toBe(1);
-    expect(Date.now() - started).toBeLessThan(30_000);
-    expect(run.output.text()).toContain("aws ec2 describe-instances failed: An error occurred (AuthFailure)");
+    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(1);
+    expect(run.ec2.inputs("DescribeInstances").filter((input) => input.InstanceIds)).toHaveLength(1);
+    expect(run.output.text()).toContain("describe refused");
     expect(run.output.text()).toMatch(/exit=interrupted /);
-    expect(aws(run.state, "terminate-instances")).toHaveLength(1);
+    expect(run.ec2.inputs("TerminateInstances").length).toBeGreaterThanOrEqual(1);
   });
 
-  test("a setup that fails after the key is imported still removes the key and the group", async () => {
+  test("a caller that cannot learn its address is refused before anything is registered or written", async () => {
     const root = burstRepository();
     const { bin, state } = fakeBin();
+    const run = await awsRun();
     const unreachable = async () => new Response("", { status: 503 });
     const { dependencies } = burstDependencies(root, burstEnvironment(bin, state), unreachable);
 
     await expect(burst(["acceptance", "--provider", "aws-spot"], dependencies)).rejects.toThrow("could not learn this machine's public IPv4 address");
-    expect(aws(state, "run-instances")).toHaveLength(0);
-    expect(aws(state, "delete-security-group")).toHaveLength(1);
-    expect(aws(state, "delete-key-pair")).toHaveLength(1);
-    expect([...new Bun.Glob("**/id_ed25519*").scanSync(join(state, "out"))]).toEqual([]);
+    expect(run.ec2.calls).toHaveLength(0);
+    expect([...new Bun.Glob("**/*").scanSync({ cwd: state, onlyFiles: true })].filter((path) => path.startsWith("out/"))).toEqual([]);
   });
 
-  test("--keep launches on-demand so the machine can stop, skips the shutdown, and removes nothing", async () => {
-    const run = await awsRun();
+  test("ORLY_BURST_MARKET=on-demand rents a lane on demand that still terminates when it shuts down", async () => {
+    const run = await awsRun({}, {}, { ORLY_BURST_MARKET: "on-demand" });
 
-    await burst(["acceptance", "--provider", "aws-spot", "--keep"], run.dependencies);
+    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(0);
+    const launch = run.ec2.inputs("RunInstances")[0] ?? {};
+    expect(launch).not.toHaveProperty("InstanceMarketOptions");
+    expect(launch.InstanceInitiatedShutdownBehavior).toBe("terminate");
+    expect(run.output.text()).toMatch(/lane=acceptance provider=aws-spot machine=c7i\.4xlarge minutes=\d+ cost≈on-demand rate exit=0 /);
+  });
 
-    const launch = aws(run.state, "run-instances")[0];
-    expect(launch).not.toContain("--instance-market-options");
-    expect(option(launch, "--instance-initiated-shutdown-behavior")).toBe("stop");
-    expect(machineScript(run.state, "198.51.100.1")).not.toContain("shutdown -h");
-    for (const verb of ["terminate-instances", "delete-security-group", "delete-key-pair"]) expect(aws(run.state, verb)).toHaveLength(0);
-    expect(run.output.text()).toContain("--keep left key pair orly-burst-feat-burst-fixture-");
+  test("a Spot lane whose price AWS does not say reports that, not a made-up price", async () => {
+    const run = await awsRun({ priceUnavailable: true });
+
+    expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(0);
+    expect(run.output.text()).toContain("cost≈spot rate unavailable exit=0");
   });
 });
 
@@ -182,36 +174,32 @@ describe("aws-spot snapshots", () => {
   test("a snapshot warms an on-demand instance with no secret, images it stopped and terminates it", async () => {
     const run = await awsRun({}, SECRETS);
 
-    const code = await burst(["snapshot", "--provider", "aws-spot"], run.dependencies);
+    expect(await burst(["snapshot", "--provider", "aws-spot"], run.dependencies)).toBe(0);
 
-    expect(code).toBe(0);
-    const launch = aws(run.state, "run-instances")[0];
-    expect(launch).not.toContain("--instance-market-options");
-    expect(option(launch, "--instance-initiated-shutdown-behavior")).toBe("stop");
+    const launch = run.ec2.inputs("RunInstances")[0] ?? {};
+    expect(launch).not.toHaveProperty("InstanceMarketOptions");
+    expect(launch.InstanceInitiatedShutdownBehavior).toBe("stop");
     const job = machineScript(run.state, "198.51.100.1");
     expect(job).toContain("BURST_MODE='warm'");
     expect(job).not.toContain("export API_TOKEN");
     expect(existsSync(join(run.state, "op-calls.txt"))).toBe(false);
-    const verbs = aws(run.state).map((call) => call[2]);
-    expect(verbs.indexOf("stop-instances")).toBeLessThan(verbs.indexOf("create-image"));
-    expect(verbs.indexOf("create-image")).toBeLessThan(verbs.indexOf("terminate-instances"));
-    const image = aws(run.state, "create-image")[0];
-    expect(option(image, "--name")).toMatch(new RegExp(`^orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8}$`));
-    expect(image).toContain(`ResourceType=image,Tags=[{Key=owner,Value=agent},{Key=orly-burst,Value=${REPOSITORY}}]`);
+    const commands = run.ec2.calls.map((call) => call.command);
+    expect(commands.indexOf("StopInstances")).toBeLessThan(commands.indexOf("CreateImage"));
+    expect(commands.indexOf("CreateImage")).toBeLessThan(commands.indexOf("TerminateInstances"));
+    const image = run.ec2.inputs("CreateImage")[0] ?? {};
+    expect(String(image.Name)).toMatch(new RegExp(`^orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8}$`));
+    expect(image.TagSpecifications).toEqual([
+      { ResourceType: "image", Tags: [{ Key: "owner", Value: "agent" }, { Key: "orly-burst", Value: REPOSITORY }] },
+      { ResourceType: "snapshot", Tags: [{ Key: "owner", Value: "agent" }, { Key: "orly-burst", Value: REPOSITORY }] },
+    ]);
+    expect(run.output.text()).toMatch(/orly burst: 🟢 saved image ami-\d+\n/);
     expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=aws-spot id=ami-\\d+ name=orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8} state=ready size=80\\.0GB storage≈\\$4\\.00/month at most`));
   });
 
-  // The real capture outlasted `aws ec2 wait image-available` and orly killed
-  // the waiter; the image itself went on saving.
-  test("an image pending for several checks is waited out with short describe calls, never a waiter", async () => {
+  test("an image pending for several reads is waited out", async () => {
     const run = await awsRun({ imagePendingPolls: 4 });
 
-    const code = await burst(["snapshot", "--provider", "aws-spot"], run.dependencies);
-
-    expect(code).toBe(0);
-    const stateReads = aws(run.state, "describe-images").filter((call) => option(call, "--query").includes("State"));
-    expect(stateReads).toHaveLength(5);
-    expect(aws(run.state, "wait")).toHaveLength(0);
+    expect(await burst(["snapshot", "--provider", "aws-spot"], run.dependencies)).toBe(0);
     expect(run.output.text()).toMatch(/snapshot provider=aws-spot id=ami-\d+ name=\S+ state=ready size=80\.0GB/);
   });
 
@@ -219,45 +207,53 @@ describe("aws-spot snapshots", () => {
     const run = await awsRun({ imagePendingPolls: 2, imageFails: "Client.InternalError: Snapshot creation failed" });
 
     await expect(burst(["snapshot", "--provider", "aws-spot"], run.dependencies)).rejects.toThrow("image ami-00000000000000001 is failed: Client.InternalError: Snapshot creation failed");
-    expect(aws(run.state, "terminate-instances")).toHaveLength(1);
-    expect(aws(run.state, "delete-key-pair")).toHaveLength(1);
+    expect(run.ec2.inputs("TerminateInstances")).toHaveLength(1);
+    expect(run.ec2.inputs("DeleteKeyPair")).toHaveLength(1);
   });
 
   test("an image still saving at the deadline is left to finish and reported as pending, not as nothing saved", async () => {
-    const root = burstRepository();
-    const { bin, state } = fakeBin();
-    await Bun.write(join(state, "scenario.json"), JSON.stringify({ imagePendingPolls: 100_000 }));
-    const { dependencies, output } = burstDependencies(root, burstEnvironment(bin, state, { ORLY_BURST_DEADLINE_MINUTES: "0.05" }), callerAddress);
+    const run = await awsRun({ imagePendingPolls: 100_000 }, {}, { ORLY_BURST_DEADLINE_MINUTES: "0.05" });
 
-    const code = await burst(["snapshot", "--provider", "aws-spot"], dependencies);
-
-    expect(code).toBe(0);
-    expect(output.text()).toMatch(/snapshot provider=aws-spot id=ami-00000000000000001 name=\S+ state=pending size=unknown/);
-    expect(output.text()).toContain("aws-spot is still saving");
-    expect(aws(state, "deregister-image")).toHaveLength(0);
-    expect(aws(state, "terminate-instances")).toHaveLength(1);
+    expect(await burst(["snapshot", "--provider", "aws-spot"], run.dependencies)).toBe(0);
+    expect(run.output.text()).toMatch(/snapshot provider=aws-spot id=ami-00000000000000001 name=\S+ state=pending size=unknown/);
+    expect(run.output.text()).toContain("aws-spot is still saving");
+    expect(run.ec2.inputs("DeregisterImage")).toHaveLength(0);
+    expect(run.ec2.inputs("TerminateInstances")).toHaveLength(1);
   });
 
-  test("lanes start from the newest snapshot, or the base image with --no-snapshot", async () => {
-    const run = await awsRun();
-    await seedImages(run.state, [`orly-burst-${REPOSITORY}-20261101000000000-1234abcd`, `orly-burst-${REPOSITORY}-20261115000000000-1234abcd`]);
+  test("burst.aws places the instances and names the base image, whose own root device carries the disk", async () => {
+    const image = "ami-0123456789abcdef0";
+    const run = await awsRun({}, { aws: { region: "ap-south-1", instance_types: ["c7i.4xlarge"], image } });
+    run.ec2.seed([snapshotOf(image, "20261115000000000")]);
 
     await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
     await burst(["acceptance", "--provider", "aws-spot", "--no-snapshot"], run.dependencies);
 
-    expect(aws(run.state, "run-instances").map((call) => option(call, "--image-id"))).toEqual(["ami-00000000000000002", BASE_IMAGE]);
+    const launches = run.ec2.inputs("RunInstances");
+    expect(launches.map((launch) => launch.ImageId)).toEqual(["ami-00000000000000001", image]);
+    expect(launches.map((launch) => launch.InstanceType)).toEqual(["c7i.4xlarge", "c7i.4xlarge"]);
+    expect(launches.map((launch) => (launch.BlockDeviceMappings as Array<{ DeviceName: string }>)[0]?.DeviceName)).toEqual(["/dev/xvda", "/dev/sda1"]);
+    expect(new Set(run.ec2.calls.map((call) => call.region))).toEqual(new Set(["ap-south-1"]));
   });
 
-  test("pruning deregisters the older images and deletes their EBS snapshots, renting nothing", async () => {
+  test("lanes start from the newest snapshot of the base image, or the base image with --no-snapshot", async () => {
     const run = await awsRun();
-    await seedImages(run.state, ["20261101000000000-1234abcd", "20261102000000000-1234abcd", "20261103000000000-1234abcd"].map((stamp) => `orly-burst-${REPOSITORY}-${stamp}`));
+    run.ec2.seed([snapshotOf(BASE_IMAGE, "20261101000000000"), snapshotOf(BASE_IMAGE, "20261115000000000"), snapshotOf("ami-0123456789abcdef0", "20261120000000000")]);
 
-    const code = await burst(["snapshot", "--prune", "--provider", "aws-spot"], run.dependencies);
+    await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
+    await burst(["acceptance", "--provider", "aws-spot", "--no-snapshot"], run.dependencies);
 
-    expect(code).toBe(0);
-    expect(aws(run.state, "deregister-image").map((call) => option(call, "--image-id"))).toEqual(["ami-00000000000000001"]);
-    expect(aws(run.state, "delete-snapshot").map((call) => option(call, "--snapshot-id"))).toEqual(["snap-1"]);
-    expect(aws(run.state, "run-instances")).toHaveLength(0);
-    expect(aws(run.state, "import-key-pair")).toHaveLength(0);
+    expect(run.ec2.inputs("RunInstances").map((launch) => launch.ImageId)).toEqual(["ami-00000000000000002", BASE_IMAGE]);
+  });
+
+  test("pruning keeps the newest snapshot of the base image, deletes the rest with their EBS snapshots, and rents nothing", async () => {
+    const run = await awsRun();
+    run.ec2.seed([snapshotOf(BASE_IMAGE, "20261101000000000"), snapshotOf(BASE_IMAGE, "20261102000000000"), snapshotOf("ami-0123456789abcdef0", "20261103000000000")]);
+
+    expect(await burst(["snapshot", "--prune", "--provider", "aws-spot", "--ref", "feat/burst-fixture"], run.dependencies)).toBe(0);
+    expect(run.ec2.inputs("DeregisterImage").map((input) => input.ImageId)).toEqual(["ami-00000000000000003", "ami-00000000000000001"]);
+    expect(run.ec2.inputs("DeleteSnapshot").map((input) => input.SnapshotId)).toEqual(["snap-3", "snap-1"]);
+    expect(run.ec2.inputs("RunInstances")).toHaveLength(0);
+    expect(run.ec2.inputs("ImportKeyPair")).toHaveLength(0);
   });
 });

@@ -8,6 +8,12 @@ import { burstDependencies, burstEnvironment, burstRepository, fakeBin, REPOSITO
 import { E2eApi } from "./tir";
 
 const CREDENTIALS = { E2E_API_KEY: "fixture-key", E2E_AUTH_TOKEN: "fixture-token", E2E_PROJECT_ID: "12345" };
+
+// The request ky hands to fetch, or the one a plain call describes.
+function seen(input: string | URL | Request, init?: RequestInit): { method: string; path: string } {
+  const request = input instanceof Request ? input : new Request(input, init);
+  return { method: request.method, path: new URL(request.url).pathname };
+}
 afterEach(() => { setSystemTime(); cleanupTemporaryDirectories(); });
 
 test("already cancelled cloud runs rent nothing", async () => {
@@ -24,7 +30,7 @@ test("cancellation after a catalogue read prevents VM creation and still cleans 
   dependencies.signal = controller.signal;
   dependencies.fetch = async (input, init) => {
     const response = await api.fetch(input, init);
-    if (new URL(String(input)).pathname.endsWith("/gpu_service/image/")) controller.abort();
+    if (seen(input, init).path.endsWith("/gpu_service/image/")) controller.abort();
     return response;
   };
   expect(await burst(["acceptance", "--provider", "e2e"], dependencies)).toBe(1);
@@ -37,7 +43,8 @@ test("cancellation after a catalogue read prevents VM creation and still cleans 
 test("a failed key deletion still attempts security group cleanup", async () => {
   const { api, dependencies, output } = fixture();
   dependencies.fetch = async (input, init) => {
-    if (init?.method === "DELETE" && /\/ssh_keys\/\d+\/$/.test(new URL(String(input)).pathname)) return new Response("{}", { status: 500 });
+    const { method, path } = seen(input, init);
+    if (method === "DELETE" && /\/ssh_keys\/\d+\/$/.test(path)) return new Response("{}", { status: 500 });
     return api.fetch(input, init);
   };
   expect(await burst(["acceptance", "--provider", "e2e"], dependencies)).toBe(0);
@@ -54,10 +61,9 @@ test.each(["/ssh_keys/", "/security_groups/", "/notebooks/"])("cancellation afte
   dependencies.signal = controller.signal;
   dependencies.fetch = async (input, init) => {
     const response = await api.fetch(input, init);
-    if (init?.method === "POST" && new URL(String(input)).pathname.endsWith(path)) {
-      controller.abort(reason);
-      init.signal?.throwIfAborted();
-    }
+    const request = seen(input, init);
+    // The create took effect and its reply arrives; the run is cancelled meanwhile.
+    if (request.method === "POST" && request.path.endsWith(path)) controller.abort(reason);
     return response;
   };
   const status = await burst(["acceptance", "--provider", "e2e"], dependencies).catch((error: unknown) => {
@@ -75,16 +81,16 @@ test.each(["/ssh_keys/", "/security_groups/", "/notebooks/"])("cancellation afte
 test("TIR requests receive cancellation and already aborted mutations never fetch", async () => {
   const controller = new AbortController();
   let requests = 0;
-  const api = new E2eApi(burstSettings(CREDENTIALS).e2e, async (_input, init) => {
+  const api = new E2eApi(burstSettings(CREDENTIALS), async (input) => {
     requests += 1;
-    const signal = init?.signal;
+    const signal = input instanceof Request ? input.signal : undefined;
     if (!signal) throw new Error("request has no cancellation signal");
     return new Promise<Response>((_resolve, reject) => {
       signal.addEventListener("abort", () => reject(new Error("fixture request cancelled")), { once: true });
       controller.abort();
     });
   });
-  await expect(api.images(controller.signal)).rejects.toThrow("fixture request cancelled");
+  await expect(api.images(controller.signal)).rejects.toThrow(/aborted|cancelled/);
   await expect(api.createVm({}, controller.signal)).rejects.toBe(controller.signal.reason);
   expect(requests).toBe(1);
 });
@@ -99,7 +105,9 @@ test("same-instant snapshots have distinct names and legacy snapshots are never 
   api.snapshot("orly-burst-acme-widget-202611170000", 9002);
   api.snapshot(`orly-burst-${REPOSITORY}-202611170000`, 9003);
   expect(await burst(["snapshot", "--prune", "--provider", "e2e"], dependencies)).toBe(0);
-  expect(api.snapshots).toHaveLength(4);
+  const left = api.snapshots.map((snapshot) => snapshot.name);
+  expect(left).toHaveLength(3);
+  expect(left).toEqual(expect.arrayContaining(["orly-burst-acme-widget-202611170000", `orly-burst-${REPOSITORY}-202611170000`]));
 });
 
 function fixture() {

@@ -2,7 +2,6 @@ import type { CommandLimits } from "./command_limits";
 import type { RepoConfig } from "./config";
 import type { ReusePolicy } from "./config_validation";
 
-import { createHmac } from "node:crypto";
 import { closeSync, existsSync, lstatSync, openSync, readFileSync, readdirSync, readSync, readlinkSync, realpathSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
 import { release } from "node:os";
@@ -48,7 +47,7 @@ export function verificationIdentity(request: IdentityRequest, observation: "bef
     const identity = {
       root, source: scope === null ? source : { base, scope },
       lane: request.lane, invocations: request.invocations, limits: request.limits, config: request.config,
-      environment: createHmac("sha256", request.key).update(JSON.stringify(environment)).digest("hex"),
+      environment: new Bun.CryptoHasher("sha256", request.key).update(JSON.stringify(environment)).digest("hex"),
       engine: { root: realpathSync(request.engineRoot), inputs: inputIdentity(realpathSync(request.engineRoot), enginePaths(request.engineRoot)) },
       runtime: { versions: process.versions, platform: process.platform, arch: process.arch, release: release() },
       inputs: inputIdentity(root, request.policy.inputs), toolchain,

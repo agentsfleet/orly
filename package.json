@@ -1,6 +1,6 @@
 {
   "name": "@agentsfleet/orly",
-  "version": "0.50.0",
+  "version": "0.60.0",
   "description": "Repository-scoped engineering harness: renders agent rules, materialises the gates that enforce them, and proves the PR boundary — for any coding agent.",
   "license": "MIT",
   "type": "module",
@@ -58,11 +58,16 @@
   },
   "devDependencies": {
     "@types/bun": "1.4.4",
+    "aws-sdk-client-mock": "4.1.0",
     "tsrs": "0.25.0-ts7.1.0-beta"
   },
   "dependencies": {
+    "@aws-sdk/client-ec2": "3.1171.0",
     "@babel/parser": "8.0.8",
     "@babel/types": "8.0.8",
+    "@smithy/fetch-http-handler": "5.8.1",
+    "ky": "2.2.0",
+    "p-limit": "7.3.3",
     "zod": "4.6.7"
   }
 }

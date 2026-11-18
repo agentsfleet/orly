@@ -33,7 +33,7 @@ const FAIL_GLYPH = "🔴";
 const PR_GATE = "pr";
 const ENGINE_MARKER = "evals/install/run.sh";
 const VERIFY_COMMAND = "verify";
-const BURST_SIGNALS = ["SIGINT", "SIGTERM"] as const;
+const BURST_SIGNALS = ["SIGINT", "SIGTERM", "SIGHUP"] as const;
 const GATE_ERRORS = {
   options: "[ORLY-GATE-001] gate accepts one name and only --accept-dirty or --reuse-verification",
   reuse: "[ORLY-GATE-002] --reuse-verification requires the named pr gate",

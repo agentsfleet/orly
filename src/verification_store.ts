@@ -1,7 +1,6 @@
 import type { Verdict } from "./criteria_support";
 import type { VerificationProof } from "./verification_identity";
 
-import { createHmac, randomBytes, randomUUID, timingSafeEqual } from "node:crypto";
 import { closeSync, existsSync, fsyncSync, lstatSync, openSync, readFileSync, readdirSync, renameSync, writeFileSync, mkdirSync, rmdirSync, unlinkSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { z } from "zod";
@@ -47,7 +46,7 @@ export function beginAttempt(state: string, lane: string): Attempt {
   const latest = names.filter((name) => ATTEMPT_NAME.test(name)).at(-1);
   const sequence = latest ? Number(latest.slice(0, 12)) + 1 : 1;
   if (sequence > 999_999_999_999) throw new Error("verification history sequence exhausted");
-  const id = `${String(sequence).padStart(12, "0")}-${randomUUID()}`;
+  const id = `${String(sequence).padStart(12, "0")}-${crypto.randomUUID()}`;
   const path = join(parent, id);
   privateDirectory(path);
   syncDirectory(path);
@@ -66,7 +65,7 @@ export function previousPass(attempt: Attempt, binding: string, maxAge: number):
     const record = signedSchema.parse(JSON.parse(readFileSync(file, ENCODING)));
     const payload = record.payload;
     const expected = signature(payload, attempt.key);
-    if (record.signature.length !== expected.length || !timingSafeEqual(Buffer.from(record.signature), Buffer.from(expected))) return undefined;
+    if (!sameSignature(record.signature, expected)) return undefined;
     const now = Date.now();
     if (payload.status !== "passed" || payload.binding !== binding || !payload.executed_revision || payload.id !== attempt.previous.split(/[\\/]/).at(-1)) return undefined;
     if (now < payload.executed_at || now - payload.executed_at > maxAge) return undefined;
@@ -106,7 +105,7 @@ export class VerificationLock {
       if (!hasErrorCode(error, "EEXIST")) throw error;
       throw new Error(`verification is already running or interrupted; confirm workloads stopped before clearing ${state}`);
     }
-    this.#owner = join(this.#path, `${process.pid}.${randomUUID()}`);
+    this.#owner = join(this.#path, `${process.pid}.${crypto.randomUUID()}`);
     try { writeFileSync(this.#owner, String(process.pid), { flag: "wx", mode: 0o600 }); }
     catch (error) { rmdirSync(this.#path); throw error; }
   }
@@ -116,13 +115,22 @@ export class VerificationLock {
 }
 
 function signature(payload: Completion, key: Uint8Array): string {
-  return `hmac-sha256:${createHmac("sha256", key).update(JSON.stringify(payload)).digest("hex")}`;
+  return `hmac-sha256:${new Bun.CryptoHasher("sha256", key).update(JSON.stringify(payload)).digest("hex")}`;
+}
+
+// Constant time in what matters: both sides are compared as HMACs under a
+// key made for this comparison, so how long the comparison takes reveals
+// nothing about the stored signature.
+function sameSignature(stored: string, expected: string): boolean {
+  const key = crypto.getRandomValues(new Uint8Array(KEY_BYTES));
+  const digest = (value: string) => new Bun.CryptoHasher("sha256", key).update(value).digest("hex");
+  return digest(stored) === digest(expected);
 }
 
 function signingKey(state: string): Uint8Array {
   const path = join(state, "signing.key");
   if (!existsSync(path)) {
-    writeDurable(path, randomBytes(KEY_BYTES));
+    writeDurable(path, crypto.getRandomValues(new Uint8Array(KEY_BYTES)));
     syncDirectory(state);
   }
   requirePrivateFile(path, KEY_BYTES);

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.60.0 (2026-11-18)
+
+Burst lanes run on E2E Networks for real, take their placement from `.orly/orly.json`, and end each step deterministically.
+
+- **E2E** — Launch, capture and cleanup work against the real TIR API, on `Debian 13` by default.
+- **Placement** — Region, plan, instance types and image move to `burst.e2e` and `burst.aws`; a moved variable still set is refused.
+- **Snapshots** — A snapshot records its base image, and lanes boot only a matching one. Snapshots from the Nov 17, 2026 release no longer match.
+- **Clients** — The AWS software development kit (SDK) and `ky` replace hand-written cloud calls, and both retry busy answers.
+- **Removed** — `--provider here`, `--keep`, `spot-then-on-demand` and Systems Manager access; nothing called them.
+
 ## 0.50.0 (2026-11-17)
 
 Reviewed input scopes can retain verification evidence across documentation commits. Default `orly gate` runs fast checks once.

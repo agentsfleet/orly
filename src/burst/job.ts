@@ -5,7 +5,7 @@ type RemoteJob = {
   kind: "lane" | "warm";
   name: string;
   ref: string;
-  keep: boolean;
+  commit: string;
   deadlineMinutes: number;
   setup: readonly string[][];
   // Warm-up steps for a snapshot, or the lane's own steps.
@@ -17,8 +17,14 @@ type RemoteJob = {
 
 // The prelude every machine runs, shipped beside this module in src/.
 const PRELUDE = join(import.meta.dir, "job.sh");
-// Where a lane's copied directories land; ssh.ts stages them there.
+// The machine's paths, defined here alone: the job script receives them, and
+// ssh.ts stages the bundle and a lane's copied directories at them.
 export const INPUTS = "/tmp/orly-burst-inputs";
+export const WORK = "/opt/orly-burst/work";
+export const BUNDLE = "/tmp/orly-burst.bundle";
+// The exit of a job whose machine preparation, checkout or burst.setup
+// failed, so the caller reports the lane as not run instead of failed.
+export const SETUP_FAILED = 254;
 
 // The whole job, prelude first. Every value is single-quoted, so a ref, an
 // argument or a secret can never become shell syntax on the machine. Setup
@@ -32,16 +38,22 @@ export async function remoteScript(job: RemoteJob): Promise<string> {
     ...job.directories.map((name) => `  export ${name}=${shellQuote(`${INPUTS}/${name}`)}`),
   ] : [];
   const main = [
+    `readonly WORK=${shellQuote(WORK)} BUNDLE=${shellQuote(BUNDLE)}`,
     `BURST_MODE=${shellQuote(job.kind)}`,
     `BURST_LANE=${shellQuote(job.name)}`,
     `BURST_REF=${shellQuote(job.ref)}`,
+    `BURST_COMMIT=${shellQuote(job.commit)}`,
     "main() {",
-    "  set -e",
-    // The backstop for a caller that died. --keep asked for the machine to stay.
-    ...(job.keep ? [] : [`  shutdown -h +${job.deadlineMinutes} >/dev/null 2>&1 || true`]),
+    // -E carries the ERR trap into functions: until the lane's own steps
+    // start, any failure is the machine's or the setup's.
+    "  set -eE",
+    `  trap 'exit ${SETUP_FAILED}' ERR`,
+    // The backstop for a caller that died.
+    `  shutdown -h +${job.deadlineMinutes} >/dev/null 2>&1 || true`,
     "  prepare",
     "  checkout",
     ...steps(job.setup),
+    "  trap - ERR",
     ...exports,
     ...steps(job.steps),
     ...(job.kind === "warm" ? ["  warmed"] : []),
@@ -55,7 +67,7 @@ export async function remoteScript(job: RemoteJob): Promise<string> {
 // exists, skip the rest, and exit 3 when there is nothing to send.
 export function resultsScript(paths: readonly string[]): string {
   return [
-    "cd /opt/orly-burst/work 2>/dev/null || exit 3",
+    `cd ${WORK} 2>/dev/null || exit 3`,
     "set --",
     `for path in ${paths.map(shellQuote).join(" ")}; do`,
     "  if [ -e \"$path\" ]; then set -- \"$@\" \"$path\"; fi",

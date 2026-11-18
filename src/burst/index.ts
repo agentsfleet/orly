@@ -1,30 +1,27 @@
 import type { RepoConfig } from "../config";
 import type { BurstSettings, Environment } from "./settings";
-import type { BurstRun, CloudProviderName, Fetch, Io, LaneResult, ProviderName } from "./types";
+import type { BurstRun, Fetch, Io, LaneResult, ProviderName } from "./types";
 
-import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { CONFIG_PATH, NOT_INSTALLED, parseConfig, readConfig } from "../config";
+import { CONFIG_PATH, parseConfig, readConfig } from "../config";
 import { UNSCOPED_ENVIRONMENT } from "../git_env";
 import { isObject, OrlyError } from "../model";
 import { cloudLanes, cloudPrune, cloudSnapshot } from "./cloud";
-import { hereLanes, hereWarm } from "./here";
 import { captureProcess } from "./process";
 import { repositoryIdentity } from "./repository";
 import { CLOUD_PROVIDERS } from "./providers";
 import { burstSettings } from "./settings";
-import { newKeyPair } from "./ssh";
-import { CLOUD_PROVIDER_NAMES, LANE_PREFIX, MINUTE_MS, PROVIDER_NAMES } from "./types";
+import { callerAddress, newKeyPair } from "./ssh";
+import { LANE_PREFIX, MINUTE_MS, PROVIDER_NAMES } from "./types";
 
 export type BurstDependencies = Io & { root: string; env: Environment; fetch: Fetch };
-type Request = { snapshot: boolean; prune: boolean; provider: ProviderName | undefined; ref: string | undefined; keep: boolean; useSnapshot: boolean; lanes: string[] };
+type Request = { snapshot: boolean; prune: boolean; provider: ProviderName | undefined; ref: string | undefined; useSnapshot: boolean; lanes: string[] };
 
 export const BURST_USAGE = [
-  `usage: orly burst <lane>... --provider ${PROVIDER_NAMES.join("|")} [--ref <ref>] [--keep] [--no-snapshot]`,
-  `       orly burst snapshot --provider ${PROVIDER_NAMES.join("|")} [--ref <ref>] [--keep]`,
-  `       orly burst snapshot --prune --provider ${CLOUD_PROVIDER_NAMES.join("|")}`,
+  `usage: orly burst <lane>... --provider ${PROVIDER_NAMES.join("|")} [--ref <ref>] [--no-snapshot]`,
+  `       orly burst snapshot [--prune] --provider ${PROVIDER_NAMES.join("|")} [--ref <ref>]`,
 ].join("\n");
 const USAGE_EXIT = 2;
 // Each lane is a paid machine started at once; past this a run is refused
@@ -37,9 +34,9 @@ const REF_NAME_CHARS = 24;
 
 class InvalidBurstArguments extends OrlyError {}
 
-// `orly burst`: run declared lanes on a machine rented for the run, or here,
-// and capture or prune the warm snapshots those machines start from. The gate
-// never calls this; it costs money and runs only when asked.
+// `orly burst`: run declared lanes on machines rented for the run, and capture
+// or prune the warm snapshots those machines start from. The gate never calls
+// this; it costs money and runs only when asked.
 export async function burst(args: string[], dependencies: BurstDependencies): Promise<number> {
   let request: Request;
   try {
@@ -51,13 +48,11 @@ export async function burst(args: string[], dependencies: BurstDependencies): Pr
     return USAGE_EXIT;
   }
   if (!request.provider || (!request.snapshot && request.lanes.length === 0)) return listLanes(dependencies);
-  const settings = burstSettings(dependencies.env);
-  if (request.provider === "here") return here(request, dependencies, settings);
-  return cloud(request, request.provider, dependencies, settings);
+  return cloud(request, request.provider, dependencies);
 }
 
 function parseArguments(args: string[]): Request {
-  const request: Request = { snapshot: false, prune: false, provider: undefined, ref: undefined, keep: false, useSnapshot: true, lanes: [] };
+  const request: Request = { snapshot: false, prune: false, provider: undefined, ref: undefined, useSnapshot: true, lanes: [] };
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index] ?? "";
     if (argument === "--provider" || argument === "--ref") {
@@ -66,8 +61,7 @@ function parseArguments(args: string[]): Request {
       index += 1;
       if (argument === "--ref") request.ref = value;
       else request.provider = PROVIDER_NAMES.find((name) => name === value) ?? refuseProvider(value);
-    } else if (argument === "--keep") request.keep = true;
-    else if (argument === "--no-snapshot") request.useSnapshot = false;
+    } else if (argument === "--no-snapshot") request.useSnapshot = false;
     else if (argument === "--prune") request.prune = true;
     else if (argument.startsWith("-")) throw new InvalidBurstArguments(`unknown flag ${argument}`);
     else if (argument === "snapshot" && index === 0) request.snapshot = true;
@@ -84,8 +78,7 @@ function checked(request: Request): Request {
   const refuse = (reason: string) => { throw new InvalidBurstArguments(reason); };
   if (request.snapshot && request.lanes.length > 0) refuse("snapshot takes no lane");
   if (request.snapshot && !request.useSnapshot) refuse("--no-snapshot applies to lanes");
-  if (request.prune && (!request.snapshot || request.ref !== undefined || request.keep)) refuse("--prune belongs to `orly burst snapshot` and takes only --provider");
-  if (request.provider === "here" && (request.ref !== undefined || request.keep || !request.useSnapshot || request.prune)) refuse("--provider here runs this checkout; it takes no --ref, --keep, --no-snapshot or --prune");
+  if (request.prune && !request.snapshot) refuse("--prune belongs to `orly burst snapshot`");
   if ((request.snapshot || request.lanes.length > 0) && !request.provider) refuse("name a provider with --provider");
   if (new Set(request.lanes).size !== request.lanes.length) refuse("a lane is named twice");
   if (request.lanes.length > MAX_LANES) refuse(`at most ${MAX_LANES} lanes run at once`);
@@ -100,27 +93,20 @@ async function listLanes(dependencies: BurstDependencies): Promise<number> {
   return USAGE_EXIT;
 }
 
-async function here(request: Request, dependencies: BurstDependencies, settings: BurstSettings): Promise<number> {
-  const config = await readConfig(dependencies.root);
-  if (!config) throw new OrlyError(NOT_INSTALLED);
-  const context = { root: dependencies.root, config, settings, write: dependencies.write, signal: dependencies.signal };
-  if (request.snapshot) {
-    const status = await hereWarm(context);
-    dependencies.write(`orly burst: warm-up provider=here exit=${status}`);
-    return status === 0 ? 0 : 1;
-  }
+// The ref's committed configuration places the machines, so it is read before
+// the provider exists, for pruning too.
+async function cloud(request: Request, name: ProviderName, dependencies: BurstDependencies): Promise<number> {
+  const ref = await resolveRef(dependencies.root, request.ref);
+  const config = await configAt(dependencies.root, ref);
+  // Checked before anything else, so a typo is named before credentials are asked for.
   requireDeclared(config, request.lanes);
-  const started = Date.now();
-  return report(await hereLanes(context, request.lanes), started, dependencies.write);
-}
-
-async function cloud(request: Request, name: CloudProviderName, dependencies: BurstDependencies, settings: BurstSettings): Promise<number> {
+  const settings = burstSettings(dependencies.env, config.burst);
   const provider = new CLOUD_PROVIDERS[name](settings, dependencies.fetch);
   if (request.prune) {
     await cloudPrune(provider, { repo: repositoryIdentity(dependencies.root), settings, write: dependencies.write, signal: dependencies.signal });
     return 0;
   }
-  const run = await stage(request, dependencies, settings);
+  const run = await stage(dependencies, settings, ref, config);
   if (request.snapshot) {
     const snapshot = await cloudSnapshot(provider, run);
     if (!snapshot) return 1;
@@ -135,19 +121,18 @@ async function cloud(request: Request, name: CloudProviderName, dependencies: Bu
 }
 
 // Everything a cloud run reads before a machine exists.
-async function stage(request: Request, dependencies: BurstDependencies, settings: BurstSettings): Promise<BurstRun> {
+async function stage(dependencies: BurstDependencies, settings: BurstSettings, ref: string, config: RepoConfig): Promise<BurstRun> {
   const { root } = dependencies;
   const repo = repositoryIdentity(root);
   const io = { write: dependencies.write, signal: dependencies.signal };
-  const ref = await resolveRef(root, request.ref);
-  const config = await configAt(root, ref);
-  // Checked before the key pair exists, so a typo leaves no key behind.
-  requireDeclared(config, request.lanes);
+  // First, so a caller that cannot learn its address leaves nothing behind.
+  const caller = await callerAddress(dependencies.fetch);
   const runId = newRunId(ref, new Date());
   const directory = runDirectory(settings.outRoot, runId);
   const bundle = await bundleRef(root, ref, directory);
+  const commit = (await git(root, ["rev-parse", "--verify", `${ref}^{commit}`])).stdout.trim();
   const { key, publicKey } = await newKeyPair(directory, `orly-burst-${runId}`, settings.env);
-  return { ...io, root, config, settings, ref, repo, runId, runDirectory: directory, bundle, key, publicKey, knownHosts: join(directory, "known_hosts"), keep: request.keep };
+  return { ...io, root, config, settings, fetch: dependencies.fetch, ref, repo, runId, runDirectory: directory, commit, bundle, key, publicKey, knownHosts: join(directory, "known_hosts"), caller };
 }
 
 function requireDeclared(config: RepoConfig, lanes: string[]): void {
@@ -161,8 +146,7 @@ function declaredLanes(config: RepoConfig): string[] {
 }
 
 // One line per lane, in the same shape for every provider, then the total.
-// The exit code is the first failing lane's own, so a single remote lane
-// reports its real code through `--provider here`.
+// The exit code is the first failing lane's own, in the order lanes were named.
 function report(results: LaneResult[], started: number, write: (line: string) => void): number {
   for (const result of results) {
     write(`orly burst: lane=${result.lane} provider=${result.provider} machine=${result.machine} minutes=${result.minutes} cost≈${result.cost} exit=${result.status} evidence=${result.evidence}`);
@@ -194,7 +178,7 @@ async function configAt(root: string, ref: string): Promise<RepoConfig> {
 
 function newRunId(ref: string, now: Date): string {
   const stamp = now.toISOString().replaceAll(/[-:T]/g, "").slice(0, 14);
-  return `${slug(ref, REF_NAME_CHARS) || "ref"}-${stamp}-${randomUUID().slice(0, 4)}`;
+  return `${slug(ref, REF_NAME_CHARS) || "ref"}-${stamp}-${crypto.randomUUID().slice(0, 4)}`;
 }
 
 // Holds the run's private key, so only this user may read it.

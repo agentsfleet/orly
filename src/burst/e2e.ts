@@ -3,19 +3,33 @@ import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot, Sna
 import type { OsImage, Plan, VmSnapshot } from "./tir";
 
 import { messageOf, OrlyError } from "../model";
-import { pause, until } from "./process";
-import { callerAddress } from "./ssh";
+import { machineDeadline, pause, until } from "./process";
+import { done, failed, ongoing } from "./progress";
 import { E2eApi, E2eRequestFailed } from "./tir";
 
-const DEFAULT_IMAGE = "Ubuntu 24.04";
-// A deleted VM can hold its group briefly, so the group's delete is retried
-// for this long before it is reported for deletion by hand.
-const GROUP_DELETE_MS = 5 * 60_000;
+// TIR caps a key label at 50 characters. A run id ends in its 14-digit stamp
+// and 4-character suffix, which keep labels unique, so the ref part is cut.
+export const TIR_LABEL_LIMIT = 50;
+const LABEL_PREFIX = "orly-burst-";
+const RUN_ID_TAIL = 20;
+const DEFAULT_IMAGE = "Debian 13";
+// How long VM deletion, then the group's delete, are waited for before each
+// is reported for deletion by hand.
+const CLEANUP_MS = 5 * 60_000;
+const NOT_FOUND = 404;
+const SERVER_ERROR = 500;
+// TIR's answer to a second delete of a VM it is already deleting, and to a
+// group or key a resource still uses.
+const ALREADY_DELETING = 400;
+const IN_USE = new Set([400, 412]);
+// Statuses TIR reports for a VM that will not come up, or a snapshot that will not save.
+const FAILED = new Set(["error", "failed"]);
+// TIR reports a booted VM as `ready`; `running` is accepted as well.
+const BOOTED = new Set(["ready", "running"]);
 // Root disk of every VM; a VM launched from a snapshot needs at least the
 // snapshot's source disk, so it never shrinks.
 const DISK_GB = 100;
 const READY = "ready";
-const FAILED = new Set(["failed", "error"]);
 // The owner's planning figures (Nov 16, 2026), used in place of the rate card:
 // a run hour costs ₹25 before 18% GST, billed by the started hour, and each
 // stored snapshot ₹200 a month.
@@ -26,22 +40,26 @@ const RUPEES_PER_SNAPSHOT_MONTH = 200;
 // kernel, reached as root over SSH. TIR accepts only a public key already
 // saved in the account, so each run saves its key; each run also makes a
 // security group admitting SSH from the caller's address alone. Both go when
-// the run's VMs have.
+// the run's VMs have. The client retries TIR's busy answers (tir.ts).
 export class E2eNodes implements CloudProvider {
   readonly name = "e2e";
   readonly user: string;
   readonly #settings: BurstSettings;
   readonly #api: E2eApi;
-  readonly #fetch: Fetch;
   #plan: Promise<Plan> | undefined;
   #group: string | undefined;
-  #keyLabel: string | undefined;
+  // Set before the key and group are created, so cleanup finds them by name
+  // even when TIR made one and its reply was lost.
+  #label: string | undefined;
+  #keyConfirmed = false;
+  readonly #statuses = new Map<string, string>();
+  // VMs whose create request failed after it may have reached TIR.
+  readonly #unconfirmed = new Set<string>();
 
   constructor(settings: BurstSettings, fetcher: Fetch) {
     this.#settings = settings;
     this.user = settings.e2e.user;
-    this.#fetch = fetcher;
-    this.#api = new E2eApi(settings.e2e, fetcher);
+    this.#api = new E2eApi(settings, fetcher);
   }
 
   cost(): string {
@@ -52,17 +70,10 @@ export class E2eNodes implements CloudProvider {
     return `₹${RUPEES_PER_SNAPSHOT_MONTH}/month + GST`;
   }
 
+  // What a snapshot warms from and a lane with no snapshot boots.
   baseImage(): Image {
-    return { id: DEFAULT_IMAGE, name: DEFAULT_IMAGE, snapshot: false };
-  }
-
-  // ORLY_BURST_E2E_IMAGE names a ready snapshot when one has that name, and an
-  // OS image, such as `Ubuntu 22.04`, otherwise.
-  async override(signal?: AbortSignal): Promise<Image | undefined> {
-    const name = this.#settings.e2e.image;
-    if (!name) return undefined;
-    const saved = (await this.#api.snapshots(signal)).find((snapshot) => snapshot.name === name && snapshot.status === READY);
-    return saved ? { id: saved.id, name, snapshot: true } : { id: name, name, snapshot: false };
+    const name = this.#settings.e2e.image ?? DEFAULT_IMAGE;
+    return { id: name, name, snapshot: false };
   }
 
   async snapshots(scope: SnapshotScope): Promise<Snapshot[]> {
@@ -70,12 +81,12 @@ export class E2eNodes implements CloudProvider {
   }
 
   async prepare(run: BurstRun): Promise<void> {
-    const name = `orly-burst-${run.runId}`;
+    const name = tirLabel(run.runId);
+    this.#label = name;
     await this.#api.addKey(name, run.publicKey, run.signal);
-    this.#keyLabel = name;
-    const caller = await callerAddress(this.#fetch);
-    this.#group = await this.#api.createSshGroup(name, caller, run.signal);
-    run.write(`orly burst: ${name} admits SSH from ${caller} only`);
+    this.#keyConfirmed = true;
+    this.#group = await this.#api.createSshGroup(name, run.caller, run.signal);
+    run.write(done(`${name} admits SSH from ${run.caller} only`));
   }
 
   async create(run: BurstRun, job: Job): Promise<Machine> {
@@ -90,70 +101,124 @@ export class E2eNodes implements CloudProvider {
         public_key: [run.publicKey], security_group_id: Number(this.#group), ...(source.snapshotId ? { snapshot_id: Number(source.snapshotId) } : {}),
       }, run.signal);
     } catch (error) {
-      // A request that failed after reaching TIR may still have made the VM.
-      if (!(error instanceof E2eRequestFailed && error.status < 500)) run.write(`orly burst: lane=${job.name} TIR may have created VM ${name}; check TIR, it bills until deleted`);
+      // A request that failed after reaching TIR may still have made the VM;
+      // finish looks for it by name.
+      if (!(error instanceof E2eRequestFailed && error.status < SERVER_ERROR)) this.#unconfirmed.add(name);
       throw error;
     }
-    run.write(`orly burst: lane=${job.name} VM ${id} (${plan.sku}, ${job.image.name}) created`);
-    return { id, label: plan.sku, address: undefined, hourly: RUPEES_PER_HOUR };
+    run.write(done(`lane=${job.name} VM ${id} (${plan.sku}, ${job.image.name}) created`));
+    return { id, label: plan.sku, address: undefined };
   }
 
   async ready(run: BurstRun, job: Job, machine: Machine): Promise<Machine> {
-    const address = await this.#until(run, job, "a running VM with a public address", async () => {
+    const address = await until("a running VM with a public address", async () => {
       const vm = await this.#api.vm(machine.id, run.signal);
-      if (vm.status === "error") throw new OrlyError(`VM ${machine.id} failed to start`);
-      return vm.status === "running" ? vm.address : undefined;
-    });
+      this.#seen(run, machine.id, vm.status);
+      if (FAILED.has(vm.status)) throw new OrlyError(`VM ${machine.id} failed to start: TIR reports ${vm.status}`);
+      return BOOTED.has(vm.status) ? vm.address : undefined;
+    }, { deadline: machineDeadline(job), signal: run.signal, pollMs: this.#settings.pollMs });
     return { ...machine, address };
   }
 
   // The VM is stopped first, so the snapshot is of a disk at rest. Saving is
   // polled until ready or failed; one still saving at the run's deadline is
-  // left to finish and reported as pending.
+  // left to finish and reported as pending, and a cancellation fails it.
   async capture(run: BurstRun, job: Job, machine: Machine, name: string): Promise<Snapshot> {
+    const timing = { deadline: job.deadline, signal: run.signal, pollMs: this.#settings.pollMs };
+    run.write(ongoing(`stopping VM ${machine.id} to save it`));
     await this.#api.stopVm(machine.id, run.signal);
-    await this.#until(run, job, "the VM to stop", async () => (await this.#api.vm(machine.id, run.signal)).status === "stopped" || undefined);
+    await until("the VM to stop", async () => {
+      const vm = await this.#api.vm(machine.id, run.signal);
+      this.#seen(run, machine.id, vm.status);
+      if (FAILED.has(vm.status)) throw new OrlyError(`VM ${machine.id} failed while stopping: TIR reports ${vm.status}`);
+      return vm.status === "stopped" || undefined;
+    }, timing);
     const created = await this.#api.createSnapshot(machine.id, name, run.signal);
-    run.write(`orly burst: saving ${name} as snapshot ${created.id}`);
+    run.write(ongoing(`saving ${name} as snapshot ${created.id}`));
     for (;;) {
       const saved = (await this.#api.snapshots(run.signal)).find((snapshot) => snapshot.id === created.id) ?? created;
-      if (saved.status === READY) return toSnapshot(saved);
+      if (saved.status === READY) {
+        run.write(done(`saved snapshot ${created.id}`));
+        return toSnapshot(saved);
+      }
       if (FAILED.has(saved.status)) throw new OrlyError(`snapshot ${name} is ${saved.status}`);
-      if (run.signal.aborted || Date.now() >= job.deadline) return toSnapshot(saved);
+      if (Date.now() >= job.deadline) return toSnapshot(saved);
       await pause(this.#settings.pollMs, run.signal);
+      if (run.signal.aborted) throw new OrlyError(`cancelled while saving snapshot ${created.id}; TIR may still finish it`);
     }
   }
 
+  // TIR deletes a VM in the background and keeps its key attached until it is
+  // gone, so removal waits for the VM to read as not found. Cleanup takes no
+  // cancellation: it is what a cancellation runs.
   async remove(machine: Machine): Promise<void> {
-    await this.#api.deleteVm(machine.id);
+    await this.#deleteVm(machine.id);
+  }
+
+  // Each VM's status is written once per change, so a status orly does not
+  // expect is visible on the first poll instead of at the deadline.
+  #seen(run: BurstRun, id: string, status: string): void {
+    if (this.#statuses.get(id) === status) return;
+    this.#statuses.set(id, status);
+    run.write(BOOTED.has(status) || status === "stopped" ? done(`VM ${id} is ${status}`) : FAILED.has(status) ? failed(`VM ${id} is ${status}`) : ongoing(`VM ${id} is ${status}`));
+  }
+
+  // A retried delete TIR already accepted answers 400 or 404; both mean the
+  // VM is going.
+  async #deleteVm(id: string): Promise<void> {
+    await this.#api.deleteVm(id).catch((error: unknown) => {
+      if (!(error instanceof E2eRequestFailed && (error.status === ALREADY_DELETING || error.status === NOT_FOUND))) throw error;
+    });
+    const timing = { deadline: Date.now() + CLEANUP_MS, signal: new AbortController().signal, pollMs: this.#settings.pollMs };
+    await until(`VM ${id} to delete`, () => this.#api.vm(id).then(() => undefined, (error: unknown) => {
+      if (error instanceof E2eRequestFailed && error.status === NOT_FOUND) return true;
+      throw error;
+    }), timing);
   }
 
   async deleteSnapshot(snapshot: Snapshot, signal: AbortSignal): Promise<void> {
     await this.#api.deleteSnapshot(snapshot.id, signal);
   }
 
-  // The run's key and group leave once its VMs are gone; --keep keeps both so
-  // the kept VMs stay reachable. Cleanup takes no cancellation: it is what a
-  // cancellation runs.
+  // A VM whose create reply was lost is found by name and deleted first, then
+  // the run's key and group, which TIR holds while any VM uses them. Cleanup
+  // takes no cancellation: it is what a cancellation runs.
   async finish(run: BurstRun): Promise<void> {
-    const label = this.#keyLabel;
+    const label = this.#label;
     if (!label) return;
-    if (run.keep) {
-      run.write(`orly burst: --keep left TIR key ${label} and security group ${this.#group ?? "none"}; delete them with the VMs`);
-      return;
-    }
+    if (this.#unconfirmed.size > 0) await this.#sweep(run);
     try {
       const pk = (await this.#api.keys()).find((key) => key.label === label)?.pk;
-      if (pk) await this.#api.deleteKey(pk);
+      if (pk) {
+        await this.#api.deleteKey(pk).catch(goneIsDeleted);
+        run.write(done(`deleted TIR key ${label}`));
+      } else if (this.#keyConfirmed) throw new OrlyError("TIR lists no such key");
     } catch (error) {
-      run.write(`orly burst: could not delete TIR key ${label}: ${messageOf(error)}; delete it by hand`);
+      run.write(failed(`could not delete TIR key ${label}: ${messageOf(error)}; delete it by hand`));
     }
-    const group = this.#group;
+    const group = this.#group ?? (await this.#api.groups().catch(() => [])).find((candidate) => candidate.name === label)?.id;
     if (!group) return;
     const never = new AbortController().signal;
-    const deleted = async () => this.#api.deleteSecurityGroup(group).then(() => true, () => undefined);
-    await until(`security group ${group} to delete`, deleted, { deadline: Date.now() + GROUP_DELETE_MS, signal: never, pollMs: this.#settings.pollMs })
-      .catch(() => run.write(`orly burst: could not delete TIR security group ${group} (${label}); delete it by hand`));
+    const deleted = () => this.#api.deleteSecurityGroup(group).then(() => true, (error: unknown) => {
+      if (error instanceof E2eRequestFailed && IN_USE.has(error.status)) return undefined;
+      return goneIsDeleted(error).then(() => true);
+    });
+    await until(`security group ${group} to delete`, deleted, { deadline: Date.now() + CLEANUP_MS, signal: never, pollMs: this.#settings.pollMs })
+      .then(() => run.write(done(`deleted TIR security group ${group}`)))
+      .catch((error: unknown) => run.write(failed(`could not delete TIR security group ${group} (${label}): ${messageOf(error)}; delete it by hand`)));
+  }
+
+  async #sweep(run: BurstRun): Promise<void> {
+    const found = await this.#api.vms().catch(() => undefined);
+    for (const name of this.#unconfirmed) {
+      const vm = found?.find((candidate) => candidate.name === name);
+      if (!found) run.write(failed(`could not list TIR VMs to find ${name}; check TIR, it bills until deleted`));
+      else if (vm) {
+        await this.#deleteVm(vm.id)
+          .then(() => run.write(done(`deleted VM ${vm.id} (${name}), whose create reply was lost`)))
+          .catch((error: unknown) => run.write(failed(`could not delete VM ${vm.id} (${name}): ${messageOf(error)}; delete it by hand`)));
+      }
+    }
   }
 
   #resolvePlan(signal: AbortSignal): Promise<Plan> {
@@ -184,11 +249,20 @@ export class E2eNodes implements CloudProvider {
     return { versionId: snapshot?.versionId, snapshotId: id };
   }
 
-  #until<T>(run: BurstRun, job: Job, what: string, probe: () => Promise<T | undefined>): Promise<T> {
-    return until(what, probe, { deadline: job.deadline, signal: run.signal, pollMs: this.#settings.pollMs });
-  }
+}
+
+// A delete TIR retried after its first attempt took effect answers 404.
+async function goneIsDeleted(error: unknown): Promise<void> {
+  if (!(error instanceof E2eRequestFailed && error.status === NOT_FOUND)) throw error;
 }
 
 function toSnapshot(snapshot: VmSnapshot): Snapshot {
-  return { id: snapshot.id, name: snapshot.name, sizeGb: snapshot.sizeGb, launchId: snapshot.id, parts: [], ready: snapshot.status === READY };
+  return { id: snapshot.id, name: snapshot.name, sizeGb: snapshot.sizeGb, parts: [], ready: snapshot.status === READY };
+}
+
+
+export function tirLabel(runId: string): string {
+  const tail = runId.slice(-RUN_ID_TAIL);
+  const ref = runId.slice(0, -RUN_ID_TAIL).slice(0, TIR_LABEL_LIMIT - LABEL_PREFIX.length - RUN_ID_TAIL).replace(/-+$/, "");
+  return `${LABEL_PREFIX}${ref}${tail}`;
 }

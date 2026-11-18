@@ -1,15 +1,18 @@
 import type { BunFile } from "bun";
 import type { Environment } from "./settings";
 
+import pLimit from "p-limit";
+
 import { stopOwnedGroup } from "../command_process";
 import { OrlyError } from "../model";
 
 type Stopped = "deadline" | "cancelled";
-export type Outcome = { code: number } | { stopped: Stopped };
+// A child killed by a signal it was not sent by orly has no exit code: it was
+// interrupted, which is never a lane's own answer.
+export type Outcome = { code: number } | { stopped: Stopped | "interrupted" };
 export type Captured = { code: number; stdout: string; stderr: string };
 type StreamOptions = {
   env: Environment;
-  cwd?: string;
   stdin?: Blob | BunFile;
   // Standard output goes to this file instead of the line sink, for a binary
   // stream such as a results archive.
@@ -30,6 +33,9 @@ const OP_TIMEOUT_MS = 60_000;
 // 1Password reads run this many at a time: a lane's secrets resolve in parallel
 // without flooding the op daemon.
 const OP_READS_AT_ONCE = 4;
+// A machine that has not booted, or answered SSH, within this long never
+// will, so these waits end well inside a run's deadline.
+export const MACHINE_WAIT_MS = 10 * 60_000;
 
 // One long-running child, in its own process group so a deadline or a
 // cancellation stops everything it started, with output streamed line by line.
@@ -39,7 +45,6 @@ export async function streamProcess(argv: string[], options: StreamOptions): Pro
   const child = Bun.spawn([locate(argv, options.env), ...argv.slice(1)], {
     env: options.env, stdin: options.stdin ?? "ignore", detached: true,
     stdout: options.stdoutFile ? Bun.file(options.stdoutFile) : PIPE, stderr: PIPE,
-    ...(options.cwd ? { cwd: options.cwd } : {}),
   });
   let stopped: Stopped | undefined;
   const stop = (reason: Stopped) => {
@@ -60,18 +65,18 @@ export async function streamProcess(argv: string[], options: StreamOptions): Pro
     stopOwnedGroup(child.pid);
     await child.exited;
   }
-  return stopped ? { stopped } : { code: child.exitCode ?? 1 };
+  if (stopped) return { stopped };
+  return child.exitCode === null ? { stopped: "interrupted" } : { code: child.exitCode };
 }
 
-// One short command whose output is read whole: an `aws` query, `git`, `tar`.
+// One short command whose output is read whole: `git`, `tar`, `ssh` probes.
 // It runs in its own process group, so a Ctrl-C at the terminal reaches orly
 // alone; only the signal passed here stops it, which is how cleanup commands,
 // handed no signal, still finish after a cancellation.
-export async function captureProcess(argv: string[], options: { env: Environment; timeoutMs: number; cwd?: string; stdin?: Blob | BunFile; signal?: AbortSignal }): Promise<Captured> {
+export async function captureProcess(argv: string[], options: { env: Environment; timeoutMs: number; stdin?: Blob | BunFile; signal?: AbortSignal }): Promise<Captured> {
   if (options.signal?.aborted) throw new OrlyError("cancelled before command launch");
   const child = Bun.spawn([locate(argv, options.env), ...argv.slice(1)], {
     env: options.env, stdin: options.stdin ?? "ignore", stdout: PIPE, stderr: PIPE, detached: true,
-    ...(options.cwd ? { cwd: options.cwd } : {}),
   });
   let stopped: Stopped | undefined;
   const stop = (reason: Stopped) => {
@@ -109,6 +114,11 @@ export async function pause(ms: number, signal: AbortSignal): Promise<void> {
   }
 }
 
+
+export function machineDeadline(job: { deadline: number }, now = Date.now()): number {
+  return Math.min(job.deadline, now + MACHINE_WAIT_MS);
+}
+
 // Polls until the probe answers, the deadline passes or the run is cancelled;
 // the last two throw, naming what was awaited.
 export async function until<T>(what: string, probe: () => Promise<T | undefined>, options: { deadline: number; signal: AbortSignal; pollMs: number }): Promise<T> {
@@ -128,12 +138,13 @@ export async function until<T>(what: string, probe: () => Promise<T | undefined>
 // nowhere else: never printed, never an argument, never a file. A failure
 // names the variable and op's complaint, which carries the reference only.
 export async function resolveSecrets(references: Record<string, string>, env: Environment): Promise<Environment> {
-  const reads = await mapBounded(Object.entries(references), OP_READS_AT_ONCE, async ([name, reference]) => {
+  const limit = pLimit(OP_READS_AT_ONCE);
+  const reads = await Promise.all(Object.entries(references).map(([name, reference]) => limit(async () => {
     const preset = env[name];
     if (preset) return { name, value: preset };
     const read = await captureProcess(["op", "read", "--no-newline", reference], { env, timeoutMs: OP_TIMEOUT_MS });
     return read.code === 0 ? { name, value: read.stdout } : { name, error: `could not read the secret for ${name}: ${read.stderr.trim().split("\n")[0] ?? ""}` };
-  });
+  })));
   // The first failure in declaration order, so the message does not depend on timing.
   const failed = reads.find((read) => "error" in read);
   if (failed && "error" in failed) throw new OrlyError(failed.error);
@@ -141,7 +152,7 @@ export async function resolveSecrets(references: Record<string, string>, env: En
 }
 
 // Reads a stream whole, refusing it past `limit` bytes with the caller's error.
-export async function readBounded(stream: ReadableStream<Uint8Array>, limit: number, tooLarge: () => Error): Promise<string> {
+async function readBounded(stream: ReadableStream<Uint8Array>, limit: number, tooLarge: () => Error): Promise<string> {
   const chunks: Uint8Array[] = [];
   let size = 0;
   for await (const chunk of stream) {
@@ -181,17 +192,6 @@ async function streamLines(stream: ReadableStream<Uint8Array>, write: (line: str
 }
 
 
-
-// Runs `work` over `items` with at most `limit` in flight, results in input order.
-async function mapBounded<T, R>(items: readonly T[], limit: number, work: (item: T) => Promise<R>): Promise<R[]> {
-  const results: R[] = [];
-  const queue = items.map((item, index) => [index, item] as const);
-  const worker = async () => {
-    for (let entry = queue.shift(); entry; entry = queue.shift()) results[entry[0]] = await work(entry[1]);
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
-}
 
 function outputTooLarge(): Error {
   return new OrlyError(`command output exceeded ${MAX_CAPTURE_BYTES} bytes`);

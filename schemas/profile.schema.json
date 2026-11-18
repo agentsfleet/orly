@@ -48,7 +48,25 @@
           "additionalProperties": {"type": "string", "pattern": "^op://[^/\\u0000-\\u001f]+/[^/\\u0000-\\u001f]+/[^\\u0000-\\u001f]+$"}
         },
         "artifacts": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}},
-        "directories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"}}
+        "directories": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"}},
+        "e2e": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "location": {"enum": ["Delhi", "Chennai"]},
+            "plan": {"type": "string", "pattern": "^[A-Za-z0-9.-]+$"},
+            "image": {"type": "string", "pattern": "^[A-Za-z0-9._-]+(?: [A-Za-z0-9._-]+)?$"},
+            "user": {"type": "string", "pattern": "^[a-z_][a-z0-9_-]*$"}
+          }
+        },
+        "aws": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "region": {"type": "string", "pattern": "^[a-z]{2}(?:-[a-z]+)+-\\d$"},
+            "instance_types": {"type": "array", "minItems": 1, "items": {"type": "string", "pattern": "^[a-z0-9-]+\\.[a-z0-9]+$"}},
+            "image": {"type": "string", "pattern": "^(?:ami-[0-9a-f]{8,17}|resolve:ssm:/[\\w./-]+)$"},
+            "user": {"type": "string", "pattern": "^[a-z_][a-z0-9_-]*$"}
+          }
+        }
       }
     },
     "limits": {

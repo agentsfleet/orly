@@ -1,8 +1,8 @@
 // Shared fixtures for the burst suites: a repository with lanes declared, a
 // directory of fake executables first on PATH, a line sink, and the
-// caller-address answer; fake_tir.ts answers for E2E Networks TIR. No suite
-// reaches a real cloud: `aws`, `ssh` and `op` on the PATH they hand orly are
-// these fakes, and the only fetch they hand it is one of these.
+// caller-address answer; fake_tir.ts answers for E2E Networks TIR and
+// aws-test-support.ts for EC2. No suite reaches a real cloud: `ssh` and `op`
+// on the PATH they hand orly are fakes, and so is every fetch.
 import type { BurstDependencies } from "./index";
 import type { Environment } from "./settings";
 
@@ -36,15 +36,13 @@ export function burstRepository(burst: Record<string, unknown> = {}, lanes: Reco
   return root;
 }
 
-// `aws` and `ssh` run the TypeScript fakes beside this file; `op` prints
-// SECRET_VALUE and records how it was called.
+// `ssh` runs the TypeScript fake beside this file; `op` prints SECRET_VALUE
+// and records how it was called.
 export function fakeBin(): { bin: string; state: string } {
   const bin = temporaryDirectory();
   const state = temporaryDirectory();
   const tools = {
-    aws: `exec bun ${join(ROOT, "src/burst/fake_aws.ts")} "$@"`,
     ssh: `exec bun ${join(ROOT, "src/burst/fake_ssh.ts")} "$@"`,
-    "session-manager-plugin": `echo 1.2.707.0`,
     op: `printf '%s\\n' "$*" >> "${join(state, "op-calls.txt")}"\n[ -n "\${FAKE_OP_FAIL:-}" ] && { echo "[ERROR] could not read secret" >&2; exit 1; }\nprintf '%s' "${SECRET_VALUE}"`,
   };
   for (const [name, body] of Object.entries(tools)) {
@@ -75,7 +73,7 @@ export function burstDependencies(root: string, env: Environment, fetcher: Burst
 export function burstEnvironment(bin: string, state: string, extra: Environment = {}): Environment {
   return {
     PATH: `${bin}:${process.env.PATH ?? ""}`, HOME: process.env.HOME, TMPDIR: process.env.TMPDIR,
-    ORLY_BURST_POLL_SECONDS: "0.01", ORLY_BURST_OUT: join(state, "out"), FAKE_AWS_STATE: state, FAKE_SSH_STATE: state, ...extra,
+    ORLY_BURST_POLL_SECONDS: "0.01", ORLY_BURST_OUT: join(state, "out"), FAKE_SSH_STATE: state, ...extra,
   };
 }
 
@@ -93,4 +91,18 @@ export function recordedCalls(state: string): string[][] {
 
 async function unreachable(): Promise<Response> {
   throw new Error("this test makes no HTTP request");
+}
+
+// The first four hexadecimal characters of each base image's SHA-256, worked
+// out once by hand: `printf %s 'Debian 13' | shasum -a 256`.
+const IMAGE_DIGESTS: Readonly<Record<string, string>> = {
+  "Debian 13": "c0e7", "Ubuntu 22.04": "7630",
+  "resolve:ssm:/aws/service/debian/release/13/latest/amd64": "dd74", "ami-0123456789abcdef0": "b1fa",
+};
+
+// A snapshot name orly would give an image of `image` taken at `stamp`.
+export function snapshotOf(image: string, stamp: string): string {
+  const digest = IMAGE_DIGESTS[image];
+  if (!digest) throw new Error(`no digest recorded for ${image}`);
+  return `orly-burst-${REPOSITORY}-${stamp}-${digest}abcd`;
 }

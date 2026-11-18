@@ -1,4 +1,3 @@
-import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { renderProfileSourceLines } from "./references";
@@ -96,7 +95,7 @@ export async function productLeakErrors(root: string, registry: unknown): Promis
 
     let text: string;
     try {
-      text = await readFile(join(root, source), "utf8");
+      text = await Bun.file(join(root, source)).text();
     } catch {
       continue; // absent sources are the reference gate's business, not ours
     }

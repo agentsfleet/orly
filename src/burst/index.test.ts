@@ -29,18 +29,16 @@ describe("orly burst arguments", () => {
 
   test.each([
     [["acceptance"], "name a provider with --provider"],
-    [["acceptance", "--provider", "gcp"], "unknown provider gcp (aws-spot, e2e, here)"],
+    [["acceptance", "--provider", "gcp"], "unknown provider gcp (aws-spot, e2e)"],
     [["acceptance", "--provider"], "--provider needs a value"],
     [["acceptance", "--provider", "e2e", "--fast"], "unknown flag --fast"],
-    [["acceptance", "--provider", "here", "--ref", "main"], "--provider here runs this checkout"],
-    [["acceptance", "--provider", "here", "--keep"], "--provider here runs this checkout"],
+    [["acceptance", "--provider", "e2e", "--keep"], "unknown flag --keep"],
     [["acceptance", "--provider", "e2e", "--prune"], "--prune belongs to `orly burst snapshot`"],
-    [["snapshot", "--prune", "--keep", "--provider", "e2e"], "--prune belongs to `orly burst snapshot`"],
     [["snapshot", "acceptance", "--provider", "e2e"], "snapshot takes no lane"],
     [["snapshot", "--provider", "e2e", "--no-snapshot"], "--no-snapshot applies to lanes"],
     [["snapshot"], "name a provider with --provider"],
-    [["acceptance", "acceptance", "--provider", "here"], "a lane is named twice"],
-    [["a", "b", "c", "d", "e", "f", "g", "h", "i", "--provider", "here"], "at most 8 lanes run at once"],
+    [["acceptance", "acceptance", "--provider", "e2e"], "a lane is named twice"],
+    [["a", "b", "c", "d", "e", "f", "g", "h", "i", "--provider", "e2e"], "at most 8 lanes run at once"],
   ])("%p is refused with exit 2", async (args, reason) => {
     const { dependencies: deps, output } = dependencies();
 
@@ -52,29 +50,26 @@ describe("orly burst arguments", () => {
   test("an undeclared lane names the declared ones", async () => {
     const { dependencies: deps } = dependencies();
 
-    await expect(burst(["acceptance", "smoke", "--provider", "here"], deps)).rejects.toThrow("unknown lane smoke; .orly/orly.json declares: acceptance, integration");
+    await expect(burst(["acceptance", "smoke", "--provider", "e2e"], deps)).rejects.toThrow("unknown lane smoke; .orly/orly.json declares: acceptance, integration");
   });
 });
 
 describe("burst settings", () => {
   test("defaults hold until a variable is set, and a blank one counts as unset", () => {
-    const settings = burstSettings({ ORLY_BURST_REGION: "", ORLY_BURST_E2E_USER: "" });
+    const settings = burstSettings({ ORLY_BURST_DEADLINE_MINUTES: "", ORLY_BURST_E2E_LOCATION: "" });
 
     expect(settings.deadlineMs).toBe(120 * 60_000);
     expect(settings.pollMs).toBe(30_000);
-    expect(settings.snapshotKeep).toBe(2);
     expect(settings.aws.region).toBe("us-east-1");
     expect(settings.aws.types).toEqual(["c7i.4xlarge", "c7a.4xlarge", "c6i.4xlarge", "m7i.4xlarge"]);
     expect(settings.aws.user).toBe("admin");
-    expect(settings.aws).toMatchObject({ market: "spot", access: "ssh", instanceProfile: undefined });
+    expect(settings.aws).toMatchObject({ market: "spot" });
     expect(settings.e2e).toMatchObject({ location: "Delhi", plan: "C3.32GB", user: "root", image: undefined });
   });
 
   test.each([
-    ["ORLY_BURST_DEADLINE_MINUTES", "-5"], ["ORLY_BURST_DEADLINE_MINUTES", "2000"], ["ORLY_BURST_SNAPSHOT_KEEP", "1.5"],
-    ["ORLY_BURST_E2E_LOCATION", "Mumbai"], ["ORLY_BURST_INSTANCE_TYPES", "c7g 4xlarge"], ["E2E_PROJECT_ID", "proj-secret-42"],
-    ["ORLY_BURST_AWS_IMAGE", "ubuntu"], ["ORLY_BURST_AWS_USER", "Root User"], ["ORLY_BURST_MARKET", "reserved"],
-    ["ORLY_BURST_AWS_ACCESS", "telnet"], ["ORLY_BURST_AWS_INSTANCE_PROFILE", "role with spaces"],
+    ["ORLY_BURST_DEADLINE_MINUTES", "-5"], ["ORLY_BURST_DEADLINE_MINUTES", "2000"],
+    ["E2E_PROJECT_ID", "proj-secret-42"], ["ORLY_BURST_MARKET", "spot-then-on-demand"],
   ])("%s=%s is refused by name, never echoing the value", (name, value) => {
     expect(() => burstSettings({ [name]: value })).toThrow(name);
     try {
@@ -85,14 +80,38 @@ describe("burst settings", () => {
   });
 });
 
+describe("burst placement", () => {
+  test("the committed burst.e2e and burst.aws place the machines", () => {
+    const settings = burstSettings({}, {
+      e2e: { location: "Chennai", plan: "C3.16GB", image: "Debian 12" },
+      aws: { region: "ap-south-1", instance_types: ["c7i.4xlarge"], image: "ami-0123456789abcdef0", user: "debian" },
+    });
+
+    expect(settings.e2e).toMatchObject({ location: "Chennai", plan: "C3.16GB", image: "Debian 12", user: "root" });
+    expect(settings.aws).toMatchObject({ region: "ap-south-1", types: ["c7i.4xlarge"], image: "ami-0123456789abcdef0", user: "debian" });
+  });
+
+  test.each([
+    ["ORLY_BURST_E2E_LOCATION", "burst.e2e.location"], ["ORLY_BURST_E2E_IMAGE", "burst.e2e.image"],
+    ["ORLY_BURST_REGION", "burst.aws.region"], ["ORLY_BURST_INSTANCE_TYPES", "burst.aws.instance_types"],
+  ])("%s is refused, naming %s", (name, key) => {
+    expect(() => burstSettings({ [name]: "Chennai" })).toThrow(`orly burst no longer reads ${name}: set ${key} in .orly/orly.json`);
+  });
+
+  test.each(["ORLY_BURST_SUBNET", "ORLY_BURST_SNAPSHOT_KEEP", "ORLY_BURST_AWS_ACCESS", "ORLY_BURST_AWS_INSTANCE_PROFILE"])("%s, which orly no longer has, is refused", (name) => {
+    expect(() => burstSettings({ [name]: "x" })).toThrow(`orly burst no longer reads ${name}: unset it`);
+  });
+});
+
 describe("the machine job script", () => {
-  const job = { kind: "lane" as const, name: "acceptance", ref: "it's$(touch pwned)", keep: false, deadlineMinutes: 120, setup: [["make", "setup"]], steps: [["make", "test", "SUITE=a b"]], secrets: { API_TOKEN: "va'lue" }, directories: ["TOOLBOX_DIR"] };
+  const job = { kind: "lane" as const, name: "acceptance", ref: "it's$(touch pwned)", commit: "0123456789abcdef0123456789abcdef01234567", deadlineMinutes: 120, setup: [["make", "setup"]], steps: [["make", "test", "SUITE=a b"]], secrets: { API_TOKEN: "va'lue" }, directories: ["TOOLBOX_DIR"] };
 
   test("every value is single-quoted, setup runs before the secrets exist, and the script parses", async () => {
     const script = await remoteScript(job);
 
     expect(script.split("\n")[0]).toBe("#!/bin/bash");
     expect(script).toContain("BURST_REF='it'\\''s$(touch pwned)'");
+    expect(script).toContain("BURST_COMMIT='0123456789abcdef0123456789abcdef01234567'");
     expect(script).toContain("  export API_TOKEN='va'\\''lue'");
     expect(script.indexOf("  step 'make' 'setup'")).toBeLessThan(script.indexOf("  export API_TOKEN="));
     expect(script.indexOf("  export API_TOKEN=")).toBeLessThan(script.indexOf("  step 'make' 'test' 'SUITE=a b'"));
@@ -104,14 +123,26 @@ describe("the machine job script", () => {
     expect(Bun.spawnSync(["bash", "-n"], { stdin: new Blob([script]) }).exitCode).toBe(0);
   });
 
-  test("a warm-up exports nothing and marks the image warm; --keep schedules no shutdown", async () => {
-    const script = await remoteScript({ ...job, kind: "warm", name: "snapshot", keep: true, steps: [["make", "build"]] });
+  test("a warm-up exports nothing and marks the image warm", async () => {
+    const script = await remoteScript({ ...job, kind: "warm", name: "snapshot", steps: [["make", "build"]] });
 
     expect(script).not.toContain("export API_TOKEN");
     expect(script).not.toContain("export CI=");
     expect(script).not.toContain("export TOOLBOX_DIR");
-    expect(script).not.toContain("shutdown -h");
     expect(script).toContain("  step 'make' 'build'\n  warmed\n}");
+  });
+
+  // The generated job, run by bash with the machine-side functions stubbed:
+  // what fails before the lane's own steps exits 254, the lane keeps its code.
+  test.each([
+    [[["false"]], [["true"]], 254],
+    [[["true"]], [["sh", "-c", "exit 3"]], 3],
+    [[["true"]], [["true"]], 0],
+  ])("setup %p then lane %p exits %p", async (setup, steps, code) => {
+    const script = await remoteScript({ ...job, secrets: {}, directories: [], setup, steps });
+    const stubbed = script.replace("main </dev/null", "prepare() { :; }; checkout() { :; }; shutdown() { :; }\nmain </dev/null");
+
+    expect(Bun.spawnSync(["bash", "-s"], { stdin: new Blob([stubbed]), stdout: "ignore", stderr: "ignore" }).exitCode).toBe(code);
   });
 
   test("the results request archives only declared paths that exist", () => {

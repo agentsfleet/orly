@@ -5,8 +5,9 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-// dropAddresses: the machines, by address or instance identifier, whose session drops.
-type Scenario = { exits?: Record<string, number | "drop">; sleepMs?: number; dropAddresses?: string[] };
+// unreachable: no machine's SSH answers, as when a security group stops admitting the caller.
+// warmCommit: the commit every machine's warm checkout holds; unset, machines are cold.
+type Scenario = { exits?: Record<string, number | "drop">; sleepMs?: number; unreachable?: boolean; warmCommit?: string };
 
 const RESULTS_MARKER = 'tar -czf - "$@"';
 const NO_RESULTS = 3;
@@ -21,7 +22,16 @@ const scenario: Scenario = existsSync(join(state, "scenario.json")) ? JSON.parse
 process.exit(await dispatch());
 
 async function dispatch(): Promise<number> {
-  if (command === "true") return 0;
+  if (command === "true") {
+    if (!scenario.unreachable) return 0;
+    process.stderr.write(`ssh: connect to host ${address} port 22: Operation timed out\n`);
+    return 255;
+  }
+  if (command.endsWith("rev-parse --verify --quiet HEAD")) {
+    if (!scenario.warmCommit) return 128;
+    process.stdout.write(`${scenario.warmCommit}\n`);
+    return 0;
+  }
   if (command === "cat > /tmp/orly-burst.bundle") {
     writeFileSync(join(node, "repo.bundle"), Buffer.from(await Bun.stdin.arrayBuffer()));
     return 0;
@@ -53,7 +63,6 @@ async function job(script: string): Promise<number> {
     writeFileSync(join(directory, "report", "summary.txt"), `lane ${lane} results\n`);
     Bun.spawnSync(["tar", "-czf", join(node, "results.tar.gz"), "-C", directory, "report"]);
   }
-  if (scenario.dropAddresses?.includes(address)) return 255;
   const outcome = scenario.exits?.[lane] ?? 0;
   return outcome === "drop" ? 255 : outcome;
 }
