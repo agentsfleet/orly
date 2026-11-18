@@ -174,11 +174,10 @@ never with a placeholder reason.
 | `orly override <criterion> --reason <why>` | record a gate exception (user-authorised only) |
 | `orly doctor` | check installed files and required command configuration |
 | `orly burst` | list the declared `burst.*` lanes; exits 2 |
-| `orly burst <lane>... --provider aws-spot\|e2e\|here` | run lanes on rented machines, one each, or on this machine (costs money; only when asked) |
-| `orly burst snapshot --provider aws-spot\|e2e` | capture a warm image the next lanes start from; `--prune` keeps the newest two |
+| `orly burst <lane>... --provider aws-spot\|e2e` | run lanes on rented machines, one each (costs money; only when asked) |
+| `orly burst snapshot --provider aws-spot\|e2e` | capture a warm image the next lanes start from; `--prune` keeps the newest one |
 
-AWS lanes rent Spot machines unless `ORLY_BURST_MARKET` says `on-demand`, or `spot-then-on-demand` to rerun a lane AWS took back.
-`ORLY_BURST_AWS_ACCESS=ssm` reaches machines through Systems Manager with no inbound port; it needs `ORLY_BURST_AWS_INSTANCE_PROFILE` and the Session Manager plugin (docs/BURST.md).
+AWS lanes rent Spot machines unless `ORLY_BURST_MARKET` says `on-demand`. Region, plan and image are `burst.aws` and `burst.e2e` in `.orly/orly.json`.
 
 Gates inspect prerequisites before commands and report blocked or unrun groups explicitly. Fresh execution is the default; a reuse flag alone cannot skip any command.
 Repository-owned `reuse` policies require hermetic input ownership, a maximum age and toolchain identities. Original execution output stays visible, and failed latest attempts or attempts without a completion record prevent fallback to an older pass.

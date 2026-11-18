@@ -99,7 +99,9 @@ test("same-instant snapshots have distinct names and legacy snapshots are never 
   api.snapshot("orly-burst-acme-widget-202611170000", 9002);
   api.snapshot(`orly-burst-${REPOSITORY}-202611170000`, 9003);
   expect(await burst(["snapshot", "--prune", "--provider", "e2e"], dependencies)).toBe(0);
-  expect(api.snapshots).toHaveLength(4);
+  const left = api.snapshots.map((snapshot) => snapshot.name);
+  expect(left).toHaveLength(3);
+  expect(left).toEqual(expect.arrayContaining(["orly-burst-acme-widget-202611170000", `orly-burst-${REPOSITORY}-202611170000`]));
 });
 
 function fixture() {

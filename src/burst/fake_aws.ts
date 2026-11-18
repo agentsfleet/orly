@@ -12,8 +12,7 @@ type Image = { id: string; name: string; repo: string; snapshots: string[]; size
 // lostReply: the instance launches but the caller never hears its identifier.
 // describeFails: every describe-instances call fails with this error.
 // imagePendingPolls and imageFails shape every image create-image makes.
-// reclaimSpot: every Spot instance's state reason says AWS took it back.
-type Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lostReply?: boolean; describeFails?: string; imagePendingPolls?: number; imageFails?: string; reclaimSpot?: boolean; priceUnavailable?: boolean };
+type Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lostReply?: boolean; describeFails?: string; imagePendingPolls?: number; imageFails?: string; priceUnavailable?: boolean };
 
 const state = process.env.FAKE_AWS_STATE ?? "";
 const args = Bun.argv.slice(2);
@@ -27,7 +26,6 @@ function dispatch(command: string[]): number {
   const [service, verb] = command;
   if (service !== "ec2") return unsupported(command);
   if (verb === "import-key-pair" || verb === "delete-key-pair" || verb === "authorize-security-group-ingress" || verb === "delete-security-group" || verb === "wait" || verb === "delete-snapshot") return 0;
-  if (verb === "describe-subnets") return print("vpc-0123456789abcdef0");
   if (verb === "create-security-group") return print("sg-0123456789abcdef0");
   if (verb === "run-instances") return launch(command);
   if (verb === "describe-instances") return describe(command);
@@ -79,10 +77,6 @@ function describe(command: string[]): number {
     return print(live.map((found) => found?.id).join("\t"));
   }
   const ids = command.slice(command.indexOf("--instance-ids") + 1).filter((argument) => argument.startsWith("i-"));
-  if (option(command, "--query").includes("StateReason")) {
-    const found = instance(ids[0] ?? "");
-    return print(found?.spot && scenario.reclaimSpot ? "Server.SpotInstanceTermination" : "None");
-  }
   if (option(command, "--query").includes("PublicIpAddress")) {
     const found = instance(ids[0] ?? "");
     return print(found ? `${found.state}\t${found.address}` : "None\tNone");
@@ -98,8 +92,11 @@ function createImage(command: string[]): number {
   return print(id);
 }
 
+// orly's own images are Debian's, rooted at /dev/xvda; any other AMI here is
+// rooted at /dev/sda1, as Ubuntu's are.
 function describeImages(command: string[]): number {
   const wanted = option(command, "--image-ids");
+  if (option(command, "--query").includes("RootDeviceName")) return print(images().some((image) => image.id === wanted) ? "/dev/xvda" : "/dev/sda1");
   if (option(command, "--query").includes("State")) return imageState(wanted);
   const repo = command.find((argument) => argument.startsWith("Name=tag:orly-burst,Values="))?.split("=").pop();
   const listed = images().filter((image) => wanted ? image.id === wanted : image.repo === repo);

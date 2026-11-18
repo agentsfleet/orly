@@ -26,6 +26,7 @@ const skusSchema = z.object({ data: z.object({ CPU: z.array(z.object({
 })).default([]) }) });
 const imagesSchema = z.object({ data: z.array(z.object({ name: z.string(), versions: z.array(z.object({ image_version_id: z.number(), version: z.coerce.string() })).default([]) })) });
 const keysSchema = z.object({ data: z.array(z.object({ pk: identifier, label: z.string() })) });
+const vmsSchema = z.object({ data: z.array(z.object({ id: identifier, name: z.string() })), total_page_number: z.number().nullish() });
 const groupSchema = z.object({ data: z.object({ id: identifier }) });
 // One VM answers `data.id`; a quantity of them answers `data.created`.
 const createdSchema = z.object({ data: z.union([z.object({ id: identifier }), z.object({ created: z.array(z.object({ id: identifier })).min(1) })]) });
@@ -101,6 +102,17 @@ export class E2eApi {
   async createVm(body: Body, signal?: AbortSignal): Promise<string> {
     const { data } = createdSchema.parse(await this.#request("POST", "/notebooks/", { signal, body }));
     return "id" in data ? data.id : data.created[0]?.id ?? "";
+  }
+
+  // GET /notebooks/: every VM in the project, a page at a time.
+  async vms(): Promise<Array<{ id: string; name: string }>> {
+    const found: Array<{ id: string; name: string }> = [];
+    for (let page = 1, pages = 1; page <= pages; page += 1) {
+      const listed = vmsSchema.parse(await this.#request("GET", "/notebooks/", { query: { page_no: String(page), per_page: "100" } }));
+      found.push(...listed.data);
+      pages = listed.total_page_number ?? 1;
+    }
+    return found;
   }
 
   async vm(id: string, signal?: AbortSignal): Promise<VmState> {

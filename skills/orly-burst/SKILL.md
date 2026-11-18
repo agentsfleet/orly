@@ -30,7 +30,7 @@ https://github.com/agentsfleet/orly/blob/main/docs/BURST.md
    HTTP-only session, start the repository's burst workflow instead.
 3. **Warm once.** Capture `orly burst snapshot --provider <P>` after setup
    changes, and prove a new provider with one capture before any lane.
-   `orly burst snapshot --prune --provider <P>` keeps the newest two.
+   `orly burst snapshot --prune --provider <P>` keeps the newest one.
 4. **Run.** `orly burst <lane>... --provider <P> [--ref <branch>]`. Record
    orly's PID from `$!`, and stop it only with `kill -INT <pid>`, so it
    deletes what it rented.

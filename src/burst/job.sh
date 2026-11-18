@@ -1,12 +1,13 @@
 #!/bin/bash
 # The start of every orly burst job: the standard input of `bash -s` on a
-# fresh or warm machine, over SSH, as root. orly appends the BURST_*
-# assignments and a main function built from .orly/orly.json, then calls main
+# fresh or warm machine, over SSH, as root. orly appends the WORK and BUNDLE
+# paths, the BURST_* assignments and a main function built from
+# .orly/orly.json, then calls main
 # with standard input from /dev/null so no command can read the rest of the
 # session. A lane's secrets are export lines inside main: they exist in this
 # shell's memory and the lane's environment, and on no disk.
 set -uo pipefail
-readonly WORK=/opt/orly-burst/work MARK=/var/lib/orly-burst/warm BUNDLE=/tmp/orly-burst.bundle
+readonly MARK=/var/lib/orly-burst/warm
 # Each step is its own process, so a toolchain one step installs for root,
 # such as rustup's cargo or Bun, is on PATH for every later step.
 export HOME=/root PATH="/root/.cargo/bin:/root/.bun/bin:/root/.local/bin:$PATH"
@@ -43,19 +44,21 @@ exec_tmp() {
   fi
 }
 
-# A warm checkout keeps its ignored build output, which is what makes a warm
-# run cheap. It fetches from the bundle only when it lacks the commit, and the
-# bundle then holds only the commits since its own; a cold one clones.
+# One path for a cold and a warm machine: fetch from the bundle only when the
+# checkout lacks the commit, then check out exactly that commit and remove
+# untracked files. Ignored build output stays, which is what makes a warm
+# run cheap; a warm machine's bundle holds only the commits it lacks.
 checkout() {
   if [ -d "$WORK/.git" ]; then
     echo "== update the warm checkout to $BURST_REF"
-    git -C "$WORK" cat-file -e "$BURST_COMMIT^{commit}" 2>/dev/null || git -C "$WORK" fetch --quiet "$BUNDLE" "$BURST_REF"
-    git -C "$WORK" checkout --quiet --force --detach "$BURST_COMMIT"
   else
     echo "== checkout $BURST_REF"
-    mkdir -p "$(dirname "$WORK")"
-    git clone --quiet --branch "$BURST_REF" "$BUNDLE" "$WORK"
+    mkdir -p "$WORK"
+    git -c init.defaultBranch=orly-burst init --quiet "$WORK"
   fi
+  git -C "$WORK" cat-file -e "$BURST_COMMIT^{commit}" 2>/dev/null || git -C "$WORK" fetch --quiet "$BUNDLE" "$BURST_REF"
+  git -C "$WORK" checkout --quiet --force --detach "$BURST_COMMIT"
+  git -C "$WORK" clean -fdq
   rm -f "$BUNDLE"
   cd "$WORK"
 }

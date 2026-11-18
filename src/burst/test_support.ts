@@ -94,3 +94,8 @@ export function recordedCalls(state: string): string[][] {
 async function unreachable(): Promise<Response> {
   throw new Error("this test makes no HTTP request");
 }
+
+// A snapshot name orly would give an image of `image` taken at `stamp`.
+export function snapshotOf(image: string, stamp: string): string {
+  return `orly-burst-${REPOSITORY}-${stamp}-${new Bun.CryptoHasher("sha256").update(image).digest("hex").slice(0, 4)}abcd`;
+}

@@ -14,6 +14,10 @@ E2E Networks lanes launch, capture and tear down against the real TIR API, and e
 - **Placement** — Region, plan, instance types, image and login user move from variables to `burst.e2e` and `burst.aws` in `.orly/orly.json`, read from the ref a run ships. A moved variable that is still set is refused, naming its key.
 - **Image** — The configured image is the base that snapshots warm from and cold lanes boot. It never replaces the newest snapshot; `--no-snapshot` does.
 - **Docs** — `docs/BURST.md` is shorter, and errors and the skill link to it on GitHub, since repositories without the governance pack lack a copy.
+- **Determinism** — TIR's busy answers (429, 5xx, timeouts) are waited out, and a VM whose create reply was lost is deleted by name. A failed `apt`, checkout or `burst.setup` reports `exit=not_run`, never an exit code. A cancelled image save fails the capture. A key TIR no longer lists is reported for a person.
+- **Checkout** — Cold and warm machines fetch the exact commit the caller resolved, then remove untracked files, so `--ref` takes any ref.
+- **Snapshots** — A snapshot's name records its base image, and lanes boot only a snapshot of the configured image. `--prune` keeps the newest one and accepts `--ref`. Snapshots taken by 0.50.0 do not match and are pruned.
+- **Removed** — `--provider here`, `--keep`, `spot-then-on-demand`, Systems Manager access, `ORLY_BURST_SUBNET` and `ORLY_BURST_SNAPSHOT_KEEP`; nothing called them. A removed variable that is still set is refused by name.
 - **Upgrade** — `bunx --bun @agentsfleet/orly@0.60.0 update`, then move any `ORLY_BURST_REGION`, `ORLY_BURST_INSTANCE_TYPES`, `ORLY_BURST_*_IMAGE`, `ORLY_BURST_*_USER`, `ORLY_BURST_E2E_LOCATION` or `ORLY_BURST_E2E_PLAN` value into `burst.aws` or `burst.e2e`.
 
 ## 0.50.0 (2026-11-17)

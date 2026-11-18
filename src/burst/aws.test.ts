@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { burst } from "./index";
 import { aws, awsRun, machineScript, option, seedImages } from "./aws-test-support";
-import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, callerAddress, fakeBin, recordedCalls, REPOSITORY, SECRET_VALUE } from "./test_support";
+import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, callerAddress, fakeBin, recordedCalls, REPOSITORY, SECRET_VALUE, snapshotOf } from "./test_support";
 import { cleanupTemporaryDirectories } from "../gates_test_support";
 
 const BASE_IMAGE = "resolve:ssm:/aws/service/debian/release/13/latest/amd64";
@@ -151,30 +151,15 @@ describe("aws-spot lanes", () => {
     expect(aws(run.state, "terminate-instances")).toHaveLength(1);
   });
 
-  test("a setup that fails after the key is imported still removes the key and the group", async () => {
+  test("a caller that cannot learn its address is refused before anything is registered or written", async () => {
     const root = burstRepository();
     const { bin, state } = fakeBin();
     const unreachable = async () => new Response("", { status: 503 });
     const { dependencies } = burstDependencies(root, burstEnvironment(bin, state), unreachable);
 
     await expect(burst(["acceptance", "--provider", "aws-spot"], dependencies)).rejects.toThrow("could not learn this machine's public IPv4 address");
-    expect(aws(state, "run-instances")).toHaveLength(0);
-    expect(aws(state, "delete-security-group")).toHaveLength(1);
-    expect(aws(state, "delete-key-pair")).toHaveLength(1);
-    expect([...new Bun.Glob("**/id_ed25519*").scanSync(join(state, "out"))]).toEqual([]);
-  });
-
-  test("--keep launches on-demand so the machine can stop, skips the shutdown, and removes nothing", async () => {
-    const run = await awsRun();
-
-    await burst(["acceptance", "--provider", "aws-spot", "--keep"], run.dependencies);
-
-    const launch = aws(run.state, "run-instances")[0];
-    expect(launch).not.toContain("--instance-market-options");
-    expect(option(launch, "--instance-initiated-shutdown-behavior")).toBe("stop");
-    expect(machineScript(run.state, "198.51.100.1")).not.toContain("shutdown -h");
-    for (const verb of ["terminate-instances", "delete-security-group", "delete-key-pair"]) expect(aws(run.state, verb)).toHaveLength(0);
-    expect(run.output.text()).toContain("--keep left key pair orly-burst-feat-burst-fixture-");
+    expect(aws(state)).toHaveLength(0);
+    expect([...new Bun.Glob("**/*").scanSync({ cwd: state, onlyFiles: true })].filter((path) => path.startsWith("out/"))).toEqual([]);
   });
 });
 
@@ -243,7 +228,7 @@ describe("aws-spot snapshots", () => {
   test("burst.aws places the instances and names the base image, which never replaces the newest snapshot", async () => {
     const image = "ami-0123456789abcdef0";
     const run = await awsRun({}, { aws: { region: "ap-south-1", instance_types: ["c7i.4xlarge"], image } });
-    await seedImages(run.state, [`orly-burst-${REPOSITORY}-20261115000000000-1234abcd`]);
+    await seedImages(run.state, [snapshotOf(image, "20261115000000000")]);
 
     await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
     await burst(["acceptance", "--provider", "aws-spot", "--no-snapshot"], run.dependencies);
@@ -251,12 +236,13 @@ describe("aws-spot snapshots", () => {
     const launches = aws(run.state, "run-instances");
     expect(launches.map((call) => option(call, "--image-id"))).toEqual(["ami-00000000000000001", image]);
     expect(launches.map((call) => option(call, "--instance-type"))).toEqual(["c7i.4xlarge", "c7i.4xlarge"]);
+    expect(launches.map((call) => option(call, "--block-device-mappings").split(",")[0])).toEqual(["DeviceName=/dev/xvda", "DeviceName=/dev/sda1"]);
     expect(new Set(aws(run.state).map((call) => option(call, "--region")))).toEqual(new Set(["ap-south-1"]));
   });
 
-  test("lanes start from the newest snapshot, or the base image with --no-snapshot", async () => {
+  test("lanes start from the newest snapshot of the base image, or the base image with --no-snapshot", async () => {
     const run = await awsRun();
-    await seedImages(run.state, [`orly-burst-${REPOSITORY}-20261101000000000-1234abcd`, `orly-burst-${REPOSITORY}-20261115000000000-1234abcd`]);
+    await seedImages(run.state, [snapshotOf(BASE_IMAGE, "20261101000000000"), snapshotOf(BASE_IMAGE, "20261115000000000"), snapshotOf("ami-0123456789abcdef0", "20261120000000000")]);
 
     await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
     await burst(["acceptance", "--provider", "aws-spot", "--no-snapshot"], run.dependencies);
@@ -264,15 +250,15 @@ describe("aws-spot snapshots", () => {
     expect(aws(run.state, "run-instances").map((call) => option(call, "--image-id"))).toEqual(["ami-00000000000000002", BASE_IMAGE]);
   });
 
-  test("pruning deregisters the older images and deletes their EBS snapshots, renting nothing", async () => {
+  test("pruning keeps the newest snapshot of the base image, deletes the rest with their EBS snapshots, and rents nothing", async () => {
     const run = await awsRun();
-    await seedImages(run.state, ["20261101000000000-1234abcd", "20261102000000000-1234abcd", "20261103000000000-1234abcd"].map((stamp) => `orly-burst-${REPOSITORY}-${stamp}`));
+    await seedImages(run.state, [snapshotOf(BASE_IMAGE, "20261101000000000"), snapshotOf(BASE_IMAGE, "20261102000000000"), snapshotOf("ami-0123456789abcdef0", "20261103000000000")]);
 
-    const code = await burst(["snapshot", "--prune", "--provider", "aws-spot"], run.dependencies);
+    const code = await burst(["snapshot", "--prune", "--provider", "aws-spot", "--ref", "feat/burst-fixture"], run.dependencies);
 
     expect(code).toBe(0);
-    expect(aws(run.state, "deregister-image").map((call) => option(call, "--image-id"))).toEqual(["ami-00000000000000001"]);
-    expect(aws(run.state, "delete-snapshot").map((call) => option(call, "--snapshot-id"))).toEqual(["snap-1"]);
+    expect(aws(run.state, "deregister-image").map((call) => option(call, "--image-id"))).toEqual(["ami-00000000000000003", "ami-00000000000000001"]);
+    expect(aws(run.state, "delete-snapshot").map((call) => option(call, "--snapshot-id"))).toEqual(["snap-3", "snap-1"]);
     expect(aws(run.state, "run-instances")).toHaveLength(0);
     expect(aws(run.state, "import-key-pair")).toHaveLength(0);
   });

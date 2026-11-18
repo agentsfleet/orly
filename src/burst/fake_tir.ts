@@ -1,7 +1,8 @@
 // E2E Networks TIR, in memory, as orly uses it, for the e2e tests, plus the
-// caller-address lookup. A VM runs after one status poll and stops after one
-// more once stopped. A snapshot is pending for `savingLists` list calls, then
-// `ready`, or `savedStatus`. A group's delete fails `groupDeleteFailures` times.
+// caller-address lookup. A VM runs after one status poll, and reads as
+// `terminating`, as TIR's does, for one poll while it stops. A snapshot is
+// pending for `savingLists` list calls, then `ready`, or `savedStatus`. A
+// group's delete fails `groupDeleteFailures` times.
 import { CALLER_ADDRESS, fields } from "./test_support";
 import { TIR_LABEL_LIMIT } from "./e2e";
 import { isObject } from "../model";
@@ -29,6 +30,12 @@ export class FakeTir {
   readonly groups = new Map<string, { id: number; name: string; rules: unknown }>();
   snapshots: FakeSnapshot[] = [];
   createStatus = 201;
+  // The VM is made, but the reply to its create is a gateway timeout.
+  lostCreate = false;
+  // How many VM status reads answer 503 before TIR answers again.
+  busyPolls = 0;
+  // TIR lists no keys, as if the run's key were already gone.
+  hideKeys = false;
   groupDeleteFailures = 0;
   // Calls after a VM delete before TIR has removed it.
   deleteLag = 2;
@@ -73,11 +80,12 @@ export class FakeTir {
     if (route === "GET /gpu_service/sku/") return reply({ CPU: [sku("C3.32GB", 3, 18.6), sku("C3.16GB", 6, 9.2)], GPU: [] });
     if (route === "GET /gpu_service/image/") return reply(IMAGES);
     if (route === "POST /ssh_keys/") return this.addKey(body);
-    if (route === "GET /ssh_keys/") return reply([...this.keys.values()]);
+    if (route === "GET /ssh_keys/") return reply(this.hideKeys ? [] : [...this.keys.values()]);
     if (route === "DELETE /ssh_keys/{id}/") return this.deleteKey(id);
     if (route === "POST /security_groups/") return this.addGroup(body);
     if (route === "DELETE /security_groups/{id}/") return this.deleteGroup(id);
     if (route === "POST /notebooks/") return this.create(body);
+    if (route === "GET /notebooks/") return reply([...this.vms.values()].map((vm) => ({ id: Number(vm.id), name: vm.name, status: vm.status })));
     if (route === "GET /notebooks/{id}/") return this.poll(id);
     if (route === "DELETE /notebooks/{id}/") return this.deleteVm(id);
     if (route === "PUT /notebooks/{id}/actions/") return this.act(id, query.action ?? "");
@@ -151,17 +159,22 @@ export class FakeTir {
     const address = `203.0.113.${this.#nextVm - 5000}`;
     this.#nextVm += 1;
     this.vms.set(id, { id, name: String(body.name), status: "waiting", polls: 0, address, body });
+    if (this.lostCreate) return reply({}, 504);
     return reply({ id: Number(id), status: "waiting", public_ip: "" }, 201);
   }
 
   private poll(id: string): Response {
+    if (this.busyPolls > 0) {
+      this.busyPolls -= 1;
+      return reply({}, 503);
+    }
     const vm = this.vms.get(id);
     if (!vm) return reply({}, 404);
     if (vm.status === "terminating") return reply({ id: Number(id), status: "terminating", public_ip: "" });
     vm.polls += 1;
     if (vm.status === "waiting" && vm.polls > 1) vm.status = this.bootStatus;
     else if (vm.status === "stopping") vm.status = "stopped";
-    return reply({ id: Number(id), status: vm.status === "stopping" ? "ready" : vm.status, public_ip: vm.status === "waiting" ? "" : vm.address });
+    return reply({ id: Number(id), status: vm.status === "stopping" ? "terminating" : vm.status, public_ip: vm.status === "waiting" ? "" : vm.address });
   }
 
   private act(id: string, action: string): Response {

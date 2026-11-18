@@ -12,7 +12,6 @@ executable: false
 
 `orly burst` runs a repository's slow lanes, such as acceptance tests, on machines rented for the run.
 Amazon Web Services (AWS) Spot and E2E Networks start one machine per lane, in parallel, and delete each one when its lane ends.
-The `here` provider runs the same lanes on the current machine, such as a Continuous Integration (CI) runner.
 
 The gates never run `burst.*` commands, because every cloud run costs money.
 
@@ -69,7 +68,7 @@ Declare the lanes as `burst.<name>` commands, and the `burst` object beside them
 | `burst.aws.image` | Amazon Machine Image (AMI) ID or `resolve:ssm:` parameter that snapshots warm from and cold lanes boot. | Debian 13 amd64 |
 | `burst.aws.user`, `burst.e2e.user` | Login user of the image. | `admin` on AWS, `root` on E2E |
 
-A lane always starts from the repository's newest ready snapshot; `--no-snapshot` starts it from the image instead.
+A lane starts from the repository's newest ready snapshot of the configured image; `--no-snapshot` starts it from the image itself.
 orly reads this object from the ref it runs, so a branch carries its own placement.
 
 Each machine installs Git, curl, unzip, Docker and Docker Compose on its first boot, and runs every lane with `CI=1`.
@@ -78,7 +77,7 @@ A secret already in the caller's environment is used as it is; any other is read
 
 > [!IMPORTANT]
 > The caller must open outbound SSH on port 22, and keep the same public address for the whole run.
-> Sessions behind an HTTP-only proxy start the repository's CI workflow instead, which runs `orly burst`.
+> Sessions behind an HTTP-only proxy start the repository's Continuous Integration (CI) workflow instead, which runs `orly burst`.
 
 orly accepts a fresh machine's host key on first connection, into the run's own `known_hosts` file only.
 Run lanes from networks you trust, since someone intercepting that first connection could stand in for the machine.
@@ -123,33 +122,6 @@ The launcher's policy creates and removes only resources tagged `owner=agent`:
 The caller's `aws` tool supplies the credentials, from a profile or the `AWS_*` variables; a CI job gets them from its login step.
 Add a monthly AWS Budgets alert as well.
 
-### Reach AWS machines through Systems Manager
-
-With `ORLY_BURST_AWS_ACCESS=ssm`, the security group admits nothing and SSH travels inside an AWS Systems Manager session.
-That needs only outbound HTTPS, and a caller whose address changes keeps its lanes.
-The account owner creates the machines' role and instance profile once:
-
-```bash
-aws iam create-role --role-name orly-burst-ssm --assume-role-policy-document \
-  '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ec2.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
-aws iam attach-role-policy --role-name orly-burst-ssm --policy-arn arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-aws iam create-instance-profile --instance-profile-name orly-burst-ssm
-aws iam add-role-to-instance-profile --instance-profile-name orly-burst-ssm --role-name orly-burst-ssm
-```
-
-The launcher policy gains these statements:
-
-```json
-  {"Effect": "Allow", "Action": "iam:PassRole", "Resource": "arn:aws:iam::*:role/orly-burst-ssm",
-   "Condition": {"StringEquals": {"iam:PassedToService": "ec2.amazonaws.com"}}},
-  {"Effect": "Allow", "Action": "ssm:StartSession", "Resource": "arn:aws:ec2:*:*:instance/*",
-   "Condition": {"StringEquals": {"ssm:resourceTag/owner": "agent"}}},
-  {"Effect": "Allow", "Action": "ssm:StartSession", "Resource": "arn:aws:ssm:*::document/AWS-StartSSHSession"},
-  {"Effect": "Allow", "Action": "ssm:TerminateSession", "Resource": "arn:aws:ssm:*:*:session/${aws:username}-*"}
-```
-
-The caller installs the Session Manager plugin, for example `brew install --cask session-manager-plugin`, and sets `ORLY_BURST_AWS_INSTANCE_PROFILE=orly-burst-ssm`.
-
 ### One-time setup for E2E Networks
 
 The `e2e` provider runs TIR virtual machines, reached as root over SSH.
@@ -167,12 +139,8 @@ These variables shape a run, not where it runs:
 |---|---|---|
 | `ORLY_BURST_DEADLINE_MINUTES` | Minutes a run may take; the machine also schedules its own shutdown for then. At most 1440. | 120 |
 | `ORLY_BURST_POLL_SECONDS` | Seconds between state checks while a machine boots or an image saves. At most 600. | 30 |
-| `ORLY_BURST_SNAPSHOT_KEEP` | Snapshots `--prune` keeps, 1 to 20. | 2 |
 | `ORLY_BURST_OUT` | Directory for each run's log and results. | the system temporary directory's `orly-burst` |
-| `ORLY_BURST_MARKET` | `spot`, `on-demand`, or `spot-then-on-demand`, which reruns a lane AWS took back on demand. | `spot` |
-| `ORLY_BURST_AWS_ACCESS` | `ssh` from the caller's address, or `ssm`. | `ssh` |
-| `ORLY_BURST_AWS_INSTANCE_PROFILE` | The instance profile `ssm` machines sign in with. | none |
-| `ORLY_BURST_SUBNET` | Subnet for AWS instances. | the default network |
+| `ORLY_BURST_MARKET` | `spot` or `on-demand`, how AWS lanes are rented. | `spot` |
 
 A machine's own shutdown is the backstop for a caller that died:
 
@@ -181,7 +149,6 @@ A machine's own shutdown is the backstop for a caller that died:
 | AWS lane | terminates | nothing |
 | AWS snapshot warm-up, on demand | stops | its 80 GB disk, until deleted |
 | E2E TIR VM | stops | unverified: what a stopped VM bills |
-| Any machine under `--keep` | no shutdown is scheduled | everything, until deleted |
 
 ### Costs
 
@@ -207,7 +174,8 @@ A snapshot capture costs one more run, and an on-demand lane costs about ten tim
 
    ```text
    orly burst: declared lanes: acceptance, integration
-   usage: orly burst <lane>... --provider aws-spot|e2e|here [--ref <ref>] [--keep] [--no-snapshot]
+   usage: orly burst <lane>... --provider aws-spot|e2e [--ref <ref>] [--no-snapshot]
+          orly burst snapshot [--prune] --provider aws-spot|e2e [--ref <ref>]
    ```
 
 2. Capture a warm snapshot. The machine boots the image, runs setup and warm with no secret, and is saved, then deleted:
@@ -234,14 +202,14 @@ A snapshot capture costs one more run, and an on-demand lane costs about ten tim
    orly burst: total provider=e2e lanes=2 passed=2 failed=0 minutes=<varies>
    ```
 
-4. Keep the two newest snapshots. **Pruning deletes the older ones permanently, and no dry run exists.**
+4. Keep the newest snapshot of the configured image. **Pruning deletes every other snapshot of the repository permanently, and no dry run exists.**
 
    ```bash
    orly burst snapshot --prune --provider e2e
    ```
 
    ```text
-   orly burst: e2e keeps 2 snapshot(s) of <REPO>
+   orly burst: e2e keeps 1 snapshot(s) of <REPO>
    ```
 
 The same steps work with `--provider aws-spot`, where a snapshot is an AMI tagged `orly-burst=<REPO>`.
@@ -287,7 +255,6 @@ jobs:
 
 `<LAUNCHER_ROLE_ARN>` carries the launcher policy and trusts the repository's GitHub identity.
 A full clone matters, because a shallow clone cannot be bundled.
-A job that runs the lane on the runner itself uses `--provider here` instead.
 
 ## Verify it works
 
@@ -308,18 +275,19 @@ Setup and warm never see `burst.secrets` or the cloud credentials, and a cloud l
 - **`could not read the secret for <NAME>`**: `op` is not signed in, or the reference is wrong.
 - **`this machine's address changed from <A> to <B>`**: the caller changed network after launch. Run the lane again from the new network.
 - **`the deadline passed while waiting for SSH`**: port 22 is blocked between the caller and the machine. Run the lane from a CI job instead.
-- **`exit=interrupted` on AWS**: AWS took the Spot instance back, or the session dropped. Run it again, or set `ORLY_BURST_MARKET=spot-then-on-demand`.
+- **`exit=interrupted` on AWS**: AWS took the Spot instance back, or the session dropped. Run it again, or set `ORLY_BURST_MARKET=on-demand`.
+- **`exit=not_run`**: the machine's preparation, the checkout or `burst.setup` failed before the lane started. The lane's `run.log` names the step.
 - **`run-instances refused`**: the launcher policy lacks the permission the message names.
 - **`Access Denied Read..` from E2E**: the keys belong to MyAccount. Create a TIR API token for the project instead.
 
 ## Remove or undo
 
 A run deletes its machines, key, security group, bundle and private key, even when a lane fails, on Ctrl-C, SIGTERM or a closed terminal.
+A VM whose create reply TIR lost is found by name and deleted too.
 A process killed outright, such as by a CI runner, leaves them behind; they are tagged or labelled `orly-burst` and safe to delete.
 
-`--keep` leaves the machines running with no scheduled shutdown, and prints the key to log in with; they bill until deleted.
-
 **Deleting a snapshot is permanent; the next run starts cold from the image.**
+A snapshot's name ends in a digest of the image it warmed from, so changing `burst.e2e.image` or `burst.aws.image` starts lanes cold until the next capture.
 Snapshots named by orly before 0.50.0 are never selected or pruned; inspect them in the provider console before deleting them.
 
 ## Related pages

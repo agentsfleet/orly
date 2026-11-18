@@ -7,7 +7,7 @@ import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { OrlyError } from "../model";
-import { INPUTS, resultsScript, WORK } from "./job";
+import { BUNDLE, INPUTS, resultsScript, SETUP_FAILED, WORK } from "./job";
 import { captureProcess, machineDeadline, streamProcess, until } from "./process";
 import { bundleFor } from "./repository";
 import { IPV4 } from "./types";
@@ -28,6 +28,9 @@ const SHORT = 7;
 // Each provider's SSH rule admits only the caller's public IPv4, learnt here.
 const CALLER_ADDRESS_URL = "https://checkip.amazonaws.com";
 const CALLER_TIMEOUT_MS = 15_000;
+// A booting machine refuses SSH for a while, so the caller's address is
+// checked only after this many probes in a row have failed.
+const PROBES_BEFORE_ADDRESS_CHECK = 3;
 
 // The run's own key pair, made in the run's private directory. ssh-keygen
 // writes the private half with mode 0600; only the public half leaves this
@@ -48,17 +51,20 @@ export function forgetRunFiles(run: BurstRun): void {
 
 // A booting machine refuses connections for a while, so the first connect is
 // retried. A booted machine answers within minutes, so the wait is bounded
-// well inside the job's deadline, and it ends at once when `lockedOut` names
-// why this caller can never connect. A failure carries ssh's own last error.
-export async function reachable(run: BurstRun, job: Job, machine: Machine, user: string, lockedOut: () => Promise<string | undefined>): Promise<void> {
+// well inside the job's deadline, and it ends at once when the caller's
+// address has changed, since the run admits only the one it launched from.
+// A failure carries ssh's own last error.
+export async function reachable(run: BurstRun, job: Job, machine: Machine, user: string): Promise<void> {
   const target = machine.address ?? machine.id;
   run.write(ongoing(`waiting for SSH on ${target}`));
   let refusal = "";
+  let failures = 0;
   const probe = async () => {
     const tried = await captureProcess(sshArgs(run, machine, user, "true"), { env: run.settings.env, timeoutMs: PROBE_TIMEOUT_MS, signal: run.signal });
     if (tried.code === 0) return true;
     refusal = tried.stderr.trim().split("\n").at(-1) ?? "";
-    const reason = await lockedOut();
+    failures += 1;
+    const reason = failures >= PROBES_BEFORE_ADDRESS_CHECK ? await movedCaller(run.fetch, run.caller) : undefined;
     if (reason) throw new LockedOut(reason);
     return undefined;
   };
@@ -73,11 +79,10 @@ export async function reachable(run: BurstRun, job: Job, machine: Machine, user:
 
 class LockedOut extends OrlyError {}
 
-// A run's SSH rule admits the one address the caller had at launch. A caller
-// that changes network mid-run can never connect again, so the reason is
-// said instead of waited out. An address that cannot be learnt changes nothing.
-export async function movedCaller(fetcher: Fetch, admitted: string | undefined): Promise<string | undefined> {
-  if (!admitted) return undefined;
+// A caller that changed network mid-run can never connect again, so the
+// reason is said instead of waited out. An address that cannot be learnt
+// changes nothing.
+async function movedCaller(fetcher: Fetch, admitted: string): Promise<string | undefined> {
   const now = await callerAddress(fetcher).catch(() => undefined);
   if (!now || now === admitted) return undefined;
   return `this machine's address changed from ${admitted} to ${now}, and the run admits SSH from ${admitted} only; run it again from this network`;
@@ -107,7 +112,7 @@ export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user
   const base = await warmCommit(run, machine, user);
   const bundle = bundleFor(run.root, run.ref, run.commit, base, run.bundle);
   if (bundle === undefined) run.write(done(`${machine.id} already holds ${run.commit.slice(0, SHORT)}; nothing to send`));
-  else await stage(run, machine, user, "cat > /tmp/orly-burst.bundle", bundle, bundle === run.bundle ? run.ref : `${run.ref} since ${base?.slice(0, SHORT)}`);
+  else await stage(run, machine, user, `cat > ${BUNDLE}`, bundle, bundle === run.bundle ? run.ref : `${run.ref} since ${base?.slice(0, SHORT)}`);
   for (const { name, archive } of directories) {
     await stage(run, machine, user, `rm -rf ${INPUTS}/${name} && mkdir -p ${INPUTS}/${name} && tar -xzf - -C ${INPUTS}/${name}`, archive, name);
   }
@@ -126,19 +131,18 @@ export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user
   }
   if (!run.signal.aborted) await collect(run, job, machine, user);
   if ("stopped" in outcome) return outcome.stopped;
+  if (outcome.code === SETUP_FAILED) return "not_run";
   return outcome.code === SSH_LOST ? "interrupted" : outcome.code;
 }
 
 // A fresh machine's host key is one nobody has seen, so the run trusts it on
 // first use and records it in the run's own known_hosts, never the user's;
-// every later connection of the run must match it. A machine reached through
-// a proxy is named by its identifier, which the proxy command receives as %h.
+// every later connection of the run must match it.
 function sshArgs(run: BurstRun, machine: Machine, user: string, command: string): string[] {
-  const proxy = machine.via ? ["-o", `ProxyCommand=${machine.via}`] : [];
   return ["ssh", "-i", run.key, "-o", "IdentitiesOnly=yes", "-o", "BatchMode=yes",
     "-o", "StrictHostKeyChecking=accept-new", "-o", `UserKnownHostsFile=${run.knownHosts}`,
-    "-o", "ConnectTimeout=15", "-o", "ServerAliveInterval=30", "-o", "ServerAliveCountMax=4", "-o", "LogLevel=ERROR", ...proxy,
-    `${user}@${machine.via ? machine.id : machine.address ?? ""}`, command];
+    "-o", "ConnectTimeout=15", "-o", "ServerAliveInterval=30", "-o", "ServerAliveCountMax=4", "-o", "LogLevel=ERROR",
+    `${user}@${machine.address ?? ""}`, command];
 }
 
 export async function callerAddress(fetcher: Fetch): Promise<string> {

@@ -5,11 +5,12 @@ import { stopOwnedGroup } from "../command_process";
 import { OrlyError } from "../model";
 
 type Stopped = "deadline" | "cancelled";
-export type Outcome = { code: number } | { stopped: Stopped };
+// A child killed by a signal it was not sent by orly has no exit code: it was
+// interrupted, which is never a lane's own answer.
+export type Outcome = { code: number } | { stopped: Stopped | "interrupted" };
 export type Captured = { code: number; stdout: string; stderr: string };
 type StreamOptions = {
   env: Environment;
-  cwd?: string;
   stdin?: Blob | BunFile;
   // Standard output goes to this file instead of the line sink, for a binary
   // stream such as a results archive.
@@ -39,7 +40,6 @@ export async function streamProcess(argv: string[], options: StreamOptions): Pro
   const child = Bun.spawn([locate(argv, options.env), ...argv.slice(1)], {
     env: options.env, stdin: options.stdin ?? "ignore", detached: true,
     stdout: options.stdoutFile ? Bun.file(options.stdoutFile) : PIPE, stderr: PIPE,
-    ...(options.cwd ? { cwd: options.cwd } : {}),
   });
   let stopped: Stopped | undefined;
   const stop = (reason: Stopped) => {
@@ -60,18 +60,18 @@ export async function streamProcess(argv: string[], options: StreamOptions): Pro
     stopOwnedGroup(child.pid);
     await child.exited;
   }
-  return stopped ? { stopped } : { code: child.exitCode ?? 1 };
+  if (stopped) return { stopped };
+  return child.exitCode === null ? { stopped: "interrupted" } : { code: child.exitCode };
 }
 
 // One short command whose output is read whole: an `aws` query, `git`, `tar`.
 // It runs in its own process group, so a Ctrl-C at the terminal reaches orly
 // alone; only the signal passed here stops it, which is how cleanup commands,
 // handed no signal, still finish after a cancellation.
-export async function captureProcess(argv: string[], options: { env: Environment; timeoutMs: number; cwd?: string; stdin?: Blob | BunFile; signal?: AbortSignal }): Promise<Captured> {
+export async function captureProcess(argv: string[], options: { env: Environment; timeoutMs: number; stdin?: Blob | BunFile; signal?: AbortSignal }): Promise<Captured> {
   if (options.signal?.aborted) throw new OrlyError("cancelled before command launch");
   const child = Bun.spawn([locate(argv, options.env), ...argv.slice(1)], {
     env: options.env, stdin: options.stdin ?? "ignore", stdout: PIPE, stderr: PIPE, detached: true,
-    ...(options.cwd ? { cwd: options.cwd } : {}),
   });
   let stopped: Stopped | undefined;
   const stop = (reason: Stopped) => {

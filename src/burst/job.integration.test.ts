@@ -38,15 +38,11 @@ test("an exec /tmp is left alone", () => {
   expect(execTmp("rw,nosuid,nodev,relatime")).toEqual({ stdout: "", mounted: undefined });
 });
 
-// checkout() against real Git, with the machine's paths moved into a temporary
-// directory: a warm checkout takes only what it lacks, a cold one clones.
+// checkout() against real Git, with the machine's paths in a temporary
+// directory: a warm checkout takes only what it lacks, a cold one the whole ref.
 function checkout(fixture: { root: string; ref: string; commit: string }): { code: number; head: string; stderr: string } {
-  const prelude = readFileSync(PRELUDE, "utf8")
-    .replace("WORK=/opt/orly-burst/work", `WORK=${join(fixture.root, "work")}`)
-    .replace("BUNDLE=/tmp/orly-burst.bundle", `BUNDLE=${join(fixture.root, "sent.bundle")}`);
-  const script = join(fixture.root, "job.sh");
-  writeFileSync(script, prelude);
-  const run = Bun.spawnSync(["bash", "-c", `source '${script}' && BURST_REF='${fixture.ref}' BURST_COMMIT='${fixture.commit}' checkout && git rev-parse HEAD`], { env: { PATH: process.env.PATH ?? "", HOME: fixture.root } });
+  const paths = `WORK='${join(fixture.root, "work")}' BUNDLE='${join(fixture.root, "sent.bundle")}'`;
+  const run = Bun.spawnSync(["bash", "-c", `source '${PRELUDE}' && ${paths} BURST_REF='${fixture.ref}' BURST_COMMIT='${fixture.commit}' checkout && git rev-parse HEAD`], { env: { PATH: process.env.PATH ?? "", HOME: fixture.root } });
   return { code: run.exitCode, head: run.stdout.toString().trim().split("\n").at(-1) ?? "", stderr: run.stderr.toString() };
 }
 

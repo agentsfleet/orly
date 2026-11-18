@@ -1,14 +1,12 @@
 import type { Captured } from "./process";
 import { done, failed, ongoing } from "./progress";
 import type { BurstSettings } from "./settings";
-import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot, SnapshotScope } from "./types";
+import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot, SnapshotScope } from "./types";
 
 import { z } from "zod";
 
 import { messageOf, OrlyError } from "../model";
 import { captureProcess, machineDeadline, pause, until } from "./process";
-import { required } from "./settings";
-import { callerAddress, movedCaller } from "./ssh";
 import { IPV4 } from "./types";
 
 type Call = { allowFailure?: boolean; signal?: AbortSignal };
@@ -21,6 +19,8 @@ const CLEANUP_WAIT_MS = 15 * 60_000;
 // are progress.
 const FAILED_IMAGE_STATES = new Set(["failed", "error", "invalid", "deregistered", "disabled"]);
 const BASE_IMAGE = Object.freeze({ id: "resolve:ssm:/aws/service/debian/release/13/latest/amd64", name: "Debian 13 amd64", snapshot: false });
+// The root device of Debian's AMIs, and so of every snapshot orly takes of one.
+const DEBIAN_ROOT_DEVICE = "/dev/xvda";
 // A type with no Spot capacity, or none at this price, falls through to the
 // next type in burst.aws.instance_types; any other refusal stops the lane.
 const CAPACITY_ERRORS = /InsufficientInstanceCapacity|SpotMaxPriceTooLow|MaxSpotInstanceCountExceeded|Unsupported/;
@@ -36,10 +36,6 @@ const SPOT_ROLE_COMMAND = "aws iam create-service-linked-role --aws-service-name
 const TRANSIENT_ERRORS = /RequestLimitExceeded|Throttling|ServiceUnavailable|InternalError|InvalidInstanceID\.NotFound|InvalidAMIID\.NotFound|Could not connect to the endpoint URL|Read timeout/;
 const GONE_STATES = new Set(["shutting-down", "terminated", "stopping", "stopped"]);
 const LIVE_STATES = "pending,running,shutting-down,stopping,stopped";
-// What describe-instances reports for an instance AWS took back for Spot capacity.
-const SPOT_RECLAIMED = "Server.SpotInstanceTermination";
-const PLUGIN_TIMEOUT_MS = 30_000;
-const SSM_PLUGIN = "session-manager-plugin";
 // An AMI's EBS snapshots bill per GB-month of stored data; the volume size is
 // the ceiling of that, which is what the summary prints.
 const SNAPSHOT_DOLLARS_PER_GB_MONTH = 0.05;
@@ -49,23 +45,19 @@ const imagesSchema = z.array(z.object({
 }));
 
 // EC2 through the `aws` command-line tool. Each run imports its public key
-// and makes a security group: open to SSH from the caller's address alone, or
-// with no inbound rule when Systems Manager carries the SSH session. Both go
-// when the run's instances have. A lane is a one-time Spot instance that
-// terminates when it shuts down unless ORLY_BURST_MARKET says on-demand; a
-// snapshot warm-up, or any run with --keep, is on-demand so it can stop.
+// and makes a security group open to SSH from the caller's address alone;
+// both go when the run's instances have. A lane is a one-time Spot instance
+// that terminates when it shuts down, unless ORLY_BURST_MARKET says
+// on-demand; a snapshot warm-up is on demand, so it can stop to be imaged.
 export class AwsSpot implements CloudProvider {
   readonly name = "aws-spot";
   readonly user: string;
   readonly #settings: BurstSettings;
-  readonly #fetch: Fetch;
   #keyImported = false;
   #group: string | undefined;
-  #caller: string | undefined;
 
-  constructor(settings: BurstSettings, fetcher: Fetch) {
+  constructor(settings: BurstSettings) {
     this.#settings = settings;
-    this.#fetch = fetcher;
     this.user = settings.aws.user;
   }
 
@@ -89,41 +81,29 @@ export class AwsSpot implements CloudProvider {
   }
 
   async prepare(run: BurstRun): Promise<void> {
-    if (this.#settings.aws.access === "ssm") await this.#requireSsm(run);
     const name = runName(run);
     const signal = run.signal;
     const tags = (type: string) => `ResourceType=${type},Tags=[{Key=owner,Value=agent},{Key=orly-burst,Value=${run.runId}}]`;
     await this.#aws(["ec2", "import-key-pair", "--key-name", name, "--public-key-material", `fileb://${run.key}.pub`, "--tag-specifications", tags("key-pair")], { signal });
     this.#keyImported = true;
-    const subnet = this.#settings.aws.subnet;
-    const vpc = subnet ? (await this.#aws(["ec2", "describe-subnets", "--subnet-ids", subnet, "--query", "Subnets[0].VpcId", "--output", "text"], { signal })).stdout.trim() : undefined;
     const group = await this.#aws(["ec2", "create-security-group", "--group-name", name, "--description", `orly burst ${run.runId}: SSH from the caller only`,
-      ...(vpc ? ["--vpc-id", vpc] : []), "--tag-specifications", tags("security-group"), "--query", "GroupId", "--output", "text"], { signal });
+      "--tag-specifications", tags("security-group"), "--query", "GroupId", "--output", "text"], { signal });
     this.#group = group.stdout.trim();
-    if (this.#settings.aws.access === "ssm") {
-      run.write(done(`${name} admits no inbound connection; SSH goes through Systems Manager`));
-      return;
-    }
-    const caller = await callerAddress(this.#fetch);
-    await this.#aws(["ec2", "authorize-security-group-ingress", "--group-id", this.#group, "--protocol", "tcp", "--port", "22", "--cidr", `${caller}/32`], { signal });
-    this.#caller = caller;
-    run.write(done(`${name} admits SSH from ${caller} only`));
-  }
-
-  // Systems Manager access admits no address, so no address change locks it out.
-  lockedOut(): Promise<string | undefined> {
-    return movedCaller(this.#fetch, this.#caller);
+    await this.#aws(["ec2", "authorize-security-group-ingress", "--group-id", this.#group, "--protocol", "tcp", "--port", "22", "--cidr", `${run.caller}/32`], { signal });
+    run.write(done(`${name} admits SSH from ${run.caller} only`));
   }
 
   async create(run: BurstRun, job: Job): Promise<Machine> {
-    const spot = job.kind === "lane" && !run.keep && !job.onDemand && this.#settings.aws.market !== "on-demand";
+    const spot = job.kind === "lane" && this.#settings.aws.market !== "on-demand";
+    const root = await this.#rootDevice(job.image, run.signal);
     let refusal = "";
     for (const type of this.#settings.aws.types) {
-      const launch = await this.#aws(this.#runInstances(run, job, type, spot), { allowFailure: true, signal: run.signal });
+      const launch = await this.#aws(this.#runInstances(run, job, type, spot, root), { allowFailure: true, signal: run.signal });
       if (launch.code === 0) {
         const id = launch.stdout.trim();
         run.write(done(`lane=${job.name} ${id} (${type}${spot ? " spot" : " on-demand"}) started from ${job.image.name}`));
-        return { id, label: type, address: undefined, market: spot ? "spot" : "on-demand", hourly: spot ? await this.#spotPrice(type, run.signal) : undefined };
+        const hourly = spot ? await this.#spotPrice(type, run.signal) : undefined;
+        return { id, label: type, address: undefined, market: spot ? "spot" : "on-demand", ...(hourly === undefined ? {} : { hourly }) };
       }
       if (SPOT_ROLE_MISSING.test(launch.stderr)) throw new OrlyError(`this account has never launched a Spot instance: an administrator runs \`${SPOT_ROLE_COMMAND}\` once (https://github.com/agentsfleet/orly/blob/main/docs/BURST.md)`);
       if (!CAPACITY_ERRORS.test(launch.stderr)) throw new OrlyError(`run-instances refused: ${launch.stderr.trim()}`);
@@ -144,20 +124,13 @@ export class AwsSpot implements CloudProvider {
       if (GONE_STATES.has(state)) throw new OrlyError(`${machine.id} is ${state} before it was reachable (Spot interruption?)`);
       return state === "running" && IPV4.test(ip) ? ip : undefined;
     }, { deadline: machineDeadline(job), signal: run.signal, pollMs: this.#settings.pollMs });
-    return { ...machine, address, ...(this.#settings.aws.access === "ssm" ? { via: this.#ssmProxy() } : {}) };
-  }
-
-  // Only a Spot machine's state reason can say AWS took it back; anything
-  // else that ended a lane, such as a dropped session, is not run again.
-  async relaunchOnDemand(run: BurstRun, machine: Machine): Promise<boolean> {
-    if (this.#settings.aws.market !== "spot-then-on-demand" || machine.market !== "spot") return false;
-    const described = await this.#poll(["ec2", "describe-instances", "--instance-ids", machine.id, "--query", "Reservations[0].Instances[0].StateReason.Code", "--output", "text"], run.signal);
-    return described?.stdout.trim() === SPOT_RECLAIMED;
+    return { ...machine, address };
   }
 
   // Saving an 80 GB image outlasts any single `aws ec2 wait`, so every check
   // is one short describe call, repeated within the run's own deadline. An
-  // image still pending at the deadline is left to finish, and said to be.
+  // image still pending at the deadline is left to finish, and said to be; a
+  // cancellation fails the capture.
   async capture(run: BurstRun, job: Job, machine: Machine, name: string): Promise<Snapshot> {
     const timing = { deadline: job.deadline, signal: run.signal, pollMs: this.#settings.pollMs };
     await this.#aws(["ec2", "stop-instances", "--instance-ids", machine.id], { signal: run.signal });
@@ -177,7 +150,7 @@ export class AwsSpot implements CloudProvider {
         return snapshot;
       }
       if (FAILED_IMAGE_STATES.has(state)) throw new OrlyError(`image ${id} is ${state}: ${reason.join(" ").trim() || "AWS gave no reason"}`);
-      if (run.signal.aborted || Date.now() >= job.deadline) return { id, name, sizeGb: undefined, launchId: id, parts: [], ready: false };
+      if (Date.now() >= job.deadline) return { id, name, sizeGb: undefined, parts: [], ready: false };
       await pause(this.#settings.pollMs, run.signal);
     }
   }
@@ -198,10 +171,6 @@ export class AwsSpot implements CloudProvider {
   async finish(run: BurstRun): Promise<void> {
     if (!this.#keyImported) return;
     const name = runName(run);
-    if (run.keep) {
-      run.write(`orly burst: --keep left key pair ${name} and security group ${this.#group ?? "none"}; delete them with the instances`);
-      return;
-    }
     const tagged = await this.#aws(["ec2", "describe-instances", "--filters", `Name=tag:orly-burst,Values=${run.runId}`, `Name=instance-state-name,Values=${LIVE_STATES}`,
       "--query", "Reservations[].Instances[].InstanceId", "--output", "text"], { allowFailure: true });
     const strays = tagged.code === 0 ? tagged.stdout.split(/\s+/).filter((id) => id.startsWith("i-")) : [];
@@ -216,38 +185,28 @@ export class AwsSpot implements CloudProvider {
     }
   }
 
-  #runInstances(run: BurstRun, job: Job, type: string, spot: boolean): string[] {
-    const subnet = this.#settings.aws.subnet;
-    const ssm = this.#settings.aws.access === "ssm"
-      ? ["--iam-instance-profile", `Name=${required(this.#settings.aws.instanceProfile, "ORLY_BURST_AWS_INSTANCE_PROFILE")}`, "--user-data", ssmAgentScript(this.#settings.aws.region)]
-      : [];
-    const network = subnet
-      ? ["--network-interfaces", `DeviceIndex=0,SubnetId=${subnet},Groups=${this.#group ?? ""},AssociatePublicIpAddress=true`]
-      : ["--security-group-ids", this.#group ?? ""];
-    return ["ec2", "run-instances", "--image-id", job.image.id, "--instance-type", type, "--key-name", runName(run), ...network,
+  #runInstances(run: BurstRun, job: Job, type: string, spot: boolean, root: string): string[] {
+    return ["ec2", "run-instances", "--image-id", job.image.id, "--instance-type", type, "--key-name", runName(run), "--security-group-ids", this.#group ?? "",
       ...(spot ? ["--instance-market-options", "MarketType=spot,SpotOptions={SpotInstanceType=one-time,InstanceInterruptionBehavior=terminate}"] : []),
       // A lane's machine is gone when it shuts down, on either market; only a
-      // warm-up, or a run with --keep, stops so it can be imaged or reused.
-      "--instance-initiated-shutdown-behavior", job.kind === "lane" && !run.keep ? "terminate" : "stop",
-      "--metadata-options", "HttpTokens=required", ...ssm,
-      "--block-device-mappings", "DeviceName=/dev/xvda,Ebs={VolumeSize=80,VolumeType=gp3,DeleteOnTermination=true}",
+      // warm-up stops, so it can be imaged.
+      "--instance-initiated-shutdown-behavior", job.kind === "lane" ? "terminate" : "stop",
+      "--metadata-options", "HttpTokens=required",
+      "--block-device-mappings", `DeviceName=${root},Ebs={VolumeSize=80,VolumeType=gp3,DeleteOnTermination=true}`,
       "--tag-specifications", `ResourceType=instance,Tags=[{Key=owner,Value=agent},{Key=orly-burst,Value=${run.runId}},{Key=Name,Value=orly-burst-${job.name}}]`,
       "--query", "Instances[0].InstanceId", "--output", "text"];
   }
 
 
-  // The caller needs the plugin that turns `aws ssm start-session` into a byte
-  // stream, and the instance profile the machine's agent signs in with.
-  async #requireSsm(run: BurstRun): Promise<void> {
-    required(this.#settings.aws.instanceProfile, "ORLY_BURST_AWS_INSTANCE_PROFILE");
-    const plugin = await captureProcess([SSM_PLUGIN, "--version"], { env: this.#settings.env, timeoutMs: PLUGIN_TIMEOUT_MS, signal: run.signal }).catch(() => undefined);
-    if (plugin?.code !== 0) throw new OrlyError(`ORLY_BURST_AWS_ACCESS=ssm needs AWS's ${SSM_PLUGIN} on this machine (https://github.com/agentsfleet/orly/blob/main/docs/BURST.md)`);
-  }
-
-  // ssh hands the instance identifier as %h and the port as %p; the profile
-  // and credentials come from the environment ssh inherits.
-  #ssmProxy(): string {
-    return `aws --region ${this.#settings.aws.region} ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p`;
+  // The 80 GB disk must be the root one: an AMI names its own root device,
+  // which an Ubuntu image puts at /dev/sda1. Debian's parameter, and every
+  // snapshot of it, boots from /dev/xvda.
+  async #rootDevice(image: Image, signal: AbortSignal): Promise<string> {
+    if (!image.id.startsWith("ami-")) return DEBIAN_ROOT_DEVICE;
+    const described = await this.#aws(["ec2", "describe-images", "--image-ids", image.id, "--query", "Images[0].RootDeviceName", "--output", "text"], { signal });
+    const device = described.stdout.trim();
+    if (!device.startsWith("/dev/")) throw new OrlyError(`image ${image.id} names no root device`);
+    return device;
   }
 
   async #spotPrice(type: string, signal: AbortSignal): Promise<number | undefined> {
@@ -287,7 +246,7 @@ export class AwsSpot implements CloudProvider {
     return imagesSchema.parse(JSON.parse(listed.stdout || "[]")).map((image) => {
       const volumes = image.devices.flatMap((device) => device.Ebs ? [device.Ebs] : []);
       const sizes = volumes.flatMap((volume) => volume.VolumeSize === undefined ? [] : [volume.VolumeSize]);
-      return { id: image.id, name: image.name, launchId: image.id, sizeGb: sizes.length ? sizes.reduce((sum, size) => sum + size, 0) : undefined, parts: volumes.flatMap((volume) => volume.SnapshotId ? [volume.SnapshotId] : []), ready: true };
+      return { id: image.id, name: image.name, sizeGb: sizes.length ? sizes.reduce((sum, size) => sum + size, 0) : undefined, parts: volumes.flatMap((volume) => volume.SnapshotId ? [volume.SnapshotId] : []), ready: true };
     });
   }
 
@@ -302,15 +261,4 @@ export class AwsSpot implements CloudProvider {
 
 function runName(run: BurstRun): string {
   return `orly-burst-${run.runId}`;
-}
-
-// Systems Manager reaches a machine through its agent, which Debian's image
-// does not carry: the first boot installs it from AWS's regional bucket. A
-// machine from a snapshot that already runs the agent skips the download.
-function ssmAgentScript(region: string): string {
-  return ["#!/bin/sh", "set -eu",
-    "systemctl is-active --quiet amazon-ssm-agent && exit 0",
-    `curl -fsSL -o /tmp/amazon-ssm-agent.deb https://s3.${region}.amazonaws.com/amazon-ssm-${region}/latest/debian_amd64/amazon-ssm-agent.deb`,
-    "dpkg -i /tmp/amazon-ssm-agent.deb",
-    "systemctl enable --now amazon-ssm-agent", ""].join("\n");
 }
