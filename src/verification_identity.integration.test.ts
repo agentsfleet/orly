@@ -1,7 +1,7 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
 import * as fs from "node:fs";
 import { randomBytes, randomUUID } from "node:crypto";
-import { chmodSync, cpSync, mkdirSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, mkdirSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { limitsFor } from "./command_limits";
@@ -122,8 +122,10 @@ test("scoped identity reuses the tracked snapshot and hashes overlapping extras 
   const opened = spyOn(fs, "openSync");
   try {
     binding(request);
+    // The identity opens each file at its resolved path; macOS's temporary
+    // directory is a symbolic link, so compare resolved paths.
     for (const path of ["tracked-input.txt", "extra-input/data"]) {
-      expect(opened.mock.calls.filter(([file]) => file === join(request.root, path))).toHaveLength(1);
+      expect(opened.mock.calls.filter(([file]) => file === realpathSync(join(request.root, path)))).toHaveLength(1);
     }
   } finally { opened.mockRestore(); }
 });
