@@ -18,6 +18,7 @@ export HOME=/root PATH="/root/.cargo/bin:/root/.bun/bin:/root/.local/bin:$PATH"
 # Anything else a repository needs belongs in its burst.setup.
 prepare() {
   export DEBIAN_FRONTEND=noninteractive
+  exec_tmp
   if [ ! -e "$MARK" ]; then
     echo "== packages"
     apt-get update -qq
@@ -30,6 +31,16 @@ prepare() {
   echo "== docker probe"
   docker version --format '{{.Server.Version}}'
   docker compose version
+}
+
+# E2E's Debian 13 image mounts /tmp noexec, and installers such as rustup-init
+# run what they download there. A warm machine boots with the same mount
+# options, so every job checks.
+exec_tmp() {
+  if findmnt -no OPTIONS /tmp 2>/dev/null | grep -qw noexec; then
+    echo "== remount /tmp exec"
+    mount -o remount,exec /tmp
+  fi
 }
 
 # A warm checkout fetches the ref from the bundle and keeps its ignored build
