@@ -51,7 +51,7 @@ export async function cloudSnapshot(provider: CloudProvider, run: BurstRun): Pro
     requireActive(run);
     machine = await provider.create(run, job);
     machine = await provider.ready(run, job, machine);
-    await reachable(run, job, machine, provider.user);
+    await reachable(run, job, machine, provider.user, () => provider.lockedOut());
     const status = await runOverSsh(run, job, machine, provider.user, await script(run, job, NO_INPUTS), []);
     if (status !== 0) {
       run.write(failed(`the warm-up ended with exit=${status}; no snapshot was taken`));
@@ -110,7 +110,7 @@ async function laneAttempt(provider: CloudProvider, run: BurstRun, job: Job, inp
     requireActive(run);
     machine = await provider.create(run, job);
     machine = await provider.ready(run, job, machine);
-    await reachable(run, job, machine, provider.user);
+    await reachable(run, job, machine, provider.user, () => provider.lockedOut());
     status = await runOverSsh(run, job, machine, provider.user, await script(run, job, inputs), inputs.directories);
   } catch (error) {
     run.write(failed(`lane=${job.name} ${messageOf(error)}`));

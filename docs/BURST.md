@@ -396,9 +396,10 @@ A cloud lane gets only its declared secrets; a lane under `here` also keeps the 
 
 - **`set E2E_AUTH_TOKEN for this provider`**: the variable is missing or empty. Export it and run again.
 - **`could not read the secret for <NAME>`**: `op` is not signed in, or the reference is wrong. Export the variable, or fix `op` and the reference.
-- **The lane waits for SSH until the deadline**: port 22 is blocked between the caller and the machine. Run the lane from a CI job instead.
+- **`this machine's address changed from <A> to <B>`**: the caller changed network after launch, and the run admits SSH from `<A>` only. Run the lane again from the new network.
+- **`the deadline passed while waiting for SSH`**: port 22 is blocked between the caller and the machine. The wait ends after 10 minutes with ssh's own error. Run the lane from a CI job instead.
 - **`exit=interrupted` on AWS**: AWS took the Spot instance back, or the session dropped. Run the lane again, or set `ORLY_BURST_MARKET=spot-then-on-demand` and `ORLY_BURST_AWS_ACCESS=ssm`.
-- **The lane waits for SSH until the deadline under `ssm`**: the machine's agent never reached Systems Manager. Check the instance profile's role carries `AmazonSSMManagedInstanceCore`.
+- **The same message under `ssm`**: the machine's agent never reached Systems Manager. Check the instance profile's role carries `AmazonSSMManagedInstanceCore`.
 - **`run-instances refused`**: the launcher policy lacks a permission. The message names the operation AWS refused.
 - **`TIR may have created VM <NAME>`**: the create request failed after reaching TIR. Delete that VM in TIR, where its name starts `orly-burst-`.
 - **`Access Denied Read..` from E2E**: the keys belong to MyAccount, not TIR. Create a TIR API token for the project and store it instead.

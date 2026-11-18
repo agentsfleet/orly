@@ -5,7 +5,7 @@ import type { OsImage, Plan, VmSnapshot } from "./tir";
 
 import { messageOf, OrlyError } from "../model";
 import { pause, until } from "./process";
-import { callerAddress } from "./ssh";
+import { callerAddress, movedCaller } from "./ssh";
 import { E2eApi, E2eRequestFailed } from "./tir";
 
 const DEFAULT_IMAGE = "Debian 13";
@@ -41,6 +41,7 @@ export class E2eNodes implements CloudProvider {
   readonly #fetch: Fetch;
   #plan: Promise<Plan> | undefined;
   #group: string | undefined;
+  #caller: string | undefined;
   #keyLabel: string | undefined;
   readonly #statuses = new Map<string, string>();
 
@@ -85,7 +86,12 @@ export class E2eNodes implements CloudProvider {
     this.#keyLabel = name;
     const caller = await callerAddress(this.#fetch);
     this.#group = await this.#api.createSshGroup(name, caller, run.signal);
+    this.#caller = caller;
     run.write(done(`${name} admits SSH from ${caller} only`));
+  }
+
+  lockedOut(): Promise<string | undefined> {
+    return movedCaller(this.#fetch, this.#caller);
   }
 
   async create(run: BurstRun, job: Job): Promise<Machine> {

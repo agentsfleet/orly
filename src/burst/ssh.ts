@@ -16,6 +16,7 @@ export type StagedDirectory = { name: string; archive: string };
 const KEY_FILE = "id_ed25519";
 const KEYGEN_TIMEOUT_MS = 60_000;
 const PROBE_TIMEOUT_MS = 30_000;
+const REACH_MS = 10 * 60_000;
 const STAGE_TIMEOUT_MS = 30 * 60_000;
 const COLLECT_TIMEOUT_MS = 10 * 60_000;
 const TAR_TIMEOUT_MS = 5 * 60_000;
@@ -41,10 +42,40 @@ export function forgetKeyPair(run: BurstRun): void {
 }
 
 // A booting machine refuses connections for a while, so the first connect is
-// retried until it answers or the job's deadline passes.
-export async function reachable(run: BurstRun, job: Job, machine: Machine, user: string): Promise<void> {
-  const probe = async () => (await captureProcess(sshArgs(run, machine, user, "true"), { env: run.settings.env, timeoutMs: PROBE_TIMEOUT_MS, signal: run.signal })).code === 0 || undefined;
-  await until(`SSH to ${machine.address ?? machine.id}`, probe, { deadline: job.deadline, signal: run.signal, pollMs: run.settings.pollMs });
+// retried. A booted machine answers within minutes, so the wait is bounded
+// well inside the job's deadline, and it ends at once when `lockedOut` names
+// why this caller can never connect. A failure carries ssh's own last error.
+export async function reachable(run: BurstRun, job: Job, machine: Machine, user: string, lockedOut: () => Promise<string | undefined>): Promise<void> {
+  const target = machine.address ?? machine.id;
+  run.write(ongoing(`waiting for SSH on ${target}`));
+  let refusal = "";
+  const probe = async () => {
+    const tried = await captureProcess(sshArgs(run, machine, user, "true"), { env: run.settings.env, timeoutMs: PROBE_TIMEOUT_MS, signal: run.signal });
+    if (tried.code === 0) return true;
+    refusal = tried.stderr.trim().split("\n").at(-1) ?? "";
+    const reason = await lockedOut();
+    if (reason) throw new LockedOut(reason);
+    return undefined;
+  };
+  try {
+    await until(`SSH to ${target}`, probe, { deadline: Math.min(job.deadline, Date.now() + REACH_MS), signal: run.signal, pollMs: run.settings.pollMs });
+  } catch (error) {
+    if (error instanceof LockedOut || !(error instanceof OrlyError) || !refusal) throw error;
+    throw new OrlyError(`${error.message}: ${refusal}`);
+  }
+  run.write(done(`SSH on ${target} answers`));
+}
+
+class LockedOut extends OrlyError {}
+
+// A run's SSH rule admits the one address the caller had at launch. A caller
+// that changes network mid-run can never connect again, so the reason is
+// said instead of waited out. An address that cannot be learnt changes nothing.
+export async function movedCaller(fetcher: Fetch, admitted: string | undefined): Promise<string | undefined> {
+  if (!admitted) return undefined;
+  const now = await callerAddress(fetcher).catch(() => undefined);
+  if (!now || now === admitted) return undefined;
+  return `this machine's address changed from ${admitted} to ${now}, and the run admits SSH from ${admitted} only; run it again from this network`;
 }
 
 // Each burst.directories variable must name a directory on this machine. It

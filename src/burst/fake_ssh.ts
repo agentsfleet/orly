@@ -6,7 +6,8 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } fr
 import { join } from "node:path";
 
 // dropAddresses: the machines, by address or instance identifier, whose session drops.
-type Scenario = { exits?: Record<string, number | "drop">; sleepMs?: number; dropAddresses?: string[] };
+// unreachable: no machine's SSH answers, as when a security group stops admitting the caller.
+type Scenario = { exits?: Record<string, number | "drop">; sleepMs?: number; dropAddresses?: string[]; unreachable?: boolean };
 
 const RESULTS_MARKER = 'tar -czf - "$@"';
 const NO_RESULTS = 3;
@@ -21,7 +22,11 @@ const scenario: Scenario = existsSync(join(state, "scenario.json")) ? JSON.parse
 process.exit(await dispatch());
 
 async function dispatch(): Promise<number> {
-  if (command === "true") return 0;
+  if (command === "true") {
+    if (!scenario.unreachable) return 0;
+    process.stderr.write(`ssh: connect to host ${address} port 22: Operation timed out\n`);
+    return 255;
+  }
   if (command === "cat > /tmp/orly-burst.bundle") {
     writeFileSync(join(node, "repo.bundle"), Buffer.from(await Bun.stdin.arrayBuffer()));
     return 0;

@@ -40,10 +40,16 @@ export class FakeTir {
   #saving = new Map<number, number>();
   #nextVm = 5001;
   #nextKey = 1;
+  // The caller's address after the run's first lookup, when its network changes mid-run.
+  callerMovesTo: string | undefined;
+  #addressLookups = 0;
 
   fetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
     const url = new URL(String(input));
-    if (url.host === "checkip.amazonaws.com") return new Response(`${CALLER_ADDRESS}\n`);
+    if (url.host === "checkip.amazonaws.com") {
+      this.#addressLookups += 1;
+      return new Response(`${this.#addressLookups > 1 && this.callerMovesTo ? this.callerMovesTo : CALLER_ADDRESS}\n`);
+    }
     const method = init?.method ?? "GET";
     const path = url.pathname.replace(PREFIX, "");
     const body: unknown = init?.body ? JSON.parse(String(init.body)) : undefined;

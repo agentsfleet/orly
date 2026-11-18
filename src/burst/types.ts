@@ -66,6 +66,8 @@ export interface CloudProvider {
   snapshots(scope: SnapshotScope): Promise<Snapshot[]>;
   // Registers whatever the run's machines share, such as the public key.
   prepare(run: BurstRun): Promise<void>;
+  // Why this caller can no longer reach the run's machines, when it cannot.
+  lockedOut(): Promise<string | undefined>;
   create(run: BurstRun, job: Job): Promise<Machine>;
   // Waits until the machine runs, and returns it with its public address.
   ready(run: BurstRun, job: Job, machine: Machine): Promise<Machine>;

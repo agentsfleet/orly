@@ -232,6 +232,30 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(run.api.vms.size).toBe(0);
   });
 
+  test("a caller whose address changes mid-run ends the lane at once, naming both addresses", async () => {
+    const run = e2eRun();
+    run.api.callerMovesTo = "203.0.113.200";
+    await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ unreachable: true }));
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
+    const text = run.output.text();
+    expect(text).toContain("orly burst: ⏳ waiting for SSH on 203.0.113.");
+    expect(text).toContain(`🔴 lane=acceptance this machine's address changed from ${CALLER_ADDRESS} to 203.0.113.200, and the run admits SSH from ${CALLER_ADDRESS} only; run it again from this network`);
+    expect(recordedCalls(run.state).filter((call) => call.at(-1) === "true")).toHaveLength(1);
+    expect(text).toMatch(/lane=acceptance .* exit=interrupted /);
+    expect(run.api.vms.size).toBe(0);
+  });
+
+  test("SSH that never answers ends the wait with ssh's own error, and the VM still goes", async () => {
+    const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.01" });
+    await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ unreachable: true }));
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
+    expect(run.output.text()).toMatch(/🔴 lane=acceptance the deadline passed while waiting for SSH to 203\.0\.113\.\d+: ssh: connect to host 203\.0\.113\.\d+ port 22: Operation timed out/);
+    expect(run.output.text()).not.toContain("answers");
+    expect(run.api.vms.size).toBe(0);
+  });
+
   test("a lane past the deadline is stopped and its VM deleted", async () => {
     const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.01" });
     await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ sleepMs: 2_000 }));

@@ -8,7 +8,7 @@ import { z } from "zod";
 import { messageOf, OrlyError } from "../model";
 import { captureProcess, pause, until } from "./process";
 import { required } from "./settings";
-import { callerAddress } from "./ssh";
+import { callerAddress, movedCaller } from "./ssh";
 import { IPV4 } from "./types";
 
 type Call = { allowFailure?: boolean; signal?: AbortSignal };
@@ -61,6 +61,7 @@ export class AwsSpot implements CloudProvider {
   readonly #fetch: Fetch;
   #keyImported = false;
   #group: string | undefined;
+  #caller: string | undefined;
 
   constructor(settings: BurstSettings, fetcher: Fetch) {
     this.#settings = settings;
@@ -108,7 +109,13 @@ export class AwsSpot implements CloudProvider {
     }
     const caller = await callerAddress(this.#fetch);
     await this.#aws(["ec2", "authorize-security-group-ingress", "--group-id", this.#group, "--protocol", "tcp", "--port", "22", "--cidr", `${caller}/32`], { signal });
+    this.#caller = caller;
     run.write(done(`${name} admits SSH from ${caller} only`));
+  }
+
+  // Systems Manager access admits no address, so no address change locks it out.
+  lockedOut(): Promise<string | undefined> {
+    return movedCaller(this.#fetch, this.#caller);
   }
 
   async create(run: BurstRun, job: Job): Promise<Machine> {
