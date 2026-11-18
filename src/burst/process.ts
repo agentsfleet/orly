@@ -109,6 +109,14 @@ export async function pause(ms: number, signal: AbortSignal): Promise<void> {
   }
 }
 
+// A machine that has not booted, or answered SSH, within this long never
+// will, so these waits end well inside a run's deadline.
+export const MACHINE_WAIT_MS = 10 * 60_000;
+
+export function machineDeadline(job: { deadline: number }, now = Date.now()): number {
+  return Math.min(job.deadline, now + MACHINE_WAIT_MS);
+}
+
 // Polls until the probe answers, the deadline passes or the run is cancelled;
 // the last two throw, naming what was awaited.
 export async function until<T>(what: string, probe: () => Promise<T | undefined>, options: { deadline: number; signal: AbortSignal; pollMs: number }): Promise<T> {

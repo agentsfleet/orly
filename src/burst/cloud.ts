@@ -9,7 +9,7 @@ import { join } from "node:path";
 
 import { remoteScript } from "./job";
 import { resolveSecrets } from "./process";
-import { archiveDirectories, forgetKeyPair, reachable, runOverSsh } from "./ssh";
+import { archiveDirectories, forgetRunFiles, reachable, runOverSsh } from "./ssh";
 import { LANE_PREFIX, MINUTE_MS } from "./types";
 import { messageOf, OrlyError } from "../model";
 
@@ -154,7 +154,7 @@ async function settle(provider: CloudProvider, run: BurstRun): Promise<void> {
     await provider.finish(run);
   } finally {
     if (run.keep) run.write(`orly burst: --keep kept the run's SSH key at ${run.key}; log in as ${provider.user}`);
-    else forgetKeyPair(run);
+    else forgetRunFiles(run);
   }
 }
 

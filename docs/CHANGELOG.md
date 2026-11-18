@@ -8,7 +8,8 @@ E2E Networks lanes launch, capture and tear down against the real TIR API, and e
 - **E2E image** — The default base image is `Debian 13`; `ORLY_BURST_E2E_IMAGE` still overrides it, and a snapshot capture starts from the same image. Every job remounts a noexec `/tmp` as exec, so installers such as rustup run on it.
 - **E2E teardown** — Removal waits for TIR to report the VM gone before deleting its key, then deletes the security group through the path TIR accepts. Nothing is left on the account after a run.
 - **Progress** — Lines read `⏳ … ` while a step runs, `🟢` when it is done and `🔴` when it failed or needs deleting by hand. Uploads name their size and duration, and a capture reports the saved snapshot before its machine is deleted. A snapshot run no longer reports missing lane results. The `lane=` and `total` lines stay unmarked.
-- **SSH wait** — A run says when it waits for SSH and stops after 10 minutes with ssh's own error. A caller whose address changed since launch ends the lane at once, naming both addresses.
+- **Waits** — A run says when it waits for a machine to boot or answer SSH, and each wait ends after 10 minutes with the cloud's or ssh's own error. A caller whose address changed since launch ends the lane at once, naming both addresses. Closing the terminal cancels the run and deletes its machines, like Ctrl-C.
+- **Run files** — A finished run deletes its bundle, directory archives and key, and keeps its evidence.
 - **Upgrade** — `bunx --bun @agentsfleet/orly@0.60.0 update`. No setting changes.
 
 ## 0.50.0 (2026-11-17)

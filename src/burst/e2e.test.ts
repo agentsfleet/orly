@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 import { burst } from "./index";
 import { tirLabel } from "./e2e";
+import { MACHINE_WAIT_MS, machineDeadline } from "./process";
 import { DEBIAN_13, FakeTir } from "./fake_tir";
 import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, fakeBin, fields, recordedCalls, REPOSITORY, SECRET_VALUE } from "./test_support";
 import { cleanupTemporaryDirectories, temporaryDirectory } from "../gates_test_support";
@@ -213,6 +214,9 @@ describe("e2e lanes on TIR virtual machines", () => {
     const exported = job.indexOf("  export TOOLBOX_DIR='/tmp/orly-burst-inputs/TOOLBOX_DIR'");
     expect(exported).toBeGreaterThan(job.indexOf("  step 'true'"));
     expect(exported).toBeLessThan(job.lastIndexOf("  step 'true'"));
+    const left = [...new Bun.Glob("**/*").scanSync({ cwd: join(run.state, "out"), onlyFiles: true })];
+    expect(left.filter((path) => /(repo\.bundle|\.tgz|id_ed25519(\.pub)?)$/.test(path))).toEqual([]);
+    expect(left.some((path) => path.endsWith("acceptance/run.log"))).toBeTrue();
   });
 
   test("a declared directory that is not set is refused before any VM exists", async () => {
@@ -230,6 +234,11 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(run.output.text()).toMatch(/lane=acceptance .* exit=3 /);
     expect(run.output.text()).toMatch(/lane=integration .* exit=interrupted /);
     expect(run.api.vms.size).toBe(0);
+  });
+
+  test("a wait for a machine to boot or answer ends within ten minutes, or at the run's deadline when sooner", () => {
+    expect(machineDeadline({ deadline: 1_000 + 60 * MACHINE_WAIT_MS }, 1_000)).toBe(1_000 + MACHINE_WAIT_MS);
+    expect(machineDeadline({ deadline: 5_000 }, 1_000)).toBe(5_000);
   });
 
   test("a caller whose address changes mid-run ends the lane at once, naming both addresses", async () => {

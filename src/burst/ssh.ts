@@ -3,12 +3,12 @@ import { done, ongoing } from "./progress";
 import type { Environment } from "./settings";
 import type { BurstRun, Fetch, Job, Machine, Status } from "./types";
 
-import { existsSync, rmSync, statSync } from "node:fs";
+import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { OrlyError } from "../model";
 import { INPUTS, resultsScript } from "./job";
-import { captureProcess, streamProcess, until } from "./process";
+import { captureProcess, machineDeadline, streamProcess, until } from "./process";
 import { IPV4 } from "./types";
 
 export type StagedDirectory = { name: string; archive: string };
@@ -16,7 +16,6 @@ export type StagedDirectory = { name: string; archive: string };
 const KEY_FILE = "id_ed25519";
 const KEYGEN_TIMEOUT_MS = 60_000;
 const PROBE_TIMEOUT_MS = 30_000;
-const REACH_MS = 10 * 60_000;
 const STAGE_TIMEOUT_MS = 30 * 60_000;
 const COLLECT_TIMEOUT_MS = 10 * 60_000;
 const TAR_TIMEOUT_MS = 5 * 60_000;
@@ -37,8 +36,11 @@ export async function newKeyPair(directory: string, comment: string, env: Enviro
   return { key, publicKey: (await Bun.file(`${key}.pub`).text()).trim() };
 }
 
-export function forgetKeyPair(run: BurstRun): void {
-  for (const path of [run.key, `${run.key}.pub`]) rmSync(path, { force: true });
+// A finished run keeps its evidence; the key, the bundle and the directory
+// archives are tens of megabytes each run and serve nothing after it.
+export function forgetRunFiles(run: BurstRun): void {
+  const archives = readdirSync(run.runDirectory).filter((name) => name.endsWith(".tgz")).map((name) => join(run.runDirectory, name));
+  for (const path of [run.key, `${run.key}.pub`, run.bundle, ...archives]) rmSync(path, { force: true });
 }
 
 // A booting machine refuses connections for a while, so the first connect is
@@ -58,7 +60,7 @@ export async function reachable(run: BurstRun, job: Job, machine: Machine, user:
     return undefined;
   };
   try {
-    await until(`SSH to ${target}`, probe, { deadline: Math.min(job.deadline, Date.now() + REACH_MS), signal: run.signal, pollMs: run.settings.pollMs });
+    await until(`SSH to ${target}`, probe, { deadline: machineDeadline(job), signal: run.signal, pollMs: run.settings.pollMs });
   } catch (error) {
     if (error instanceof LockedOut || !(error instanceof OrlyError) || !refusal) throw error;
     throw new OrlyError(`${error.message}: ${refusal}`);

@@ -4,7 +4,7 @@ import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot, Sna
 import type { OsImage, Plan, VmSnapshot } from "./tir";
 
 import { messageOf, OrlyError } from "../model";
-import { pause, until } from "./process";
+import { machineDeadline, pause, until } from "./process";
 import { callerAddress, movedCaller } from "./ssh";
 import { E2eApi, E2eRequestFailed } from "./tir";
 
@@ -115,12 +115,12 @@ export class E2eNodes implements CloudProvider {
   }
 
   async ready(run: BurstRun, job: Job, machine: Machine): Promise<Machine> {
-    const address = await this.#until(run, job, "a running VM with a public address", async () => {
+    const address = await until("a running VM with a public address", async () => {
       const vm = await this.#api.vm(machine.id, run.signal);
       this.#seen(run, machine.id, vm.status);
       if (FAILED_VM.has(vm.status)) throw new OrlyError(`VM ${machine.id} failed to start: TIR reports ${vm.status}`);
       return BOOTED.has(vm.status) ? vm.address : undefined;
-    });
+    }, { deadline: machineDeadline(job), signal: run.signal, pollMs: this.#settings.pollMs });
     return { ...machine, address };
   }
 

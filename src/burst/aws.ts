@@ -6,7 +6,7 @@ import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot, Sna
 import { z } from "zod";
 
 import { messageOf, OrlyError } from "../model";
-import { captureProcess, pause, until } from "./process";
+import { captureProcess, machineDeadline, pause, until } from "./process";
 import { required } from "./settings";
 import { callerAddress, movedCaller } from "./ssh";
 import { IPV4 } from "./types";
@@ -140,12 +140,13 @@ export class AwsSpot implements CloudProvider {
 
   // A Spot instance reclaimed while it boots is gone before it answers.
   async ready(run: BurstRun, job: Job, machine: Machine): Promise<Machine> {
+    run.write(ongoing(`waiting for ${machine.id} to boot`));
     const address = await until("a running instance with a public address", async () => {
       const described = await this.#poll(["ec2", "describe-instances", "--instance-ids", machine.id, "--query", "Reservations[0].Instances[0].[State.Name,PublicIpAddress]", "--output", "text"], run.signal);
       const [state = "", ip = ""] = described?.stdout.trim().split(/\s+/) ?? [];
       if (GONE_STATES.has(state)) throw new OrlyError(`${machine.id} is ${state} before it was reachable (Spot interruption?)`);
       return state === "running" && IPV4.test(ip) ? ip : undefined;
-    }, { deadline: job.deadline, signal: run.signal, pollMs: this.#settings.pollMs });
+    }, { deadline: machineDeadline(job), signal: run.signal, pollMs: this.#settings.pollMs });
     return { ...machine, address, ...(this.#settings.aws.access === "ssm" ? { via: this.#ssmProxy() } : {}) };
   }
 
