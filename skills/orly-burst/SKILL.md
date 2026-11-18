@@ -41,11 +41,11 @@ costs are in orly's `docs/BURST.md`.
    for a ref other than the current branch. Lanes run in parallel, one machine
    each. `--keep` leaves machines running for inspection, and they keep
    billing.
-5. **Stop and clean up.** Record orly's PID from `$!` at launch and stop it
-   with `kill -INT <pid>`; never a `pgrep` pattern, which can match the
-   wrapping shell, and never `kill -9`, which skips cleanup. After any failed
-   or interrupted run, list the provider's machines, keys and security
-   groups, and delete what each "delete it by hand" line names.
+5. **Stop and clean up.** Record orly's PID from `$!` and stop it with
+   `kill -INT <pid>`. A `pgrep` pattern can match the wrapping shell, and
+   `kill -9` skips cleanup. After a failed or interrupted run, list the
+   provider's machines, keys and security groups, and delete what each
+   🔴 line names.
 6. **Report.** Quote every `orly burst: lane=…` summary line and the `total`
    line verbatim, with the evidence directory. Only a numeric `exit=` is
    evidence. `exit=interrupted`, `deadline`, `cancelled`, `unlaunched` or
