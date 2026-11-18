@@ -12,17 +12,18 @@ test.each(["deadline", "cancelled", "parent-exit"])("capture reaps descendants h
   const root = temporaryDirectory();
   const pidFile = join(root, "child.pid");
   const controller = new AbortController();
-  const pending = captureProcess(["sh", "-c", 'sleep 30 & printf "%s" "$!" > "$1"; if test "$2" != parent-exit; then wait; fi', "fixture", pidFile, kind], {
-    env: UNSCOPED_ENVIRONMENT, timeoutMs: kind === "deadline" ? 250 : 2_000, signal: controller.signal,
+  // The pid file appears whole, by rename, so a reader never sees it empty,
+  // and the deadline falls after it exists, however loaded the machine is.
+  const pending = captureProcess(["sh", "-c", 'sleep 30 & printf "%s" "$!" > "$1.tmp" && mv "$1.tmp" "$1"; if test "$2" != parent-exit; then wait; fi', "fixture", pidFile, kind], {
+    env: UNSCOPED_ENVIRONMENT, timeoutMs: kind === "deadline" ? 1_500 : 5_000, signal: controller.signal,
   });
-  if (kind === "cancelled") {
-    await waitFor(() => existsSync(pidFile));
-    controller.abort();
-  }
+  await waitFor(() => existsSync(pidFile));
+  if (kind === "cancelled") controller.abort();
   const result = await pending;
   expect(result.code === 0).toBe(kind === "parent-exit");
   if (kind !== "parent-exit") expect(result.stderr).toContain(`stopped by ${kind}`);
   const pid = Number(readFileSync(pidFile, "utf8"));
+  expect(pid).toBeGreaterThan(1);
   await waitFor(() => !running(pid));
   expect(running(pid)).toBeFalse();
 });
