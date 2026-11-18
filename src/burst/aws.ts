@@ -168,6 +168,7 @@ export class AwsSpot implements CloudProvider {
       if (state === "available") {
         const [snapshot] = await this.#describeImages(["--image-ids", id], run.signal);
         if (!snapshot) throw new OrlyError(`image ${id} is not visible after it became available`);
+        run.write(done(`saved image ${id}`));
         return snapshot;
       }
       if (FAILED_IMAGE_STATES.has(state)) throw new OrlyError(`image ${id} is ${state}: ${reason.join(" ").trim() || "AWS gave no reason"}`);

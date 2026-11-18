@@ -7,7 +7,7 @@ E2E Networks lanes launch, capture and tear down against the real TIR API, and e
 - **E2E launch** — Key labels fit TIR's 50-character limit, security groups carry the outbound rule TIR requires, and a VM reporting `ready` counts as booted. A VM reporting `failed` ends the lane at its first poll.
 - **E2E image** — The default base image is `Debian 13`; `ORLY_BURST_E2E_IMAGE` still overrides it, and a snapshot capture starts from the same image. Every job remounts a noexec `/tmp` as exec, so installers such as rustup run on it.
 - **E2E teardown** — Removal waits for TIR to report the VM gone before deleting its key, then deletes the security group through the path TIR accepts. Nothing is left on the account after a run.
-- **Progress** — Lines read `⏳ … ` while a step runs, `🟢` when it is done and `🔴` when it failed or needs deleting by hand. Uploads name their size and duration. The `lane=` and `total` lines stay unmarked.
+- **Progress** — Lines read `⏳ … ` while a step runs, `🟢` when it is done and `🔴` when it failed or needs deleting by hand. Uploads name their size and duration, and a capture reports the saved snapshot before its machine is deleted. A snapshot run no longer reports missing lane results. The `lane=` and `total` lines stay unmarked.
 - **Upgrade** — `bunx --bun @agentsfleet/orly@0.60.0 update`. No setting changes.
 
 ## 0.50.0 (2026-11-17)

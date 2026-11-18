@@ -123,9 +123,10 @@ function megabytes(bytes: number): string {
   return (bytes / 1_000_000).toFixed(1);
 }
 
+// A snapshot's warm-up produces no lane results, so only lanes collect.
 async function collect(run: BurstRun, job: Job, machine: Machine, user: string): Promise<void> {
   const paths = run.config.burst?.artifacts ?? [];
-  if (paths.length === 0) return;
+  if (paths.length === 0 || job.kind === "warm") return;
   const archive = join(job.evidence, "results.tar.gz");
   const fetched = await streamProcess(sshArgs(run, machine, user, asRoot(user, "bash -s")), {
     env: run.settings.env, stdin: new Blob([resultsScript(paths)]), stdoutFile: archive,

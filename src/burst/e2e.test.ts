@@ -315,6 +315,9 @@ describe("e2e snapshots on TIR", () => {
     expect(order.indexOf("POST /notebooks/5001/snapshots/")).toBeLessThan(order.lastIndexOf("DELETE /notebooks/5001/"));
     expect(String(fields(run.api.callsTo("POST", /\/snapshots\/$/)[0]?.body).name)).toMatch(SNAPSHOT_NAME);
     expect(run.api.vms.size).toBe(0);
+    const text = run.output.text();
+    expect(text.indexOf("orly burst: 🟢 saved snapshot 9000\n")).toBeLessThan(text.indexOf("deleting e2e machine 5001"));
+    expect(text).not.toContain("none of the declared results");
     expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=e2e id=9000 name=orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8} state=ready size=100\\.0GB storage≈₹200/month \\+ GST`));
   });
 

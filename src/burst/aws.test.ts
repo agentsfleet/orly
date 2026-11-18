@@ -198,6 +198,8 @@ describe("aws-spot snapshots", () => {
     const image = aws(run.state, "create-image")[0];
     expect(option(image, "--name")).toMatch(new RegExp(`^orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8}$`));
     expect(image).toContain(`ResourceType=image,Tags=[{Key=owner,Value=agent},{Key=orly-burst,Value=${REPOSITORY}}]`);
+    expect(run.output.text()).toMatch(/orly burst: 🟢 saved image ami-\d+\n/);
+    expect(run.output.text()).not.toContain("none of the declared results");
     expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=aws-spot id=ami-\\d+ name=orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8} state=ready size=80\\.0GB storage≈\\$4\\.00/month at most`));
   });
 

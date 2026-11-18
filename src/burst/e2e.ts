@@ -134,7 +134,10 @@ export class E2eNodes implements CloudProvider {
     run.write(ongoing(`saving ${name} as snapshot ${created.id}`));
     for (;;) {
       const saved = (await this.#api.snapshots(run.signal)).find((snapshot) => snapshot.id === created.id) ?? created;
-      if (saved.status === READY) return toSnapshot(saved);
+      if (saved.status === READY) {
+        run.write(done(`saved snapshot ${created.id}`));
+        return toSnapshot(saved);
+      }
       if (FAILED.has(saved.status)) throw new OrlyError(`snapshot ${name} is ${saved.status}`);
       if (run.signal.aborted || Date.now() >= job.deadline) return toSnapshot(saved);
       await pause(this.#settings.pollMs, run.signal);
