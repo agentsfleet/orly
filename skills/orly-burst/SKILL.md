@@ -29,11 +29,11 @@ costs are in orly's `docs/BURST.md`.
 2. **Pick the provider.** Use `aws-spot` or `e2e` where outbound SSH on port
    22 works, and the repository's burst workflow from an HTTP-only session.
    Inside a CI job, `--provider here` runs the lane on the runner itself.
-3. **Warm once.** Set the image and region first: a snapshot serves only the
-   region and OS it was captured in, so `ORLY_BURST_E2E_IMAGE` and
-   `ORLY_BURST_E2E_LOCATION` match the repository's setup before the first
-   capture. The first run of a new provider path is one snapshot capture, not
-   a lane: tests against the fake API are not evidence about the real one.
+3. **Warm once.** A snapshot serves only the region and OS it was captured in.
+   Set `ORLY_BURST_E2E_IMAGE` and `ORLY_BURST_E2E_LOCATION` before the first
+   capture. Prove a new provider path with one snapshot capture first, since
+   the fake API proves nothing about the real one.
+
    A repository with no snapshot starts every lane cold from a
    base image. Run `orly burst snapshot --provider <P>` after setup changes,
    and `orly burst snapshot --prune --provider <P>` to keep the newest two.
