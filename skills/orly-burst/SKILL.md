@@ -30,12 +30,12 @@ costs are in orly's `docs/BURST.md`.
    22 works, and the repository's burst workflow from an HTTP-only session.
    Inside a CI job, `--provider here` runs the lane on the runner itself.
 3. **Warm once.** A snapshot serves only the region and OS it was captured in.
-   Set `ORLY_BURST_E2E_IMAGE` and `ORLY_BURST_E2E_LOCATION` before the first
-   capture. Prove a new provider path with one snapshot capture first, since
-   the fake API proves nothing about the real one.
+   Set `ORLY_BURST_E2E_LOCATION` for every run. A set `ORLY_BURST_E2E_IMAGE`
+   skips snapshots, so leave it unset unless a lane must not use one.
 
-   A repository with no snapshot starts every lane cold from a
-   base image. Run `orly burst snapshot --provider <P>` after setup changes,
+   Prove a new provider path with one snapshot capture first, since the fake
+   API proves nothing about the real one. Without a snapshot, every lane
+   starts cold from a base image. Run `orly burst snapshot --provider <P>` after setup changes,
    and `orly burst snapshot --prune --provider <P>` to keep the newest two.
 4. **Run.** Run `orly burst <lane>... --provider <P>`, with `--ref <branch>`
    for a ref other than the current branch. Lanes run in parallel, one machine
