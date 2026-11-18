@@ -62,7 +62,6 @@ export interface CloudProvider {
   cost(machine: Machine): string;
   storage(snapshot: Snapshot): string;
   baseImage(): Image;
-  override(signal?: AbortSignal): Promise<Image | undefined>;
   snapshots(scope: SnapshotScope): Promise<Snapshot[]>;
   // Registers whatever the run's machines share, such as the public key.
   prepare(run: BurstRun): Promise<void>;

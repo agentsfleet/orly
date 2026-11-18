@@ -18,7 +18,8 @@ type Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lost
 const state = process.env.FAKE_AWS_STATE ?? "";
 const args = Bun.argv.slice(2);
 const rest = args[0] === "--region" ? args.slice(2) : args;
-appendFileSync(join(state, "calls.jsonl"), `${JSON.stringify(["aws", ...rest])}\n`);
+// The region is recorded last, so a call's verb stays at index 2.
+appendFileSync(join(state, "calls.jsonl"), `${JSON.stringify(["aws", ...rest, ...(rest === args ? [] : ["--region", args[1] ?? ""])])}\n`);
 const scenario: Scenario = existsSync(join(state, "scenario.json")) ? JSON.parse(readFileSync(join(state, "scenario.json"), "utf8")) : {};
 process.exit(dispatch(rest));
 

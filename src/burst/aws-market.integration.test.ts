@@ -100,7 +100,7 @@ describe("aws-spot over Systems Manager", () => {
     writeFileSync(join(run.bin, "session-manager-plugin"), "#!/bin/sh\nexit 127\n");
     chmodSync(join(run.bin, "session-manager-plugin"), 0o755);
 
-    await expect(burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).rejects.toThrow("ORLY_BURST_AWS_ACCESS=ssm needs AWS's session-manager-plugin on this machine (docs/BURST.md)");
+    await expect(burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).rejects.toThrow("ORLY_BURST_AWS_ACCESS=ssm needs AWS's session-manager-plugin on this machine (https://github.com/agentsfleet/orly/blob/main/docs/BURST.md)");
     expect(aws(run.state, "import-key-pair")).toHaveLength(0);
     expect(aws(run.state, "run-instances")).toHaveLength(0);
   });
@@ -108,7 +108,7 @@ describe("aws-spot over Systems Manager", () => {
   test("ssm without an instance profile names the variable before anything is rented", async () => {
     const run = await awsRunWith({ ORLY_BURST_AWS_ACCESS: "ssm" });
 
-    await expect(burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).rejects.toThrow("set ORLY_BURST_AWS_INSTANCE_PROFILE for this provider (see docs/BURST.md)");
+    await expect(burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).rejects.toThrow("set ORLY_BURST_AWS_INSTANCE_PROFILE for this provider (see https://github.com/agentsfleet/orly/blob/main/docs/BURST.md)");
     expect(aws(run.state, "import-key-pair")).toHaveLength(0);
   });
 });

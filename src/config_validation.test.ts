@@ -23,6 +23,8 @@ for (const [field, value] of [
   ["burst", { secrets: { API_TOKEN: "Vault/item/field" } }], ["burst", { secrets: { "1API": "op://v/i/f" } }],
   ["burst", { secrets: { OP_SERVICE_ACCOUNT_TOKEN: "op://v/i/f" } }], ["burst", { secrets: { API_TOKEN: "op://v/i/f\nx" } }],
   ["burst", { artifacts: ["../outside"] }], ["burst", { artifacts: ["/abs/path"] }], ["burst", { artifacts: [".git/config"] }],
+  ["burst", { e2e: { location: "Mumbai" } }], ["burst", { e2e: { region: "Chennai" } }], ["burst", { aws: { instance_types: [] } }],
+  ["burst", { aws: { image: "ubuntu" } }], ["burst", { aws: { region: "Mumbai" } }],
   ["burst", { lanes: {} }], ["burst", { directories: ["TOOLBOX_DIR", "TOOLBOX_DIR"] }], ["burst", { directories: ["1DIR"] }],
 ] as Array<[string, unknown]>) {
   test(`both configuration readers reject invalid ${field} value ${JSON.stringify(value)}`, async () => {

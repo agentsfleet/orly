@@ -5,12 +5,15 @@
 E2E Networks lanes launch, capture and tear down against the real TIR API, and every provider marks each step as under way, done or failed.
 
 - **E2E launch** — Key labels fit TIR's 50-character limit, security groups carry the outbound rule TIR requires, and a VM reporting `ready` counts as booted. A VM reporting `failed` ends the lane at its first poll.
-- **E2E image** — The default base image is `Debian 13`; `ORLY_BURST_E2E_IMAGE` still overrides it, and a snapshot capture starts from the same image. Every job remounts a noexec `/tmp` as exec, so installers such as rustup run on it.
+- **E2E image** — The default base image is `Debian 13`, and a snapshot capture starts from the same image. Every job remounts a noexec `/tmp` as exec, so installers such as rustup run on it.
 - **E2E teardown** — Removal waits for TIR to report the VM gone before deleting its key, then deletes the security group through the path TIR accepts. Nothing is left on the account after a run.
 - **Progress** — Lines read `⏳ … ` while a step runs, `🟢` when it is done and `🔴` when it failed or needs deleting by hand. Uploads name their size and duration, and a capture reports the saved snapshot before its machine is deleted. A snapshot run no longer reports missing lane results. The `lane=` and `total` lines stay unmarked.
 - **Waits** — A run says when it waits for a machine to boot or answer SSH, and each wait ends after 10 minutes with the cloud's or ssh's own error. A caller whose address changed since launch ends the lane at once, naming both addresses. Closing the terminal cancels the run and deletes its machines, like Ctrl-C.
 - **Run files** — A finished run deletes its bundle, directory archives and key, and keeps its evidence.
-- **Upgrade** — `bunx --bun @agentsfleet/orly@0.60.0 update`. No setting changes.
+- **Placement** — Region, plan, instance types, image and login user move from variables to `burst.e2e` and `burst.aws` in `.orly/orly.json`, read from the ref a run ships. A moved variable that is still set is refused, naming its key.
+- **Image** — The configured image is the base that snapshots warm from and cold lanes boot. It never replaces the newest snapshot; `--no-snapshot` does.
+- **Docs** — `docs/BURST.md` is shorter, and errors and the skill link to it on GitHub, since repositories without the governance pack lack a copy.
+- **Upgrade** — `bunx --bun @agentsfleet/orly@0.60.0 update`, then move any `ORLY_BURST_REGION`, `ORLY_BURST_INSTANCE_TYPES`, `ORLY_BURST_*_IMAGE`, `ORLY_BURST_*_USER`, `ORLY_BURST_E2E_LOCATION` or `ORLY_BURST_E2E_PLAN` value into `burst.aws` or `burst.e2e`.
 
 ## 0.50.0 (2026-11-17)
 

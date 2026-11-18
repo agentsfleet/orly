@@ -25,6 +25,25 @@ const OP_REFERENCE = /^op:\/\/[^/\u0000-\u001f]+\/[^/\u0000-\u001f]+\/[^\u0000-\
 // The token `op` itself reads, which no declared secret may overwrite.
 const OP_TOKEN = "OP_SERVICE_ACCOUNT_TOKEN";
 const invocations = z.array(z.array(nonempty).min(1));
+const LOGIN_USER = /^[a-z_][a-z0-9_-]*$/;
+export const E2E_LOCATIONS = ["Delhi", "Chennai"] as const;
+// Where each provider's machines run and what they boot. It belongs to the
+// repository, committed beside the lanes and snapshots it shapes, so no shell
+// variable can move a lane to another region or OS unseen.
+const e2ePlacement = z.object({
+  location: z.enum(E2E_LOCATIONS).optional(),
+  plan: z.string().regex(/^[A-Za-z0-9.-]+$/).optional(),
+  // An OS image as `<name> <version>`, such as `Debian 13`.
+  image: z.string().regex(/^[A-Za-z0-9._-]+(?: [A-Za-z0-9._-]+)?$/).optional(),
+  user: z.string().regex(LOGIN_USER).optional(),
+}).strict();
+const awsPlacement = z.object({
+  region: z.string().regex(/^[a-z]{2}(?:-[a-z]+)+-\d$/).optional(),
+  // x86 types, tried in order until one has capacity.
+  instance_types: z.array(z.string().regex(/^[a-z0-9-]+\.[a-z0-9]+$/)).min(1).optional(),
+  image: z.string().regex(/^(?:ami-[0-9a-f]{8,17}|resolve:ssm:\/[\w./-]+)$/).optional(),
+  user: z.string().regex(LOGIN_USER).optional(),
+}).strict();
 export const burstSchema = z.object({
   setup: invocations.optional(),
   warm: invocations.optional(),
@@ -33,6 +52,8 @@ export const burstSchema = z.object({
   // Variables that name a directory on the caller, copied to the machine for
   // the lane, such as a signed toolbox fetched just before the run.
   directories: z.array(z.string().regex(ENVIRONMENT_NAME)).refine((names) => new Set(names).size === names.length, "must not repeat a name").optional(),
+  e2e: e2ePlacement.optional(),
+  aws: awsPlacement.optional(),
 }).strict();
 export type BurstConfig = z.infer<typeof burstSchema>;
 export const reusePoliciesSchema = z.record(nonempty, z.object({

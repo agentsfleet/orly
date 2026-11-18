@@ -58,7 +58,7 @@ describe("orly burst arguments", () => {
 
 describe("burst settings", () => {
   test("defaults hold until a variable is set, and a blank one counts as unset", () => {
-    const settings = burstSettings({ ORLY_BURST_REGION: "", ORLY_BURST_E2E_USER: "" });
+    const settings = burstSettings({ ORLY_BURST_DEADLINE_MINUTES: "", ORLY_BURST_E2E_LOCATION: "" });
 
     expect(settings.deadlineMs).toBe(120 * 60_000);
     expect(settings.pollMs).toBe(30_000);
@@ -72,8 +72,7 @@ describe("burst settings", () => {
 
   test.each([
     ["ORLY_BURST_DEADLINE_MINUTES", "-5"], ["ORLY_BURST_DEADLINE_MINUTES", "2000"], ["ORLY_BURST_SNAPSHOT_KEEP", "1.5"],
-    ["ORLY_BURST_E2E_LOCATION", "Mumbai"], ["ORLY_BURST_INSTANCE_TYPES", "c7g 4xlarge"], ["E2E_PROJECT_ID", "proj-secret-42"],
-    ["ORLY_BURST_AWS_IMAGE", "ubuntu"], ["ORLY_BURST_AWS_USER", "Root User"], ["ORLY_BURST_MARKET", "reserved"],
+    ["E2E_PROJECT_ID", "proj-secret-42"], ["ORLY_BURST_MARKET", "reserved"],
     ["ORLY_BURST_AWS_ACCESS", "telnet"], ["ORLY_BURST_AWS_INSTANCE_PROFILE", "role with spaces"],
   ])("%s=%s is refused by name, never echoing the value", (name, value) => {
     expect(() => burstSettings({ [name]: value })).toThrow(name);
@@ -82,6 +81,25 @@ describe("burst settings", () => {
     } catch (error) {
       expect(String(error)).not.toContain(value);
     }
+  });
+});
+
+describe("burst placement", () => {
+  test("the committed burst.e2e and burst.aws place the machines", () => {
+    const settings = burstSettings({}, {
+      e2e: { location: "Chennai", plan: "C3.16GB", image: "Debian 12" },
+      aws: { region: "ap-south-1", instance_types: ["c7i.4xlarge"], image: "ami-0123456789abcdef0", user: "debian" },
+    });
+
+    expect(settings.e2e).toMatchObject({ location: "Chennai", plan: "C3.16GB", image: "Debian 12", user: "root" });
+    expect(settings.aws).toMatchObject({ region: "ap-south-1", types: ["c7i.4xlarge"], image: "ami-0123456789abcdef0", user: "debian" });
+  });
+
+  test.each([
+    ["ORLY_BURST_E2E_LOCATION", "burst.e2e.location"], ["ORLY_BURST_E2E_IMAGE", "burst.e2e.image"],
+    ["ORLY_BURST_REGION", "burst.aws.region"], ["ORLY_BURST_INSTANCE_TYPES", "burst.aws.instance_types"],
+  ])("%s is refused, naming %s", (name, key) => {
+    expect(() => burstSettings({ [name]: "Chennai" })).toThrow(`orly burst no longer reads ${name}; set ${key} in .orly/orly.json`);
   });
 });
 

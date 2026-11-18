@@ -318,7 +318,7 @@ describe("e2e lanes on TIR virtual machines", () => {
   });
 
   test("an unknown plan is refused with the plans TIR offers", async () => {
-    const run = e2eRun({ ORLY_BURST_E2E_PLAN: "C3.999GB" });
+    const run = e2eRun({}, { e2e: { plan: "C3.999GB" } });
 
     expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
     expect(run.output.text()).toContain("TIR offers no hourly C3.999GB plan in Delhi; it offers: C3.32GB, C3.16GB");
@@ -369,20 +369,23 @@ describe("e2e snapshots on TIR", () => {
     expect(bodies[1]).not.toHaveProperty("snapshot_id");
   });
 
-  test("ORLY_BURST_E2E_IMAGE picks a snapshot by name, or an OS image by name and version", async () => {
-    const bySnapshot = e2eRun({ ORLY_BURST_E2E_IMAGE: "hand-made" });
-    bySnapshot.api.snapshot("hand-made", 7100);
-    await burst(ONE_LANE, bySnapshot.dependencies);
-    expect(created(bySnapshot.api)[0]).toMatchObject({ snapshot_id: 7100 });
+  test("burst.e2e.image is the base image: a lane still starts from the newest snapshot, a capture warms from it", async () => {
+    const run = e2eRun({}, { e2e: { image: "Ubuntu 22.04" } });
+    run.api.snapshot(`orly-burst-${REPOSITORY}-20261115000000000-1234abcd`, 7002);
 
-    const byImage = e2eRun({ ORLY_BURST_E2E_IMAGE: "Ubuntu 22.04" });
-    await burst(ONE_LANE, byImage.dependencies);
-    expect(created(byImage.api)[0]).toMatchObject({ image_version_id: 107 });
-    expect(created(byImage.api)[0]).not.toHaveProperty("snapshot_id");
+    await burst(ONE_LANE, run.dependencies);
+    await burst([...ONE_LANE, "--no-snapshot"], run.dependencies);
+    await burst(["snapshot", "--provider", "e2e"], run.dependencies);
+
+    const [lane, cold, capture] = created(run.api);
+    expect(lane).toMatchObject({ snapshot_id: 7002 });
+    expect(cold).toMatchObject({ image_version_id: 107 });
+    expect(cold).not.toHaveProperty("snapshot_id");
+    expect(capture).toMatchObject({ image_version_id: 107 });
   });
 
   test("an image version TIR does not list is refused with the versions it has, before any VM", async () => {
-    const run = e2eRun({ ORLY_BURST_E2E_IMAGE: "Ubuntu 26.04" });
+    const run = e2eRun({}, { e2e: { image: "Ubuntu 26.04" } });
 
     expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
     expect(run.output.text()).toContain("TIR has no image Ubuntu 26.04; it has: Ubuntu 24.04-cuda13.0, Ubuntu 22.04, Ubuntu 24.04, Ubuntu 22.04");

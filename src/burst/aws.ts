@@ -22,7 +22,7 @@ const CLEANUP_WAIT_MS = 15 * 60_000;
 const FAILED_IMAGE_STATES = new Set(["failed", "error", "invalid", "deregistered", "disabled"]);
 const BASE_IMAGE = Object.freeze({ id: "resolve:ssm:/aws/service/debian/release/13/latest/amd64", name: "Debian 13 amd64", snapshot: false });
 // A type with no Spot capacity, or none at this price, falls through to the
-// next type in ORLY_BURST_INSTANCE_TYPES; any other refusal stops the lane.
+// next type in burst.aws.instance_types; any other refusal stops the lane.
 const CAPACITY_ERRORS = /InsufficientInstanceCapacity|SpotMaxPriceTooLow|MaxSpotInstanceCountExceeded|Unsupported/;
 // "An error occurred (InsufficientInstanceCapacity) when calling …"
 const AWS_ERROR_CODE = /\(([A-Za-z.]+)\)/;
@@ -78,13 +78,10 @@ export class AwsSpot implements CloudProvider {
     return snapshot.sizeGb === undefined ? "unknown" : `$${(snapshot.sizeGb * SNAPSHOT_DOLLARS_PER_GB_MONTH).toFixed(2)}/month at most`;
   }
 
+  // What a snapshot warms from and a lane with no snapshot boots.
   baseImage(): Image {
-    return BASE_IMAGE;
-  }
-
-  async override(): Promise<Image | undefined> {
     const image = this.#settings.aws.image;
-    return image ? { id: image, name: image, snapshot: image.startsWith("ami-") } : undefined;
+    return image ? { id: image, name: image, snapshot: false } : BASE_IMAGE;
   }
 
   async snapshots(scope: SnapshotScope): Promise<Snapshot[]> {
@@ -128,7 +125,7 @@ export class AwsSpot implements CloudProvider {
         run.write(done(`lane=${job.name} ${id} (${type}${spot ? " spot" : " on-demand"}) started from ${job.image.name}`));
         return { id, label: type, address: undefined, market: spot ? "spot" : "on-demand", hourly: spot ? await this.#spotPrice(type, run.signal) : undefined };
       }
-      if (SPOT_ROLE_MISSING.test(launch.stderr)) throw new OrlyError(`this account has never launched a Spot instance: an administrator runs \`${SPOT_ROLE_COMMAND}\` once (docs/BURST.md)`);
+      if (SPOT_ROLE_MISSING.test(launch.stderr)) throw new OrlyError(`this account has never launched a Spot instance: an administrator runs \`${SPOT_ROLE_COMMAND}\` once (https://github.com/agentsfleet/orly/blob/main/docs/BURST.md)`);
       if (!CAPACITY_ERRORS.test(launch.stderr)) throw new OrlyError(`run-instances refused: ${launch.stderr.trim()}`);
       // AWS's own words say which limit it was: capacity, a Spot quota or an
       // unsupported type are fixed in different places.
@@ -244,7 +241,7 @@ export class AwsSpot implements CloudProvider {
   async #requireSsm(run: BurstRun): Promise<void> {
     required(this.#settings.aws.instanceProfile, "ORLY_BURST_AWS_INSTANCE_PROFILE");
     const plugin = await captureProcess([SSM_PLUGIN, "--version"], { env: this.#settings.env, timeoutMs: PLUGIN_TIMEOUT_MS, signal: run.signal }).catch(() => undefined);
-    if (plugin?.code !== 0) throw new OrlyError(`ORLY_BURST_AWS_ACCESS=ssm needs AWS's ${SSM_PLUGIN} on this machine (docs/BURST.md)`);
+    if (plugin?.code !== 0) throw new OrlyError(`ORLY_BURST_AWS_ACCESS=ssm needs AWS's ${SSM_PLUGIN} on this machine (https://github.com/agentsfleet/orly/blob/main/docs/BURST.md)`);
   }
 
   // ssh hands the instance identifier as %h and the port as %p; the profile

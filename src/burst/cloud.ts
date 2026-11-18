@@ -82,11 +82,9 @@ async function repositorySnapshots(provider: CloudProvider, scope: SnapshotScope
   return (await provider.snapshots(scope)).filter((snapshot) => name.test(snapshot.name)).sort((left, right) => left.name < right.name ? 1 : left.name > right.name ? -1 : 0);
 }
 
-// An explicit image wins, then the newest snapshot unless --no-snapshot, and
-// the base image when the repository has none yet.
+// The newest snapshot unless --no-snapshot, and the base image when the
+// repository has none yet.
 async function chooseImage(provider: CloudProvider, run: BurstRun, useSnapshot: boolean): Promise<Image> {
-  const override = await provider.override(run.signal);
-  if (override) return override;
   const newest = useSnapshot ? (await repositorySnapshots(provider, run))[0] : undefined;
   return newest ? { id: newest.launchId, name: newest.name, snapshot: true } : provider.baseImage();
 }

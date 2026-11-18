@@ -66,7 +66,7 @@ Burst (paid machines, run only when asked; the gates never run burst.* commands)
                                     snapshot; here only warms this machine
   orly burst snapshot --prune --provider ${CLOUDS}
                                     keep the newest ORLY_BURST_SNAPSHOT_KEEP (2) snapshots
-  Setup and costs: docs/BURST.md.
+  Setup and costs: https://github.com/agentsfleet/orly/blob/main/docs/BURST.md
 
 Ruleset authoring (an orly checkout only — refused from an installed package):
   orly verify                       the standards catalogue keeps its rules,

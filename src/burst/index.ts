@@ -51,9 +51,8 @@ export async function burst(args: string[], dependencies: BurstDependencies): Pr
     return USAGE_EXIT;
   }
   if (!request.provider || (!request.snapshot && request.lanes.length === 0)) return listLanes(dependencies);
-  const settings = burstSettings(dependencies.env);
-  if (request.provider === "here") return here(request, dependencies, settings);
-  return cloud(request, request.provider, dependencies, settings);
+  if (request.provider === "here") return here(request, dependencies, burstSettings(dependencies.env));
+  return cloud(request, request.provider, dependencies);
 }
 
 function parseArguments(args: string[]): Request {
@@ -114,13 +113,18 @@ async function here(request: Request, dependencies: BurstDependencies, settings:
   return report(await hereLanes(context, request.lanes), started, dependencies.write);
 }
 
-async function cloud(request: Request, name: CloudProviderName, dependencies: BurstDependencies, settings: BurstSettings): Promise<number> {
+// The ref's committed configuration places the machines, so it is read before
+// the provider exists, for pruning too.
+async function cloud(request: Request, name: CloudProviderName, dependencies: BurstDependencies): Promise<number> {
+  const ref = await resolveRef(dependencies.root, request.ref);
+  const config = await configAt(dependencies.root, ref);
+  const settings = burstSettings(dependencies.env, config.burst);
   const provider = new CLOUD_PROVIDERS[name](settings, dependencies.fetch);
   if (request.prune) {
     await cloudPrune(provider, { repo: repositoryIdentity(dependencies.root), settings, write: dependencies.write, signal: dependencies.signal });
     return 0;
   }
-  const run = await stage(request, dependencies, settings);
+  const run = await stage(request, dependencies, settings, ref, config);
   if (request.snapshot) {
     const snapshot = await cloudSnapshot(provider, run);
     if (!snapshot) return 1;
@@ -135,12 +139,10 @@ async function cloud(request: Request, name: CloudProviderName, dependencies: Bu
 }
 
 // Everything a cloud run reads before a machine exists.
-async function stage(request: Request, dependencies: BurstDependencies, settings: BurstSettings): Promise<BurstRun> {
+async function stage(request: Request, dependencies: BurstDependencies, settings: BurstSettings, ref: string, config: RepoConfig): Promise<BurstRun> {
   const { root } = dependencies;
   const repo = repositoryIdentity(root);
   const io = { write: dependencies.write, signal: dependencies.signal };
-  const ref = await resolveRef(root, request.ref);
-  const config = await configAt(root, ref);
   // Checked before the key pair exists, so a typo leaves no key behind.
   requireDeclared(config, request.lanes);
   const runId = newRunId(ref, new Date());

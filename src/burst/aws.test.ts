@@ -118,7 +118,7 @@ describe("aws-spot lanes", () => {
     const code = await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
 
     expect(code).toBe(1);
-    expect(run.output.text()).toContain("this account has never launched a Spot instance: an administrator runs `aws iam create-service-linked-role --aws-service-name spot.amazonaws.com` once (docs/BURST.md)");
+    expect(run.output.text()).toContain("this account has never launched a Spot instance: an administrator runs `aws iam create-service-linked-role --aws-service-name spot.amazonaws.com` once (https://github.com/agentsfleet/orly/blob/main/docs/BURST.md)");
     expect(aws(run.state, "run-instances")).toHaveLength(1);
   });
 
@@ -238,6 +238,20 @@ describe("aws-spot snapshots", () => {
     expect(output.text()).toContain("aws-spot is still saving");
     expect(aws(state, "deregister-image")).toHaveLength(0);
     expect(aws(state, "terminate-instances")).toHaveLength(1);
+  });
+
+  test("burst.aws places the instances and names the base image, which never replaces the newest snapshot", async () => {
+    const image = "ami-0123456789abcdef0";
+    const run = await awsRun({}, { aws: { region: "ap-south-1", instance_types: ["c7i.4xlarge"], image } });
+    await seedImages(run.state, [`orly-burst-${REPOSITORY}-20261115000000000-1234abcd`]);
+
+    await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
+    await burst(["acceptance", "--provider", "aws-spot", "--no-snapshot"], run.dependencies);
+
+    const launches = aws(run.state, "run-instances");
+    expect(launches.map((call) => option(call, "--image-id"))).toEqual(["ami-00000000000000001", image]);
+    expect(launches.map((call) => option(call, "--instance-type"))).toEqual(["c7i.4xlarge", "c7i.4xlarge"]);
+    expect(new Set(aws(run.state).map((call) => option(call, "--region")))).toEqual(new Set(["ap-south-1"]));
   });
 
   test("lanes start from the newest snapshot, or the base image with --no-snapshot", async () => {

@@ -60,20 +60,10 @@ export class E2eNodes implements CloudProvider {
     return `₹${RUPEES_PER_SNAPSHOT_MONTH}/month + GST`;
   }
 
-  // A snapshot warms from ORLY_BURST_E2E_IMAGE when it is set, so the
-  // snapshot's OS is the one its lanes were chosen for.
+  // What a snapshot warms from and a lane with no snapshot boots.
   baseImage(): Image {
     const name = this.#settings.e2e.image ?? DEFAULT_IMAGE;
     return { id: name, name, snapshot: false };
-  }
-
-  // ORLY_BURST_E2E_IMAGE names a ready snapshot when one has that name, and an
-  // OS image, such as `Ubuntu 22.04`, otherwise.
-  async override(signal?: AbortSignal): Promise<Image | undefined> {
-    const name = this.#settings.e2e.image;
-    if (!name) return undefined;
-    const saved = (await this.#api.snapshots(signal)).find((snapshot) => snapshot.name === name && snapshot.status === READY);
-    return saved ? { id: saved.id, name, snapshot: true } : { id: name, name, snapshot: false };
   }
 
   async snapshots(scope: SnapshotScope): Promise<Snapshot[]> {
