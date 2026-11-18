@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.60.1 (2026-11-18)
+
+Agents draw before they ask.
+
+- **Drawing** — Every decision put to the owner, and any flow or comparison, opens with one ASCII picture. Saying "draw" asks for one.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.60.1 update` to take the new working notes.
+
 ## 0.60.0 (2026-11-18)
 
 Burst lanes run on E2E Networks for real, take their placement from `.orly/orly.json`, and end each step deterministically.

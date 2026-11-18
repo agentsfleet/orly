@@ -2,7 +2,7 @@
 type: explanation
 audience: contributor
 verified: 2026-11-17
-product_version: 0.60.0
+product_version: 0.60.1
 executable: false
 ---
 
