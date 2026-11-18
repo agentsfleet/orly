@@ -1,4 +1,3 @@
-import { randomUUID } from "node:crypto";
 import { lstatSync, mkdirSync, readdirSync, readFileSync, rmdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { assertWritableInside, hasErrorCode, OrlyError } from "../model";
@@ -38,7 +37,7 @@ export function installationLock(root: string): () => void {
     recoverDeadOwner(root, path);
     mkdirSync(path, { mode: PRIVATE_DIRECTORY_MODE });
   }
-  const ownerPath = join(path, `${process.pid}.${randomUUID()}`);
+  const ownerPath = join(path, `${process.pid}.${crypto.randomUUID()}`);
   try { writeFileSync(ownerPath, String(process.pid), { flag: "wx", mode: PRIVATE_FILE_MODE }); }
   catch (error) {
     rmdirSync(path);

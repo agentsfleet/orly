@@ -12,7 +12,6 @@ const DEFAULT_IMAGE = "Debian 13";
 // is reported for deletion by hand.
 const CLEANUP_MS = 5 * 60_000;
 const NOT_FOUND = 404;
-const TOO_MANY = 429;
 const SERVER_ERROR = 500;
 // TIR's answer to a second delete of a VM it is already deleting.
 const ALREADY_DELETING = 400;
@@ -34,8 +33,7 @@ const RUPEES_PER_SNAPSHOT_MONTH = 200;
 // kernel, reached as root over SSH. TIR accepts only a public key already
 // saved in the account, so each run saves its key; each run also makes a
 // security group admitting SSH from the caller's address alone. Both go when
-// the run's VMs have. TIR answers 429, a 5xx or nothing while it is busy, so
-// every wait reads those as no answer yet.
+// the run's VMs have. The client retries TIR's busy answers (tir.ts).
 export class E2eNodes implements CloudProvider {
   readonly name = "e2e";
   readonly user: string;
@@ -51,7 +49,7 @@ export class E2eNodes implements CloudProvider {
   constructor(settings: BurstSettings, fetcher: Fetch) {
     this.#settings = settings;
     this.user = settings.e2e.user;
-    this.#api = new E2eApi(settings.e2e, fetcher);
+    this.#api = new E2eApi(settings, fetcher);
   }
 
   cost(): string {
@@ -103,8 +101,7 @@ export class E2eNodes implements CloudProvider {
 
   async ready(run: BurstRun, job: Job, machine: Machine): Promise<Machine> {
     const address = await until("a running VM with a public address", async () => {
-      const vm = await whenAnswered(() => this.#api.vm(machine.id, run.signal));
-      if (!vm) return undefined;
+      const vm = await this.#api.vm(machine.id, run.signal);
       this.#seen(run, machine.id, vm.status);
       if (FAILED.has(vm.status)) throw new OrlyError(`VM ${machine.id} failed to start: TIR reports ${vm.status}`);
       return BOOTED.has(vm.status) ? vm.address : undefined;
@@ -120,8 +117,7 @@ export class E2eNodes implements CloudProvider {
     run.write(ongoing(`stopping VM ${machine.id} to save it`));
     await this.#api.stopVm(machine.id, run.signal);
     await until("the VM to stop", async () => {
-      const vm = await whenAnswered(() => this.#api.vm(machine.id, run.signal));
-      if (!vm) return undefined;
+      const vm = await this.#api.vm(machine.id, run.signal);
       this.#seen(run, machine.id, vm.status);
       if (FAILED.has(vm.status)) throw new OrlyError(`VM ${machine.id} failed while stopping: TIR reports ${vm.status}`);
       return vm.status === "stopped" || undefined;
@@ -129,8 +125,7 @@ export class E2eNodes implements CloudProvider {
     const created = await this.#api.createSnapshot(machine.id, name, run.signal);
     run.write(ongoing(`saving ${name} as snapshot ${created.id}`));
     for (;;) {
-      const listed = await whenAnswered(() => this.#api.snapshots(run.signal));
-      const saved = listed?.find((snapshot) => snapshot.id === created.id) ?? created;
+      const saved = (await this.#api.snapshots(run.signal)).find((snapshot) => snapshot.id === created.id) ?? created;
       if (saved.status === READY) {
         run.write(done(`saved snapshot ${created.id}`));
         return toSnapshot(saved);
@@ -157,16 +152,17 @@ export class E2eNodes implements CloudProvider {
     run.write(BOOTED.has(status) || status === "stopped" ? done(`VM ${id} is ${status}`) : FAILED.has(status) ? failed(`VM ${id} is ${status}`) : ongoing(`VM ${id} is ${status}`));
   }
 
+  // A retried delete TIR already accepted answers 400 or 404; both mean the
+  // VM is going.
   async #deleteVm(id: string): Promise<void> {
+    await this.#api.deleteVm(id).catch((error: unknown) => {
+      if (!(error instanceof E2eRequestFailed && (error.status === ALREADY_DELETING || error.status === NOT_FOUND))) throw error;
+    });
     const timing = { deadline: Date.now() + CLEANUP_MS, signal: new AbortController().signal, pollMs: this.#settings.pollMs };
-    await until(`TIR to accept deleting VM ${id}`, () => whenAnswered(() => this.#api.deleteVm(id).then(() => true, (error: unknown) => {
-      if (error instanceof E2eRequestFailed && (error.status === ALREADY_DELETING || error.status === NOT_FOUND)) return true;
-      throw error;
-    })), timing);
-    await until(`VM ${id} to delete`, () => whenAnswered(() => this.#api.vm(id).then(() => undefined, (error: unknown) => {
+    await until(`VM ${id} to delete`, () => this.#api.vm(id).then(() => undefined, (error: unknown) => {
       if (error instanceof E2eRequestFailed && error.status === NOT_FOUND) return true;
       throw error;
-    })), timing);
+    }), timing);
   }
 
   async deleteSnapshot(snapshot: Snapshot, signal: AbortSignal): Promise<void> {
@@ -238,19 +234,6 @@ export class E2eNodes implements CloudProvider {
     return { versionId: snapshot?.versionId, snapshotId: id };
   }
 
-}
-
-// A TIR answer, or nothing while TIR is busy: 429, a 5xx, a timeout or a
-// dropped connection. A cancellation and any other refusal still throw.
-async function whenAnswered<T>(call: () => Promise<T>): Promise<T | undefined> {
-  try {
-    return await call();
-  } catch (error) {
-    if (error instanceof E2eRequestFailed && (error.status === TOO_MANY || error.status >= SERVER_ERROR)) return undefined;
-    if (error instanceof DOMException && error.name === "TimeoutError") return undefined;
-    if (error instanceof TypeError) return undefined;
-    throw error;
-  }
 }
 
 function toSnapshot(snapshot: VmSnapshot): Snapshot {

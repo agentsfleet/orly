@@ -3,7 +3,6 @@ import { done, failed, ongoing } from "./progress";
 import type { StagedDirectory } from "./ssh";
 import type { BurstRun, CloudProvider, Image, Job, LaneResult, Machine, Snapshot, SnapshotScope, Status } from "./types";
 
-import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -161,7 +160,7 @@ function newJob(run: BurstRun, kind: Job["kind"], name: string, image: Image): J
 // digest of the base image it warmed from, so a lane boots only a snapshot of
 // the image the repository names now.
 function snapshotName(repo: string, image: Image, now: Date): string {
-  return `orly-burst-${repo}-${now.toISOString().replace(/\D/g, "")}-${imageDigest(image)}${randomUUID().slice(0, SUFFIX_CHARS - IMAGE_DIGEST_CHARS)}`;
+  return `orly-burst-${repo}-${now.toISOString().replace(/\D/g, "")}-${imageDigest(image)}${crypto.randomUUID().slice(0, SUFFIX_CHARS - IMAGE_DIGEST_CHARS)}`;
 }
 
 function ofImage(snapshot: Snapshot, image: Image): boolean {

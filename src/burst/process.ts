@@ -1,6 +1,8 @@
 import type { BunFile } from "bun";
 import type { Environment } from "./settings";
 
+import pLimit from "p-limit";
+
 import { stopOwnedGroup } from "../command_process";
 import { OrlyError } from "../model";
 
@@ -136,12 +138,13 @@ export async function until<T>(what: string, probe: () => Promise<T | undefined>
 // nowhere else: never printed, never an argument, never a file. A failure
 // names the variable and op's complaint, which carries the reference only.
 export async function resolveSecrets(references: Record<string, string>, env: Environment): Promise<Environment> {
-  const reads = await mapBounded(Object.entries(references), OP_READS_AT_ONCE, async ([name, reference]) => {
+  const limit = pLimit(OP_READS_AT_ONCE);
+  const reads = await Promise.all(Object.entries(references).map(([name, reference]) => limit(async () => {
     const preset = env[name];
     if (preset) return { name, value: preset };
     const read = await captureProcess(["op", "read", "--no-newline", reference], { env, timeoutMs: OP_TIMEOUT_MS });
     return read.code === 0 ? { name, value: read.stdout } : { name, error: `could not read the secret for ${name}: ${read.stderr.trim().split("\n")[0] ?? ""}` };
-  });
+  })));
   // The first failure in declaration order, so the message does not depend on timing.
   const failed = reads.find((read) => "error" in read);
   if (failed && "error" in failed) throw new OrlyError(failed.error);
@@ -149,7 +152,7 @@ export async function resolveSecrets(references: Record<string, string>, env: En
 }
 
 // Reads a stream whole, refusing it past `limit` bytes with the caller's error.
-export async function readBounded(stream: ReadableStream<Uint8Array>, limit: number, tooLarge: () => Error): Promise<string> {
+async function readBounded(stream: ReadableStream<Uint8Array>, limit: number, tooLarge: () => Error): Promise<string> {
   const chunks: Uint8Array[] = [];
   let size = 0;
   for await (const chunk of stream) {
@@ -189,17 +192,6 @@ async function streamLines(stream: ReadableStream<Uint8Array>, write: (line: str
 }
 
 
-
-// Runs `work` over `items` with at most `limit` in flight, results in input order.
-async function mapBounded<T, R>(items: readonly T[], limit: number, work: (item: T) => Promise<R>): Promise<R[]> {
-  const results: R[] = [];
-  const queue = items.map((item, index) => [index, item] as const);
-  const worker = async () => {
-    for (let entry = queue.shift(); entry; entry = queue.shift()) results[entry[0]] = await work(entry[1]);
-  };
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
-  return results;
-}
 
 function outputTooLarge(): Error {
   return new OrlyError(`command output exceeded ${MAX_CAPTURE_BYTES} bytes`);

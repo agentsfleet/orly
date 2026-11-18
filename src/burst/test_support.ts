@@ -36,15 +36,13 @@ export function burstRepository(burst: Record<string, unknown> = {}, lanes: Reco
   return root;
 }
 
-// `aws` and `ssh` run the TypeScript fakes beside this file; `op` prints
-// SECRET_VALUE and records how it was called.
+// `ssh` runs the TypeScript fake beside this file; `op` prints SECRET_VALUE
+// and records how it was called.
 export function fakeBin(): { bin: string; state: string } {
   const bin = temporaryDirectory();
   const state = temporaryDirectory();
   const tools = {
-    aws: `exec bun ${join(ROOT, "src/burst/fake_aws.ts")} "$@"`,
     ssh: `exec bun ${join(ROOT, "src/burst/fake_ssh.ts")} "$@"`,
-    "session-manager-plugin": `echo 1.2.707.0`,
     op: `printf '%s\\n' "$*" >> "${join(state, "op-calls.txt")}"\n[ -n "\${FAKE_OP_FAIL:-}" ] && { echo "[ERROR] could not read secret" >&2; exit 1; }\nprintf '%s' "${SECRET_VALUE}"`,
   };
   for (const [name, body] of Object.entries(tools)) {
@@ -75,7 +73,7 @@ export function burstDependencies(root: string, env: Environment, fetcher: Burst
 export function burstEnvironment(bin: string, state: string, extra: Environment = {}): Environment {
   return {
     PATH: `${bin}:${process.env.PATH ?? ""}`, HOME: process.env.HOME, TMPDIR: process.env.TMPDIR,
-    ORLY_BURST_POLL_SECONDS: "0.01", ORLY_BURST_OUT: join(state, "out"), FAKE_AWS_STATE: state, FAKE_SSH_STATE: state, ...extra,
+    ORLY_BURST_POLL_SECONDS: "0.01", ORLY_BURST_OUT: join(state, "out"), FAKE_SSH_STATE: state, ...extra,
   };
 }
 

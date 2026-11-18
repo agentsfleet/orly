@@ -11,6 +11,7 @@ Burst lanes run on E2E Networks for real, take their placement from `.orly/orly.
 - **Outcomes** — A failed `apt`, checkout or `burst.setup` reports `exit=not_run`. An interrupted `ssh` reports `interrupted`, and a cancelled image save fails the capture.
 - **Waits** — Each wait says what it waits for, and a boot or SSH wait ends within 10 minutes. A caller whose address changed ends the lane at once, and a closed terminal cancels the run like Ctrl-C.
 - **Progress** — Lines read `⏳ …` while a step runs, `🟢` when done and `🔴` when it failed or needs a person. The `lane=` and `total` lines stay unmarked, and a finished run deletes its bundle and key.
+- **Packages** — EC2 calls go through the AWS SDK on Bun's `fetch`, with its retries, instead of parsing `aws` command-line output. TIR calls go through `ky`, which retries busy answers. The `aws` tool is no longer needed.
 - **Removed** — `--provider here`, `--keep`, `spot-then-on-demand`, Systems Manager access, `ORLY_BURST_SUBNET` and `ORLY_BURST_SNAPSHOT_KEEP`; nothing called them.
 - **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.60.0 update`, move placement variables into `burst.e2e` or `burst.aws`, then capture a new snapshot.
 

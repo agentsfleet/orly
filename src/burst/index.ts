@@ -2,7 +2,6 @@ import type { RepoConfig } from "../config";
 import type { BurstSettings, Environment } from "./settings";
 import type { BurstRun, Fetch, Io, LaneResult, ProviderName } from "./types";
 
-import { randomUUID } from "node:crypto";
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
@@ -179,7 +178,7 @@ async function configAt(root: string, ref: string): Promise<RepoConfig> {
 
 function newRunId(ref: string, now: Date): string {
   const stamp = now.toISOString().replaceAll(/[-:T]/g, "").slice(0, 14);
-  return `${slug(ref, REF_NAME_CHARS) || "ref"}-${stamp}-${randomUUID().slice(0, 4)}`;
+  return `${slug(ref, REF_NAME_CHARS) || "ref"}-${stamp}-${crypto.randomUUID().slice(0, 4)}`;
 }
 
 // Holds the run's private key, so only this user may read it.

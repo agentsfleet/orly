@@ -119,7 +119,7 @@ The launcher's policy creates and removes only resources tagged `owner=agent`:
 ]}
 ```
 
-The caller's `aws` tool supplies the credentials, from a profile or the `AWS_*` variables; a CI job gets them from its login step.
+orly calls EC2 through the AWS SDK, which reads the same credentials as the `aws` tool: a profile, `AWS_PROFILE` or the `AWS_*` variables. A CI job gets them from its login step, and the `aws` tool itself is not needed.
 Add a monthly AWS Budgets alert as well.
 
 ### One-time setup for E2E Networks

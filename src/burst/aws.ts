@@ -1,64 +1,67 @@
-import type { Captured } from "./process";
-import { done, failed, ongoing } from "./progress";
 import type { BurstSettings } from "./settings";
 import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot, SnapshotScope } from "./types";
 
-import { z } from "zod";
+import {
+  AuthorizeSecurityGroupIngressCommand, CreateImageCommand, CreateSecurityGroupCommand, DeleteKeyPairCommand, DeleteSecurityGroupCommand,
+  DeleteSnapshotCommand, DeregisterImageCommand, DescribeImagesCommand, DescribeInstancesCommand, DescribeSpotPriceHistoryCommand, EC2Client,
+  ImportKeyPairCommand, RunInstancesCommand, StopInstancesCommand, TerminateInstancesCommand,
+} from "@aws-sdk/client-ec2";
+import type { DescribeImagesCommandInput, ResourceType } from "@aws-sdk/client-ec2";
+import { FetchHttpHandler } from "@smithy/fetch-http-handler";
 
 import { messageOf, OrlyError } from "../model";
-import { captureProcess, machineDeadline, pause, until } from "./process";
+import { done, failed, ongoing } from "./progress";
+import { machineDeadline, pause, until } from "./process";
 import { IPV4 } from "./types";
 
-type Call = { allowFailure?: boolean; signal?: AbortSignal };
-
-// Bounds one `aws` call. Nothing orly runs waits inside the call: every wait
-// is a loop of short describe calls, so this bound never cuts a wait short.
-const AWS_TIMEOUT_MS = 10 * 60_000;
+// The SDK retries throttling, 5xx answers and dropped connections with
+// backoff; a call that still fails after this many attempts fails.
+const MAX_ATTEMPTS = 10;
+const REQUEST_TIMEOUT_MS = 60_000;
 const CLEANUP_WAIT_MS = 15 * 60_000;
-// Image states that will never become available; `pending` and `transient`
-// are progress.
-const FAILED_IMAGE_STATES = new Set(["failed", "error", "invalid", "deregistered", "disabled"]);
+const DISK_GB = 80;
 const BASE_IMAGE = Object.freeze({ id: "resolve:ssm:/aws/service/debian/release/13/latest/amd64", name: "Debian 13 amd64", snapshot: false });
 // The root device of Debian's AMIs, and so of every snapshot orly takes of one.
 const DEBIAN_ROOT_DEVICE = "/dev/xvda";
 // A type with no Spot capacity, or none at this price, falls through to the
 // next type in burst.aws.instance_types; any other refusal stops the lane.
-const CAPACITY_ERRORS = /InsufficientInstanceCapacity|SpotMaxPriceTooLow|MaxSpotInstanceCountExceeded|Unsupported/;
-// "An error occurred (InsufficientInstanceCapacity) when calling …"
-const AWS_ERROR_CODE = /\(([A-Za-z.]+)\)/;
+const CAPACITY_ERRORS = new Set(["InsufficientInstanceCapacity", "SpotMaxPriceTooLow", "MaxSpotInstanceCountExceeded", "Unsupported"]);
 // An account's first Spot launch needs the Spot service-linked role, which
 // the launcher may not create: that is an administrator's one-time step.
 const SPOT_ROLE_MISSING = /ServiceLinkedRoleCreationNotPermitted/;
 const SPOT_ROLE_COMMAND = "aws iam create-service-linked-role --aws-service-name spot.amazonaws.com";
-// Failures a poll waits out: throttling, a service hiccup, and an instance or
-// image not yet visible right after it was created. Anything else, such as
-// expired credentials, stops the wait at once.
-const TRANSIENT_ERRORS = /RequestLimitExceeded|Throttling|ServiceUnavailable|InternalError|InvalidInstanceID\.NotFound|InvalidAMIID\.NotFound|Could not connect to the endpoint URL|Read timeout/;
+const LIVE_STATES = ["pending", "running", "shutting-down", "stopping", "stopped"];
 const GONE_STATES = new Set(["shutting-down", "terminated", "stopping", "stopped"]);
-const LIVE_STATES = "pending,running,shutting-down,stopping,stopped";
+// EC2 is eventually consistent: for a few seconds after a launch or a
+// capture, the new identifier reads as not found. A wait reads that as not yet.
+const NOT_YET_VISIBLE = new Set(["InvalidInstanceID.NotFound", "InvalidAMIID.NotFound"]);
+// Image states that will never become available; `pending` is progress.
+const FAILED_IMAGE_STATES = new Set(["failed", "error", "invalid", "deregistered", "disabled"]);
 // An AMI's EBS snapshots bill per GB-month of stored data; the volume size is
-// the ceiling of that, which is what the summary prints.
+// the ceiling of that, which the summary prints.
 const SNAPSHOT_DOLLARS_PER_GB_MONTH = 0.05;
-const imagesSchema = z.array(z.object({
-  id: z.string(), name: z.string(),
-  devices: z.array(z.object({ Ebs: z.object({ SnapshotId: z.string().optional(), VolumeSize: z.number().optional() }).optional() })).default([]),
-}));
 
-// EC2 through the `aws` command-line tool. Each run imports its public key
-// and makes a security group open to SSH from the caller's address alone;
-// both go when the run's instances have. A lane is a one-time Spot instance
-// that terminates when it shuts down, unless ORLY_BURST_MARKET says
-// on-demand; a snapshot warm-up is on demand, so it can stop to be imaged.
+// EC2 through the AWS SDK. Each run imports its public key and makes a
+// security group open to SSH from the caller's address alone; both go when
+// the run's instances have. A lane is a one-time Spot instance that
+// terminates when it shuts down, unless ORLY_BURST_MARKET says on-demand; a
+// snapshot warm-up is on demand, so it can stop to be imaged. The SDK retries
+// throttling and transient failures inside each call, so an error that
+// reaches a wait is real and ends it. The SDK's own waiters are not used:
+// they retry every error, expired credentials too, until they time out.
 export class AwsSpot implements CloudProvider {
   readonly name = "aws-spot";
   readonly user: string;
   readonly #settings: BurstSettings;
+  readonly #ec2: EC2Client;
   #keyImported = false;
   #group: string | undefined;
 
   constructor(settings: BurstSettings) {
     this.#settings = settings;
     this.user = settings.aws.user;
+    // Requests go through Bun's own fetch, not node:http.
+    this.#ec2 = new EC2Client({ region: settings.aws.region, maxAttempts: MAX_ATTEMPTS, requestHandler: new FetchHttpHandler({ requestTimeout: REQUEST_TIMEOUT_MS }) });
   }
 
   cost(machine: Machine): string {
@@ -77,19 +80,18 @@ export class AwsSpot implements CloudProvider {
   }
 
   async snapshots(scope: SnapshotScope): Promise<Snapshot[]> {
-    return this.#describeImages(["--owners", "self", "--filters", `Name=tag:orly-burst,Values=${scope.repo}`, "Name=state,Values=available"], scope.signal);
+    return this.#images({ Owners: ["self"], Filters: [{ Name: "tag:orly-burst", Values: [scope.repo] }, { Name: "state", Values: ["available"] }] }, scope.signal);
   }
 
   async prepare(run: BurstRun): Promise<void> {
     const name = runName(run);
-    const signal = run.signal;
-    const tags = (type: string) => `ResourceType=${type},Tags=[{Key=owner,Value=agent},{Key=orly-burst,Value=${run.runId}}]`;
-    await this.#aws(["ec2", "import-key-pair", "--key-name", name, "--public-key-material", `fileb://${run.key}.pub`, "--tag-specifications", tags("key-pair")], { signal });
+    await this.#ec2.send(new ImportKeyPairCommand({ KeyName: name, PublicKeyMaterial: new TextEncoder().encode(run.publicKey), TagSpecifications: tagged("key-pair", run.runId) }), { abortSignal: run.signal });
     this.#keyImported = true;
-    const group = await this.#aws(["ec2", "create-security-group", "--group-name", name, "--description", `orly burst ${run.runId}: SSH from the caller only`,
-      "--tag-specifications", tags("security-group"), "--query", "GroupId", "--output", "text"], { signal });
-    this.#group = group.stdout.trim();
-    await this.#aws(["ec2", "authorize-security-group-ingress", "--group-id", this.#group, "--protocol", "tcp", "--port", "22", "--cidr", `${run.caller}/32`], { signal });
+    const group = await this.#ec2.send(new CreateSecurityGroupCommand({ GroupName: name, Description: `orly burst ${run.runId}: SSH from the caller only`, TagSpecifications: tagged("security-group", run.runId) }), { abortSignal: run.signal });
+    this.#group = group.GroupId;
+    await this.#ec2.send(new AuthorizeSecurityGroupIngressCommand({
+      GroupId: this.#group, IpPermissions: [{ IpProtocol: "tcp", FromPort: 22, ToPort: 22, IpRanges: [{ CidrIp: `${run.caller}/32` }] }],
+    }), { abortSignal: run.signal });
     run.write(done(`${name} admits SSH from ${run.caller} only`));
   }
 
@@ -98,19 +100,21 @@ export class AwsSpot implements CloudProvider {
     const root = await this.#rootDevice(job.image, run.signal);
     let refusal = "";
     for (const type of this.#settings.aws.types) {
-      const launch = await this.#aws(this.#runInstances(run, job, type, spot, root), { allowFailure: true, signal: run.signal });
-      if (launch.code === 0) {
-        const id = launch.stdout.trim();
+      try {
+        const launched = await this.#ec2.send(this.#runInstances(run, job, type, spot, root), { abortSignal: run.signal });
+        const instance = launched.Instances?.[0];
+        const id = instance?.InstanceId;
+        if (!id) throw new OrlyError("run-instances answered no instance");
         run.write(done(`lane=${job.name} ${id} (${type}${spot ? " spot" : " on-demand"}) started from ${job.image.name}`));
-        const hourly = spot ? await this.#spotPrice(type, run.signal) : undefined;
+        const hourly = spot ? await this.#spotPrice(type, instance.Placement?.AvailabilityZone, run.signal) : undefined;
         return { id, label: type, address: undefined, market: spot ? "spot" : "on-demand", ...(hourly === undefined ? {} : { hourly }) };
+      } catch (error) {
+        const code = error instanceof Error ? error.name : "";
+        if (SPOT_ROLE_MISSING.test(code)) throw new OrlyError(`this account has never launched a Spot instance: an administrator runs \`${SPOT_ROLE_COMMAND}\` once (https://github.com/agentsfleet/orly/blob/main/docs/BURST.md)`);
+        if (!CAPACITY_ERRORS.has(code)) throw new OrlyError(`run-instances refused: ${code ? `${code}: ` : ""}${messageOf(error)}`);
+        refusal = `${code}: ${messageOf(error)}`;
+        run.write(ongoing(`lane=${job.name} no capacity for ${type} (${code}); trying the next type`));
       }
-      if (SPOT_ROLE_MISSING.test(launch.stderr)) throw new OrlyError(`this account has never launched a Spot instance: an administrator runs \`${SPOT_ROLE_COMMAND}\` once (https://github.com/agentsfleet/orly/blob/main/docs/BURST.md)`);
-      if (!CAPACITY_ERRORS.test(launch.stderr)) throw new OrlyError(`run-instances refused: ${launch.stderr.trim()}`);
-      // AWS's own words say which limit it was: capacity, a Spot quota or an
-      // unsupported type are fixed in different places.
-      refusal = launch.stderr.trim().replaceAll(/\s+/g, " ");
-      run.write(ongoing(`lane=${job.name} no capacity for ${type} (${refusal.match(AWS_ERROR_CODE)?.[1] ?? "unknown"}); trying the next type`));
     }
     throw new OrlyError(`no capacity for any of: ${this.#settings.aws.types.join(" ")}; AWS last said: ${refusal}`);
   }
@@ -119,146 +123,140 @@ export class AwsSpot implements CloudProvider {
   async ready(run: BurstRun, job: Job, machine: Machine): Promise<Machine> {
     run.write(ongoing(`waiting for ${machine.id} to boot`));
     const address = await until("a running instance with a public address", async () => {
-      const described = await this.#poll(["ec2", "describe-instances", "--instance-ids", machine.id, "--query", "Reservations[0].Instances[0].[State.Name,PublicIpAddress]", "--output", "text"], run.signal);
-      const [state = "", ip = ""] = described?.stdout.trim().split(/\s+/) ?? [];
+      const instance = await this.#instance(machine.id, run.signal).catch(notYet);
+      if (!instance) return undefined;
+      const state = instance.State?.Name ?? "";
       if (GONE_STATES.has(state)) throw new OrlyError(`${machine.id} is ${state} before it was reachable (Spot interruption?)`);
-      return state === "running" && IPV4.test(ip) ? ip : undefined;
+      return state === "running" && IPV4.test(instance.PublicIpAddress ?? "") ? instance.PublicIpAddress : undefined;
     }, { deadline: machineDeadline(job), signal: run.signal, pollMs: this.#settings.pollMs });
     return { ...machine, address };
   }
 
-  // Saving an 80 GB image outlasts any single `aws ec2 wait`, so every check
-  // is one short describe call, repeated within the run's own deadline. An
-  // image still pending at the deadline is left to finish, and said to be; a
-  // cancellation fails the capture.
+  // An image still saving at the deadline is left to finish, and said to be;
+  // a cancellation fails the capture.
   async capture(run: BurstRun, job: Job, machine: Machine, name: string): Promise<Snapshot> {
     const timing = { deadline: job.deadline, signal: run.signal, pollMs: this.#settings.pollMs };
-    await this.#aws(["ec2", "stop-instances", "--instance-ids", machine.id], { signal: run.signal });
-    await until(`${machine.id} to stop`, async () => (await this.#states([machine.id], run.signal))[0] === "stopped" || undefined, timing);
-    const tags = `Tags=[{Key=owner,Value=agent},{Key=orly-burst,Value=${run.repo}}]`;
-    const created = await this.#aws(["ec2", "create-image", "--instance-id", machine.id, "--name", name, "--description", `orly burst warm image of ${run.repo}`,
-      "--tag-specifications", `ResourceType=image,${tags}`, `ResourceType=snapshot,${tags}`, "--query", "ImageId", "--output", "text"], { signal: run.signal });
-    const id = created.stdout.trim();
+    await this.#ec2.send(new StopInstancesCommand({ InstanceIds: [machine.id] }), { abortSignal: run.signal });
+    await until(`${machine.id} to stop`, async () => (await this.#instance(machine.id, run.signal)).State?.Name === "stopped" || undefined, timing);
+    const created = await this.#ec2.send(new CreateImageCommand({
+      InstanceId: machine.id, Name: name, Description: `orly burst warm image of ${run.repo}`,
+      TagSpecifications: [...tagged("image", run.repo), ...tagged("snapshot", run.repo)],
+    }), { abortSignal: run.signal });
+    const id = created.ImageId ?? "";
     run.write(ongoing(`capturing ${name} as ${id}`));
     for (;;) {
-      const described = await this.#poll(["ec2", "describe-images", "--image-ids", id, "--query", "Images[0].[State,StateReason.Message]", "--output", "text"], run.signal);
-      const [state = "", ...reason] = described?.stdout.trim().split("\t") ?? [];
-      if (state === "available") {
-        const [snapshot] = await this.#describeImages(["--image-ids", id], run.signal);
+      const image = (await this.#ec2.send(new DescribeImagesCommand({ ImageIds: [id] }), { abortSignal: run.signal }).catch(notYet))?.Images?.[0];
+      if (image?.State === "available") {
+        const [snapshot] = await this.#images({ ImageIds: [id] }, run.signal);
         if (!snapshot) throw new OrlyError(`image ${id} is not visible after it became available`);
         run.write(done(`saved image ${id}`));
         return snapshot;
       }
-      if (FAILED_IMAGE_STATES.has(state)) throw new OrlyError(`image ${id} is ${state}: ${reason.join(" ").trim() || "AWS gave no reason"}`);
+      if (FAILED_IMAGE_STATES.has(image?.State ?? "")) throw new OrlyError(`image ${id} is ${image?.State}: ${image?.StateReason?.Message ?? "AWS gave no reason"}`);
       if (Date.now() >= job.deadline) return { id, name, sizeGb: undefined, parts: [], ready: false };
       await pause(this.#settings.pollMs, run.signal);
+      if (run.signal.aborted) throw new OrlyError(`cancelled while saving image ${id}; AWS may still finish it`);
     }
   }
 
   // Cleanup takes no cancellation signal: it is what a cancellation runs.
   async remove(machine: Machine): Promise<void> {
-    await this.#aws(["ec2", "terminate-instances", "--instance-ids", machine.id]);
+    await this.#ec2.send(new TerminateInstancesCommand({ InstanceIds: [machine.id] }));
   }
 
   async deleteSnapshot(snapshot: Snapshot, signal: AbortSignal): Promise<void> {
-    await this.#aws(["ec2", "deregister-image", "--image-id", snapshot.id], { signal });
-    for (const part of snapshot.parts) await this.#aws(["ec2", "delete-snapshot", "--snapshot-id", part], { signal });
+    await this.#ec2.send(new DeregisterImageCommand({ ImageId: snapshot.id }), { abortSignal: signal });
+    for (const part of snapshot.parts) await this.#ec2.send(new DeleteSnapshotCommand({ SnapshotId: part }), { abortSignal: signal });
   }
 
   // Every instance tagged with the run is terminated here, including one
-  // whose launch was interrupted before its identifier came back. A security
+  // whose launch reply was lost before its identifier came back. A security
   // group cannot be deleted while an instance uses it, so this waits for them.
   async finish(run: BurstRun): Promise<void> {
     if (!this.#keyImported) return;
     const name = runName(run);
-    const tagged = await this.#aws(["ec2", "describe-instances", "--filters", `Name=tag:orly-burst,Values=${run.runId}`, `Name=instance-state-name,Values=${LIVE_STATES}`,
-      "--query", "Reservations[].Instances[].InstanceId", "--output", "text"], { allowFailure: true });
-    const strays = tagged.code === 0 ? tagged.stdout.split(/\s+/).filter((id) => id.startsWith("i-")) : [];
-    if (strays.length > 0) {
-      await this.#aws(["ec2", "terminate-instances", "--instance-ids", ...strays], { allowFailure: true });
-      await this.#awaitTerminated(strays).catch((error: unknown) => run.write(failed(messageOf(error))));
+    try {
+      const tagged = await this.#ec2.send(new DescribeInstancesCommand({ Filters: [{ Name: "tag:orly-burst", Values: [run.runId] }, { Name: "instance-state-name", Values: LIVE_STATES }] }));
+      const strays = (tagged.Reservations ?? []).flatMap((reservation) => reservation.Instances ?? []).flatMap((instance) => instance.InstanceId ? [instance.InstanceId] : []);
+      if (strays.length > 0) {
+        const never = new AbortController().signal;
+        await this.#ec2.send(new TerminateInstancesCommand({ InstanceIds: strays }));
+        await until(`${strays.join(" ")} to terminate`, async () => {
+          const described = await this.#ec2.send(new DescribeInstancesCommand({ InstanceIds: strays }));
+          const states = (described.Reservations ?? []).flatMap((reservation) => reservation.Instances ?? []).map((instance) => instance.State?.Name);
+          return states.length === strays.length && states.every((state) => state === "terminated") || undefined;
+        }, { deadline: Date.now() + CLEANUP_WAIT_MS, signal: never, pollMs: this.#settings.pollMs });
+      }
+    } catch (error) {
+      run.write(failed(`could not terminate the run's instances: ${messageOf(error)}; delete them by hand`));
     }
-    const cleanups = [...(this.#group ? [["ec2", "delete-security-group", "--group-id", this.#group]] : []), ["ec2", "delete-key-pair", "--key-name", name]];
-    for (const cleanup of cleanups) {
-      const done = await this.#aws(cleanup, { allowFailure: true });
-      if (done.code !== 0) run.write(failed(`could not ${cleanup[1]} for ${name}: ${done.stderr.trim()}; delete it by hand`));
+    if (this.#group) {
+      await this.#ec2.send(new DeleteSecurityGroupCommand({ GroupId: this.#group }))
+        .catch((error: unknown) => run.write(failed(`could not delete security group ${this.#group}: ${messageOf(error)}; delete it by hand`)));
     }
+    await this.#ec2.send(new DeleteKeyPairCommand({ KeyName: name }))
+      .catch((error: unknown) => run.write(failed(`could not delete key pair ${name}: ${messageOf(error)}; delete it by hand`)));
   }
 
-  #runInstances(run: BurstRun, job: Job, type: string, spot: boolean, root: string): string[] {
-    return ["ec2", "run-instances", "--image-id", job.image.id, "--instance-type", type, "--key-name", runName(run), "--security-group-ids", this.#group ?? "",
-      ...(spot ? ["--instance-market-options", "MarketType=spot,SpotOptions={SpotInstanceType=one-time,InstanceInterruptionBehavior=terminate}"] : []),
+  #runInstances(run: BurstRun, job: Job, type: string, spot: boolean, root: string): RunInstancesCommand {
+    return new RunInstancesCommand({
+      ImageId: job.image.id, InstanceType: type as never, MinCount: 1, MaxCount: 1, KeyName: runName(run), SecurityGroupIds: this.#group ? [this.#group] : [],
+      ...(spot ? { InstanceMarketOptions: { MarketType: "spot", SpotOptions: { SpotInstanceType: "one-time", InstanceInterruptionBehavior: "terminate" } } } : {}),
       // A lane's machine is gone when it shuts down, on either market; only a
       // warm-up stops, so it can be imaged.
-      "--instance-initiated-shutdown-behavior", job.kind === "lane" ? "terminate" : "stop",
-      "--metadata-options", "HttpTokens=required",
-      "--block-device-mappings", `DeviceName=${root},Ebs={VolumeSize=80,VolumeType=gp3,DeleteOnTermination=true}`,
-      "--tag-specifications", `ResourceType=instance,Tags=[{Key=owner,Value=agent},{Key=orly-burst,Value=${run.runId}},{Key=Name,Value=orly-burst-${job.name}}]`,
-      "--query", "Instances[0].InstanceId", "--output", "text"];
+      InstanceInitiatedShutdownBehavior: job.kind === "lane" ? "terminate" : "stop",
+      MetadataOptions: { HttpTokens: "required" },
+      BlockDeviceMappings: [{ DeviceName: root, Ebs: { VolumeSize: DISK_GB, VolumeType: "gp3", DeleteOnTermination: true } }],
+      TagSpecifications: [{ ResourceType: "instance", Tags: [{ Key: "owner", Value: "agent" }, { Key: "orly-burst", Value: run.runId }, { Key: "Name", Value: `orly-burst-${job.name}` }] }],
+      // The SDK retries a launch whose reply was lost; the token makes the
+      // retry return the first launch instead of starting a second machine.
+      ClientToken: new Bun.CryptoHasher("sha256").update(`${run.runId}/${job.name}/${type}`).digest("hex"),
+    });
   }
-
 
   // The 80 GB disk must be the root one: an AMI names its own root device,
   // which an Ubuntu image puts at /dev/sda1. Debian's parameter, and every
   // snapshot of it, boots from /dev/xvda.
   async #rootDevice(image: Image, signal: AbortSignal): Promise<string> {
     if (!image.id.startsWith("ami-")) return DEBIAN_ROOT_DEVICE;
-    const described = await this.#aws(["ec2", "describe-images", "--image-ids", image.id, "--query", "Images[0].RootDeviceName", "--output", "text"], { signal });
-    const device = described.stdout.trim();
-    if (!device.startsWith("/dev/")) throw new OrlyError(`image ${image.id} names no root device`);
+    const device = (await this.#ec2.send(new DescribeImagesCommand({ ImageIds: [image.id] }), { abortSignal: signal })).Images?.[0]?.RootDeviceName;
+    if (!device) throw new OrlyError(`image ${image.id} names no root device`);
     return device;
   }
 
-  async #spotPrice(type: string, signal: AbortSignal): Promise<number | undefined> {
-    const price = await this.#aws(["ec2", "describe-spot-price-history", "--instance-types", type, "--product-descriptions", "Linux/UNIX", "--max-items", "1",
-      "--query", "SpotPriceHistory[0].SpotPrice", "--output", "text"], { allowFailure: true, signal });
-    const value = Number(price.stdout.trim());
-    return price.code === 0 && Number.isFinite(value) && value > 0 ? value : undefined;
+  // The current Spot price in the zone the instance landed in, when AWS says.
+  async #spotPrice(type: string, zone: string | undefined, signal: AbortSignal): Promise<number | undefined> {
+    const history = await this.#ec2.send(new DescribeSpotPriceHistoryCommand({
+      InstanceTypes: [type as never], ProductDescriptions: ["Linux/UNIX"], StartTime: new Date(), ...(zone ? { AvailabilityZone: zone } : {}),
+    }), { abortSignal: signal }).catch(() => undefined);
+    const value = Number(history?.SpotPriceHistory?.[0]?.SpotPrice);
+    return Number.isFinite(value) && value > 0 ? value : undefined;
   }
 
-  // The state of each instance, in the order AWS lists them; a transient
-  // failure reads as no answer yet.
-  async #states(ids: string[], signal: AbortSignal): Promise<string[]> {
-    const described = await this.#poll(["ec2", "describe-instances", "--instance-ids", ...ids, "--query", "Reservations[].Instances[].State.Name", "--output", "text"], signal);
-    return described?.stdout.trim().split(/\s+/).filter(Boolean) ?? [];
+  async #instance(id: string, signal: AbortSignal) {
+    const described = await this.#ec2.send(new DescribeInstancesCommand({ InstanceIds: [id] }), { abortSignal: signal });
+    return described.Reservations?.[0]?.Instances?.[0] ?? {};
   }
 
-  // Cleanup's own bound, apart from the run's deadline, which may have passed.
-  async #awaitTerminated(ids: string[]): Promise<void> {
-    const never = new AbortController().signal;
-    await until(`${ids.join(" ")} to terminate`, async () => {
-      const states = await this.#states(ids, never);
-      return states.length === ids.length && states.every((state) => state === "terminated") || undefined;
-    }, { deadline: Date.now() + CLEANUP_WAIT_MS, signal: never, pollMs: this.#settings.pollMs });
-  }
-
-  // One attempt of a poll: the answer, nothing for a transient failure worth
-  // another attempt, and an error for any other failure.
-  async #poll(args: string[], signal: AbortSignal): Promise<Captured | undefined> {
-    const result = await this.#aws(args, { allowFailure: true, signal });
-    if (result.code === 0) return result;
-    if (TRANSIENT_ERRORS.test(result.stderr) || signal.aborted) return undefined;
-    throw new OrlyError(`aws ${args.slice(0, 2).join(" ")} failed: ${result.stderr.trim()}`);
-  }
-
-  async #describeImages(selection: string[], signal: AbortSignal): Promise<Snapshot[]> {
-    const listed = await this.#aws(["ec2", "describe-images", ...selection, "--query", "Images[].{id:ImageId,name:Name,devices:BlockDeviceMappings}", "--output", "json"], { signal });
-    return imagesSchema.parse(JSON.parse(listed.stdout || "[]")).map((image) => {
-      const volumes = image.devices.flatMap((device) => device.Ebs ? [device.Ebs] : []);
+  async #images(input: DescribeImagesCommandInput, signal: AbortSignal): Promise<Snapshot[]> {
+    const listed = await this.#ec2.send(new DescribeImagesCommand(input), { abortSignal: signal });
+    return (listed.Images ?? []).map((image) => {
+      const volumes = (image.BlockDeviceMappings ?? []).flatMap((device) => device.Ebs ? [device.Ebs] : []);
       const sizes = volumes.flatMap((volume) => volume.VolumeSize === undefined ? [] : [volume.VolumeSize]);
-      return { id: image.id, name: image.name, sizeGb: sizes.length ? sizes.reduce((sum, size) => sum + size, 0) : undefined, parts: volumes.flatMap((volume) => volume.SnapshotId ? [volume.SnapshotId] : []), ready: true };
+      return { id: image.ImageId ?? "", name: image.Name ?? "", sizeGb: sizes.length ? sizes.reduce((sum, size) => sum + size, 0) : undefined, parts: volumes.flatMap((volume) => volume.SnapshotId ? [volume.SnapshotId] : []), ready: true };
     });
   }
+}
 
-  async #aws(args: string[], call: Call = {}): Promise<Captured> {
-    const result = await captureProcess(["aws", "--region", this.#settings.aws.region, ...args], {
-      env: { ...this.#settings.env, AWS_PAGER: "" }, timeoutMs: AWS_TIMEOUT_MS, ...(call.signal ? { signal: call.signal } : {}),
-    });
-    if (result.code !== 0 && !call.allowFailure) throw new OrlyError(`aws ${args.slice(0, 2).join(" ")} failed: ${result.stderr.trim()}`);
-    return result;
-  }
+function notYet(error: unknown): undefined {
+  if (error instanceof Error && NOT_YET_VISIBLE.has(error.name)) return undefined;
+  throw error;
 }
 
 function runName(run: BurstRun): string {
   return `orly-burst-${run.runId}`;
+}
+
+function tagged(type: ResourceType, value: string) {
+  return [{ ResourceType: type, Tags: [{ Key: "owner", Value: "agent" }, { Key: "orly-burst", Value: value }] }];
 }

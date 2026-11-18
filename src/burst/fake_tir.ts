@@ -51,17 +51,20 @@ export class FakeTir {
   callerMovesTo: string | undefined;
   #addressLookups = 0;
 
+  // ky hands a Request; the caller-address lookup hands a URL string.
   fetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
-    const url = new URL(String(input));
+    const request = input instanceof Request ? input : new Request(input, init);
+    const url = new URL(request.url);
     if (url.host === "checkip.amazonaws.com") {
       this.#addressLookups += 1;
       return new Response(`${this.#addressLookups > 1 && this.callerMovesTo ? this.callerMovesTo : CALLER_ADDRESS}\n`);
     }
-    const method = init?.method ?? "GET";
+    const method = request.method;
     const path = url.pathname.replace(PREFIX, "");
-    const body: unknown = init?.body ? JSON.parse(String(init.body)) : undefined;
+    const text = await request.text();
+    const body: unknown = text ? JSON.parse(text) : undefined;
     const query = Object.fromEntries(url.searchParams);
-    this.calls.push({ method, path, query, body, authorization: new Headers(init?.headers).get("Authorization") });
+    this.calls.push({ method, path, query, body, authorization: request.headers.get("Authorization") });
     this.#settleDeletes();
     return this.answer(method, path, query, isObject(body) ? body : {});
   };

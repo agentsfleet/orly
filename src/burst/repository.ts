@@ -1,6 +1,5 @@
 import { existsSync, realpathSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
 import { git } from "../git_env";
 import { OrlyError } from "../model";
@@ -23,7 +22,7 @@ export function repositoryIdentity(root: string): string {
 function remoteIdentity(remote: string, root: string): string {
   if (remote.includes("://")) {
     const url = new URL(remote);
-    if (url.protocol === "file:") return `local:${realpathSync(fileURLToPath(url))}`;
+    if (url.protocol === "file:") return `local:${realpathSync(Bun.fileURLToPath(url))}`;
     if (url.protocol === "ssh:" && url.pathname.startsWith("/~")) return homeIdentity(url.username, url.host.toLowerCase(), trimPath(url.pathname));
     return `${url.host.toLowerCase()}${trimPath(url.pathname)}`;
   }
