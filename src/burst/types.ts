@@ -46,8 +46,9 @@ export type Image = { id: string; name: string; snapshot: boolean };
 // `ready` is false only for a capture whose image was still saving when the
 // run's deadline came; the cloud finishes it, and lanes use it once it is.
 export type Snapshot = { id: string; name: string; sizeGb: number | undefined; parts: string[]; ready: boolean };
-// `hourly` is the Spot price a lane was rented at, when the cloud said.
-export type Machine = { id: string; label: string; address: string | undefined; hourly?: number; market?: "spot" | "on-demand" };
+// How an AWS machine is rented; a Spot price is there when AWS said it.
+export type Billing = { market: "on-demand" } | { market: "spot"; hourly: number | undefined };
+export type Machine = { id: string; label: string; address: string | undefined; billing?: Billing };
 
 // The seam a cloud provider fills: how its machines start, become reachable,
 // stop and turn into images. The shared code in cloud.ts owns the order,

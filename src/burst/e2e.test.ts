@@ -5,39 +5,13 @@ import { join } from "node:path";
 import { burst } from "./index";
 import { tirLabel } from "./e2e";
 import { MACHINE_WAIT_MS, machineDeadline } from "./process";
-import { DEBIAN_13, FakeTir } from "./fake_tir";
-import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, fakeBin, fields, recordedCalls, REPOSITORY, SECRET_VALUE, snapshotOf } from "./test_support";
-import { cleanupTemporaryDirectories, git, gitOutput, temporaryDirectory } from "../gates_test_support";
-
-const API_KEY = "e2e_test_key_00000000";
-const AUTH_TOKEN = "e2e_test_token_00000000";
-const CREDENTIALS = { E2E_API_KEY: API_KEY, E2E_AUTH_TOKEN: AUTH_TOKEN, E2E_PROJECT_ID: "12345" };
-const SECRETS = { secrets: { API_TOKEN: "op://Burst Vault/api/credential" } };
-const LANES = ["acceptance", "integration", "--provider", "e2e"];
-const ONE_LANE = ["acceptance", "--provider", "e2e"];
-const SNAPSHOT_NAME = new RegExp(`^orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8}$`);
-const CREATE = /^\/notebooks\/$/;
-const VM = /^\/notebooks\/\d+\/$/;
+import { DEBIAN_13 } from "./fake_tir";
+import { API_KEY, AUTH_TOKEN, CREATE, e2eRun, LANES, machineScript, ONE_LANE, SECRETS, VM } from "./e2e-test-support";
+import { burstDependencies, CALLER_ADDRESS, fields, recordedCalls, SECRET_VALUE } from "./test_support";
+import { cleanupTemporaryDirectories, git, temporaryDirectory } from "../gates_test_support";
 
 setDefaultTimeout(60_000);
 afterEach(cleanupTemporaryDirectories);
-
-function e2eRun(extra: Record<string, string> = {}, burstConfig: Record<string, unknown> = {}) {
-  const root = burstRepository(burstConfig);
-  const { bin, state } = fakeBin();
-  const api = new FakeTir();
-  const env = burstEnvironment(bin, state, { ...CREDENTIALS, ...extra });
-  return { root, state, api, env, ...burstDependencies(root, env, api.fetch) };
-}
-
-function machineScript(state: string): string {
-  const machine = [...new Bun.Glob("203.0.113.*").scanSync({ cwd: state, onlyFiles: false })][0] ?? "";
-  return readFileSync(join(state, machine, "job.sh"), "utf8");
-}
-
-function created(api: FakeTir): Array<Record<string, unknown>> {
-  return api.callsTo("POST", CREATE).map((call) => fields(call.body));
-}
 
 describe("e2e lanes on TIR virtual machines", () => {
   test("lanes start at once as VMs reached over SSH, and every VM and the run's key are removed", async () => {
@@ -50,7 +24,9 @@ describe("e2e lanes on TIR virtual machines", () => {
     const deletes = run.api.callsTo("DELETE", VM);
     expect(creates).toHaveLength(2);
     expect(deletes).toHaveLength(2);
-    expect(run.api.calls.indexOf(creates[1] ?? deletes[0]!)).toBeLessThan(run.api.calls.indexOf(deletes[0]!));
+    const firstDelete = deletes[0];
+    if (!firstDelete) throw new Error("no VM was deleted");
+    expect(run.api.calls.indexOf(creates[1] ?? firstDelete)).toBeLessThan(run.api.calls.indexOf(firstDelete));
     expect(run.api.vms.size).toBe(0);
     const body = fields(creates[0]?.body);
     expect(body).toMatchObject({ kind: "vm", image_type: "pre-built", image_version_id: DEBIAN_13, sku_item_price_id: 3, disk_size_in_gb: 100, quantity: 1, security_group_id: 700 });
@@ -88,7 +64,7 @@ describe("e2e lanes on TIR virtual machines", () => {
   test("a branch name past 19 characters still fits TIR's 50-character key label", async () => {
     const run = e2eRun();
     const branch = "feat/m246-tenant-owned-runners";
-    expect(Bun.spawnSync(["git", "-C", run.root, "branch", branch]).exitCode).toBe(0);
+    git(run.root, "branch", branch);
 
     expect(await burst(["acceptance", "--provider", "e2e", "--ref", branch], run.dependencies)).toBe(0);
     const label = String(fields(run.api.callsTo("POST", /^\/ssh_keys\/$/)[0]?.body).label);
@@ -262,239 +238,6 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
     expect(run.output.text()).toMatch(/🔴 lane=acceptance the deadline passed while waiting for SSH to 203\.0\.113\.\d+: ssh: connect to host 203\.0\.113\.\d+ port 22: Operation timed out/);
     expect(run.output.text()).not.toContain("answers");
-    expect(run.api.vms.size).toBe(0);
-  });
-
-  describe("what a warm machine is sent", () => {
-    function sent(run: ReturnType<typeof e2eRun>): string | undefined {
-      const machine = [...new Bun.Glob("203.0.113.*").scanSync({ cwd: run.state, onlyFiles: false })][0] ?? "";
-      const bundle = join(run.state, machine, "repo.bundle");
-      return existsSync(bundle) ? bundle : undefined;
-    }
-
-    test("a checkout at an older commit receives only the commits since it", async () => {
-      const run = e2eRun();
-      const older = gitOutput(run.root, "rev-parse", "HEAD");
-      git(run.root, "commit", "-q", "--allow-empty", "-m", "test: a newer commit");
-      const newer = gitOutput(run.root, "rev-parse", "HEAD");
-      await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ warmCommit: older }));
-
-      expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
-
-      const bundle = sent(run) ?? "";
-      const verified = Bun.spawnSync(["git", "bundle", "verify", bundle], { cwd: run.root, stderr: "pipe", stdout: "pipe" });
-      expect(`${verified.stdout}${verified.stderr}`).toContain(`requires this ref:\n${older}`);
-      expect(run.output.text()).toContain(`sending feat/burst-fixture since ${older.slice(0, 7)}`);
-      expect(machineScript(run.state)).toContain(`BURST_COMMIT='${newer}'`);
-    });
-
-    test("a checkout that already holds the commit receives nothing", async () => {
-      const run = e2eRun();
-      const head = gitOutput(run.root, "rev-parse", "HEAD");
-      await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ warmCommit: head }));
-
-      expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
-      expect(sent(run)).toBeUndefined();
-      expect(run.output.text()).toContain(`🟢 5001 already holds ${head.slice(0, 7)}; nothing to send`);
-    });
-
-    test("a checkout at a commit this repository lacks, or a cold machine, receives the whole ref", async () => {
-      for (const scenario of [{ warmCommit: "f".repeat(40) }, {}]) {
-        const run = e2eRun();
-        await Bun.write(join(run.state, "scenario.json"), JSON.stringify(scenario));
-
-        expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
-        const verified = Bun.spawnSync(["git", "bundle", "verify", sent(run) ?? ""], { cwd: run.root, stderr: "pipe", stdout: "pipe" });
-        expect(`${verified.stdout}${verified.stderr}`).toContain("records a complete history");
-      }
-    });
-  });
-
-  test("a lane past the deadline is stopped and its VM deleted", async () => {
-    const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.01" });
-    await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ sleepMs: 2_000 }));
-
-    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
-    expect(run.output.text()).toMatch(/lane=acceptance .* exit=deadline /);
-    expect(run.api.vms.size).toBe(0);
-  });
-
-  test("a cancelled run deletes the VM it started and its key", async () => {
-    const root = burstRepository();
-    const { bin, state } = fakeBin();
-    const api = new FakeTir();
-    const controller = new AbortController();
-    await Bun.write(join(state, "scenario.json"), JSON.stringify({ sleepMs: 2_000 }));
-    const { dependencies, output } = burstDependencies(root, burstEnvironment(bin, state, CREDENTIALS), api.fetch, controller.signal);
-    setTimeout(() => controller.abort(), 1_500);
-
-    expect(await burst(ONE_LANE, dependencies)).toBe(1);
-    expect(output.text()).toMatch(/exit=cancelled /);
-    expect(api.vms.size).toBe(0);
-    expect(api.keys.size).toBe(0);
-  });
-
-  test("a refused create starts nothing and looks for no VM", async () => {
-    const run = e2eRun();
-    run.api.createStatus = 400;
-
-    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
-    expect(run.output.text()).toMatch(/lane=acceptance provider=e2e machine=none minutes=0 cost≈none exit=unlaunched /);
-    expect(run.api.callsTo("GET", /^\/notebooks\/$/)).toHaveLength(0);
-    expect(run.api.keys.size).toBe(0);
-  });
-
-  test("a VM whose create reply was lost is found by name and deleted before the key", async () => {
-    const run = e2eRun();
-    run.api.lostCreate = true;
-
-    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
-    expect(run.output.text()).toMatch(/lane=acceptance provider=e2e machine=none minutes=0 cost≈none exit=unlaunched /);
-    expect(run.output.text()).toMatch(/🟢 deleted VM 5001 \(orly-burst-acceptance-\w{4}\), whose create reply was lost/);
-    expect(run.api.vms.size).toBe(0);
-    expect(run.api.keys.size).toBe(0);
-  });
-
-  test("TIR busy while a VM boots is waited out, not a failed lane", async () => {
-    const run = e2eRun();
-    run.api.busyPolls = 2;
-
-    expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
-    expect(run.output.text()).not.toContain("🔴");
-  });
-
-  test("a key TIR no longer lists is reported for a person, never as deleted", async () => {
-    const run = e2eRun();
-    run.api.hideKeys = true;
-
-    await burst(ONE_LANE, run.dependencies);
-    expect(run.output.text()).toMatch(/🔴 could not delete TIR key orly-burst-\S+: TIR lists no such key; delete it by hand/);
-    expect(run.output.text()).not.toContain("🟢 deleted TIR key");
-  });
-
-  test("a failed burst.setup reports the lane as not run, never as its exit code", async () => {
-    const run = e2eRun();
-    await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ exits: { acceptance: 254 } }));
-
-    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
-    expect(run.output.text()).toMatch(/🔴 lane=acceptance the machine or burst.setup failed before the lane started; see \S+run\.log/);
-    expect(run.output.text()).toMatch(/lane=acceptance .* exit=not_run /);
-  });
-
-  test("an unknown plan is refused with the plans TIR offers", async () => {
-    const run = e2eRun({}, { e2e: { plan: "C3.999GB" } });
-
-    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
-    expect(run.output.text()).toContain("TIR offers no hourly C3.999GB plan in Delhi; it offers: C3.32GB, C3.16GB");
-  });
-
-  test("missing credentials are named before any request", async () => {
-    const run = e2eRun({ E2E_AUTH_TOKEN: "" });
-
-    await expect(burst(LANES, run.dependencies)).rejects.toThrow("set E2E_AUTH_TOKEN for this provider");
-    expect(run.api.calls).toHaveLength(0);
-  });
-});
-
-describe("e2e snapshots on TIR", () => {
-  test("a snapshot warms a base VM with no secret, saves it stopped and deletes the VM", async () => {
-    const run = e2eRun({}, { ...SECRETS, warm: [["make", "build"]] });
-
-    expect(await burst(["snapshot", "--provider", "e2e"], run.dependencies)).toBe(0);
-
-    const job = machineScript(run.state);
-    expect(job).toContain("BURST_MODE='warm'");
-    expect(job).toContain("  step 'make' 'build'\n  warmed\n");
-    expect(job).not.toContain("export API_TOKEN");
-    expect(existsSync(join(run.state, "op-calls.txt"))).toBe(false);
-    const order = run.api.calls.map((call) => `${call.method} ${call.path}${call.query.action ? `?${call.query.action}` : ""}`);
-    expect(order.indexOf("PUT /notebooks/5001/actions/?Stop")).toBeLessThan(order.indexOf("POST /notebooks/5001/snapshots/"));
-    expect(order.indexOf("POST /notebooks/5001/snapshots/")).toBeLessThan(order.lastIndexOf("DELETE /notebooks/5001/"));
-    expect(String(fields(run.api.callsTo("POST", /\/snapshots\/$/)[0]?.body).name)).toMatch(SNAPSHOT_NAME);
-    expect(run.api.vms.size).toBe(0);
-    const text = run.output.text();
-    expect(text.indexOf("orly burst: 🟢 saved snapshot 9000\n")).toBeLessThan(text.indexOf("deleting e2e machine 5001"));
-    expect(text).not.toContain("none of the declared results");
-    expect(run.output.text()).toMatch(new RegExp(`orly burst: snapshot provider=e2e id=9000 name=orly-burst-${REPOSITORY}-\\d{17}-[0-9a-f]{8} state=ready size=100\\.0GB storage≈₹200/month \\+ GST`));
-  });
-
-  test("lanes start from the newest ready snapshot of the configured image unless told otherwise", async () => {
-    const run = e2eRun();
-    run.api.snapshot(snapshotOf("Debian 13", "20261101000000000"), 7001);
-    run.api.snapshot(snapshotOf("Debian 13", "20261115000000000"), 7002);
-    run.api.snapshot(snapshotOf("Debian 13", "20261116000000000"), 7003, "pending");
-    run.api.snapshot(snapshotOf("Ubuntu 22.04", "20261117000000000"), 7005);
-    run.api.snapshot(`orly-burst-${REPOSITORY}-app-20261201000000000-1234abcd`, 7004);
-
-    await burst(ONE_LANE, run.dependencies);
-    await burst([...ONE_LANE, "--no-snapshot"], run.dependencies);
-
-    const bodies = created(run.api);
-    expect(bodies[0]).toMatchObject({ snapshot_id: 7002, image_version_id: 106, disk_size_in_gb: 100 });
-    expect(bodies[1]).not.toHaveProperty("snapshot_id");
-  });
-
-  test("burst.e2e.image is the base image: a lane starts from its newest snapshot, a capture warms from it", async () => {
-    const run = e2eRun({}, { e2e: { image: "Ubuntu 22.04" } });
-    run.api.snapshot(snapshotOf("Ubuntu 22.04", "20261115000000000"), 7002);
-    run.api.snapshot(snapshotOf("Debian 13", "20261116000000000"), 7003);
-
-    await burst(ONE_LANE, run.dependencies);
-    await burst([...ONE_LANE, "--no-snapshot"], run.dependencies);
-    await burst(["snapshot", "--provider", "e2e"], run.dependencies);
-
-    const [lane, cold, capture] = created(run.api);
-    expect(lane).toMatchObject({ snapshot_id: 7002 });
-    expect(cold).toMatchObject({ image_version_id: 107 });
-    expect(cold).not.toHaveProperty("snapshot_id");
-    expect(capture).toMatchObject({ image_version_id: 107 });
-  });
-
-  test("an image version TIR does not list is refused with the versions it has, before any VM", async () => {
-    const run = e2eRun({}, { e2e: { image: "Ubuntu 26.04" } });
-
-    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
-    expect(run.output.text()).toContain("TIR has no image Ubuntu 26.04; it has: Ubuntu 24.04-cuda13.0, Ubuntu 22.04, Ubuntu 24.04, Ubuntu 22.04");
-    expect(run.api.callsTo("POST", CREATE)).toHaveLength(0);
-    expect(run.api.groups.size).toBe(0);
-  });
-
-  test("pruning keeps the newest snapshot of the configured image, deletes the rest of this repository's, and rents nothing", async () => {
-    const run = e2eRun();
-    for (const [stamp, id] of [["20261101000000000", 7001], ["20261102000000000", 7002], ["20261103000000000", 7003]] as const) run.api.snapshot(snapshotOf("Debian 13", stamp), id);
-    run.api.snapshot(snapshotOf("Ubuntu 22.04", "20261104000000000"), 7004);
-    run.api.snapshot(`orly-burst-${REPOSITORY}-app-20261201000000000-1234abcd`, 7006);
-
-    expect(await burst(["snapshot", "--prune", "--provider", "e2e"], run.dependencies)).toBe(0);
-    expect(run.api.callsTo("DELETE", /^\/notebooks\/vm\/snapshots\//).map((call) => call.path)).toEqual(["/notebooks/vm/snapshots/7004/", "/notebooks/vm/snapshots/7002/", "/notebooks/vm/snapshots/7001/"]);
-    expect(run.api.snapshots.map((snapshot) => snapshot.id).sort()).toEqual([7003, 7006]);
-    expect(run.api.callsTo("POST", /^\/(?:notebooks|ssh_keys)\/$/)).toHaveLength(0);
-  });
-
-  test("a snapshot pending for several lists is waited out", async () => {
-    const run = e2eRun();
-    run.api.savingLists = 4;
-
-    expect(await burst(["snapshot", "--provider", "e2e"], run.dependencies)).toBe(0);
-    expect(run.api.callsTo("GET", /^\/notebooks\/vm\/snapshots\/$/).length).toBeGreaterThanOrEqual(5);
-    expect(run.output.text()).toMatch(/snapshot provider=e2e id=9000 name=\S+ state=ready/);
-  });
-
-  test("a snapshot that fails fails the capture, and the VM still goes", async () => {
-    const run = e2eRun();
-    run.api.savedStatus = "failed";
-
-    await expect(burst(["snapshot", "--provider", "e2e"], run.dependencies)).rejects.toThrow(/snapshot orly-burst-\S+ is failed/);
-    expect(run.api.vms.size).toBe(0);
-  });
-
-  test("a snapshot still pending at the deadline is reported as pending, not as nothing saved", async () => {
-    const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.05" });
-    run.api.savingLists = 100_000;
-
-    expect(await burst(["snapshot", "--provider", "e2e"], run.dependencies)).toBe(0);
-    expect(run.output.text()).toMatch(/snapshot provider=e2e id=9000 name=\S+ state=pending/);
-    expect(run.output.text()).toContain("e2e is still saving");
     expect(run.api.vms.size).toBe(0);
   });
 });

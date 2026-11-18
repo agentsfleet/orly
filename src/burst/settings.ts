@@ -1,8 +1,8 @@
+import type { BurstConfig } from "../config_validation";
+
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
-
-import type { BurstConfig } from "../config_validation";
 
 import { OrlyError } from "../model";
 import { MINUTE_MS } from "./types";

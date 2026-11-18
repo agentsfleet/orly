@@ -119,7 +119,7 @@ The launcher's policy creates and removes only resources tagged `owner=agent`:
 ]}
 ```
 
-orly calls EC2 through the AWS SDK, which reads the same credentials as the `aws` tool: a profile, `AWS_PROFILE` or the `AWS_*` variables. A CI job gets them from its login step, and the `aws` tool itself is not needed.
+orly calls Amazon Elastic Compute Cloud (EC2) through the AWS software development kit (SDK), which reads the same credentials as the `aws` tool. That means a profile, `AWS_PROFILE` or the `AWS_*` variables; a CI job gets them from its login step.
 Add a monthly AWS Budgets alert as well.
 
 ### One-time setup for E2E Networks
@@ -141,6 +141,17 @@ These variables shape a run, not where it runs:
 | `ORLY_BURST_POLL_SECONDS` | Seconds between state checks while a machine boots or an image saves. At most 600. | 30 |
 | `ORLY_BURST_OUT` | Directory for each run's log and results. | the system temporary directory's `orly-burst` |
 | `ORLY_BURST_MARKET` | `spot` or `on-demand`, how AWS lanes are rented. | `spot` |
+
+orly's own limits, which no setting changes:
+
+| Wait | Limit |
+|---|---|
+| A machine booting, then answering SSH | 10 minutes each |
+| One request to TIR or EC2 | 60 seconds |
+| TIR retries of a busy answer (429, 5xx, timeout), creates excepted | 10, backing off up to `ORLY_BURST_POLL_SECONDS` |
+| EC2 attempts of one call | 10 |
+| E2E VM deletion, then security group deletion | 5 minutes each |
+| AWS instance termination before the group is deleted | 15 minutes |
 
 A machine's own shutdown is the backstop for a caller that died:
 

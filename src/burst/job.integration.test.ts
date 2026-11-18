@@ -5,6 +5,8 @@ import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+import { UNSCOPED_ENVIRONMENT } from "../git_env";
+
 const PRELUDE = join(import.meta.dir, "job.sh");
 
 function execTmp(options: string): { stdout: string; mounted: string | undefined } {
@@ -48,8 +50,8 @@ function checkout(fixture: { root: string; ref: string; commit: string }): { cod
 
 function repository(root: string): { older: string; newer: string } {
   const source = join(root, "source");
-  const git = (...args: string[]) => Bun.spawnSync(["git", "-C", source, ...args], { env: { PATH: process.env.PATH ?? "", HOME: root, GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@t", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@t" } }).stdout.toString().trim();
-  Bun.spawnSync(["git", "init", "-q", "-b", "lane", source]);
+  const git = (...args: string[]) => gitIn(source, ...args).stdout.toString().trim();
+  gitIn(root, "init", "-q", "-b", "lane", source);
   git("commit", "-q", "--allow-empty", "-m", "older");
   const older = git("rev-parse", "HEAD");
   git("commit", "-q", "--allow-empty", "-m", "newer");
@@ -60,13 +62,13 @@ test("a warm checkout at an older commit takes the commits since it and lands on
   const root = mkdtempSync(join(tmpdir(), "orly-checkout-"));
   try {
     const { older, newer } = repository(root);
-    Bun.spawnSync(["git", "clone", "-q", join(root, "source"), join(root, "work")]);
-    Bun.spawnSync(["git", "-C", join(root, "work"), "checkout", "-q", "--detach", older]);
+    gitIn(root, "clone", "-q", join(root, "source"), join(root, "work"));
+    gitIn(join(root, "work"), "checkout", "-q", "--detach", older);
     for (const args of [["branch", "-q", "-D", "lane"], ["update-ref", "-d", "refs/remotes/origin/lane"], ["reflog", "expire", "--expire=now", "--all"], ["gc", "-q", "--prune=now"]]) {
-      Bun.spawnSync(["git", "-C", join(root, "work"), ...args]);
+      gitIn(join(root, "work"), ...args);
     }
-    expect(Bun.spawnSync(["git", "-C", join(root, "work"), "cat-file", "-e", `${newer}^{commit}`]).exitCode).not.toBe(0);
-    Bun.spawnSync(["git", "-C", join(root, "source"), "bundle", "create", join(root, "sent.bundle"), "lane", `^${older}`]);
+    expect(gitIn(join(root, "work"), "cat-file", "-e", `${newer}^{commit}`).exitCode).not.toBe(0);
+    gitIn(join(root, "source"), "bundle", "create", join(root, "sent.bundle"), "lane", `^${older}`);
 
     expect(checkout({ root, ref: "lane", commit: newer })).toMatchObject({ code: 0, head: newer });
   } finally {
@@ -78,7 +80,7 @@ test("a warm checkout that holds the commit needs no bundle, and a cold one clon
   const root = mkdtempSync(join(tmpdir(), "orly-checkout-"));
   try {
     const { older, newer } = repository(root);
-    Bun.spawnSync(["git", "-C", join(root, "source"), "bundle", "create", join(root, "sent.bundle"), "lane"]);
+    gitIn(join(root, "source"), "bundle", "create", join(root, "sent.bundle"), "lane");
     expect(checkout({ root, ref: "lane", commit: newer })).toMatchObject({ code: 0, head: newer });
 
     expect(existsSync(join(root, "sent.bundle"))).toBeFalse();
@@ -87,3 +89,11 @@ test("a warm checkout that holds the commit needs no bundle, and a cold one clon
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+// Git for these fixtures: inherited GIT_* variables stripped, so a commit
+// hook's GIT_DIR never points a fixture command at this repository.
+function gitIn(directory: string, ...args: string[]) {
+  return Bun.spawnSync(["git", "-C", directory, ...args], {
+    env: { ...UNSCOPED_ENVIRONMENT, GIT_AUTHOR_NAME: "t", GIT_AUTHOR_EMAIL: "t@t", GIT_COMMITTER_NAME: "t", GIT_COMMITTER_EMAIL: "t@t" },
+  });
+}

@@ -34,6 +34,8 @@ export class FakeTir {
   lostCreate = false;
   // How many VM status reads answer 503 before TIR answers again.
   busyPolls = 0;
+  // Paths whose create is made but answered with a gateway timeout.
+  lostReplies = new Set<string>();
   // TIR lists no keys, as if the run's key were already gone.
   hideKeys = false;
   groupDeleteFailures = 0;
@@ -82,10 +84,11 @@ export class FakeTir {
     const id = path.match(/\/(\d+)\//)?.[1] ?? "";
     if (route === "GET /gpu_service/sku/") return reply({ CPU: [sku("C3.32GB", 3, 18.6), sku("C3.16GB", 6, 9.2)], GPU: [] });
     if (route === "GET /gpu_service/image/") return reply(IMAGES);
-    if (route === "POST /ssh_keys/") return this.addKey(body);
+    if (route === "POST /ssh_keys/") return this.lost(path, this.addKey(body));
     if (route === "GET /ssh_keys/") return reply(this.hideKeys ? [] : [...this.keys.values()]);
     if (route === "DELETE /ssh_keys/{id}/") return this.deleteKey(id);
-    if (route === "POST /security_groups/") return this.addGroup(body);
+    if (route === "POST /security_groups/") return this.lost(path, this.addGroup(body));
+    if (route === "GET /security_groups/") return reply([...this.groups.values()].map((group) => ({ id: group.id, name: group.name })));
     if (route === "DELETE /security_groups/{id}/") return this.deleteGroup(id);
     if (route === "POST /notebooks/") return this.create(body);
     if (route === "GET /notebooks/") return reply([...this.vms.values()].map((vm) => ({ id: Number(vm.id), name: vm.name, status: vm.status })));
@@ -99,6 +102,10 @@ export class FakeTir {
       return reply({});
     }
     return reply({}, 404);
+  }
+
+  private lost(path: string, made: Response): Response {
+    return this.lostReplies.has(path) ? reply({}, 504) : made;
   }
 
   // TIR refuses a key label over 50 characters, as the real API does.

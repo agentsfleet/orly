@@ -1,5 +1,4 @@
 import type { Outcome } from "./process";
-import { done, ongoing } from "./progress";
 import type { Environment } from "./settings";
 import type { BurstRun, Fetch, Job, Machine, Status } from "./types";
 
@@ -9,6 +8,7 @@ import { join } from "node:path";
 import { OrlyError } from "../model";
 import { BUNDLE, INPUTS, resultsScript, SETUP_FAILED, WORK } from "./job";
 import { captureProcess, machineDeadline, streamProcess, until } from "./process";
+import { done, ongoing } from "./progress";
 import { bundleFor } from "./repository";
 import { IPV4 } from "./types";
 

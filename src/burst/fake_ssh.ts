@@ -5,10 +5,9 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-// dropAddresses: the machines, by address or instance identifier, whose session drops.
 // unreachable: no machine's SSH answers, as when a security group stops admitting the caller.
 // warmCommit: the commit every machine's warm checkout holds; unset, machines are cold.
-type Scenario = { exits?: Record<string, number | "drop">; sleepMs?: number; dropAddresses?: string[]; unreachable?: boolean; warmCommit?: string };
+type Scenario = { exits?: Record<string, number | "drop">; sleepMs?: number; unreachable?: boolean; warmCommit?: string };
 
 const RESULTS_MARKER = 'tar -czf - "$@"';
 const NO_RESULTS = 3;
@@ -64,7 +63,6 @@ async function job(script: string): Promise<number> {
     writeFileSync(join(directory, "report", "summary.txt"), `lane ${lane} results\n`);
     Bun.spawnSync(["tar", "-czf", join(node, "results.tar.gz"), "-C", directory, "report"]);
   }
-  if (scenario.dropAddresses?.includes(address)) return 255;
   const outcome = scenario.exits?.[lane] ?? 0;
   return outcome === "drop" ? 255 : outcome;
 }

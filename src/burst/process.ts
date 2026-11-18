@@ -33,6 +33,9 @@ const OP_TIMEOUT_MS = 60_000;
 // 1Password reads run this many at a time: a lane's secrets resolve in parallel
 // without flooding the op daemon.
 const OP_READS_AT_ONCE = 4;
+// A machine that has not booted, or answered SSH, within this long never
+// will, so these waits end well inside a run's deadline.
+export const MACHINE_WAIT_MS = 10 * 60_000;
 
 // One long-running child, in its own process group so a deadline or a
 // cancellation stops everything it started, with output streamed line by line.
@@ -66,7 +69,7 @@ export async function streamProcess(argv: string[], options: StreamOptions): Pro
   return child.exitCode === null ? { stopped: "interrupted" } : { code: child.exitCode };
 }
 
-// One short command whose output is read whole: an `aws` query, `git`, `tar`.
+// One short command whose output is read whole: `git`, `tar`, `ssh` probes.
 // It runs in its own process group, so a Ctrl-C at the terminal reaches orly
 // alone; only the signal passed here stops it, which is how cleanup commands,
 // handed no signal, still finish after a cancellation.
@@ -111,9 +114,6 @@ export async function pause(ms: number, signal: AbortSignal): Promise<void> {
   }
 }
 
-// A machine that has not booted, or answered SSH, within this long never
-// will, so these waits end well inside a run's deadline.
-export const MACHINE_WAIT_MS = 10 * 60_000;
 
 export function machineDeadline(job: { deadline: number }, now = Date.now()): number {
   return Math.min(job.deadline, now + MACHINE_WAIT_MS);

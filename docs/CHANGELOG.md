@@ -2,18 +2,13 @@
 
 ## 0.60.0 (2026-11-18)
 
-Burst lanes run on E2E Networks for real, take their placement from `.orly/orly.json`, and end every step with one deterministic outcome.
+Burst lanes run on E2E Networks for real, take their placement from `.orly/orly.json`, and end each step deterministically.
 
-- **E2E** — Launch, capture and teardown work against the real TIR API, on `Debian 13` by default. Every job remounts a noexec `/tmp`. TIR's busy answers are waited out, and a VM whose create reply was lost is deleted by name.
-- **Placement** — Region, plan, instance types, image and login user move to `burst.e2e` and `burst.aws`, read from the ref a run ships. A moved or removed variable that is still set is refused by name.
-- **Snapshots** — A snapshot's name records its base image, and lanes boot only a snapshot of the configured image. `--prune` keeps the newest one and accepts `--ref`; snapshots taken by 0.50.0 no longer match.
-- **Upload** — A warm machine receives only the commits it lacks. Every machine checks out the exact commit the caller resolved, then removes untracked files.
-- **Outcomes** — A failed `apt`, checkout or `burst.setup` reports `exit=not_run`. An interrupted `ssh` reports `interrupted`, and a cancelled image save fails the capture.
-- **Waits** — Each wait says what it waits for, and a boot or SSH wait ends within 10 minutes. A caller whose address changed ends the lane at once, and a closed terminal cancels the run like Ctrl-C.
-- **Progress** — Lines read `⏳ …` while a step runs, `🟢` when done and `🔴` when it failed or needs a person. The `lane=` and `total` lines stay unmarked, and a finished run deletes its bundle and key.
-- **Packages** — EC2 calls go through the AWS SDK on Bun's `fetch`, with its retries, instead of parsing `aws` command-line output. TIR calls go through `ky`, which retries busy answers. The `aws` tool is no longer needed.
-- **Removed** — `--provider here`, `--keep`, `spot-then-on-demand`, Systems Manager access, `ORLY_BURST_SUBNET` and `ORLY_BURST_SNAPSHOT_KEEP`; nothing called them.
-- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.60.0 update`, move placement variables into `burst.e2e` or `burst.aws`, then capture a new snapshot.
+- **E2E** — Launch, capture and cleanup work against the real TIR API, on `Debian 13` by default.
+- **Placement** — Region, plan, instance types and image move to `burst.e2e` and `burst.aws`; a moved variable still set is refused.
+- **Snapshots** — A snapshot records its base image, and lanes boot only a matching one. Snapshots from the Nov 17, 2026 release no longer match.
+- **Clients** — The AWS software development kit (SDK) and `ky` replace hand-written cloud calls, and both retry busy answers.
+- **Removed** — `--provider here`, `--keep`, `spot-then-on-demand` and Systems Manager access; nothing called them.
 
 ## 0.50.0 (2026-11-17)
 

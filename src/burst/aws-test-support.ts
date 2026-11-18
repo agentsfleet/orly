@@ -6,8 +6,8 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
   AuthorizeSecurityGroupIngressCommand, CreateImageCommand, CreateSecurityGroupCommand, DeleteKeyPairCommand, DeleteSecurityGroupCommand,
-  DeleteSnapshotCommand, DeregisterImageCommand, DescribeImagesCommand, DescribeInstancesCommand, DescribeSpotPriceHistoryCommand, EC2Client,
-  ImportKeyPairCommand, RunInstancesCommand, StopInstancesCommand, TerminateInstancesCommand,
+  DeleteSnapshotCommand, DeregisterImageCommand, DescribeImagesCommand, DescribeInstancesCommand, DescribeSecurityGroupsCommand, DescribeSpotPriceHistoryCommand,
+  EC2Client, ImportKeyPairCommand, RunInstancesCommand, StopInstancesCommand, TerminateInstancesCommand,
 } from "@aws-sdk/client-ec2";
 import { mockClient } from "aws-sdk-client-mock";
 
@@ -17,8 +17,9 @@ import { burstDependencies, burstEnvironment, burstRepository, callerAddress, fa
 // vanish: an instance is terminated before it answers. lostReply: the
 // instance launches but the launch call fails. describeFails: every instance
 // read fails with this error. imagePendingPolls and imageFails shape every
-// image a capture makes.
-export type Ec2Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lostReply?: boolean; describeFails?: string; imagePendingPolls?: number; imageFails?: string; priceUnavailable?: boolean };
+// image a capture makes. lostCreate: the key or group is made, but its
+// create call fails.
+export type Ec2Scenario = { noCapacity?: string[]; refuse?: string; vanish?: boolean; lostReply?: boolean; describeFails?: string; imagePendingPolls?: number; imageFails?: string; priceUnavailable?: boolean; lostCreate?: "ImportKeyPair" | "CreateSecurityGroup" };
 type Instance = { id: string; type: string; state: string; address: string; run: string; spot: boolean; shutdown: string };
 type FakeImage = { id: string; name: string; repo: string; snapshots: string[]; size: number; pendingPolls: number; fails?: string };
 type Call = { command: string; input: Record<string, unknown>; region: string };
@@ -26,23 +27,25 @@ type Tagged = { TagSpecifications?: Array<{ Tags?: Array<{ Key?: string; Value?:
 
 const COMMANDS = {
   AuthorizeSecurityGroupIngressCommand, CreateImageCommand, CreateSecurityGroupCommand, DeleteKeyPairCommand, DeleteSecurityGroupCommand,
-  DeleteSnapshotCommand, DeregisterImageCommand, DescribeImagesCommand, DescribeInstancesCommand, DescribeSpotPriceHistoryCommand,
+  DeleteSnapshotCommand, DeregisterImageCommand, DescribeImagesCommand, DescribeInstancesCommand, DescribeSecurityGroupsCommand, DescribeSpotPriceHistoryCommand,
   ImportKeyPairCommand, RunInstancesCommand, StopInstancesCommand, TerminateInstancesCommand,
 };
 export const GROUP_ID = "sg-0123456789abcdef0";
-let installed: ReturnType<typeof mockClient> | undefined;
+// The library's own pattern: one stub per client class for the test file,
+// reset by each FakeEc2 and restored after each test.
+const ec2Mock = mockClient(EC2Client);
 
 export class FakeEc2 {
   readonly calls: Call[] = [];
   readonly instances = new Map<string, Instance>();
   images: FakeImage[] = [];
+  groups: string[] = [];
   #nextInstance = 1;
 
   constructor(readonly scenario: Ec2Scenario = {}) {
-    restoreEc2();
-    installed = mockClient(EC2Client);
+    ec2Mock.reset();
     for (const [name, command] of Object.entries(COMMANDS)) {
-      installed.on(command as never).callsFake(async (input: Record<string, unknown>, getClient: () => unknown) => {
+      ec2Mock.on(command as never).callsFake(async (input: Record<string, unknown>, getClient: () => unknown) => {
         this.calls.push({ command: name.replace(/Command$/, ""), input, region: await (getClient() as EC2Client).config.region() });
         return this.#answer(name.replace(/Command$/, ""), input);
       });
@@ -60,7 +63,11 @@ export class FakeEc2 {
 
   #answer(command: string, input: Record<string, unknown>): unknown {
     switch (command) {
-      case "CreateSecurityGroup": return { GroupId: GROUP_ID };
+      case "ImportKeyPair": return this.#lost(command, {});
+      case "CreateSecurityGroup":
+        this.groups.push(String(input.GroupName));
+        return this.#lost(command, { GroupId: GROUP_ID });
+      case "DescribeSecurityGroups": return { SecurityGroups: this.groups.map(() => ({ GroupId: GROUP_ID })) };
       case "RunInstances": return this.#launch(input);
       case "DescribeInstances": return this.#describe(input);
       case "TerminateInstances": return this.#set(input, "terminated");
@@ -75,6 +82,11 @@ export class FakeEc2 {
         return {};
       default: return {};
     }
+  }
+
+  #lost(command: string, answer: unknown): unknown {
+    if (this.scenario.lostCreate === command) throw named("RequestTimeout", `${command} made, but its reply was lost`);
+    return answer;
   }
 
   #launch(input: Record<string, unknown>): unknown {
@@ -137,8 +149,7 @@ export class FakeEc2 {
 }
 
 export function restoreEc2(): void {
-  installed?.restore();
-  installed = undefined;
+  ec2Mock.reset();
 }
 
 export async function awsRun(scenario: Ec2Scenario = {}, burstConfig: Record<string, unknown> = {}, extra: Record<string, string> = {}) {

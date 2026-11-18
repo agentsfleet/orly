@@ -1,12 +1,12 @@
+import type { _InstanceType, DescribeImagesCommandInput, ResourceType } from "@aws-sdk/client-ec2";
 import type { BurstSettings } from "./settings";
 import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot, SnapshotScope } from "./types";
 
 import {
-  AuthorizeSecurityGroupIngressCommand, CreateImageCommand, CreateSecurityGroupCommand, DeleteKeyPairCommand, DeleteSecurityGroupCommand,
-  DeleteSnapshotCommand, DeregisterImageCommand, DescribeImagesCommand, DescribeInstancesCommand, DescribeSpotPriceHistoryCommand, EC2Client,
+  _InstanceType as INSTANCE_TYPES, AuthorizeSecurityGroupIngressCommand, CreateImageCommand, CreateSecurityGroupCommand, DeleteKeyPairCommand, DeleteSecurityGroupCommand,
+  DeleteSnapshotCommand, DeregisterImageCommand, DescribeImagesCommand, DescribeInstancesCommand, DescribeSecurityGroupsCommand, DescribeSpotPriceHistoryCommand, EC2Client,
   ImportKeyPairCommand, RunInstancesCommand, StopInstancesCommand, TerminateInstancesCommand,
 } from "@aws-sdk/client-ec2";
-import type { DescribeImagesCommandInput, ResourceType } from "@aws-sdk/client-ec2";
 import { FetchHttpHandler } from "@smithy/fetch-http-handler";
 
 import { messageOf, OrlyError } from "../model";
@@ -54,7 +54,7 @@ export class AwsSpot implements CloudProvider {
   readonly user: string;
   readonly #settings: BurstSettings;
   readonly #ec2: EC2Client;
-  #keyImported = false;
+  #started = false;
   #group: string | undefined;
 
   constructor(settings: BurstSettings) {
@@ -65,8 +65,8 @@ export class AwsSpot implements CloudProvider {
   }
 
   cost(machine: Machine): string {
-    if (machine.market !== "spot") return "on-demand rate";
-    return machine.hourly === undefined ? "spot rate unavailable" : `$${machine.hourly}/h (spot)`;
+    if (machine.billing?.market !== "spot") return "on-demand rate";
+    return machine.billing.hourly === undefined ? "spot rate unavailable" : `$${machine.billing.hourly}/h (spot)`;
   }
 
   storage(snapshot: Snapshot): string {
@@ -83,15 +83,19 @@ export class AwsSpot implements CloudProvider {
     return this.#images({ Owners: ["self"], Filters: [{ Name: "tag:orly-burst", Values: [scope.repo] }, { Name: "state", Values: ["available"] }] }, scope.signal);
   }
 
+  // Both names are the run's own, so a create the SDK retried after AWS made
+  // it answers Duplicate, which means made; finish deletes both by name.
   async prepare(run: BurstRun): Promise<void> {
     const name = runName(run);
-    await this.#ec2.send(new ImportKeyPairCommand({ KeyName: name, PublicKeyMaterial: new TextEncoder().encode(run.publicKey), TagSpecifications: tagged("key-pair", run.runId) }), { abortSignal: run.signal });
-    this.#keyImported = true;
-    const group = await this.#ec2.send(new CreateSecurityGroupCommand({ GroupName: name, Description: `orly burst ${run.runId}: SSH from the caller only`, TagSpecifications: tagged("security-group", run.runId) }), { abortSignal: run.signal });
-    this.#group = group.GroupId;
+    this.#started = true;
+    await this.#ec2.send(new ImportKeyPairCommand({ KeyName: name, PublicKeyMaterial: new TextEncoder().encode(run.publicKey), TagSpecifications: tagged("key-pair", run.runId) }), { abortSignal: run.signal })
+      .catch(duplicateIsMade);
+    const group = await this.#ec2.send(new CreateSecurityGroupCommand({ GroupName: name, Description: `orly burst ${run.runId}: SSH from the caller only`, TagSpecifications: tagged("security-group", run.runId) }), { abortSignal: run.signal })
+      .catch(duplicateIsMade);
+    this.#group = group?.GroupId ?? await this.#groupNamed(name);
     await this.#ec2.send(new AuthorizeSecurityGroupIngressCommand({
       GroupId: this.#group, IpPermissions: [{ IpProtocol: "tcp", FromPort: 22, ToPort: 22, IpRanges: [{ CidrIp: `${run.caller}/32` }] }],
-    }), { abortSignal: run.signal });
+    }), { abortSignal: run.signal }).catch(duplicateIsMade);
     run.write(done(`${name} admits SSH from ${run.caller} only`));
   }
 
@@ -100,14 +104,15 @@ export class AwsSpot implements CloudProvider {
     const root = await this.#rootDevice(job.image, run.signal);
     let refusal = "";
     for (const type of this.#settings.aws.types) {
+      if (!isInstanceType(type)) throw new OrlyError(`burst.aws.instance_types names ${type}, which EC2 does not offer`);
       try {
         const launched = await this.#ec2.send(this.#runInstances(run, job, type, spot, root), { abortSignal: run.signal });
         const instance = launched.Instances?.[0];
         const id = instance?.InstanceId;
         if (!id) throw new OrlyError("run-instances answered no instance");
         run.write(done(`lane=${job.name} ${id} (${type}${spot ? " spot" : " on-demand"}) started from ${job.image.name}`));
-        const hourly = spot ? await this.#spotPrice(type, instance.Placement?.AvailabilityZone, run.signal) : undefined;
-        return { id, label: type, address: undefined, market: spot ? "spot" : "on-demand", ...(hourly === undefined ? {} : { hourly }) };
+        const billing = spot ? { market: "spot" as const, hourly: await this.#spotPrice(type, instance.Placement?.AvailabilityZone, run.signal) } : { market: "on-demand" as const };
+        return { id, label: type, address: undefined, billing };
       } catch (error) {
         const code = error instanceof Error ? error.name : "";
         if (SPOT_ROLE_MISSING.test(code)) throw new OrlyError(`this account has never launched a Spot instance: an administrator runs \`${SPOT_ROLE_COMMAND}\` once (https://github.com/agentsfleet/orly/blob/main/docs/BURST.md)`);
@@ -173,7 +178,7 @@ export class AwsSpot implements CloudProvider {
   // whose launch reply was lost before its identifier came back. A security
   // group cannot be deleted while an instance uses it, so this waits for them.
   async finish(run: BurstRun): Promise<void> {
-    if (!this.#keyImported) return;
+    if (!this.#started) return;
     const name = runName(run);
     try {
       const tagged = await this.#ec2.send(new DescribeInstancesCommand({ Filters: [{ Name: "tag:orly-burst", Values: [run.runId] }, { Name: "instance-state-name", Values: LIVE_STATES }] }));
@@ -190,17 +195,18 @@ export class AwsSpot implements CloudProvider {
     } catch (error) {
       run.write(failed(`could not terminate the run's instances: ${messageOf(error)}; delete them by hand`));
     }
-    if (this.#group) {
-      await this.#ec2.send(new DeleteSecurityGroupCommand({ GroupId: this.#group }))
-        .catch((error: unknown) => run.write(failed(`could not delete security group ${this.#group}: ${messageOf(error)}; delete it by hand`)));
+    const group = this.#group ?? await this.#groupNamed(name).catch(() => undefined);
+    if (group) {
+      await this.#ec2.send(new DeleteSecurityGroupCommand({ GroupId: group }))
+        .catch((error: unknown) => run.write(failed(`could not delete security group ${group}: ${messageOf(error)}; delete it by hand`)));
     }
     await this.#ec2.send(new DeleteKeyPairCommand({ KeyName: name }))
       .catch((error: unknown) => run.write(failed(`could not delete key pair ${name}: ${messageOf(error)}; delete it by hand`)));
   }
 
-  #runInstances(run: BurstRun, job: Job, type: string, spot: boolean, root: string): RunInstancesCommand {
+  #runInstances(run: BurstRun, job: Job, type: _InstanceType, spot: boolean, root: string): RunInstancesCommand {
     return new RunInstancesCommand({
-      ImageId: job.image.id, InstanceType: type as never, MinCount: 1, MaxCount: 1, KeyName: runName(run), SecurityGroupIds: this.#group ? [this.#group] : [],
+      ImageId: job.image.id, InstanceType: type, MinCount: 1, MaxCount: 1, KeyName: runName(run), SecurityGroupIds: this.#group ? [this.#group] : [],
       ...(spot ? { InstanceMarketOptions: { MarketType: "spot", SpotOptions: { SpotInstanceType: "one-time", InstanceInterruptionBehavior: "terminate" } } } : {}),
       // A lane's machine is gone when it shuts down, on either market; only a
       // warm-up stops, so it can be imaged.
@@ -225,12 +231,17 @@ export class AwsSpot implements CloudProvider {
   }
 
   // The current Spot price in the zone the instance landed in, when AWS says.
-  async #spotPrice(type: string, zone: string | undefined, signal: AbortSignal): Promise<number | undefined> {
+  async #spotPrice(type: _InstanceType, zone: string | undefined, signal: AbortSignal): Promise<number | undefined> {
     const history = await this.#ec2.send(new DescribeSpotPriceHistoryCommand({
-      InstanceTypes: [type as never], ProductDescriptions: ["Linux/UNIX"], StartTime: new Date(), ...(zone ? { AvailabilityZone: zone } : {}),
+      InstanceTypes: [type], ProductDescriptions: ["Linux/UNIX"], StartTime: new Date(), ...(zone ? { AvailabilityZone: zone } : {}),
     }), { abortSignal: signal }).catch(() => undefined);
     const value = Number(history?.SpotPriceHistory?.[0]?.SpotPrice);
     return Number.isFinite(value) && value > 0 ? value : undefined;
+  }
+
+  async #groupNamed(name: string): Promise<string | undefined> {
+    const found = await this.#ec2.send(new DescribeSecurityGroupsCommand({ Filters: [{ Name: "group-name", Values: [name] }] }));
+    return found.SecurityGroups?.[0]?.GroupId;
   }
 
   async #instance(id: string, signal: AbortSignal) {
@@ -246,6 +257,15 @@ export class AwsSpot implements CloudProvider {
       return { id: image.ImageId ?? "", name: image.Name ?? "", sizeGb: sizes.length ? sizes.reduce((sum, size) => sum + size, 0) : undefined, parts: volumes.flatMap((volume) => volume.SnapshotId ? [volume.SnapshotId] : []), ready: true };
     });
   }
+}
+
+function isInstanceType(type: string): type is _InstanceType {
+  return Object.values<string>(INSTANCE_TYPES).includes(type);
+}
+
+function duplicateIsMade(error: unknown): undefined {
+  if (error instanceof Error && error.name.endsWith(".Duplicate")) return undefined;
+  throw error;
 }
 
 function notYet(error: unknown): undefined {

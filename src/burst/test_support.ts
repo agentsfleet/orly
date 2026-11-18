@@ -1,8 +1,8 @@
 // Shared fixtures for the burst suites: a repository with lanes declared, a
 // directory of fake executables first on PATH, a line sink, and the
-// caller-address answer; fake_tir.ts answers for E2E Networks TIR. No suite
-// reaches a real cloud: `aws`, `ssh` and `op` on the PATH they hand orly are
-// these fakes, and the only fetch they hand it is one of these.
+// caller-address answer; fake_tir.ts answers for E2E Networks TIR and
+// aws-test-support.ts for EC2. No suite reaches a real cloud: `ssh` and `op`
+// on the PATH they hand orly are fakes, and so is every fetch.
 import type { BurstDependencies } from "./index";
 import type { Environment } from "./settings";
 
@@ -93,7 +93,16 @@ async function unreachable(): Promise<Response> {
   throw new Error("this test makes no HTTP request");
 }
 
+// The first four hexadecimal characters of each base image's SHA-256, worked
+// out once by hand: `printf %s 'Debian 13' | shasum -a 256`.
+const IMAGE_DIGESTS: Readonly<Record<string, string>> = {
+  "Debian 13": "c0e7", "Ubuntu 22.04": "7630",
+  "resolve:ssm:/aws/service/debian/release/13/latest/amd64": "dd74", "ami-0123456789abcdef0": "b1fa",
+};
+
 // A snapshot name orly would give an image of `image` taken at `stamp`.
 export function snapshotOf(image: string, stamp: string): string {
-  return `orly-burst-${REPOSITORY}-${stamp}-${new Bun.CryptoHasher("sha256").update(image).digest("hex").slice(0, 4)}abcd`;
+  const digest = IMAGE_DIGESTS[image];
+  if (!digest) throw new Error(`no digest recorded for ${image}`);
+  return `orly-burst-${REPOSITORY}-${stamp}-${digest}abcd`;
 }

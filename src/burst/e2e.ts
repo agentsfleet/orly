@@ -1,20 +1,27 @@
 import type { BurstSettings } from "./settings";
-import { done, failed, ongoing } from "./progress";
 import type { BurstRun, CloudProvider, Fetch, Image, Job, Machine, Snapshot, SnapshotScope } from "./types";
 import type { OsImage, Plan, VmSnapshot } from "./tir";
 
 import { messageOf, OrlyError } from "../model";
 import { machineDeadline, pause, until } from "./process";
+import { done, failed, ongoing } from "./progress";
 import { E2eApi, E2eRequestFailed } from "./tir";
 
+// TIR caps a key label at 50 characters. A run id ends in its 14-digit stamp
+// and 4-character suffix, which keep labels unique, so the ref part is cut.
+export const TIR_LABEL_LIMIT = 50;
+const LABEL_PREFIX = "orly-burst-";
+const RUN_ID_TAIL = 20;
 const DEFAULT_IMAGE = "Debian 13";
 // How long VM deletion, then the group's delete, are waited for before each
 // is reported for deletion by hand.
 const CLEANUP_MS = 5 * 60_000;
 const NOT_FOUND = 404;
 const SERVER_ERROR = 500;
-// TIR's answer to a second delete of a VM it is already deleting.
+// TIR's answer to a second delete of a VM it is already deleting, and to a
+// group or key a resource still uses.
 const ALREADY_DELETING = 400;
+const IN_USE = new Set([400, 412]);
 // Statuses TIR reports for a VM that will not come up, or a snapshot that will not save.
 const FAILED = new Set(["error", "failed"]);
 // TIR reports a booted VM as `ready`; `running` is accepted as well.
@@ -41,7 +48,10 @@ export class E2eNodes implements CloudProvider {
   readonly #api: E2eApi;
   #plan: Promise<Plan> | undefined;
   #group: string | undefined;
-  #keyLabel: string | undefined;
+  // Set before the key and group are created, so cleanup finds them by name
+  // even when TIR made one and its reply was lost.
+  #label: string | undefined;
+  #keyConfirmed = false;
   readonly #statuses = new Map<string, string>();
   // VMs whose create request failed after it may have reached TIR.
   readonly #unconfirmed = new Set<string>();
@@ -72,8 +82,9 @@ export class E2eNodes implements CloudProvider {
 
   async prepare(run: BurstRun): Promise<void> {
     const name = tirLabel(run.runId);
+    this.#label = name;
     await this.#api.addKey(name, run.publicKey, run.signal);
-    this.#keyLabel = name;
+    this.#keyConfirmed = true;
     this.#group = await this.#api.createSshGroup(name, run.caller, run.signal);
     run.write(done(`${name} admits SSH from ${run.caller} only`));
   }
@@ -173,24 +184,28 @@ export class E2eNodes implements CloudProvider {
   // the run's key and group, which TIR holds while any VM uses them. Cleanup
   // takes no cancellation: it is what a cancellation runs.
   async finish(run: BurstRun): Promise<void> {
-    const label = this.#keyLabel;
+    const label = this.#label;
     if (!label) return;
     if (this.#unconfirmed.size > 0) await this.#sweep(run);
     try {
       const pk = (await this.#api.keys()).find((key) => key.label === label)?.pk;
-      if (!pk) throw new OrlyError("TIR lists no such key");
-      await this.#api.deleteKey(pk);
-      run.write(done(`deleted TIR key ${label}`));
+      if (pk) {
+        await this.#api.deleteKey(pk).catch(goneIsDeleted);
+        run.write(done(`deleted TIR key ${label}`));
+      } else if (this.#keyConfirmed) throw new OrlyError("TIR lists no such key");
     } catch (error) {
       run.write(failed(`could not delete TIR key ${label}: ${messageOf(error)}; delete it by hand`));
     }
-    const group = this.#group;
+    const group = this.#group ?? (await this.#api.groups().catch(() => [])).find((candidate) => candidate.name === label)?.id;
     if (!group) return;
     const never = new AbortController().signal;
-    const deleted = async () => this.#api.deleteSecurityGroup(group).then(() => true, () => undefined);
+    const deleted = () => this.#api.deleteSecurityGroup(group).then(() => true, (error: unknown) => {
+      if (error instanceof E2eRequestFailed && IN_USE.has(error.status)) return undefined;
+      return goneIsDeleted(error).then(() => true);
+    });
     await until(`security group ${group} to delete`, deleted, { deadline: Date.now() + CLEANUP_MS, signal: never, pollMs: this.#settings.pollMs })
       .then(() => run.write(done(`deleted TIR security group ${group}`)))
-      .catch(() => run.write(failed(`could not delete TIR security group ${group} (${label}); delete it by hand`)));
+      .catch((error: unknown) => run.write(failed(`could not delete TIR security group ${group} (${label}): ${messageOf(error)}; delete it by hand`)));
   }
 
   async #sweep(run: BurstRun): Promise<void> {
@@ -236,15 +251,15 @@ export class E2eNodes implements CloudProvider {
 
 }
 
+// A delete TIR retried after its first attempt took effect answers 404.
+async function goneIsDeleted(error: unknown): Promise<void> {
+  if (!(error instanceof E2eRequestFailed && error.status === NOT_FOUND)) throw error;
+}
+
 function toSnapshot(snapshot: VmSnapshot): Snapshot {
   return { id: snapshot.id, name: snapshot.name, sizeGb: snapshot.sizeGb, parts: [], ready: snapshot.status === READY };
 }
 
-// TIR caps a key label at 50 characters. A run id ends in its 14-digit stamp
-// and 4-character suffix, which keep labels unique, so the ref part is cut.
-export const TIR_LABEL_LIMIT = 50;
-const LABEL_PREFIX = "orly-burst-";
-const RUN_ID_TAIL = 20;
 
 export function tirLabel(runId: string): string {
   const tail = runId.slice(-RUN_ID_TAIL);

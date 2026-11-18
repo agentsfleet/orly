@@ -121,12 +121,20 @@ describe("aws-spot lanes", () => {
     expect(commands.slice(-2)).toEqual(["DeleteSecurityGroup", "DeleteKeyPair"]);
   });
 
+  test.each(["ImportKeyPair", "CreateSecurityGroup"] as const)("a %s whose reply was lost is still deleted by name", async (command) => {
+    const run = await awsRun({ lostCreate: command });
+
+    await expect(burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).rejects.toThrow("made, but its reply was lost");
+    expect(run.ec2.inputs("DeleteKeyPair")).toHaveLength(1);
+    expect(run.ec2.inputs("DeleteSecurityGroup")).toEqual(command === "CreateSecurityGroup" ? [{ GroupId: GROUP_ID }] : []);
+    expect(run.ec2.inputs("RunInstances")).toHaveLength(0);
+  });
+
   test("an instance read that fails after the SDK's own retries ends the wait at once, and the instance is terminated", async () => {
     const run = await awsRun({ describeFails: "AuthFailure" });
-    const started = Date.now();
 
     expect(await burst(["acceptance", "--provider", "aws-spot"], run.dependencies)).toBe(1);
-    expect(Date.now() - started).toBeLessThan(30_000);
+    expect(run.ec2.inputs("DescribeInstances").filter((input) => input.InstanceIds)).toHaveLength(1);
     expect(run.output.text()).toContain("describe refused");
     expect(run.output.text()).toMatch(/exit=interrupted /);
     expect(run.ec2.inputs("TerminateInstances").length).toBeGreaterThanOrEqual(1);

@@ -33,6 +33,7 @@ const imagesSchema = z.object({ data: z.array(z.object({ name: z.string(), versi
 const keysSchema = z.object({ data: z.array(z.object({ pk: identifier, label: z.string() })) });
 const vmsSchema = z.object({ data: z.array(z.object({ id: identifier, name: z.string() })), total_page_number: z.number().nullish() });
 const groupSchema = z.object({ data: z.object({ id: identifier }) });
+const groupsSchema = z.object({ data: z.array(z.object({ id: identifier, name: z.string() })) });
 // One VM answers `data.id`; a quantity of them answers `data.created`.
 const createdSchema = z.object({ data: z.union([z.object({ id: identifier }), z.object({ created: z.array(z.object({ id: identifier })).min(1) })]) });
 const vmSchema = z.object({ data: z.object({ status: z.string(), public_ip: z.string().nullish() }) });
@@ -100,6 +101,10 @@ export class E2eApi {
       { rule_type: "outbound", protocol: "All", protocol_type: "AllTraffic", network_type: "any", ports: [], description: "All traffic from the orly burst machine" },
     ];
     return groupSchema.parse(await this.#request("POST", "/security_groups/", { signal, body: { name, description: "SSH for one orly burst run", rules } })).data.id;
+  }
+
+  async groups(): Promise<Array<{ id: string; name: string }>> {
+    return groupsSchema.parse(await this.#request("GET", "/security_groups/")).data;
   }
 
   // DELETE /security_groups/{id}/; the `/rules/` path answers 405.

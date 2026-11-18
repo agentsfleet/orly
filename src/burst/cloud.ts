@@ -1,5 +1,4 @@
 import type { Environment } from "./settings";
-import { done, failed, ongoing } from "./progress";
 import type { StagedDirectory } from "./ssh";
 import type { BurstRun, CloudProvider, Image, Job, LaneResult, Machine, Snapshot, SnapshotScope, Status } from "./types";
 
@@ -7,6 +6,7 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 import { remoteScript } from "./job";
+import { done, failed, ongoing } from "./progress";
 import { resolveSecrets } from "./process";
 import { archiveDirectories, forgetRunFiles, reachable, runOverSsh } from "./ssh";
 import { LANE_PREFIX, MINUTE_MS } from "./types";
@@ -14,6 +14,7 @@ import { messageOf, OrlyError } from "../model";
 
 // What only a lane receives: its secrets and its copied directories.
 type LaneInputs = { secrets: Environment; directories: readonly StagedDirectory[] };
+type NamedSnapshot = { snapshot: Snapshot; stamp: string; digest: string };
 
 const NO_INPUTS: LaneInputs = Object.freeze({ secrets: {}, directories: [] });
 const SNAPSHOT_JOB = "snapshot";
@@ -75,8 +76,9 @@ export async function cloudSnapshot(provider: CloudProvider, run: BurstRun): Pro
 // every other snapshot of the repository, including those of another image.
 export async function cloudPrune(provider: CloudProvider, scope: SnapshotScope): Promise<Snapshot[]> {
   const snapshots = await repositorySnapshots(provider, scope);
-  const kept = snapshots.filter((snapshot) => ofImage(snapshot, provider.baseImage())).slice(0, KEEP);
-  const doomed = snapshots.filter((snapshot) => !kept.includes(snapshot));
+  const digest = imageDigest(provider.baseImage());
+  const kept = snapshots.filter((entry) => entry.digest === digest).slice(0, KEEP);
+  const doomed = snapshots.filter((entry) => !kept.includes(entry)).map((entry) => entry.snapshot);
   for (const snapshot of doomed) {
     await provider.deleteSnapshot(snapshot, scope.signal);
     scope.write(`orly burst: deleted snapshot ${snapshot.name} (${snapshot.id})`);
@@ -85,17 +87,22 @@ export async function cloudPrune(provider: CloudProvider, scope: SnapshotScope):
   return doomed;
 }
 
-// The repository's snapshots, newest first by the timestamp their names carry.
-async function repositorySnapshots(provider: CloudProvider, scope: SnapshotScope): Promise<Snapshot[]> {
-  const name = new RegExp(`^orly-burst-${scope.repo}-\\d{17}-[0-9a-f]{${SUFFIX_CHARS}}$`);
-  return (await provider.snapshots(scope)).filter((snapshot) => name.test(snapshot.name)).sort((left, right) => left.name < right.name ? 1 : left.name > right.name ? -1 : 0);
+// The repository's snapshots, each read once into the moment it was taken
+// and the digest of its base image, newest first.
+async function repositorySnapshots(provider: CloudProvider, scope: SnapshotScope): Promise<NamedSnapshot[]> {
+  const name = new RegExp(`^orly-burst-${scope.repo}-(\\d{17})-([0-9a-f]{${IMAGE_DIGEST_CHARS}})[0-9a-f]{${SUFFIX_CHARS - IMAGE_DIGEST_CHARS}}$`);
+  return (await provider.snapshots(scope)).flatMap((snapshot) => {
+    const [, stamp = "", digest = ""] = name.exec(snapshot.name) ?? [];
+    return stamp ? [{ snapshot, stamp, digest }] : [];
+  }).sort((left, right) => right.stamp.localeCompare(left.stamp) || right.snapshot.name.localeCompare(left.snapshot.name));
 }
 
 // The newest snapshot warmed from the configured base image, unless
 // --no-snapshot; the base image itself when there is none.
 async function chooseImage(provider: CloudProvider, run: BurstRun, useSnapshot: boolean): Promise<Image> {
   const base = provider.baseImage();
-  const newest = useSnapshot ? (await repositorySnapshots(provider, run)).find((snapshot) => ofImage(snapshot, base)) : undefined;
+  const digest = imageDigest(base);
+  const newest = useSnapshot ? (await repositorySnapshots(provider, run)).find((entry) => entry.digest === digest)?.snapshot : undefined;
   return newest ? { id: newest.id, name: newest.name, snapshot: true } : base;
 }
 
@@ -161,10 +168,6 @@ function newJob(run: BurstRun, kind: Job["kind"], name: string, image: Image): J
 // the image the repository names now.
 function snapshotName(repo: string, image: Image, now: Date): string {
   return `orly-burst-${repo}-${now.toISOString().replace(/\D/g, "")}-${imageDigest(image)}${crypto.randomUUID().slice(0, SUFFIX_CHARS - IMAGE_DIGEST_CHARS)}`;
-}
-
-function ofImage(snapshot: Snapshot, image: Image): boolean {
-  return snapshot.name.slice(-SUFFIX_CHARS, -SUFFIX_CHARS + IMAGE_DIGEST_CHARS) === imageDigest(image);
 }
 
 function imageDigest(image: Image): string {

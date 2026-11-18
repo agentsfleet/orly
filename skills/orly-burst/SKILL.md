@@ -1,8 +1,8 @@
 ---
 name: orly-burst
 description: |
-  Run requested burst lanes on AWS or E2E Networks, or on the current runner,
-  and manage their snapshots. Use on "run acceptance on a burst box" or
+  Run requested burst lanes on AWS or E2E Networks, and manage their
+  snapshots. Use on "run acceptance on a burst box" or
   "capture a snapshot". Paid runs need explicit authorization; missing PR
   evidence does not authorize a run. Never run from a gate or hook.
 ---
