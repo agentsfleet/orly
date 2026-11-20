@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.60.3 (2026-11-20)
+
+A create keyed by a tenant-unique natural key takes no `Idempotency-Key`.
+
+- **HTTP** — HTTP-IDEMKEY's workspace exception becomes a rule. A retry of such a create answers `409` naming the existing resource, and the client recovers by reading it. Workspace creation and runner registration are the examples.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.60.3 update` after this version is published.
+
 ## 0.60.2 (2026-11-18)
 
 SQL identity guidance leaves Universally Unique Identifier (UUID) version validation in the application.
