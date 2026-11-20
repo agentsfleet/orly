@@ -5,6 +5,7 @@
 A create keyed by a tenant-unique natural key takes no `Idempotency-Key`.
 
 - **HTTP** — HTTP-IDEMKEY's workspace exception becomes a rule. A retry of such a create answers `409` naming the existing resource, and the client recovers by reading it. Workspace creation and runner registration are the examples.
+- **Bun** — orly now needs Bun 1.4.5 or later (`engines.bun` is `>=1.4.5`); the harness, release and test workflows pin 1.4.5.
 - **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.60.3 update` after this version is published.
 
 ## 0.60.2 (2026-11-18)
