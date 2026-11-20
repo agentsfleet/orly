@@ -3,8 +3,9 @@ name: release
 # A merge to main releases — no tag to remember, no second motion after the
 # Pull Request. agentsfleet releases from a `v*` tag instead, because it ships
 # cross-compiled binaries and a prod deployment that must be cut deliberately;
-# this package is one npm artifact whose only gate is the same `make audit` the
-# Pull Request already passed.
+# this package is one npm artifact. Its gates, `make audit` and
+# `make install-evals`, run on the Pull Request (harness.yml); the release only
+# proves the packed tarball installs, then publishes.
 on:
   push:
     branches: [main]
@@ -60,30 +61,6 @@ jobs:
       - name: Install orly dependencies
         if: steps.published.outputs.already == 'false'
         run: bun install --frozen-lockfile --ignore-scripts
-
-      - name: Install judgment scanner test tool
-        if: steps.published.outputs.already == 'false'
-        uses: jdx/mise-action@7a4e45a543138629540c9a1616d08632b893e492 # v5.0.1
-        with:
-          version: 2026.9.15
-          tool_versions: |
-            gitleaks 8.30.1
-
-      # The same gate the Pull Request passed, re-run against the merge commit.
-      # A merge can combine two independently-green branches into a red main,
-      # and this is the last point before an immutable artifact leaves.
-      - name: make audit
-        if: steps.published.outputs.already == 'false'
-        run: make audit
-
-      # The install evals no longer ride inside `make audit` — they left the
-      # pre-push chain for costing more than half its wall-clock (see the
-      # Makefile). They stay on the release path: this is the last gate before
-      # an immutable artifact leaves, and they cover init, update, and the pack
-      # allowlist, which the single tarball probe below does not.
-      - name: make install-evals
-        if: steps.published.outputs.already == 'false'
-        run: make install-evals
 
       # Proves the payload installs from a real tarball rather than from this
       # checkout. A file missing from the `files` allowlist passes every local
