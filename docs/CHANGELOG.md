@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.60.4 (2026-11-20)
+
+A release publishes without rerunning the Pull Request's gates.
+
+- **Release** — The release job no longer reruns `make audit` and `make install-evals` on the merge commit; both run on the Pull Request (`harness.yml`). It proves the packed tarball installs, then publishes.
+- **Upgrade** — Run `bunx --bun @agentsfleet/orly@0.60.4 update` after this version is published.
+
 ## 0.60.3 (2026-11-20)
 
 A create keyed by a tenant-unique natural key takes no `Idempotency-Key`.
