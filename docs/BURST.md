@@ -246,7 +246,7 @@ jobs:
       - uses: actions/checkout@v4
         with: {fetch-depth: 0}
       - uses: oven-sh/setup-bun@v2
-        with: {bun-version: "1.4.4"}
+        with: {bun-version: "1.4.5"}
       - uses: 1password/load-secrets-action@v2
         with: {export-env: true}
         env:
