@@ -4,7 +4,7 @@
 
 # orly
 
-[![Bun ≥1.4.4](https://img.shields.io/badge/Bun-%E2%89%A51.4.4-black)](https://bun.sh)
+[![Bun ≥1.4.5](https://img.shields.io/badge/Bun-%E2%89%A51.4.5-black)](https://bun.sh)
 [![MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Repository rules and verification gates for coding agents.
@@ -15,7 +15,7 @@ Works with Claude Code, Codex, OpenCode and Amp. **Agents:** read [llms.txt](llm
 
 ## Install
 
-Needs Git and Bun 1.4.4 or newer. In the repository you want governed:
+Needs Git and Bun 1.4.5 or newer. In the repository you want governed:
 
 ```bash
 bunx --bun @agentsfleet/orly init

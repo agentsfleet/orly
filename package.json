@@ -31,7 +31,7 @@
     "amp"
   ],
   "engines": {
-    "bun": ">=1.4.4"
+    "bun": ">=1.4.5"
   },
   "files": [
     "bin/orly",
@@ -57,7 +57,7 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/bun": "1.4.4",
+    "@types/bun": "1.4.5",
     "aws-sdk-client-mock": "4.1.0",
     "tsrs": "0.25.0-ts7.1.0-beta"
   },
