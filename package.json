@@ -4,6 +4,7 @@
   "description": "Repository-scoped engineering harness: renders agent rules, materialises the gates that enforce them, and proves the PR boundary — for any coding agent.",
   "license": "MIT",
   "type": "module",
+  "packageManager": "bun@1.4.5",
   "scripts": {
     "test": "bun test src",
     "typecheck": "bun run --bun tsrs --noEmit"
