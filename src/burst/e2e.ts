@@ -12,6 +12,11 @@ import { E2eApi, E2eRequestFailed } from "./tir";
 export const TIR_LABEL_LIMIT = 50;
 const LABEL_PREFIX = "orly-burst-";
 const RUN_ID_TAIL = 20;
+// A start script is named `obs-<run stamp>-<run suffix>-<lane>`, within TIR's
+// 50 characters. One whose run began longer ago than any run may last is
+// an orphan of a run that died, and the next run's teardown deletes it.
+const SCRIPT_NAME = /^obs-(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})-[0-9a-f]{4}-/;
+const ORPHAN_AGE_MS = 25 * 60 * 60_000;
 const DEFAULT_IMAGE = "Debian 13";
 // How long VM deletion, then the group's delete, are waited for before each
 // is reported for deletion by hand.
@@ -58,10 +63,9 @@ export class E2eNodes implements CloudProvider {
   readonly #statuses = new Map<string, string>();
   // VMs whose create request failed after it may have reached TIR.
   readonly #unconfirmed = new Set<string>();
-  // Each VM's start script, deleted once the VM is gone, and the scripts of
-  // VMs never made.
+  // Each VM's start script, deleted once the VM is gone; finish deletes the
+  // rest by name.
   readonly #scripts = new Map<string, string>();
-  readonly #orphanScripts = new Set<string>();
 
   constructor(settings: BurstSettings, fetcher: Fetch) {
     this.#settings = settings;
@@ -100,7 +104,7 @@ export class E2eNodes implements CloudProvider {
     const plan = await this.#resolvePlan(run.signal);
     const source = job.image.snapshot ? await this.#snapshotSource(job.image.id, run.signal) : await this.#osImage(job.image.name, run.signal);
     const name = `orly-burst-${job.name}-${run.runId.slice(-4)}`;
-    const script = await this.#api.createStartScript(name, boot, run.signal);
+    const script = await this.#api.createStartScript(scriptPrefix(run.runId) + job.name, boot, run.signal);
     let id: string;
     try {
       id = await this.#api.createVm({
@@ -112,7 +116,6 @@ export class E2eNodes implements CloudProvider {
       // A request that failed after reaching TIR may still have made the VM;
       // finish looks for it by name, then deletes the script it held.
       if (!(error instanceof E2eRequestFailed && error.status < SERVER_ERROR)) this.#unconfirmed.add(name);
-      this.#orphanScripts.add(script);
       throw error;
     }
     this.#scripts.set(id, script);
@@ -236,13 +239,19 @@ export class E2eNodes implements CloudProvider {
     }
   }
 
-  // A start script outlives its VM only when the VM was never made, or its
-  // removal failed; it holds a key already deleted, and is deleted here.
+  // A start script outlives its VM when the VM was never made, the create's
+  // reply was lost, or the delete failed; it holds a key already deleted.
+  // This run's are found by name, with any a dead run left behind.
   async #deleteScripts(run: BurstRun): Promise<void> {
-    for (const id of new Set([...this.#orphanScripts, ...this.#scripts.values()])) {
-      await this.#api.deleteStartScript(id).catch(goneIsDeleted)
-        .then(() => run.write(done(`deleted TIR start script ${id}`)))
-        .catch((error: unknown) => run.write(failed(`could not delete TIR start script ${id}: ${messageOf(error)}; delete it by hand`)));
+    const listed = await this.#api.startScripts().catch((error: unknown) => {
+      run.write(failed(`could not list TIR start scripts: ${messageOf(error)}; delete any named ${scriptPrefix(run.runId)}* by hand`));
+      return [];
+    });
+    const mine = scriptPrefix(run.runId);
+    for (const script of listed.filter((candidate) => candidate.name.startsWith(mine) || orphaned(candidate.name))) {
+      await this.#api.deleteStartScript(script.id).catch(goneIsDeleted)
+        .then(() => run.write(done(`deleted TIR start script ${script.id} (${script.name})`)))
+        .catch((error: unknown) => run.write(failed(`could not delete TIR start script ${script.id} (${script.name}): ${messageOf(error)}; delete it by hand`)));
     }
   }
 
@@ -285,6 +294,17 @@ function toSnapshot(snapshot: VmSnapshot): Snapshot {
   return { id: snapshot.id, name: snapshot.name, sizeGb: snapshot.sizeGb, parts: [], ready: snapshot.status === READY };
 }
 
+
+// A run id ends in `<14-digit stamp>-<4 hexadecimal characters>`.
+function scriptPrefix(runId: string): string {
+  return `obs-${runId.slice(-RUN_ID_TAIL + 1)}-`;
+}
+
+function orphaned(name: string, now = Date.now()): boolean {
+  const [, year, month, day, hour, minute, second] = (SCRIPT_NAME.exec(name) ?? []).map(Number);
+  if (year === undefined || month === undefined) return false;
+  return now - Date.UTC(year, month - 1, day, hour, minute, second) > ORPHAN_AGE_MS;
+}
 
 export function tirLabel(runId: string): string {
   const tail = runId.slice(-RUN_ID_TAIL);

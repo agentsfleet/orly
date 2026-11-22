@@ -63,7 +63,7 @@ Declare the lanes as `burst.<name>` commands, and the `burst` object beside them
 | `burst.<name>` command | One lane. A name has 1 to 24 lowercase letters, digits or hyphens. | none |
 | `burst.setup` | Runs as root before every lane and snapshot warm-up, with no secret. Keep it fast on a warm machine. | none |
 | `burst.warm` | Runs after setup when a snapshot is captured, with no secret, to fill build caches. | none |
-| `burst.secrets` | Environment variable name to an `op://` reference, read on the caller. | none |
+| `burst.secrets` | Environment variable name to an `op://` reference, read on the caller. A name may not be `OP_SERVICE_ACCOUNT_TOKEN` or start with `TS_OAUTH_`, `E2E_` or `AWS_`. | none |
 | `burst.artifacts` | Paths below the checkout that a lane brings back. A missing path is skipped. | none |
 | `burst.directories` | Variables naming directories on the caller, copied to each lane's machine over SSH. | none |
 | `burst.e2e.location` | TIR location. | `Delhi` |
@@ -100,6 +100,10 @@ Every run's machines join the caller's tailnet as ephemeral nodes tagged `tag:or
      "grants": [{"src": ["autogroup:member"], "dst": ["tag:orly-burst"], "ip": ["tcp:22"]}]
    }
    ```
+
+   > [!WARNING]
+   > `tag:orly-burst` must appear in no rule's `src`, and the policy's default allow-all grant must go.
+   > Otherwise every burst machine can reach every device on the tailnet, CI runners and laptops included.
 
 2. Create an OAuth trust credential with the `auth_keys` write scope whose only tag is `tag:orly-burst`.
    orly mints every key with exactly that tag set, and a credential mints no other.
@@ -167,8 +171,9 @@ MyAccount keys do not work. Each run saves its public key and a security group n
 TIR refuses a group with no inbound rule, so its one inbound rule admits UDP port 41641, Tailscale's direct-connection port.
 No rule opens SSH.
 
-TIR VMs take no user data, so each VM boots a start script of its own, named `orly-burst-<LANE>-<SUFFIX>`, which joins it to the tailnet.
+TIR VMs take no user data, so each VM boots a start script of its own, named `obs-<STAMP>-<SUFFIX>-<LANE>`, which joins it to the tailnet.
 orly deletes the script once the VM is gone.
+A run's teardown also deletes any script left by a run that began more than 25 hours ago.
 
 ### Settings
 

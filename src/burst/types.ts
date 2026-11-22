@@ -49,8 +49,8 @@ export type Image = { id: string; name: string; snapshot: boolean };
 export type Snapshot = { id: string; name: string; sizeGb: number | undefined; parts: string[]; ready: boolean };
 // How an AWS machine is rented; a Spot price is there when AWS said it.
 export type Billing = { market: "on-demand" } | { market: "spot"; hourly: number | undefined };
-// `address` is the public one the cloud reports until the machine joins the
-// tailnet as `node`, and its tailnet address after.
+// `node` is the name the machine joins the tailnet as. `address` is the
+// public one the cloud reports until it has joined, and its tailnet one after.
 export type Machine = { id: string; label: string; address: string | undefined; node?: string | undefined; billing?: Billing };
 
 // The seam a cloud provider fills: how its machines start, become reachable,

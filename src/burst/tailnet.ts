@@ -15,6 +15,7 @@ import { required } from "./settings";
 export type AuthKey = { id: string; secret: string };
 type Wait = { deadline: number; signal: AbortSignal; pollMs: number };
 type TailscaleStatus = z.infer<typeof statusSchema>;
+type Peer = z.infer<typeof peerSchema>;
 
 // Every machine joins tagged, so the tailnet's access rules decide who may
 // reach it, and the OAuth client may only mint keys for this tag.
@@ -38,7 +39,7 @@ const NOT_FOUND = 404;
 const IPV4 = /^100\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
 const tokenSchema = z.object({ access_token: z.string().min(1), expires_in: z.number().positive() });
 const keySchema = z.object({ id: z.string().min(1), key: z.string().min(1) });
-const peerSchema = z.object({ HostName: z.string(), Online: z.boolean().optional(), TailscaleIPs: z.array(z.string()).nullish() });
+const peerSchema = z.object({ HostName: z.string(), Online: z.boolean().optional(), TailscaleIPs: z.array(z.string()).nullish(), Tags: z.array(z.string()).nullish() });
 const statusSchema = z.object({
   BackendState: z.string(),
   Self: z.object({ Online: z.boolean().optional(), HostName: z.string().optional() }).nullish(),
@@ -99,8 +100,15 @@ export class Tailnet {
   async joined(host: string, wait: Wait): Promise<string> {
     return until(`${host} to join the tailnet`, async () => {
       const peer = this.#peer(await this.#status(wait.signal), host);
-      return peer?.Online === true ? peer.TailscaleIPs?.find((address) => IPV4.test(address)) : undefined;
+      return peer?.Online === true ? address(peer) : undefined;
     }, wait);
+  }
+
+  // Where the node is now, online or not, when it joined at all; for logging
+  // out a machine that joined after its run stopped waiting for it.
+  async find(host: string): Promise<string | undefined> {
+    const peer = this.#peer(await this.#status(), host);
+    return peer ? address(peer) : undefined;
   }
 
   // Waits until the node is gone from the caller's view of the tailnet.
@@ -108,8 +116,12 @@ export class Tailnet {
     await until(`${host} to leave the tailnet`, async () => this.#peer(await this.#status(wait.signal), host) === undefined || undefined, wait);
   }
 
-  #peer(status: TailscaleStatus, host: string): z.infer<typeof peerSchema> | undefined {
-    return Object.values(status.Peer ?? {}).find((peer) => peer.HostName.toLowerCase() === host.toLowerCase());
+  // A name any device can claim, so only a node carrying the burst tag counts,
+  // and two such nodes of one name are refused rather than guessed between.
+  #peer(status: TailscaleStatus, host: string): Peer | undefined {
+    const named = Object.values(status.Peer ?? {}).filter((peer) => peer.HostName.toLowerCase() === host.toLowerCase() && peer.Tags?.includes(BURST_TAG));
+    if (named.length > 1) throw new OrlyError(`${named.length} tailnet nodes tagged ${BURST_TAG} are named ${host}; remove the stale ones in the Tailscale admin console`);
+    return named[0];
   }
 
   async #status(signal?: AbortSignal): Promise<TailscaleStatus> {
@@ -153,6 +165,10 @@ class TailscaleRequestFailed extends OrlyError {
     super(message);
     this.status = status;
   }
+}
+
+function address(peer: Peer): string | undefined {
+  return peer.TailscaleIPs?.find((candidate) => IPV4.test(candidate));
 }
 
 function messageOf(body: unknown): string {

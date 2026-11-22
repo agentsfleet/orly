@@ -5,7 +5,7 @@ import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { OrlyError } from "../model";
-import { BUNDLE, followScript, INPUTS, JOB_EXIT, LAUNCH, LEAVE, NO_JOB, resultsScript, SETUP_FAILED, shellQuote, WORK } from "./job";
+import { BUNDLE, followScript, INPUTS, JOB_EXIT, launchScript, LEAVE, NO_JOB, resultsScript, SETUP_FAILED, shellQuote, UPLOAD_CUT, WORK } from "./job";
 import { captureProcess, Lines, machineDeadline, pause, streamProcess, until } from "./process";
 import { done, failed, ongoing } from "./progress";
 import { bundleFor } from "./repository";
@@ -113,8 +113,9 @@ export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user
 // A machine that joined the tailnet leaves it before it is deleted or
 // imaged, so its node goes at once instead of when the tailnet notices it
 // offline. Logout runs detached, since it ends the session it was sent over.
-export async function leaveTailnet(run: BurstRun, machine: Machine, user: string): Promise<boolean> {
-  const sent = await captureProcess(sshArgs(run, machine, user, asRoot(user, LEAVE)), { env: run.settings.env, timeoutMs: PROBE_TIMEOUT_MS });
+// A warm-up about to be imaged sends FORGET instead, which also wipes its node.
+export async function leaveTailnet(run: BurstRun, machine: Machine, user: string, command = LEAVE): Promise<boolean> {
+  const sent = await captureProcess(sshArgs(run, machine, user, asRoot(user, command)), { env: run.settings.env, timeoutMs: PROBE_TIMEOUT_MS });
   return sent.code === 0;
 }
 
@@ -138,9 +139,10 @@ class Session {
 
   async run(script: string, lines: Lines): Promise<Status> {
     for (;;) {
-      const launched = await this.#capture(`bash -c ${shellQuote(LAUNCH)}`, STAGE_TIMEOUT_MS, new Blob([script]));
+      const job = new Blob([script]);
+      const launched = await this.#capture(`bash -c ${shellQuote(launchScript(job.size))}`, STAGE_TIMEOUT_MS, job);
       if (launched.code === 0) break;
-      if (launched.code !== SSH_LOST) throw new OrlyError(`could not start the job on ${this.#machine.id}: ${launched.stderr.trim()}`);
+      if (launched.code !== SSH_LOST && launched.code !== UPLOAD_CUT) throw new OrlyError(`could not start the job on ${this.#machine.id}: ${launched.stderr.trim()}`);
       const stop = await this.#lost(lines.bytes);
       if (stop) return stop;
     }

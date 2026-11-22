@@ -107,9 +107,14 @@ export class E2eApi {
   }
 
   // POST /notebooks/init-script/: a start script, which a VM created with
-  // its identifier runs as root at boot. Its text holds a single-use key.
+  // its identifier runs as root at boot. Its text holds a single-use key, so
+  // a refusal names its status only: TIR's errors may quote the text back.
   async createStartScript(name: string, script: string, signal?: AbortSignal): Promise<string> {
-    return createdOneSchema.parse(await this.#request("POST", "/notebooks/init-script/", { signal, body: { name, init_script: script } })).data.id;
+    return createdOneSchema.parse(await this.#request("POST", "/notebooks/init-script/", { signal, body: { name, init_script: script }, quiet: true })).data.id;
+  }
+
+  async startScripts(): Promise<Array<{ id: string; name: string }>> {
+    return namedSchema.parse(await this.#request("GET", "/notebooks/init-script/")).data;
   }
 
   // TIR refuses to delete a script a VM still uses.
@@ -171,7 +176,7 @@ export class E2eApi {
     await this.#request("DELETE", `/notebooks/vm/snapshots/${id}/`, { signal });
   }
 
-  async #request(method: string, path: string, options: { signal?: AbortSignal | undefined; body?: Body; query?: Record<string, string>; project?: boolean } = {}): Promise<unknown> {
+  async #request(method: string, path: string, options: { signal?: AbortSignal | undefined; body?: Body; query?: Record<string, string>; project?: boolean; quiet?: boolean } = {}): Promise<unknown> {
     options.signal?.throwIfAborted();
     const searchParams = {
       ...(options.project === false ? {} : { project_id: this.#credentials.project }),
@@ -186,7 +191,7 @@ export class E2eApi {
       const text = await response.text();
       return text ? JSON.parse(text) : {};
     } catch (error) {
-      if (isHTTPError(error)) throw new E2eRequestFailed(`E2E TIR ${method} ${path} answered ${error.response.status}: ${errorMessage(error.data)}`, error.response.status);
+      if (isHTTPError(error)) throw new E2eRequestFailed(`E2E TIR ${method} ${path} answered ${error.response.status}${options.quiet ? "" : `: ${errorMessage(error.data)}`}`, error.response.status);
       throw error;
     }
   }

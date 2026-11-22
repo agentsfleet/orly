@@ -6,7 +6,7 @@ import type { BurstRun, CloudProvider, Image, Job, LaneResult, Machine, Snapshot
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { bootScript, remoteScript } from "./job";
+import { bootScript, FORGET, remoteScript } from "./job";
 import { done, failed, ongoing } from "./progress";
 import { machineDeadline, resolveSecrets } from "./process";
 import { archiveDirectories, forgetRunFiles, leaveTailnet, reachable, runOverSsh } from "./ssh";
@@ -139,14 +139,14 @@ async function start(provider: CloudProvider, run: BurstRun, job: Job, started: 
   const node = `orly-burst-${job.name}-${run.runId.slice(-RUN_ID_TAIL)}`;
   const key = await run.tailnet.mint(node);
   try {
-    const created = await provider.create(run, job, bootScript(node, key.secret));
+    const created = { ...await provider.create(run, job, bootScript(node, key.secret)), node };
     started(created);
     const running = await provider.ready(run, job, created);
     started(running);
     run.write(ongoing(`waiting for ${node} to join the tailnet`));
     const address = await run.tailnet.joined(node, { deadline: machineDeadline(job), signal: run.signal, pollMs: run.settings.pollMs });
     run.write(done(`${node} joined the tailnet at ${address}`));
-    const joined = { ...running, address, node };
+    const joined = { ...running, address };
     started(joined);
     return joined;
   } finally {
@@ -168,7 +168,7 @@ async function forgetKey(run: BurstRun, key: AuthKey, node: string): Promise<voi
 async function leaveForCapture(provider: CloudProvider, run: BurstRun, machine: Machine): Promise<Machine> {
   const node = machine.node ?? "";
   run.write(ongoing(`${node} leaves the tailnet before it is imaged`));
-  await leaveTailnet(run, machine, provider.user);
+  await leaveTailnet(run, machine, provider.user, FORGET);
   await run.tailnet.left(node, { deadline: Date.now() + LEAVE_MS, signal: run.signal, pollMs: run.settings.pollMs });
   run.write(done(`${node} left the tailnet`));
   return { ...machine, node: undefined };
@@ -187,9 +187,13 @@ function script(run: BurstRun, job: Job, inputs: LaneInputs): Promise<string> {
 // A machine that outlives its run bills until someone deletes it, so a failed
 // delete is said loudly, with the identifier to delete by hand.
 async function release(provider: CloudProvider, run: BurstRun, machine: Machine): Promise<void> {
-  if (machine.node) {
-    const left = await leaveTailnet(run, machine, provider.user).catch(() => false);
-    run.write(left ? done(`${machine.node} is leaving the tailnet`) : failed(`${machine.node} did not log out; as an ephemeral node it leaves the tailnet once offline, or remove it in the Tailscale admin console`));
+  // The node is looked up afresh, so one that joined after the run stopped
+  // waiting for it is logged out too.
+  const node = machine.node;
+  const address = node ? await run.tailnet.find(node).catch(() => undefined) : undefined;
+  if (node && address) {
+    const left = await leaveTailnet(run, { ...machine, address }, provider.user).catch(() => false);
+    run.write(left ? done(`${node} is leaving the tailnet`) : failed(`${node} did not log out; as an ephemeral node it leaves the tailnet once offline, or remove it in the Tailscale admin console`));
   }
   try {
     run.write(ongoing(`deleting ${provider.name} machine ${machine.id}`));

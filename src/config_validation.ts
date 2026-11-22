@@ -23,7 +23,9 @@ const ENVIRONMENT_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 // character; `op read` resolves the reference on the caller.
 const OP_REFERENCE = /^op:\/\/[^/\u0000-\u001f]+\/[^/\u0000-\u001f]+\/[^\u0000-\u001f]+$/;
 // The token `op` itself reads, which no declared secret may overwrite.
-const OP_TOKEN = "OP_SERVICE_ACCOUNT_TOKEN";
+// orly's own credentials, which a lane's secret must never name: a value
+// already in the caller's environment is sent to the machine as it is.
+const OWN_CREDENTIALS = /^(?:OP_SERVICE_ACCOUNT_TOKEN$|TS_OAUTH_|E2E_|AWS_)/;
 const invocations = z.array(z.array(nonempty).min(1));
 const LOGIN_USER = /^[a-z_][a-z0-9_-]*$/;
 export const E2E_LOCATIONS = ["Delhi", "Chennai"] as const;
@@ -47,7 +49,7 @@ const awsPlacement = z.object({
 export const burstSchema = z.object({
   setup: invocations.optional(),
   warm: invocations.optional(),
-  secrets: z.record(z.string().regex(ENVIRONMENT_NAME).refine((name) => name !== OP_TOKEN, `must not be ${OP_TOKEN}`), z.string().regex(OP_REFERENCE, "must be an op:// reference")).optional(),
+  secrets: z.record(z.string().regex(ENVIRONMENT_NAME).refine((name) => !OWN_CREDENTIALS.test(name), "must not name OP_SERVICE_ACCOUNT_TOKEN or a TS_OAUTH_, E2E_ or AWS_ variable"), z.string().regex(OP_REFERENCE, "must be an op:// reference")).optional(),
   artifacts: z.array(input).optional(),
   // Variables that name a directory on the caller, copied to the machine for
   // the lane, such as a signed toolbox fetched just before the run.

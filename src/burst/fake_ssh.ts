@@ -12,13 +12,15 @@ import { leaveTailnet } from "./fake_tailscale";
 // unreachable: no machine's SSH answers. warmCommit: the commit every
 // machine's warm checkout holds; unset, machines are cold. drops: how many
 // sessions following a lane's log are cut after its first line. lost: lanes
-// whose machine never answers again once a session was cut.
-type Scenario = { exits?: Record<string, number>; sleepMs?: number; unreachable?: boolean; warmCommit?: string; drops?: Record<string, number>; lost?: string[] };
+// whose machine never answers again once a session was cut. cutUpload: the
+// first launch's session is lost before the whole job script arrived.
+type Scenario = { exits?: Record<string, number>; sleepMs?: number; unreachable?: boolean; warmCommit?: string; drops?: Record<string, number>; lost?: string[]; cutUpload?: boolean };
 
 const RESULTS_MARKER = 'tar -czf - "$@"';
 const NO_RESULTS = 3;
 const NO_JOB = 3;
 const SSH_LOST = 255;
+const UPLOAD_CUT = 4;
 const FOLLOW_POLL_MS = 5;
 const state = process.env.FAKE_SSH_STATE ?? "";
 const argv = Bun.argv.slice(2);
@@ -47,7 +49,16 @@ async function dispatch(): Promise<number> {
     writeFileSync(join(node, `input-${input}.tgz`), Buffer.from(await Bun.stdin.arrayBuffer()));
     return 0;
   }
-  if (command.includes("mkdir /run/orly-burst/launched")) return launch(await Bun.stdin.text());
+  if (command.includes("mkdir /run/orly-burst/launched")) {
+    const script = await Bun.stdin.text();
+    if (scenario.cutUpload && !existsSync(join(node, "cut"))) {
+      writeFileSync(join(node, "cut"), "");
+      return lostConnection();
+    }
+    const bytes = Number(command.match(/-ne (\d+)/)?.[1]);
+    if (Buffer.byteLength(script) !== bytes) return UPLOAD_CUT;
+    return launch(script);
+  }
   const offset = command.match(/tail -c \+(\d+)/)?.[1];
   if (offset) return follow(Number(offset) - 1);
   if (command.endsWith("cat /run/orly-burst/exit")) return exitCode();

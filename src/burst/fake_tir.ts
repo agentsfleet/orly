@@ -32,6 +32,7 @@ export class FakeTir {
   readonly keys = new Map<string, { pk: number; label: string; ssh_key: string }>();
   readonly groups = new Map<string, { id: number; name: string; rules: unknown }>();
   readonly scripts = new Map<string, { id: number; name: string; init_script: string }>();
+  scriptStatus = 201;
   snapshots: FakeSnapshot[] = [];
   createStatus = 201;
   // The VM is made, but the reply to its create is a gateway timeout.
@@ -79,6 +80,12 @@ export class FakeTir {
     return this.calls.filter((call) => call.method === method && pattern.test(call.path));
   }
 
+  // A start script some other run, or a person, left in the project.
+  leftScript(name: string): void {
+    this.scripts.set(String(this.#nextScript), { id: this.#nextScript, name, init_script: "#!/bin/bash\n" });
+    this.#nextScript += 1;
+  }
+
   snapshot(name: string, id: number, status = "ready"): void {
     this.snapshots.push({ id, name, status, size_gb: 100, image_details: { version_id: UBUNTU_24 } });
   }
@@ -95,6 +102,7 @@ export class FakeTir {
     if (route === "GET /security_groups/") return reply([...this.groups.values()].map((group) => ({ id: group.id, name: group.name })));
     if (route === "DELETE /security_groups/{id}/") return this.deleteGroup(id);
     if (route === "POST /notebooks/init-script/") return this.lost(path, this.addScript(body));
+    if (route === "GET /notebooks/init-script/") return reply([...this.scripts.values()]);
     if (route === "DELETE /notebooks/init-script/{id}/") return this.deleteScript(id);
     if (route === "POST /notebooks/") return this.create(body);
     if (route === "GET /notebooks/") return reply([...this.vms.values()].map((vm) => ({ id: Number(vm.id), name: vm.name, status: vm.status })));
@@ -169,7 +177,9 @@ export class FakeTir {
     return reply("Security Group deleted successfully", this.groups.delete(id) ? 200 : 404);
   }
 
+  // A refused script's errors quote the script back, as a validation error may.
   private addScript(body: Record<string, unknown>): Response {
+    if (this.scriptStatus !== 201) return new Response(JSON.stringify({ code: this.scriptStatus, data: {}, message: "Failed", errors: { init_script: [String(body.init_script)] } }), { status: this.scriptStatus, headers: JSON_HEADERS });
     const script = { id: this.#nextScript, name: String(body.name), init_script: String(body.init_script) };
     this.#nextScript += 1;
     this.scripts.set(String(script.id), script);

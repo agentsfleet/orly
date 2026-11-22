@@ -1,12 +1,13 @@
 import { afterEach, describe, expect, setDefaultTimeout, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { burst } from "./index";
 import { awsRun, restoreEc2 } from "./aws-test-support";
 import { CREATE, e2eRun, LANES, ONE_LANE } from "./e2e-test-support";
 import { CLIENT_SECRET } from "./fake_tailscale";
-import { bootScript } from "./job";
+import { bootScript, launchScript, UPLOAD_CUT } from "./job";
 import { fields, recordedCalls } from "./test_support";
 import { cleanupTemporaryDirectories } from "../gates_test_support";
 
@@ -130,6 +131,46 @@ describe("the caller's tailnet", () => {
     expect(run.tailnet.nodes()).toEqual([]);
   });
 
+  test("a device that claims the node's name without the burst tag is never reached", async () => {
+    const run = e2eRun();
+    run.tailnet.impostorTags = [];
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
+    expect(recordedCalls(run.state).some((call) => call.some((argument) => argument.includes("100.64.9.9")))).toBe(false);
+  });
+
+  test("two burst-tagged nodes of one name are refused rather than guessed between", async () => {
+    const run = e2eRun();
+    run.tailnet.impostorTags = ["tag:orly-burst"];
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
+    expect(run.output.text()).toMatch(/🔴 lane=acceptance 2 tailnet nodes tagged tag:orly-burst are named orly-burst-acceptance-\S+; remove the stale ones/);
+    expect(recordedCalls(run.state).filter((call) => call.at(-1) !== undefined && !call.at(-1)?.includes("tailscale logout"))).toEqual([]);
+    expect(run.api.vms.size).toBe(0);
+  });
+
+  test("a node that joins after the run stopped waiting for it is still logged out", async () => {
+    const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.02" });
+    run.tailnet.joinOffline = true;
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
+    expect(run.output.text()).toContain("the deadline passed while waiting for orly-burst-acceptance-");
+    expect(recordedCalls(run.state).filter((call) => call.at(-1)?.includes("tailscale logout"))).toHaveLength(1);
+    expect(run.tailnet.nodes()).toEqual([]);
+    expect(run.tailnet.keys.size).toBe(0);
+  });
+
+  test("a warm-up forgets its node and its user data before it is imaged; a lane only logs out", async () => {
+    const run = e2eRun();
+
+    expect(await burst(["snapshot", "--provider", "e2e"], run.dependencies)).toBe(0);
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
+    const leaves = recordedCalls(run.state).flatMap((call) => call.at(-1)?.includes("tailscale logout") ? [call.at(-1) ?? ""] : []);
+    expect(leaves).toHaveLength(2);
+    expect(leaves[0]).toContain("cloud-init clean --logs; tailscale logout; systemctl stop tailscaled; rm -f /var/lib/tailscale/tailscaled.state");
+    expect(leaves[1]).toBe("setsid nohup tailscale logout >/dev/null 2>&1 </dev/null &");
+  });
+
   test("the boot script quotes its key and name, and parses", () => {
     const script = bootScript("orly-burst-acceptance-20261122000000-ab12", "tskey-fake-it's");
 
@@ -153,6 +194,31 @@ describe("a detached lane", () => {
     expect(run.output.text()).toMatch(/lane=acceptance .* exit=0 /);
   });
 
+  test("a launch whose session was lost mid-upload is sent again, and the job starts once", async () => {
+    const run = e2eRun();
+    await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ cutUpload: true }));
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
+    expect(recordedCalls(run.state).filter((call) => call.at(-1)?.includes("mkdir /run/orly-burst/launched"))).toHaveLength(2);
+    expect(run.output.text()).toMatch(/lane=acceptance .* exit=0 /);
+  });
+
+  test("the launcher discards a script that arrived short, and keeps one that arrived whole", () => {
+    const directory = mkdtempSync(join(tmpdir(), "orly-launch-"));
+    try {
+      const script = "echo whole\n";
+      const launch = (input: string) => Bun.spawnSync(["bash", "-c", launchScript(Buffer.byteLength(script)).replaceAll("/run/orly-burst", directory)], { stdin: new Blob([input]), stdout: "ignore", stderr: "ignore" }).exitCode;
+
+      expect(launch(script.slice(0, 4))).toBe(UPLOAD_CUT);
+      expect(existsSync(join(directory, "launched"))).toBe(false);
+      expect(existsSync(join(directory, "job.part"))).toBe(false);
+      expect(launch(script)).toBe(0);
+      expect(existsSync(join(directory, "launched"))).toBe(true);
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
+    }
+  });
+
   test("a launch is sent once: the job is started on the machine a single time", async () => {
     const run = e2eRun();
 
@@ -161,7 +227,8 @@ describe("a detached lane", () => {
   });
 
   test("a machine that never answers again before the deadline leaves the lane interrupted, and the VM still goes", async () => {
-    const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.05" });
+    // Long enough that a loaded machine reaches the lost session before the deadline.
+    const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.15" });
     await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ drops: { acceptance: 1 }, lost: ["acceptance"], sleepMs: 200 }));
 
     expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
@@ -171,6 +238,32 @@ describe("a detached lane", () => {
     expect(text).toMatch(/lane=acceptance .* exit=interrupted /);
     expect(run.api.vms.size).toBe(0);
     expect(run.tailnet.keys.size).toBe(0);
+  });
+});
+
+describe("e2e start scripts", () => {
+  test("a refused start script is named by its status alone, never by what TIR quoted back", async () => {
+    const run = e2eRun();
+    run.api.scriptStatus = 400;
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
+    expect(run.output.text()).toContain("E2E TIR POST /notebooks/init-script/ answered 400");
+    expect(run.output.text()).not.toContain("tskey-fake-auth");
+    expect(run.tailnet.keys.size).toBe(0);
+  });
+
+  test("a script whose create reply was lost is deleted by name, with a dead run's orphans; others stay", async () => {
+    const run = e2eRun();
+    run.api.lostReplies.add("/notebooks/init-script/");
+    run.api.leftScript("obs-20200101000000-ab12-acceptance");
+    const recent = `obs-${new Date().toISOString().replaceAll(/\D/g, "").slice(0, 14)}-cd34-acceptance`;
+    run.api.leftScript(recent);
+    run.api.leftScript("someone-elses-script");
+
+    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
+    expect([...run.api.scripts.values()].map((script) => script.name).sort()).toEqual([recent, "someone-elses-script"]);
+    expect(run.output.text()).toMatch(/🟢 deleted TIR start script \d+ \(obs-\d{14}-[0-9a-f]{4}-acceptance\)/);
+    expect(run.output.text()).toContain("(obs-20200101000000-ab12-acceptance)");
   });
 });
 

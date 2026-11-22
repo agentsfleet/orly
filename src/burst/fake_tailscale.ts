@@ -11,7 +11,7 @@ import { isObject } from "../model";
 
 type Call = { method: string; path: string; body: string; authorization: string | null };
 type FakeKey = { id: string; secret: string; request: Record<string, unknown>; used: boolean };
-type Peer = { HostName: string; Online: boolean; TailscaleIPs: string[] };
+type Peer = { HostName: string; Online: boolean; TailscaleIPs: string[]; Tags?: string[] };
 
 export const CLIENT_ID = "fake-client-id";
 export const CLIENT_SECRET = "tskey-fake-client-secret";
@@ -27,6 +27,11 @@ export class FakeTailscale {
   // The status a mint or a key delete answers with, to fail them.
   mintStatus = 200;
   deleteStatus = 200;
+  // A node that joins but never reads as online, as one still coming up when
+  // the run stops waiting.
+  joinOffline = false;
+  // Another device that claims each joining node's name, with these tags.
+  impostorTags: string[] | undefined;
   readonly #directory: string;
   #nextKey = 1;
   #nextAddress = 1;
@@ -77,8 +82,12 @@ export class FakeTailscale {
     const address = `100.64.0.${this.#nextAddress}`;
     this.#nextAddress += 1;
     this.events.push(`join ${key.id} ${host}`);
-    const peer: Peer = { HostName: host, Online: true, TailscaleIPs: [address, `fd7a:115c:a1e0::${this.#nextAddress}`] };
+    const peer: Peer = { HostName: host, Online: !this.joinOffline, TailscaleIPs: [address, `fd7a:115c:a1e0::${this.#nextAddress}`], Tags: ["tag:orly-burst"] };
     writeFileSync(join(this.#directory, "peers", `${host}.json`), JSON.stringify(peer));
+    if (this.impostorTags) {
+      const impostor: Peer = { HostName: host, Online: true, TailscaleIPs: ["100.64.9.9"], Tags: this.impostorTags };
+      writeFileSync(join(this.#directory, "peers", `${host}-impostor.json`), JSON.stringify(impostor));
+    }
   }
 
   nodes(): string[] {
