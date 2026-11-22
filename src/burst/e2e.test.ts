@@ -7,7 +7,8 @@ import { tirLabel } from "./e2e";
 import { MACHINE_WAIT_MS, machineDeadline } from "./process";
 import { DEBIAN_13 } from "./fake_tir";
 import { API_KEY, AUTH_TOKEN, CREATE, e2eRun, LANES, machineScript, ONE_LANE, SECRETS, VM } from "./e2e-test-support";
-import { burstDependencies, CALLER_ADDRESS, fields, recordedCalls, SECRET_VALUE } from "./test_support";
+import { CLIENT_SECRET } from "./fake_tailscale";
+import { fields, recordedCalls, SECRET_VALUE } from "./test_support";
 import { cleanupTemporaryDirectories, git, temporaryDirectory } from "../gates_test_support";
 
 setDefaultTimeout(60_000);
@@ -42,14 +43,18 @@ describe("e2e lanes on TIR virtual machines", () => {
     const group = fields(run.api.callsTo("POST", /^\/security_groups\/$/)[0]?.body);
     expect(String(group.name)).toMatch(/^orly-burst-feat-burst-fixture-\d{14}-[0-9a-f]{4}$/);
     expect(group.rules).toEqual([
-      { rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "manual", cidr_ip: CALLER_ADDRESS, cidr_subnet: 32, ports: [22], description: "SSH from the orly burst caller" },
+      { rule_type: "inbound", protocol: "UDP", protocol_type: "CustomUDP", network_type: "any", ports: [41641], description: "Tailscale WireGuard for the orly burst machine" },
       { rule_type: "outbound", protocol: "All", protocol_type: "AllTraffic", network_type: "any", ports: [], description: "All traffic from the orly burst machine" },
     ]);
     expect(run.api.groups.size).toBe(0);
+    expect(body.init_script_id_list).toEqual([300]);
+    expect(run.api.scripts.size).toBe(0);
     const order = run.api.calls.map((call) => `${call.method} ${call.path}`);
     expect(order.lastIndexOf("DELETE /notebooks/5002/")).toBeLessThan(order.indexOf("DELETE /security_groups/700/"));
     const text = run.output.text();
-    expect(text).toContain(`admits SSH from ${CALLER_ADDRESS} only`);
+    expect(text).toContain("opens no SSH port; the run's VMs are reached over the tailnet");
+    expect(text).toContain("caller-laptop is on the tailnet");
+    expect(text).toMatch(/🟢 orly-burst-acceptance-\d{14}-[0-9a-f]{4} joined the tailnet at 100\.64\.0\.\d/);
     expect(text).toContain("[acceptance] lane acceptance ran");
     expect(text).toMatch(/orly burst: lane=acceptance provider=e2e machine=C3\.32GB minutes=\d+ cost≈₹25\/h \+ GST \(billed hourly\) exit=0 evidence=\S+/);
     expect(text).toContain("orly burst: total provider=e2e lanes=2 passed=2 failed=0");
@@ -59,6 +64,8 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(text).toMatch(/orly burst: 🟢 deleted TIR key orly-burst-/);
     expect(text).toContain("orly burst: 🟢 deleted TIR security group 700");
     expect(text).not.toContain(API_KEY);
+    expect(text).not.toContain(CLIENT_SECRET);
+    expect(text).not.toContain("tskey-fake-auth");
   });
 
   test("a branch name past 19 characters still fits TIR's 50-character key label", async () => {
@@ -123,17 +130,6 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(run.api.groups.size).toBe(0);
   });
 
-  test("a caller address that cannot be learnt stops the run before any VM, and the key still goes", async () => {
-    const run = e2eRun();
-    const answer = run.api.fetch;
-    const { dependencies } = burstDependencies(run.root, run.env, async (input, init) => String(input).includes("checkip") ? new Response("", { status: 503 }) : answer(input, init));
-
-    await expect(burst(ONE_LANE, dependencies)).rejects.toThrow("could not learn this machine's public IPv4 address");
-    expect(run.api.callsTo("POST", CREATE)).toHaveLength(0);
-    expect(run.api.groups.size).toBe(0);
-    expect(run.api.keys.size).toBe(0);
-  });
-
   test("secrets are read on the caller and reach the lane only through the session's input", async () => {
     const run = e2eRun({}, SECRETS);
 
@@ -183,7 +179,7 @@ describe("e2e lanes on TIR virtual machines", () => {
 
     expect(await burst(ONE_LANE, run.dependencies)).toBe(0);
 
-    const machine = [...new Bun.Glob("203.0.113.*").scanSync({ cwd: run.state, onlyFiles: false })][0] ?? "";
+    const machine = [...new Bun.Glob("100.64.*").scanSync({ cwd: run.state, onlyFiles: false })][0] ?? "";
     const listed = Bun.spawnSync(["tar", "-tzf", join(run.state, machine, "input-TOOLBOX_DIR.tgz")], { stdout: "pipe" }).stdout.toString();
     expect(listed).toContain("./toolbox-0000.erofs");
     const job = machineScript(run.state);
@@ -202,13 +198,14 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(run.api.callsTo("POST", CREATE)).toHaveLength(0);
   });
 
-  test("a lane's own exit code is the run's, and a dropped session is interrupted", async () => {
+  test("the exit code the machine wrote is the lane's, whatever ended the session", async () => {
     const run = e2eRun();
-    await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ exits: { acceptance: 3, integration: "drop" } }));
+    await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ exits: { acceptance: 3 }, drops: { integration: 1 } }));
 
     expect(await burst(LANES, run.dependencies)).toBe(3);
     expect(run.output.text()).toMatch(/lane=acceptance .* exit=3 /);
-    expect(run.output.text()).toMatch(/lane=integration .* exit=interrupted /);
+    expect(run.output.text()).toMatch(/lane=integration .* exit=0 /);
+    expect(recordedCalls(run.state).filter((call) => call.at(-1)?.endsWith("cat /run/orly-burst/exit"))).toHaveLength(2);
     expect(run.api.vms.size).toBe(0);
   });
 
@@ -217,26 +214,12 @@ describe("e2e lanes on TIR virtual machines", () => {
     expect(machineDeadline({ deadline: 5_000 }, 1_000)).toBe(5_000);
   });
 
-  test("a caller whose address changes mid-run ends the lane at once, naming both addresses", async () => {
-    const run = e2eRun();
-    run.api.callerMovesTo = "203.0.113.200";
-    await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ unreachable: true }));
-
-    expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
-    const text = run.output.text();
-    expect(text).toContain("orly burst: ⏳ waiting for SSH on 203.0.113.");
-    expect(text).toContain(`🔴 lane=acceptance this machine's address changed from ${CALLER_ADDRESS} to 203.0.113.200, and the run admits SSH from ${CALLER_ADDRESS} only; run it again from this network`);
-    expect(recordedCalls(run.state).filter((call) => call.at(-1) === "true")).toHaveLength(3);
-    expect(text).toMatch(/lane=acceptance .* exit=interrupted /);
-    expect(run.api.vms.size).toBe(0);
-  });
-
   test("SSH that never answers ends the wait with ssh's own error, and the VM still goes", async () => {
     const run = e2eRun({ ORLY_BURST_DEADLINE_MINUTES: "0.01" });
     await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ unreachable: true }));
 
     expect(await burst(ONE_LANE, run.dependencies)).toBe(1);
-    expect(run.output.text()).toMatch(/🔴 lane=acceptance the deadline passed while waiting for SSH to 203\.0\.113\.\d+: ssh: connect to host 203\.0\.113\.\d+ port 22: Operation timed out/);
+    expect(run.output.text()).toMatch(/🔴 lane=acceptance the deadline passed while waiting for SSH to 100\.64\.0\.\d+: ssh: connect to host 100\.64\.0\.\d+ port 22: Operation timed out/);
     expect(run.output.text()).not.toContain("answers");
     expect(run.api.vms.size).toBe(0);
   });

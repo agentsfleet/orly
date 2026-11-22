@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "orly_version": "0.60.4",
+  "orly_version": "0.70.0",
   "packs": [
     "domain.auth",
     "domain.changelog",

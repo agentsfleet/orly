@@ -10,10 +10,12 @@ import { UNSCOPED_ENVIRONMENT } from "../git_env";
 import { isObject, OrlyError } from "../model";
 import { cloudLanes, cloudPrune, cloudSnapshot } from "./cloud";
 import { captureProcess } from "./process";
+import { done } from "./progress";
 import { repositoryIdentity } from "./repository";
 import { CLOUD_PROVIDERS } from "./providers";
 import { burstSettings } from "./settings";
-import { callerAddress, newKeyPair } from "./ssh";
+import { newKeyPair } from "./ssh";
+import { Tailnet } from "./tailnet";
 import { LANE_PREFIX, MINUTE_MS, PROVIDER_NAMES } from "./types";
 
 export type BurstDependencies = Io & { root: string; env: Environment; fetch: Fetch };
@@ -106,7 +108,7 @@ async function cloud(request: Request, name: ProviderName, dependencies: BurstDe
     await cloudPrune(provider, { repo: repositoryIdentity(dependencies.root), settings, write: dependencies.write, signal: dependencies.signal });
     return 0;
   }
-  const run = await stage(dependencies, settings, ref, config);
+  const run = await stage(dependencies, settings, ref, config, new Tailnet(settings, dependencies.fetch));
   if (request.snapshot) {
     const snapshot = await cloudSnapshot(provider, run);
     if (!snapshot) return 1;
@@ -121,18 +123,20 @@ async function cloud(request: Request, name: ProviderName, dependencies: BurstDe
 }
 
 // Everything a cloud run reads before a machine exists.
-async function stage(dependencies: BurstDependencies, settings: BurstSettings, ref: string, config: RepoConfig): Promise<BurstRun> {
+async function stage(dependencies: BurstDependencies, settings: BurstSettings, ref: string, config: RepoConfig, tailnet: Tailnet): Promise<BurstRun> {
   const { root } = dependencies;
   const repo = repositoryIdentity(root);
   const io = { write: dependencies.write, signal: dependencies.signal };
-  // First, so a caller that cannot learn its address leaves nothing behind.
-  const caller = await callerAddress(dependencies.fetch);
+  // First, so a caller off the tailnet, or with an OAuth client Tailscale
+  // refuses, leaves nothing behind.
+  const caller = await tailnet.admit();
+  dependencies.write(done(`${caller} is on the tailnet; the run's machines join it`));
   const runId = newRunId(ref, new Date());
   const directory = runDirectory(settings.outRoot, runId);
   const bundle = await bundleRef(root, ref, directory);
   const commit = (await git(root, ["rev-parse", "--verify", `${ref}^{commit}`])).stdout.trim();
   const { key, publicKey } = await newKeyPair(directory, `orly-burst-${runId}`, settings.env);
-  return { ...io, root, config, settings, fetch: dependencies.fetch, ref, repo, runId, runDirectory: directory, commit, bundle, key, publicKey, knownHosts: join(directory, "known_hosts"), caller };
+  return { ...io, root, config, settings, fetch: dependencies.fetch, ref, repo, runId, runDirectory: directory, commit, bundle, key, publicKey, knownHosts: join(directory, "known_hosts"), tailnet };
 }
 
 function requireDeclared(config: RepoConfig, lanes: string[]): void {

@@ -1,8 +1,9 @@
 // Shared fixtures for the burst suites: a repository with lanes declared, a
-// directory of fake executables first on PATH, a line sink, and the
-// caller-address answer; fake_tir.ts answers for E2E Networks TIR and
-// aws-test-support.ts for EC2. No suite reaches a real cloud: `ssh` and `op`
-// on the PATH they hand orly are fakes, and so is every fetch.
+// directory of fake executables first on PATH and a line sink;
+// fake_tailscale.ts answers for Tailscale, fake_tir.ts for E2E Networks TIR
+// and aws-test-support.ts for EC2. No suite reaches a real cloud or tailnet:
+// `ssh`, `tailscale` and `op` on the PATH they hand orly are fakes, and so is
+// every fetch.
 import type { BurstDependencies } from "./index";
 import type { Environment } from "./settings";
 
@@ -10,6 +11,7 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "n
 import { join } from "node:path";
 
 import { CONFIG_PATH } from "../config";
+import { TAILSCALE_CREDENTIALS } from "./fake_tailscale";
 import { git, newRepository, ROOT, temporaryDirectory } from "../gates_test_support";
 import { isObject } from "../model";
 
@@ -18,7 +20,6 @@ export const FIXTURE_BRANCH = "feat/burst-fixture";
 // Independently derived SHA-256 prefix of example.invalid/acme/widget.
 export const REPOSITORY = "de3cf852395d210d0d756297";
 export const SECRET_VALUE = "op-value-test-0000";
-export const CALLER_ADDRESS = "198.51.100.77";
 
 export function burstRepository(burst: Record<string, unknown> = {}, lanes: Record<string, string[][]> = {}): string {
   const root = newRepository();
@@ -36,13 +37,14 @@ export function burstRepository(burst: Record<string, unknown> = {}, lanes: Reco
   return root;
 }
 
-// `ssh` runs the TypeScript fake beside this file; `op` prints SECRET_VALUE
-// and records how it was called.
+// `ssh` and `tailscale` run the TypeScript fakes beside this file; `op`
+// prints SECRET_VALUE and records how it was called.
 export function fakeBin(): { bin: string; state: string } {
   const bin = temporaryDirectory();
   const state = temporaryDirectory();
   const tools = {
     ssh: `exec bun ${join(ROOT, "src/burst/fake_ssh.ts")} "$@"`,
+    tailscale: `exec bun ${join(ROOT, "src/burst/fake_tailscale.ts")} "$@"`,
     op: `printf '%s\\n' "$*" >> "${join(state, "op-calls.txt")}"\n[ -n "\${FAKE_OP_FAIL:-}" ] && { echo "[ERROR] could not read secret" >&2; exit 1; }\nprintf '%s' "${SECRET_VALUE}"`,
   };
   for (const [name, body] of Object.entries(tools)) {
@@ -69,18 +71,12 @@ export function burstDependencies(root: string, env: Environment, fetcher: Burst
 }
 
 // The environment every burst suite starts from: fast polls, a private
-// output directory and the fakes first on PATH.
+// output directory, the fakes first on PATH and the fake OAuth client.
 export function burstEnvironment(bin: string, state: string, extra: Environment = {}): Environment {
   return {
     PATH: `${bin}:${process.env.PATH ?? ""}`, HOME: process.env.HOME, TMPDIR: process.env.TMPDIR,
-    ORLY_BURST_POLL_SECONDS: "0.01", ORLY_BURST_OUT: join(state, "out"), FAKE_SSH_STATE: state, ...extra,
+    ORLY_BURST_POLL_SECONDS: "0.01", ORLY_BURST_OUT: join(state, "out"), FAKE_SSH_STATE: state, ...TAILSCALE_CREDENTIALS, ...extra,
   };
-}
-
-// What checkip.amazonaws.com answers a caller at CALLER_ADDRESS.
-export async function callerAddress(input: string | URL | Request): Promise<Response> {
-  if (String(input) !== "https://checkip.amazonaws.com") throw new Error(`unexpected request to ${String(input)}`);
-  return new Response(`${CALLER_ADDRESS}\n`);
 }
 
 export function recordedCalls(state: string): string[][] {

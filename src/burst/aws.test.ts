@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { burst } from "./index";
 import { awsRun, GROUP_ID, machineScript, restoreEc2 } from "./aws-test-support";
-import { burstDependencies, burstEnvironment, burstRepository, CALLER_ADDRESS, fakeBin, recordedCalls, REPOSITORY, SECRET_VALUE, snapshotOf } from "./test_support";
+import { recordedCalls, REPOSITORY, SECRET_VALUE, snapshotOf } from "./test_support";
 import { cleanupTemporaryDirectories } from "../gates_test_support";
 
 const BASE_IMAGE = "resolve:ssm:/aws/service/debian/release/13/latest/amd64";
@@ -19,15 +19,15 @@ afterEach(() => {
 });
 
 describe("aws-spot lanes", () => {
-  test("a run imports its key, opens SSH to the caller only, launches lanes at once and removes it all", async () => {
+  test("a run imports its key, opens no inbound port, launches lanes at once and removes it all", async () => {
     const run = await awsRun({ noCapacity: ["c7i.4xlarge"] });
 
     expect(await burst(LANES, run.dependencies)).toBe(0);
 
     const commands = run.ec2.calls.map((call) => call.command);
-    expect(commands.slice(0, 4)).toEqual(["DescribeImages", "ImportKeyPair", "CreateSecurityGroup", "AuthorizeSecurityGroupIngress"]);
+    expect(commands.slice(0, 3)).toEqual(["DescribeImages", "ImportKeyPair", "CreateSecurityGroup"]);
+    expect(commands).not.toContain("AuthorizeSecurityGroupIngress");
     expect(String(run.ec2.inputs("ImportKeyPair")[0]?.KeyName)).toMatch(RUN_NAME);
-    expect(run.ec2.inputs("AuthorizeSecurityGroupIngress")[0]?.IpPermissions).toEqual([{ IpProtocol: "tcp", FromPort: 22, ToPort: 22, IpRanges: [{ CidrIp: `${CALLER_ADDRESS}/32` }] }]);
     const launches = run.ec2.inputs("RunInstances");
     expect(launches.map((launch) => launch.InstanceType).sort()).toEqual(["c7a.4xlarge", "c7a.4xlarge", "c7i.4xlarge", "c7i.4xlarge"]);
     expect(commands.lastIndexOf("RunInstances")).toBeLessThan(commands.indexOf("TerminateInstances"));
@@ -42,11 +42,11 @@ describe("aws-spot lanes", () => {
     expect(run.ec2.inputs("TerminateInstances")).toHaveLength(2);
     expect(commands.slice(-3)).toEqual(["DescribeInstances", "DeleteSecurityGroup", "DeleteKeyPair"]);
     const ssh = recordedCalls(run.state).filter((call) => call[0] === "ssh");
-    expect(ssh.every((call) => call.includes("admin@198.51.100.1") || call.includes("admin@198.51.100.2"))).toBe(true);
-    expect(ssh.some((call) => call.at(-1) === "sudo -n bash -s")).toBe(true);
+    expect(ssh.every((call) => call.includes("admin@100.64.0.1") || call.includes("admin@100.64.0.2"))).toBe(true);
+    expect(ssh.some((call) => call.at(-1)?.startsWith("sudo -n bash -c "))).toBe(true);
     const text = run.output.text();
     expect(text).toContain("no capacity for c7i.4xlarge (InsufficientInstanceCapacity); trying the next type");
-    expect(text).toContain(`admits SSH from ${CALLER_ADDRESS} only`);
+    expect(text).toContain("opens no inbound port; the run's instances are reached over the tailnet");
     expect(text).toMatch(/orly burst: lane=acceptance provider=aws-spot machine=c7a\.4xlarge minutes=\d+ cost≈\$0\.2345\/h \(spot\) exit=0 evidence=\S+/);
     expect(text).toContain("orly burst: total provider=aws-spot lanes=2 passed=2 failed=0");
   });
@@ -56,7 +56,7 @@ describe("aws-spot lanes", () => {
 
     await burst(["acceptance", "--provider", "aws-spot"], run.dependencies);
 
-    expect(machineScript(run.state, "198.51.100.1")).toContain(`  export API_TOKEN='${SECRET_VALUE}'`);
+    expect(machineScript(run.state, "100.64.0.1")).toContain(`  export API_TOKEN='${SECRET_VALUE}'`);
     expect(JSON.stringify(run.ec2.calls)).not.toContain(SECRET_VALUE);
     expect(run.output.text()).not.toContain(SECRET_VALUE);
     const evidence = run.output.text().match(/evidence=(\S+)/)?.[1] ?? "";
@@ -64,13 +64,13 @@ describe("aws-spot lanes", () => {
     expect(readFileSync(join(evidence, "run.log"), "utf8")).toBe("== packages\nlane acceptance ran\n");
   });
 
-  test("a lane's exit code is the run's, and a dropped session is interrupted", async () => {
+  test("a lane's exit code is the run's, and a dropped session is resumed", async () => {
     const run = await awsRun();
-    await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ exits: { acceptance: 4, integration: "drop" } }));
+    await Bun.write(join(run.state, "scenario.json"), JSON.stringify({ exits: { acceptance: 4 }, drops: { integration: 1 } }));
 
     expect(await burst(LANES, run.dependencies)).toBe(4);
     expect(run.output.text()).toMatch(/lane=acceptance .* exit=4 /);
-    expect(run.output.text()).toMatch(/lane=integration .* exit=interrupted /);
+    expect(run.output.text()).toMatch(/lane=integration .* exit=0 /);
   });
 
   test("an instance gone before it answers is interrupted, and still terminated", async () => {
@@ -140,18 +140,6 @@ describe("aws-spot lanes", () => {
     expect(run.ec2.inputs("TerminateInstances").length).toBeGreaterThanOrEqual(1);
   });
 
-  test("a caller that cannot learn its address is refused before anything is registered or written", async () => {
-    const root = burstRepository();
-    const { bin, state } = fakeBin();
-    const run = await awsRun();
-    const unreachable = async () => new Response("", { status: 503 });
-    const { dependencies } = burstDependencies(root, burstEnvironment(bin, state), unreachable);
-
-    await expect(burst(["acceptance", "--provider", "aws-spot"], dependencies)).rejects.toThrow("could not learn this machine's public IPv4 address");
-    expect(run.ec2.calls).toHaveLength(0);
-    expect([...new Bun.Glob("**/*").scanSync({ cwd: state, onlyFiles: true })].filter((path) => path.startsWith("out/"))).toEqual([]);
-  });
-
   test("ORLY_BURST_MARKET=on-demand rents a lane on demand that still terminates when it shuts down", async () => {
     const run = await awsRun({}, {}, { ORLY_BURST_MARKET: "on-demand" });
 
@@ -179,7 +167,7 @@ describe("aws-spot snapshots", () => {
     const launch = run.ec2.inputs("RunInstances")[0] ?? {};
     expect(launch).not.toHaveProperty("InstanceMarketOptions");
     expect(launch.InstanceInitiatedShutdownBehavior).toBe("stop");
-    const job = machineScript(run.state, "198.51.100.1");
+    const job = machineScript(run.state, "100.64.0.1");
     expect(job).toContain("BURST_MODE='warm'");
     expect(job).not.toContain("export API_TOKEN");
     expect(existsSync(join(run.state, "op-calls.txt"))).toBe(false);

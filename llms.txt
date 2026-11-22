@@ -15,7 +15,7 @@ License: Massachusetts Institute of Technology (MIT)
 This guide describes orly 0.60.1. The `bunx` commands below fetch the
 published package; available versions are listed at
 https://github.com/agentsfleet/orly/releases. Use an installed local tarball for
-candidate checks. orly collects no usage telemetry. Authorized cloud burst runs call provider APIs; package installation may fetch dependencies.
+candidate checks. orly collects no usage telemetry. Authorized cloud burst runs call provider and Tailscale APIs; package installation may fetch dependencies.
 
 ---
 

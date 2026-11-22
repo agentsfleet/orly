@@ -15,6 +15,7 @@ export type BurstSettings = Readonly<{
   outRoot: string;
   aws: Readonly<{ region: string; types: readonly string[]; image: string | undefined; user: string; market: AwsMarket }>;
   e2e: Readonly<{ apiKey: string | undefined; authToken: string | undefined; projectId: string | undefined; location: string; plan: string; image: string | undefined; user: string }>;
+  tailscale: Readonly<{ clientId: string | undefined; clientSecret: string | undefined }>;
 }>;
 
 // What a lane's machine is rented as. Spot is about a tenth of the price, and
@@ -46,6 +47,8 @@ const environmentSchema = z.object({
   E2E_API_KEY: z.string().min(1).optional(),
   E2E_AUTH_TOKEN: z.string().min(1).optional(),
   E2E_PROJECT_ID: z.string().regex(/^\d+$/).optional(),
+  TS_OAUTH_CLIENT_ID: z.string().min(1).optional(),
+  TS_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
 });
 
 // Every variable `orly burst` reads, read once. A blank value means unset, so
@@ -74,6 +77,7 @@ export function burstSettings(env: Environment, burst: BurstConfig = {}): BurstS
       location: burst.e2e?.location ?? "Delhi", plan: burst.e2e?.plan ?? "C3.32GB", image: burst.e2e?.image,
       user: burst.e2e?.user ?? "root",
     }),
+    tailscale: Object.freeze({ clientId: value.TS_OAUTH_CLIENT_ID, clientSecret: value.TS_OAUTH_CLIENT_SECRET }),
   });
 }
 

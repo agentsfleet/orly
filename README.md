@@ -49,7 +49,7 @@ Only the owner records an override.
 bunx --bun @agentsfleet/orly burst acceptance --provider aws-spot
 ```
 
-Slow `burst.<name>` lanes run on a machine rented for the run, on AWS or E2E Networks.
+Slow `burst.<name>` lanes run on a machine rented for the run, on AWS or E2E Networks, reached over the caller's Tailscale tailnet.
 No gate runs them; [Burst lanes](docs/BURST.md) covers setup and costs.
 
 ## Update

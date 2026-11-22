@@ -1,5 +1,6 @@
 import type { RepoConfig } from "../config";
 import type { BurstSettings } from "./settings";
+import type { Tailnet } from "./tailnet";
 
 // Shared by the command line and the cloud lifecycle.
 export const LANE_PREFIX = "burst.";
@@ -19,7 +20,7 @@ export type Io = { write: (line: string) => void; signal: AbortSignal };
 
 // What a cloud run fixes before any machine starts: the repository, the ref
 // and its commit, the bundle of that ref, the run's own SSH key pair and
-// known_hosts, and the one caller address its SSH rule admits.
+// known_hosts, and the caller's tailnet its machines join.
 export type BurstRun = Io & {
   root: string;
   config: RepoConfig;
@@ -34,7 +35,7 @@ export type BurstRun = Io & {
   key: string;
   publicKey: string;
   knownHosts: string;
-  caller: string;
+  tailnet: Tailnet;
 };
 
 // What listing and pruning a repository's snapshots needs, which is less than a run.
@@ -48,7 +49,9 @@ export type Image = { id: string; name: string; snapshot: boolean };
 export type Snapshot = { id: string; name: string; sizeGb: number | undefined; parts: string[]; ready: boolean };
 // How an AWS machine is rented; a Spot price is there when AWS said it.
 export type Billing = { market: "on-demand" } | { market: "spot"; hourly: number | undefined };
-export type Machine = { id: string; label: string; address: string | undefined; billing?: Billing };
+// `address` is the public one the cloud reports until the machine joins the
+// tailnet as `node`, and its tailnet address after.
+export type Machine = { id: string; label: string; address: string | undefined; node?: string | undefined; billing?: Billing };
 
 // The seam a cloud provider fills: how its machines start, become reachable,
 // stop and turn into images. The shared code in cloud.ts owns the order,
@@ -64,10 +67,12 @@ export interface CloudProvider {
   // What a snapshot warms from and a lane with no matching snapshot boots.
   baseImage(): Image;
   snapshots(scope: SnapshotScope): Promise<Snapshot[]>;
-  // Registers what the run's machines share: its public key, and an SSH rule
-  // admitting run.caller alone.
+  // Registers what the run's machines share: its public key, and a firewall
+  // that opens no SSH port, since the caller reaches them over its tailnet.
   prepare(run: BurstRun): Promise<void>;
-  create(run: BurstRun, job: Job): Promise<Machine>;
+  // Starts a machine that runs `boot` as root on its first boot, through the
+  // cloud's own user data, so it joins the tailnet with no inbound port.
+  create(run: BurstRun, job: Job, boot: string): Promise<Machine>;
   // Waits until the machine runs, and returns it with its public address.
   ready(run: BurstRun, job: Job, machine: Machine): Promise<Machine>;
   capture(run: BurstRun, job: Job, machine: Machine, name: string): Promise<Snapshot>;

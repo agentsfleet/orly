@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.70.0 (2026-11-22)
+
+Burst machines join the caller's tailnet, and a lane survives the caller changing network.
+
+- **Tailscale** — `orly burst` now requires the caller on a tailnet and a Tailscale OAuth trust credential in `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET`, whose only tag is `tag:orly-burst`. Each machine joins with its own single-use key, deleted once it has joined.
+- **No public SSH** — No AWS or E2E security group opens port 22; SSH runs over the tailnet, and the caller-address check is gone.
+- **Detached lanes** — A lane runs detached on its machine. A lost session reconnects for up to 10 minutes, and the log resumes where it stopped. The lane's `exit=` is the code the machine wrote.
+- **E2E** — Each VM boots a TIR start script of its own, deleted with the VM.
+- **Upgrade** — Follow the Tailscale setup in [Burst lanes](BURST.md#one-time-setup-for-tailscale) before the next run, then run `bunx --bun @agentsfleet/orly@0.70.0 update` after this version is published.
+
 ## 0.60.4 (2026-11-20)
 
 A release publishes without rerunning the Pull Request's gates.

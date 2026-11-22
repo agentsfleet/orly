@@ -17,6 +17,9 @@ type StreamOptions = {
   // Standard output goes to this file instead of the line sink, for a binary
   // stream such as a results archive.
   stdoutFile?: string;
+  // Standard output goes here, chunk by chunk, instead of the line sink, for
+  // a reader that counts the bytes it was sent.
+  chunks?: (chunk: Uint8Array) => void;
   lines: (line: string) => void;
   deadline: number;
   signal: AbortSignal;
@@ -56,7 +59,8 @@ export async function streamProcess(argv: string[], options: StreamOptions): Pro
   if (options.signal.aborted) cancel();
   else options.signal.addEventListener("abort", cancel, { once: true });
   try {
-    const stdout = child.stdout instanceof ReadableStream ? streamLines(child.stdout, options.lines) : undefined;
+    const { chunks } = options;
+    const stdout = child.stdout instanceof ReadableStream ? chunks ? streamChunks(child.stdout, chunks) : streamLines(child.stdout, options.lines) : undefined;
     await Promise.all([stdout, streamLines(child.stderr, options.lines), child.exited]);
   } finally {
     clearTimeout(timer);
@@ -174,21 +178,51 @@ function locate(argv: string[], env: Environment): string {
   return found;
 }
 
-async function streamLines(stream: ReadableStream<Uint8Array>, write: (line: string) => void): Promise<void> {
-  const decoder = new TextDecoder();
-  let pending = "";
-  for await (const chunk of stream) {
-    pending += decoder.decode(chunk, { stream: true });
-    const parts = pending.split("\n");
-    pending = parts.pop() ?? "";
-    for (const line of parts) write(line);
-    if (pending.length > MAX_LINE_CHARS) {
-      write(pending);
-      pending = "";
+// Bytes in, whole lines out. It may be fed by several streams in turn, such
+// as the sessions one detached job's log is followed through, so a line cut
+// by a lost session is written once, whole, when the next one completes it.
+export class Lines {
+  readonly #write: (line: string) => void;
+  readonly #decoder = new TextDecoder();
+  #pending = "";
+  #bytes = 0;
+
+  constructor(write: (line: string) => void) {
+    this.#write = write;
+  }
+
+  // Every byte taken so far: where a resumed stream starts.
+  get bytes(): number {
+    return this.#bytes;
+  }
+
+  take(chunk: Uint8Array): void {
+    this.#bytes += chunk.byteLength;
+    this.#pending += this.#decoder.decode(chunk, { stream: true });
+    const parts = this.#pending.split("\n");
+    this.#pending = parts.pop() ?? "";
+    for (const line of parts) this.#write(line);
+    if (this.#pending.length > MAX_LINE_CHARS) {
+      this.#write(this.#pending);
+      this.#pending = "";
     }
   }
-  pending += decoder.decode();
-  if (pending) write(pending);
+
+  end(): void {
+    this.#pending += this.#decoder.decode();
+    if (this.#pending) this.#write(this.#pending);
+    this.#pending = "";
+  }
+}
+
+async function streamLines(stream: ReadableStream<Uint8Array>, write: (line: string) => void): Promise<void> {
+  const lines = new Lines(write);
+  await streamChunks(stream, (chunk) => lines.take(chunk));
+  lines.end();
+}
+
+async function streamChunks(stream: ReadableStream<Uint8Array>, take: (chunk: Uint8Array) => void): Promise<void> {
+  for await (const chunk of stream) take(chunk);
 }
 
 
