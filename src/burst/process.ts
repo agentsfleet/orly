@@ -4,7 +4,7 @@ import type { Environment } from "./settings";
 import pLimit from "p-limit";
 
 import { stopOwnedGroup } from "../command_process";
-import { OrlyError } from "../model";
+import { hasErrorCode, OrlyError } from "../model";
 
 type Stopped = "deadline" | "cancelled";
 // A child killed by a signal it was not sent by orly has no exit code: it was
@@ -52,7 +52,7 @@ export async function streamProcess(argv: string[], options: StreamOptions): Pro
   let stopped: Stopped | undefined;
   const stop = (reason: Stopped) => {
     stopped ??= reason;
-    stopOwnedGroup(child.pid);
+    stopGroup(child.pid);
   };
   const timer = setTimeout(() => stop("deadline"), Math.max(0, options.deadline - Date.now()));
   const cancel = () => stop("cancelled");
@@ -66,7 +66,7 @@ export async function streamProcess(argv: string[], options: StreamOptions): Pro
     clearTimeout(timer);
     options.signal.removeEventListener("abort", cancel);
     // Reaps anything the child left running in its group after it exited.
-    stopOwnedGroup(child.pid);
+    stopGroup(child.pid);
     await child.exited;
   }
   if (stopped) return { stopped };
@@ -85,20 +85,20 @@ export async function captureProcess(argv: string[], options: { env: Environment
   let stopped: Stopped | undefined;
   const stop = (reason: Stopped) => {
     stopped ??= reason;
-    stopOwnedGroup(child.pid);
+    stopGroup(child.pid);
   };
   const timer = setTimeout(() => stop("deadline"), options.timeoutMs);
   const cancel = () => stop("cancelled");
   options.signal?.addEventListener("abort", cancel, { once: true });
   try {
-    const exited = child.exited.then(() => stopOwnedGroup(child.pid));
+    const exited = child.exited.then(() => stopGroup(child.pid));
     const [stdout, stderr] = await Promise.all([readBounded(child.stdout, MAX_CAPTURE_BYTES, outputTooLarge), readBounded(child.stderr, MAX_CAPTURE_BYTES, outputTooLarge), exited]);
     const stoppedBy = stopped ?? child.signalCode;
     return { code: stopped ? -1 : child.exitCode ?? -1, stdout, stderr: `${stderr}${stoppedBy ? `\n${argv[0]} stopped by ${stoppedBy}` : ""}` };
   } finally {
     clearTimeout(timer);
     options.signal?.removeEventListener("abort", cancel);
-    stopOwnedGroup(child.pid);
+    stopGroup(child.pid);
     await child.exited;
   }
 }
@@ -153,6 +153,17 @@ export async function resolveSecrets(references: Record<string, string>, env: En
   const failed = reads.find((read) => "error" in read);
   if (failed && "error" in failed) throw new OrlyError(failed.error);
   return Object.fromEntries(reads.map((read) => [read.name, "value" in read ? read.value : undefined]));
+}
+
+// macOS refuses to signal a group whose members have all exited but are not
+// yet reaped, as a session that ended just as its deadline came; that group
+// needs no stopping.
+function stopGroup(pid: number): void {
+  try {
+    stopOwnedGroup(pid);
+  } catch (error) {
+    if (!hasErrorCode(error, "EPERM")) throw error;
+  }
 }
 
 // Reads a stream whole, refusing it past `limit` bytes with the caller's error.
