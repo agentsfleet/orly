@@ -16,7 +16,7 @@ import { CLOUD_PROVIDERS } from "./providers";
 import { burstSettings } from "./settings";
 import { newKeyPair } from "./ssh";
 import { Tailnet } from "./tailnet";
-import { LANE_PREFIX, MINUTE_MS, PROVIDER_NAMES } from "./types";
+import { LANE_PREFIX, MINUTE_MS, newRunId, PROVIDER_NAMES } from "./types";
 
 export type BurstDependencies = Io & { root: string; env: Environment; fetch: Fetch };
 type Request = { snapshot: boolean; prune: boolean; provider: ProviderName | undefined; ref: string | undefined; useSnapshot: boolean; lanes: string[] };
@@ -131,7 +131,7 @@ async function stage(dependencies: BurstDependencies, settings: BurstSettings, r
   // refuses, leaves nothing behind.
   const caller = await tailnet.admit();
   dependencies.write(done(`${caller} is on the tailnet; the run's machines join it`));
-  const runId = newRunId(ref, new Date());
+  const runId = newRunId(slug(ref, REF_NAME_CHARS) || "ref", new Date());
   const directory = runDirectory(settings.outRoot, runId);
   const bundle = await bundleRef(root, ref, directory);
   const commit = (await git(root, ["rev-parse", "--verify", `${ref}^{commit}`])).stdout.trim();
@@ -178,11 +178,6 @@ async function configAt(root: string, ref: string): Promise<RepoConfig> {
   const value: unknown = JSON.parse(shown.stdout);
   if (!isObject(value)) throw new OrlyError(`${ref}:${CONFIG_PATH} must be a JSON object`);
   return parseConfig(value);
-}
-
-function newRunId(ref: string, now: Date): string {
-  const stamp = now.toISOString().replaceAll(/[-:T]/g, "").slice(0, 14);
-  return `${slug(ref, REF_NAME_CHARS) || "ref"}-${stamp}-${crypto.randomUUID().slice(0, 4)}`;
 }
 
 // Holds the run's private key, so only this user may read it.

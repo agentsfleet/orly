@@ -10,12 +10,14 @@ import { bootScript, FORGET, remoteScript } from "./job";
 import { done, failed, ongoing } from "./progress";
 import { machineDeadline, resolveSecrets } from "./process";
 import { archiveDirectories, forgetRunFiles, leaveTailnet, reachable, runOverSsh } from "./ssh";
-import { LANE_PREFIX, MINUTE_MS } from "./types";
+import { LANE_PREFIX, MINUTE_MS, runTail } from "./types";
 import { messageOf, OrlyError } from "../model";
 
 // What only a lane receives: its secrets and its copied directories.
 type LaneInputs = { secrets: Environment; directories: readonly StagedDirectory[] };
 type NamedSnapshot = { snapshot: Snapshot; stamp: string; digest: string };
+// A machine on the tailnet, as `node`, at its tailnet address.
+type Joined = Machine & { node: string };
 
 const NO_INPUTS: LaneInputs = Object.freeze({ secrets: {}, directories: [] });
 const SNAPSHOT_JOB = "snapshot";
@@ -25,9 +27,6 @@ const KEEP = 1;
 // then 4 random ones, so two captures in one millisecond still differ.
 const SUFFIX_CHARS = 8;
 const IMAGE_DIGEST_CHARS = 4;
-// A run id ends in its 14-digit stamp and 4-character suffix; a node name
-// carries both, so two runs' machines never share a tailnet name.
-const RUN_ID_TAIL = 19;
 // How long a warm-up machine is given to leave the tailnet before it is imaged.
 const LEAVE_MS = 2 * MINUTE_MS;
 
@@ -63,14 +62,15 @@ export async function cloudSnapshot(provider: CloudProvider, run: BurstRun): Pro
     requireActive(run);
     await provider.prepare(run);
     requireActive(run);
-    machine = await start(provider, run, job, (started) => { machine = started; });
+    const joined = await start(provider, run, job, (started) => { machine = started; });
+    machine = joined;
     await reachable(run, job, machine, provider.user);
     const status = await runOverSsh(run, job, machine, provider.user, await script(run, job, NO_INPUTS), []);
     if (status !== 0) {
       run.write(failed(`the warm-up ended with exit=${status}; no snapshot was taken`));
       return undefined;
     }
-    machine = await leaveForCapture(provider, run, machine);
+    machine = await leaveForCapture(provider, run, joined);
     return await provider.capture(run, job, machine, snapshotName(run.repo, image, new Date()));
   } finally {
     if (machine) await release(provider, run, machine);
@@ -135,8 +135,8 @@ async function cloudLane(provider: CloudProvider, run: BurstRun, job: Job, input
 // tailnet and is reached at its tailnet address. The key is deleted once the
 // machine has joined, or has failed to. `started` learns each stage of the
 // machine, so whatever ends the start, the caller still deletes it.
-async function start(provider: CloudProvider, run: BurstRun, job: Job, started: (machine: Machine) => void): Promise<Machine> {
-  const node = `orly-burst-${job.name}-${run.runId.slice(-RUN_ID_TAIL)}`;
+async function start(provider: CloudProvider, run: BurstRun, job: Job, started: (machine: Machine) => void): Promise<Joined> {
+  const node = `orly-burst-${job.name}-${runTail(run.runId)}`;
   const key = await run.tailnet.mint(node);
   try {
     const created = { ...await provider.create(run, job, bootScript(node, key.secret)), node };
@@ -146,7 +146,7 @@ async function start(provider: CloudProvider, run: BurstRun, job: Job, started: 
     run.write(ongoing(`waiting for ${node} to join the tailnet`));
     const address = await run.tailnet.joined(node, { deadline: machineDeadline(job), signal: run.signal, pollMs: run.settings.pollMs });
     run.write(done(`${node} joined the tailnet at ${address}`));
-    const joined = { ...running, address };
+    const joined = { ...running, address, node };
     started(joined);
     return joined;
   } finally {
@@ -165,10 +165,10 @@ async function forgetKey(run: BurstRun, key: AuthKey, node: string): Promise<voi
 
 // A snapshot of a machine still on the tailnet would boot every later lane
 // as that node, so the warm-up leaves first, and is not imaged if it cannot.
-async function leaveForCapture(provider: CloudProvider, run: BurstRun, machine: Machine): Promise<Machine> {
-  const node = machine.node ?? "";
+async function leaveForCapture(provider: CloudProvider, run: BurstRun, machine: Joined): Promise<Machine> {
+  const { node } = machine;
   run.write(ongoing(`${node} leaves the tailnet before it is imaged`));
-  await leaveTailnet(run, machine, provider.user, FORGET);
+  if (!await leaveTailnet(run, machine, provider.user, FORGET)) throw new OrlyError(`could not log ${node} out of the tailnet; no snapshot was taken`);
   await run.tailnet.left(node, { deadline: Date.now() + LEAVE_MS, signal: run.signal, pollMs: run.settings.pollMs });
   run.write(done(`${node} left the tailnet`));
   return { ...machine, node: undefined };

@@ -38,9 +38,12 @@ const MOVED: Readonly<Record<string, string>> = {
   ORLY_BURST_SUBNET: "unset it; lanes use the default network", ORLY_BURST_SNAPSHOT_KEEP: "unset it; --prune keeps the newest snapshot",
   ORLY_BURST_AWS_ACCESS: "unset it; lanes are reached over SSH", ORLY_BURST_AWS_INSTANCE_PROFILE: "unset it; lanes are reached over SSH",
 };
+// The longest a run may take, so anything a run left behind longer ago than
+// this, with a margin, belongs to a run that died.
+export const MAX_DEADLINE_MINUTES = 1440;
 const bounded = (max: number) => z.coerce.number().positive().max(max);
 const environmentSchema = z.object({
-  ORLY_BURST_DEADLINE_MINUTES: bounded(1440).default(120),
+  ORLY_BURST_DEADLINE_MINUTES: bounded(MAX_DEADLINE_MINUTES).default(120),
   ORLY_BURST_POLL_SECONDS: bounded(600).default(30),
   ORLY_BURST_OUT: z.string().min(1).default(join(tmpdir(), "orly-burst")),
   ORLY_BURST_MARKET: z.enum(AWS_MARKETS).default("spot"),

@@ -7,6 +7,10 @@ const PRIVATE_FILE_MODE = 0o600;
 const TEXT_ENCODING = "utf8";
 const KILL_SIGNAL = "SIGKILL";
 const MISSING_PROCESS = "ESRCH";
+// macOS refuses to signal a group whose members have all exited but are not
+// yet reaped, as a command that ended just as its deadline came; that group,
+// like a missing one, needs no stopping.
+const EXITED_GROUP = "EPERM";
 const PIPE_OUTPUT = "pipe";
 const OWNER_POLL_MS = 100;
 const TERMINATION_SIGNALS = ["SIGTERM", "SIGINT", "SIGHUP"] as const;
@@ -20,7 +24,7 @@ export type CommandResult = { exit_code: number | null; elapsed_ms: number; outp
 export function stopOwnedGroup(pid: number): void {
   if (!Number.isSafeInteger(pid) || pid <= 0) throw new Error("invalid owned process group");
   try { process.kill(-pid, KILL_SIGNAL); }
-  catch (error) { if (!hasErrorCode(error, MISSING_PROCESS)) throw error; }
+  catch (error) { if (!hasErrorCode(error, MISSING_PROCESS) && !hasErrorCode(error, EXITED_GROUP)) throw error; }
 }
 
 async function capture(stream: ReadableStream<Uint8Array>, file: string, onBytes: (size: number) => void): Promise<void> {

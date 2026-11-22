@@ -5,18 +5,21 @@ import type { OsImage, Plan, VmSnapshot } from "./tir";
 import { messageOf, OrlyError } from "../model";
 import { machineDeadline, pause, until } from "./process";
 import { done, failed, ongoing } from "./progress";
+import { MAX_DEADLINE_MINUTES } from "./settings";
 import { E2eApi, E2eRequestFailed } from "./tir";
+import { MINUTE_MS, runBegan, runTail } from "./types";
 
 // TIR caps a key label at 50 characters. A run id ends in its 14-digit stamp
 // and 4-character suffix, which keep labels unique, so the ref part is cut.
 export const TIR_LABEL_LIMIT = 50;
 const LABEL_PREFIX = "orly-burst-";
 const RUN_ID_TAIL = 20;
-// A start script is named `obs-<run stamp>-<run suffix>-<lane>`, within TIR's
-// 50 characters. One whose run began longer ago than any run may last is
-// an orphan of a run that died, and the next run's teardown deletes it.
-const SCRIPT_NAME = /^obs-(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})-[0-9a-f]{4}-/;
-const ORPHAN_AGE_MS = 25 * 60 * 60_000;
+// A start script is named `obs-<run tail>-<lane>`, within TIR's 50
+// characters. One whose run began longer ago than any run may last, with
+// its staging before the deadline starts and its cleanup after, is an
+// orphan of a run that died, and a later run's teardown deletes it.
+const SCRIPT_PREFIX = "obs-";
+const ORPHAN_AGE_MS = MAX_DEADLINE_MINUTES * MINUTE_MS + 60 * MINUTE_MS;
 const DEFAULT_IMAGE = "Debian 13";
 // How long VM deletion, then the group's delete, are waited for before each
 // is reported for deletion by hand.
@@ -251,7 +254,9 @@ export class E2eNodes implements CloudProvider {
     for (const script of listed.filter((candidate) => candidate.name.startsWith(mine) || orphaned(candidate.name))) {
       await this.#api.deleteStartScript(script.id).catch(goneIsDeleted)
         .then(() => run.write(done(`deleted TIR start script ${script.id} (${script.name})`)))
-        .catch((error: unknown) => run.write(failed(`could not delete TIR start script ${script.id} (${script.name}): ${messageOf(error)}; delete it by hand`)));
+        .catch((error: unknown) => run.write(error instanceof E2eRequestFailed && IN_USE.has(error.status)
+          ? ongoing(`TIR start script ${script.id} (${script.name}) is still used by a VM; it goes with that VM, or at a later run's teardown`)
+          : failed(`could not delete TIR start script ${script.id} (${script.name}): ${messageOf(error)}; delete it by hand`)));
     }
   }
 
@@ -297,13 +302,12 @@ function toSnapshot(snapshot: VmSnapshot): Snapshot {
 
 // A run id ends in `<14-digit stamp>-<4 hexadecimal characters>`.
 function scriptPrefix(runId: string): string {
-  return `obs-${runId.slice(-RUN_ID_TAIL + 1)}-`;
+  return `${SCRIPT_PREFIX}${runTail(runId)}-`;
 }
 
 function orphaned(name: string, now = Date.now()): boolean {
-  const [, year, month, day, hour, minute, second] = (SCRIPT_NAME.exec(name) ?? []).map(Number);
-  if (year === undefined || month === undefined) return false;
-  return now - Date.UTC(year, month - 1, day, hour, minute, second) > ORPHAN_AGE_MS;
+  const began = name.startsWith(SCRIPT_PREFIX) ? runBegan(name.slice(SCRIPT_PREFIX.length).split("-").slice(0, 2).join("-")) : undefined;
+  return began !== undefined && now - began > ORPHAN_AGE_MS;
 }
 
 export function tirLabel(runId: string): string {

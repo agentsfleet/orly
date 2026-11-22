@@ -70,7 +70,8 @@ describe("the caller's tailnet", () => {
       expect(order).toEqual(["mint", "join", "delete"]);
     }
     const scripts = run.api.callsTo("POST", /^\/notebooks\/init-script\/$/).map((call) => String(fields(call.body).init_script));
-    expect(scripts.map((script) => script.match(/--auth-key='([^']+)'/)?.[1]).sort()).toEqual(["tskey-fake-auth-k1", "tskey-fake-auth-k2"]);
+    expect(scripts.map((script) => script.match(/printf '%s' '([^']+)'/)?.[1]).sort()).toEqual(["tskey-fake-auth-k1", "tskey-fake-auth-k2"]);
+    expect(scripts.every((script) => script.includes('tailscale up --reset --auth-key="file:$key"'))).toBe(true);
     expect(scripts.some((script) => /--hostname='orly-burst-acceptance-\d{14}-[0-9a-f]{4}'/.test(script))).toBe(true);
     const tokenForm = new URLSearchParams(run.tailnet.calls.find((call) => call.path === "/api/v2/oauth/token")?.body ?? "");
     expect(tokenForm.get("client_secret")).toBe(CLIENT_SECRET);
@@ -174,7 +175,9 @@ describe("the caller's tailnet", () => {
   test("the boot script quotes its key and name, and parses", () => {
     const script = bootScript("orly-burst-acceptance-20261122000000-ab12", "tskey-fake-it's");
 
-    expect(script).toContain("tailscale up --reset --auth-key='tskey-fake-it'\\''s' --hostname='orly-burst-acceptance-20261122000000-ab12'");
+    expect(script).toContain("printf '%s' 'tskey-fake-it'\\''s' > \"$key\"");
+    expect(script).toContain("tailscale up --reset --auth-key=\"file:$key\" --hostname='orly-burst-acceptance-20261122000000-ab12'");
+    expect(script).not.toMatch(/--auth-key='/);
     expect(Bun.spawnSync(["bash", "-n"], { stdin: new Blob([script]) }).exitCode).toBe(0);
   });
 });

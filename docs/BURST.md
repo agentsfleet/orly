@@ -34,7 +34,6 @@ One transport serves both clouds: Secure Shell (SSH) with a key pair made for th
 No cloud firewall opens port 22, and nothing is staged in object storage.
 
 The only secret stored in the cloud is a machine's Tailscale key, in its boot script.
-orly deletes that key once the machine has joined.
 
 ## Before you begin
 
@@ -101,17 +100,14 @@ Every run's machines join the caller's tailnet as ephemeral nodes tagged `tag:or
    }
    ```
 
-   > [!WARNING]
-   > `tag:orly-burst` must appear in no rule's `src`, and the policy's default allow-all grant must go.
-   > Otherwise every burst machine can reach every device on the tailnet, CI runners and laptops included.
-
 2. Create an OAuth trust credential with the `auth_keys` write scope whose only tag is `tag:orly-burst`.
    orly mints every key with exactly that tag set, and a credential mints no other.
 3. Store its client ID and secret as `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET` on the caller.
 
 > [!WARNING]
-> Never reuse the credential, or its tag set, of a CI job.
-> A key carrying both tags gives every burst machine whatever the CI tag may reach.
+> `tag:orly-burst` must appear in no rule's `src`, and the policy's default allow-all grant must go.
+> Never reuse a CI job's credential or tag set: a key carrying both tags reaches whatever the CI tag reaches.
+> Either mistake lets every burst machine reach devices on the tailnet, CI runners and laptops included.
 
 Each machine gets its own key: single use, ephemeral, preauthorized and valid for 10 minutes.
 orly deletes it as soon as the machine has joined, or failed to.
@@ -356,7 +352,7 @@ That is the Tailscale keys, the key pair, the security group, the start scripts,
 A VM whose create reply TIR lost is found by name and deleted too.
 
 A process killed outright, such as by a CI runner, leaves them behind; they are tagged or labelled `orly-burst` and safe to delete.
-Its Tailscale keys expire 10 minutes after they were minted, and its ephemeral nodes leave the tailnet once their machines are gone.
+Its Tailscale keys expire 10 minutes after they were minted, and its ephemeral nodes leave the tailnet once their machines are deleted or go offline.
 
 **Deleting a snapshot is permanent**, and the next run starts cold from the image.
 A snapshot's name ends in a digest of its base image, so changing `burst.e2e.image` or `burst.aws.image` starts lanes cold until the next capture.

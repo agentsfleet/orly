@@ -74,7 +74,7 @@ export class FakeTailscale {
   // A machine runs its boot script: it joins with the key in it, which must
   // be live, unused and for one ephemeral, preauthorized, tagged device.
   join(boot: string): void {
-    const secret = boot.match(/--auth-key='([^']+)'/)?.[1] ?? "";
+    const secret = boot.match(/printf '%s' '([^']+)' > "\$key"/)?.[1] ?? "";
     const host = boot.match(/--hostname='([^']+)'/)?.[1] ?? "";
     const key = [...this.keys.values()].find((candidate) => candidate.secret === secret);
     if (!key || key.used || !host || !singleUse(key.request)) return;

@@ -151,7 +151,9 @@ class Session {
       const outcome = await streamProcess(this.#ssh(`bash -c ${shellQuote(followScript(from))}`), {
         env: this.#run.settings.env, deadline: this.#job.deadline, signal: this.#run.signal,
         // ssh's complaint is said once per loss, not at every retry.
-        chunks: (chunk) => lines.take(chunk), lines: (line) => this.#lostAt === undefined && this.#run.write(`[${this.#job.name}] ${line}`),
+        chunks: (chunk) => lines.take(chunk), lines: (line) => {
+          if (this.#lostAt === undefined) this.#run.write(`[${this.#job.name}] ${line}`);
+        },
       });
       if ("stopped" in outcome && outcome.stopped === "cancelled") return "cancelled";
       if ("stopped" in outcome && outcome.stopped === "deadline") return this.#lostAt === undefined ? "deadline" : this.#giveUp(Date.now());

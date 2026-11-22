@@ -6,6 +6,10 @@ import type { Tailnet } from "./tailnet";
 export const LANE_PREFIX = "burst.";
 export const MINUTE_MS = 60_000;
 export const IPV4 = /^\d{1,3}(?:\.\d{1,3}){3}$/;
+// A run id is `<ref>-<14-digit UTC stamp>-<4 hexadecimal characters>`. Its
+// tail names the run's machines, nodes and start scripts, unique to the run.
+const RUN_TAIL = /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})-[0-9a-f]{4}$/;
+const RUN_TAIL_CHARS = 19;
 
 // The fetch a provider calls its cloud with, so tests can answer for it.
 export type Fetch = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
@@ -81,4 +85,18 @@ export interface CloudProvider {
   // Removes what prepare registered, and any machine the run may have
   // started without learning its identifier, once every lane has ended.
   finish(run: BurstRun): Promise<void>;
+}
+
+export function newRunId(ref: string, now: Date): string {
+  return `${ref}-${now.toISOString().replaceAll(/[-:T]/g, "").slice(0, 14)}-${crypto.randomUUID().slice(0, 4)}`;
+}
+
+export function runTail(runId: string): string {
+  return runId.slice(-RUN_TAIL_CHARS);
+}
+
+// When the run whose tail ends `text` began, or undefined when it is none.
+export function runBegan(text: string): number | undefined {
+  const [, year, month, day, hour, minute, second] = (RUN_TAIL.exec(text) ?? []).map(Number);
+  return year === undefined || month === undefined ? undefined : Date.UTC(year, month - 1, day, hour, minute, second);
 }

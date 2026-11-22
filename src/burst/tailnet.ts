@@ -8,6 +8,7 @@ import { z } from "zod";
 import { OrlyError } from "../model";
 import { captureProcess, until } from "./process";
 import { required } from "./settings";
+import { IPV4 } from "./types";
 
 // One single-use key a machine joins the tailnet with. `secret` is the key
 // itself: it reaches the machine only inside its boot script, which goes to
@@ -36,7 +37,8 @@ const RETRIES = 5;
 const TOKEN_MARGIN_MS = 60_000;
 const STATUS_TIMEOUT_MS = 30_000;
 const NOT_FOUND = 404;
-const IPV4 = /^100\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
+// Tailscale gives each node an IPv4 address in 100.64.0.0/10.
+const TAILNET_PREFIX = "100.";
 const tokenSchema = z.object({ access_token: z.string().min(1), expires_in: z.number().positive() });
 const keySchema = z.object({ id: z.string().min(1), key: z.string().min(1) });
 const peerSchema = z.object({ HostName: z.string(), Online: z.boolean().optional(), TailscaleIPs: z.array(z.string()).nullish(), Tags: z.array(z.string()).nullish() });
@@ -152,7 +154,7 @@ export class Tailnet {
       const text = await (await this.#http(path, { method, ...options })).text();
       return text ? JSON.parse(text) : {};
     } catch (error) {
-      if (isHTTPError(error)) throw new TailscaleRequestFailed(`Tailscale ${method} /api/v2/${path} answered ${error.response.status}: ${messageOf(error.data)}`, error.response.status);
+      if (isHTTPError(error)) throw new TailscaleRequestFailed(`Tailscale ${method} /api/v2/${path} answered ${error.response.status}: ${tailscaleMessage(error.data)}`, error.response.status);
       throw error;
     }
   }
@@ -168,10 +170,10 @@ class TailscaleRequestFailed extends OrlyError {
 }
 
 function address(peer: Peer): string | undefined {
-  return peer.TailscaleIPs?.find((candidate) => IPV4.test(candidate));
+  return peer.TailscaleIPs?.find((candidate) => IPV4.test(candidate) && candidate.startsWith(TAILNET_PREFIX));
 }
 
-function messageOf(body: unknown): string {
+function tailscaleMessage(body: unknown): string {
   const parsed = z.object({ message: z.string() }).safeParse(body);
   return parsed.success ? parsed.data.message : "no message";
 }
