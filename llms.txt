@@ -12,10 +12,10 @@ Package: `@agentsfleet/orly` (npm)
 Source: https://github.com/agentsfleet/orly
 License: Massachusetts Institute of Technology (MIT)
 
-This guide describes orly 0.60.1. The `bunx` commands below fetch the
+This guide describes orly 0.70.0. The `bunx` commands below fetch the
 published package; available versions are listed at
 https://github.com/agentsfleet/orly/releases. Use an installed local tarball for
-candidate checks. orly collects no usage telemetry. Authorized cloud burst runs call provider APIs; package installation may fetch dependencies.
+candidate checks. orly collects no usage telemetry. Authorized cloud burst runs call provider and Tailscale APIs; package installation may fetch dependencies.
 
 ---
 
@@ -171,6 +171,8 @@ never with a placeholder reason.
 | `orly gate` | run work then pr, with fast verification once; stop at the first failure |
 | `orly gate pr` | the Pull Request criteria check |
 | `orly gate pr --reuse-verification` | reuse intact current-input evidence only for reviewed hermetic policies |
+| `orly proof <file> --test <name> -- <cmd>` | with the test's covered code reverted, record that the test fails |
+| `orly note "<quote>"` | add the owner's verbatim ruling, dated, to the active spec's Discovery |
 | `orly override <criterion> --reason <why>` | record a gate exception (user-authorised only) |
 | `orly doctor` | check installed files and required command configuration |
 | `orly burst` | list the declared `burst.*` lanes; exits 2 |
@@ -181,7 +183,9 @@ AWS lanes rent Spot machines unless `ORLY_BURST_MARKET` says `on-demand`. Region
 
 Gates inspect prerequisites before commands and report blocked or unrun groups explicitly. Fresh execution is the default; a reuse flag alone cannot skip any command.
 Repository-owned `reuse` policies require hermetic input ownership, a maximum age and toolchain identities. Original execution output stays visible, and failed latest attempts or attempts without a completion record prevent fallback to an older pass.
-An optional `tracked_inputs` policy permits reuse across documentation commits only when every tracked dependency is declared and the command does not read Git history.
+Evidence binds tracked content, not the revision. A run before the commit is reused once that tree is committed and pushed, and a hermetic command reads no Git history.
+An optional `tracked_inputs` policy narrows that content, and must declare every tracked dependency.
+`coupled` path groups fail `gate pr` when a branch changes one side only. `gate pr` names new tests that have no `orly proof` record, and never fails on them.
 Full-source observations still bracket the commands and toolchain probes.
 Keep fixture evidence, live acceptance and injected-delay measurements separate. Unavailable reviews remain blocked, and final review follows the same pushed head through two quiet polls.
 

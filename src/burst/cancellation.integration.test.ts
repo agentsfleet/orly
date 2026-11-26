@@ -1,6 +1,7 @@
 import { afterEach, expect, setSystemTime, test } from "bun:test";
 
 import { cleanupTemporaryDirectories } from "../gates_test_support";
+import { FakeTailscale } from "./fake_tailscale";
 import { FakeTir } from "./fake_tir";
 import { burst } from "./index";
 import { burstSettings } from "./settings";
@@ -113,6 +114,6 @@ test("same-instant snapshots have distinct names and legacy snapshots are never 
 function fixture() {
   const root = burstRepository();
   const { bin, state } = fakeBin();
-  const api = new FakeTir();
+  const api = new FakeTir(new FakeTailscale(state));
   return { api, ...burstDependencies(root, burstEnvironment(bin, state, CREDENTIALS), api.fetch) };
 }

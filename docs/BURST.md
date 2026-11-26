@@ -1,8 +1,8 @@
 ---
 type: how-to
 audience: operator
-verified: 2026-11-18
-product_version: 0.60.0
+verified: 2026-11-22
+product_version: 0.70.0
 executable: false
 ---
 
@@ -16,19 +16,24 @@ Amazon Web Services (AWS) Spot and E2E Networks start one machine per lane, in p
 The gates never run `burst.*` commands, because every cloud run costs money.
 
 ```text
-caller                                         rented machine
-  1. read burst.secrets (environment or op)
+caller (on a tailnet)                          rented machine
+  1. check `tailscale status`, read burst.secrets (environment or op)
   2. bundle the ref with git
-  3. create the machine ------- cloud API ---> boots the newest snapshot
-  4. ssh: the commits it lacks  SSH ---------> /tmp/orly-burst.bundle
-  5. ssh: bash -s ------------- SSH ---------> setup, then secrets, then lane
-     [lane] log lines <-------- SSH ---------- standard output and errors
-  6. ssh: tar of results <----- SSH ---------- burst.artifacts that exist
-  7. delete the machine, the key and the security group
+  3. mint a single-use Tailscale key - Tailscale API
+  4. create the machine ------- cloud API ---> boots, runs the boot script:
+                                               installs Tailscale, joins the tailnet
+  5. delete the Tailscale key once the machine has joined
+  6. ssh over the tailnet: the commits it lacks, then the job, started detached
+     [lane] log lines <-------- SSH ---------- the job's log, from the last byte read
+     a lost session is reconnected, and the log resumes where it stopped
+  7. ssh: the job's exit code and the tar of results
+  8. log the machine out of the tailnet, delete it, the key pair and the security group
 ```
 
-One transport serves both clouds: Secure Shell (SSH) with a key pair made for the run.
-Nothing is staged in object storage, and no secret is stored in the cloud.
+One transport serves both clouds: Secure Shell (SSH) with a key pair made for the run, carried by the caller's tailnet.
+No cloud firewall opens port 22, and nothing is staged in object storage.
+
+The only secret stored in the cloud is a machine's Tailscale key, in its boot script.
 
 ## Before you begin
 
@@ -57,7 +62,7 @@ Declare the lanes as `burst.<name>` commands, and the `burst` object beside them
 | `burst.<name>` command | One lane. A name has 1 to 24 lowercase letters, digits or hyphens. | none |
 | `burst.setup` | Runs as root before every lane and snapshot warm-up, with no secret. Keep it fast on a warm machine. | none |
 | `burst.warm` | Runs after setup when a snapshot is captured, with no secret, to fill build caches. | none |
-| `burst.secrets` | Environment variable name to an `op://` reference, read on the caller. | none |
+| `burst.secrets` | Environment variable name to an `op://` reference, read on the caller. A name may not be `OP_SERVICE_ACCOUNT_TOKEN` or start with `TS_OAUTH_`, `E2E_` or `AWS_`. | none |
 | `burst.artifacts` | Paths below the checkout that a lane brings back. A missing path is skipped. | none |
 | `burst.directories` | Variables naming directories on the caller, copied to each lane's machine over SSH. | none |
 | `burst.e2e.location` | TIR location. | `Delhi` |
@@ -71,16 +76,44 @@ Declare the lanes as `burst.<name>` commands, and the `burst` object beside them
 A lane starts from the repository's newest ready snapshot of the configured image; `--no-snapshot` starts it from the image itself.
 orly reads this object from the ref it runs, so a branch carries its own placement.
 
-Each machine installs Git, curl, unzip, Docker and Docker Compose on its first boot, and runs every lane with `CI=1`.
-The caller needs `git`, `ssh`, `ssh-keygen`, `tar` and the provider's credentials below.
+Each machine installs Tailscale, Git, curl, unzip, Docker and Docker Compose on its first boot, and runs every lane with `CI=1`.
+The caller needs `git`, `ssh`, `ssh-keygen`, `tar`, `tailscale`, the Tailscale credential below and the provider's credentials.
 A secret already in the caller's environment is used as it is; any other is read with `op read`.
 
 > [!IMPORTANT]
-> The caller must open outbound SSH on port 22, and keep the same public address for the whole run.
-> Sessions behind an HTTP-only proxy start the repository's Continuous Integration (CI) workflow instead, which runs `orly burst`.
+> The caller must be on a tailnet, with `tailscale status` reporting it online, or `orly burst` refuses to start.
+> The caller may change network mid-run: the lane keeps running on its machine, and orly reconnects to it.
 
 orly accepts a fresh machine's host key on first connection, into the run's own `known_hosts` file only.
-Run lanes from networks you trust, since someone intercepting that first connection could stand in for the machine.
+That connection travels inside the tailnet's encrypted tunnel to the node the run's key created.
+
+### One-time setup for Tailscale
+
+Every run's machines join the caller's tailnet as ephemeral nodes tagged `tag:orly-burst`.
+
+1. In the tailnet policy, declare the tag and let members reach its SSH port:
+
+   ```json
+   {
+     "tagOwners": {"tag:orly-burst": ["autogroup:admin"]},
+     "grants": [{"src": ["autogroup:member"], "dst": ["tag:orly-burst"], "ip": ["tcp:22"]}]
+   }
+   ```
+
+2. Create an OAuth trust credential with the `auth_keys` write scope whose only tag is `tag:orly-burst`.
+   orly mints every key with exactly that tag set, and a credential mints no other.
+3. Store its client ID and secret as `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET` on the caller.
+
+> [!WARNING]
+> `tag:orly-burst` must appear in no rule's `src`, and the policy's default allow-all grant must go.
+> Never reuse a CI job's credential or tag set: a key carrying both tags reaches whatever the CI tag reaches.
+> Either mistake lets every burst machine reach devices on the tailnet, CI runners and laptops included.
+
+Each machine gets its own key: single use, ephemeral, preauthorized and valid for 10 minutes.
+orly deletes it as soon as the machine has joined, or failed to.
+
+A node logs out before its machine is deleted, and an ephemeral node that missed that leaves the tailnet once offline.
+Each run names its nodes `orly-burst-<LANE>-<STAMP>-<SUFFIX>`, so a node left behind can be found and removed in the admin console.
 
 ### One-time setup for AWS Spot
 
@@ -106,7 +139,7 @@ The launcher's policy creates and removes only resources tagged `owner=agent`:
   {"Effect": "Allow", "Action": "ec2:CreateSecurityGroup", "Resource": "arn:aws:ec2:*:*:vpc/*"},
   {"Effect": "Allow", "Action": "ec2:CreateTags", "Resource": "*",
    "Condition": {"StringEquals": {"ec2:CreateAction": ["RunInstances", "ImportKeyPair", "CreateSecurityGroup", "CreateImage"]}}},
-  {"Effect": "Allow", "Action": ["ec2:TerminateInstances", "ec2:StopInstances", "ec2:AuthorizeSecurityGroupIngress",
+  {"Effect": "Allow", "Action": ["ec2:TerminateInstances", "ec2:StopInstances",
    "ec2:DeleteSecurityGroup", "ec2:DeleteKeyPair", "ec2:DeregisterImage", "ec2:DeleteSnapshot"], "Resource": "*",
    "Condition": {"StringEquals": {"aws:ResourceTag/owner": "agent"}}},
   {"Effect": "Allow", "Action": "ec2:CreateImage", "Resource": "arn:aws:ec2:*:*:instance/*",
@@ -131,6 +164,13 @@ The `e2e` provider runs TIR virtual machines, reached as root over SSH.
 
 MyAccount keys do not work. Each run saves its public key and a security group named `orly-burst-<RUN>` in TIR, and deletes both after.
 
+TIR refuses a group with no inbound rule, so its one inbound rule admits UDP port 41641, Tailscale's direct-connection port.
+No rule opens SSH.
+
+TIR VMs take no user data, so each VM boots a start script of its own, named `obs-<STAMP>-<SUFFIX>-<LANE>`, which joins it to the tailnet.
+orly deletes the script once the VM is gone.
+A run's teardown also deletes any script left by a run that began more than 25 hours ago.
+
 ### Settings
 
 These variables shape a run, not where it runs:
@@ -146,7 +186,8 @@ orly's own limits, which no setting changes:
 
 | Wait | Limit |
 |---|---|
-| A machine booting, then answering SSH | 10 minutes each |
+| A machine booting, joining the tailnet, then answering SSH | 10 minutes each |
+| Reconnecting to a lane whose session was lost | 10 minutes since the log last grew, or the run's deadline when sooner |
 | One request to TIR or EC2 | 60 seconds |
 | TIR retries of a busy answer (429, 5xx, timeout), creates excepted | 10, backing off up to `ORLY_BURST_POLL_SECONDS` |
 | EC2 attempts of one call | 10 |
@@ -228,7 +269,7 @@ A local orly checkout runs the same way: `~/Projects/orly/bin/orly burst accepta
 
 ### Run a lane from a CI job
 
-A session that cannot open SSH starts a workflow like this one:
+A session that cannot run Tailscale starts a workflow like this one, on a runner that joins the tailnet first:
 
 ```yaml
 name: burst
@@ -255,14 +296,21 @@ jobs:
       - if: inputs.provider == 'aws-spot'
         uses: aws-actions/configure-aws-credentials@v4
         with: {role-to-assume: "<LAUNCHER_ROLE_ARN>", aws-region: ap-south-1}
-      - run: bunx --bun @agentsfleet/orly@0.60.0 burst "$LANE" --provider "$PROVIDER" --ref "$GITHUB_REF_NAME"
+      - uses: tailscale/github-action@v3
+        with: {oauth-client-id: "${{ secrets.TS_CI_OAUTH_CLIENT_ID }}", oauth-secret: "${{ secrets.TS_CI_OAUTH_SECRET }}", tags: "tag:ci"}
+      - run: bunx --bun @agentsfleet/orly@0.70.0 burst "$LANE" --provider "$PROVIDER" --ref "$GITHUB_REF_NAME"
         env:
           LANE: ${{ inputs.lane }}
           PROVIDER: ${{ inputs.provider }}
           E2E_API_KEY: ${{ secrets.E2E_API_KEY }}
           E2E_AUTH_TOKEN: ${{ secrets.E2E_AUTH_TOKEN }}
           E2E_PROJECT_ID: ${{ vars.E2E_PROJECT_ID }}
+          TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          TS_OAUTH_CLIENT_SECRET: ${{ secrets.TS_OAUTH_CLIENT_SECRET }}
 ```
+
+The runner joins as `tag:ci` with its own credential, and the lane's machines as `tag:orly-burst` with theirs.
+The policy must let `tag:ci` reach `tag:orly-burst` on port 22.
 
 `<LAUNCHER_ROLE_ARN>` carries the launcher policy and trusts the repository's GitHub identity.
 A full clone matters, because a shallow clone cannot be bundled.
@@ -276,6 +324,8 @@ orly burst: lane=<LANE> provider=<PROVIDER> machine=<TYPE_OR_PLAN> minutes=<N> c
 ```
 
 Only a number after `exit=` is evidence about the code; `interrupted`, `deadline`, `cancelled`, `unlaunched` and `not_run` mean the lane never finished.
+The number is the one the machine wrote when the lane's job ended, never the exit of an SSH session.
+
 The evidence directory holds `run.log` and the declared results the machine had.
 Setup and warm never see `burst.secrets` or the cloud credentials, and a cloud lane gets only its declared secrets.
 
@@ -284,18 +334,25 @@ Setup and warm never see `burst.secrets` or the cloud credentials, and a cloud l
 - **`set E2E_AUTH_TOKEN for this provider`**: the variable is missing or empty. Export it and run again.
 - **`orly burst no longer reads <VARIABLE>`**: placement moved to `.orly/orly.json`. Set the key the message names, and unset the variable.
 - **`could not read the secret for <NAME>`**: `op` is not signed in, or the reference is wrong.
-- **`this machine's address changed from <A> to <B>`**: the caller changed network after launch. Run the lane again from the new network.
-- **`the deadline passed while waiting for SSH`**: port 22 is blocked between the caller and the machine. Run the lane from a CI job instead.
-- **`exit=interrupted` on AWS**: AWS took the Spot instance back, or the session dropped. Run it again, or set `ORLY_BURST_MARKET=on-demand`.
+- **`this machine is not on a tailnet`**: run `tailscale up` on the caller, and run again.
+- **`Tailscale POST /api/v2/oauth/token answered 401`**: `TS_OAUTH_CLIENT_ID` or `TS_OAUTH_CLIENT_SECRET` is wrong.
+- **`Tailscale POST /api/v2/tailnet/-/keys answered 400`**: the credential's tags are not exactly `tag:orly-burst`.
+- **`the deadline passed while waiting for <NODE> to join the tailnet`**: the machine could not install Tailscale or reach it. The lane's machine is deleted; run it again.
+- **`the deadline passed while waiting for SSH`**: the tailnet policy does not let the caller reach `tag:orly-burst` on port 22.
+- **`could not reconnect to <ADDRESS>`**: the caller stayed off the tailnet for 10 minutes. Run the lane again.
+- **`exit=interrupted` on AWS**: AWS took the Spot instance back. Run it again, or set `ORLY_BURST_MARKET=on-demand`.
 - **`exit=not_run`**: the machine's preparation, the checkout or `burst.setup` failed before the lane started. The lane's `run.log` names the step.
 - **`run-instances refused`**: the launcher policy lacks the permission the message names.
 - **`Access Denied Read..` from E2E**: the keys belong to MyAccount. Create a TIR API token for the project instead.
 
 ## Remove or undo
 
-A run deletes its machines, key, security group, bundle and private key, even when a lane fails, on Ctrl-C, SIGTERM or a closed terminal.
+A run deletes its machines and everything it made for them, even when a lane fails, on Ctrl-C, SIGTERM or a closed terminal.
+That is the Tailscale keys, the key pair, the security group, the start scripts, the bundle and the private key.
 A VM whose create reply TIR lost is found by name and deleted too.
+
 A process killed outright, such as by a CI runner, leaves them behind; they are tagged or labelled `orly-burst` and safe to delete.
+Its Tailscale keys expire 10 minutes after they were minted, and its ephemeral nodes leave the tailnet once their machines are deleted or go offline.
 
 **Deleting a snapshot is permanent**, and the next run starts cold from the image.
 A snapshot's name ends in a digest of its base image, so changing `burst.e2e.image` or `burst.aws.image` starts lanes cold until the next capture.

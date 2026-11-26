@@ -21,11 +21,15 @@ for (const [field, value] of [
   ["limits", { [UNIT_LANE]: { typo: 10 } }], ["limits", { [UNIT_LANE]: null }],
   ["burst", []], ["burst", { setup: "make setup" }], ["burst", { setup: [[]] }], ["burst", { warm: [[""]] }],
   ["burst", { secrets: { API_TOKEN: "Vault/item/field" } }], ["burst", { secrets: { "1API": "op://v/i/f" } }],
-  ["burst", { secrets: { OP_SERVICE_ACCOUNT_TOKEN: "op://v/i/f" } }], ["burst", { secrets: { API_TOKEN: "op://v/i/f\nx" } }],
+  ["burst", { secrets: { OP_SERVICE_ACCOUNT_TOKEN: "op://v/i/f" } }], ["burst", { secrets: { TS_OAUTH_CLIENT_SECRET: "op://v/i/f" } }],
+  ["burst", { secrets: { E2E_API_KEY: "op://v/i/f" } }], ["burst", { secrets: { AWS_SECRET_ACCESS_KEY: "op://v/i/f" } }], ["burst", { secrets: { API_TOKEN: "op://v/i/f\nx" } }],
   ["burst", { artifacts: ["../outside"] }], ["burst", { artifacts: ["/abs/path"] }], ["burst", { artifacts: [".git/config"] }],
   ["burst", { e2e: { location: "Mumbai" } }], ["burst", { e2e: { region: "Chennai" } }], ["burst", { aws: { instance_types: [] } }],
   ["burst", { aws: { image: "ubuntu" } }], ["burst", { aws: { region: "Mumbai" } }],
   ["burst", { lanes: {} }], ["burst", { directories: ["TOOLBOX_DIR", "TOOLBOX_DIR"] }], ["burst", { directories: ["1DIR"] }],
+  ["coupled", []], ["coupled", {}], ["coupled", [{ when: ["src/wire/"] }]], ["coupled", [{ when: [], then: ["VERSION"] }]],
+  ["coupled", [{ when: ["src/wire/"], then: ["../VERSION"] }]], ["coupled", [{ when: [".git/HEAD"], then: ["VERSION"] }]],
+  ["coupled", [{ when: ["src/wire/"], then: ["VERSION"], why: "unknown key" }]], ["coupled", [{ when: [""], then: ["VERSION"] }]],
 ] as Array<[string, unknown]>) {
   test(`both configuration readers reject invalid ${field} value ${JSON.stringify(value)}`, async () => {
     const root = mkdtempSync(join(tmpdir(), "orly-config-validation-"));
@@ -46,6 +50,13 @@ test("a burst object survives a rewrite exactly, with no fields it did not have"
   const config = parseConfig({ ...BASE, commands: { ...BASE.commands, "burst.acceptance": [["make", "acceptance"]] }, burst });
 
   expect(JSON.parse(serialiseConfig(config)).burst).toEqual(burst);
+  expect(parseConfig(JSON.parse(serialiseConfig(config)))).toEqual(config);
+});
+
+test("coupled path groups survive a rewrite exactly", () => {
+  const coupled = [{ when: ["src/wire/"], then: ["src/wire/VERSION", "docs/protocol.md"] }];
+  const config = parseConfig({ ...BASE, coupled });
+  expect(JSON.parse(serialiseConfig(config)).coupled).toEqual(coupled);
   expect(parseConfig(JSON.parse(serialiseConfig(config)))).toEqual(config);
 });
 

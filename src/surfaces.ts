@@ -1,3 +1,4 @@
+import type { Coupling } from "./config_validation";
 import type { JsonObject } from "./model";
 
 import { isObject, OrlyError, stringArray } from "./model";
@@ -55,6 +56,16 @@ export function isUserSurface(path: string, prefixes: string[]): boolean {
 export function isDocs(path: string, prefixes: string[]): boolean {
   if (SPEC_TREE.test(path)) return false;
   return prefixes.some((prefix) => path.startsWith(prefix));
+}
+
+// One sentence per coupling the branch breaks: a path under a `when` prefix
+// changed while no path under its `then` prefixes did.
+export function couplingGaps(couplings: Coupling[], changed: string[]): string[] {
+  return couplings.flatMap(({ when, then }) => {
+    const trigger = changed.find((path) => when.some((prefix) => path.startsWith(prefix)));
+    if (trigger === undefined || changed.some((path) => then.some((prefix) => path.startsWith(prefix)))) return [];
+    return [`${trigger} changed under ${when.join(", ")}, but nothing under ${then.join(", ")} did`];
+  });
 }
 
 function branchDiff(root: string): string[] {

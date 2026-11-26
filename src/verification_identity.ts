@@ -8,13 +8,15 @@ import { release } from "node:os";
 
 import { runCommand } from "./command_runner";
 import { contentDigest } from "./config";
-import { git, UNSCOPED_ENVIRONMENT } from "./git_env";
+import { git, gitOutput, UNSCOPED_ENVIRONMENT } from "./git_env";
 import { defaultMergeBase } from "./surfaces";
-import { objectValue, stringArray } from "./model";
+import { hasErrorCode, objectValue, stringArray } from "./model";
 
 type InputEntry = { path: string; directory: true } | { path: string; mode: number; bytes: string } | { path: string; mode: number; link: string };
 
-export type VerificationProof = { binding: string; revision: string; scope: string | null };
+// `current` marks an observation that may accept earlier evidence: a clean
+// tree at the pushed revision. Any tree without untracked files may record it.
+export type VerificationProof = { binding: string; revision: string; scope: string | null; uncommitted: boolean; current: boolean };
 type VerificationIdentity = { source: string } & (VerificationProof | { reason: string });
 export type IdentityRequest = {
   root: string; engineRoot: string; config: RepoConfig; lane: string; policy: ReusePolicy;
@@ -24,6 +26,7 @@ export type IdentityRequest = {
 const PROBE_LIMITS = { timeout_ms: 10_000, output_bytes: 64 * 1024 };
 const HASH_CHUNK_BYTES = 64 * 1024;
 const MANIFEST_BYTES = 1024 * 1024;
+const UNTRACKED = "?? ";
 
 export function verificationIdentity(request: IdentityRequest, observation: "before-probes" | "after-probes" = "before-probes"): VerificationIdentity {
   // Bracket all executed probes with the two source snapshots, without hashing
@@ -32,27 +35,31 @@ export function verificationIdentity(request: IdentityRequest, observation: "bef
   const root = realpathSync(request.root);
   const revision = gitInput(root, ["rev-parse", "HEAD"]).trim();
   const base = defaultMergeBase(root);
-  const dirty = gitInput(root, ["status", "--porcelain=v1", "-uall"]);
+  const dirty = gitInput(root, ["status", "--porcelain=v1", "-z", "--no-renames", "-uall"]);
   const files = inputIdentity(root, trackedPaths(root), true);
   const source = contentDigest(JSON.stringify({ revision, base, dirty, files }));
   try {
     if (files.some((entry) => "link" in entry)) return { source, reason: "symlink inputs require fresh execution" };
-    const upstream = gitInput(root, ["rev-parse", "@{upstream}"]).trim();
-    if (!revision || revision !== upstream || dirty) return { source, reason: "reuse requires a clean, pushed worktree" };
-    if (!base) return { source, reason: "reuse requires an exact merge base" };
+    // A command may read an untracked file that the committed tree will lack.
+    if (dirty.split("\0").some((entry) => entry.startsWith(UNTRACKED))) return { source, reason: "untracked files are outside the tree; add or remove them" };
+    if (!revision || !base) return { source, reason: "reuse requires an exact merge base" };
     const toolchain = observation === "after-probes" ? finalToolchain : probeToolchain(request);
     if (!toolchain) return { source, reason: "toolchain identity is unavailable" };
+    // The tree is the tracked content the command reads, never the commit that
+    // holds it, so a run on uncommitted edits matches the commit that records them.
     const scope = request.policy.tracked_inputs ? scopedDigest(files, request.policy.tracked_inputs) : null;
+    const tree = scope ?? contentDigest(JSON.stringify(files));
     const environment = Object.entries(UNSCOPED_ENVIRONMENT).filter(([, value]) => value !== undefined).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0);
     const identity = {
-      root, source: scope === null ? source : { base, scope },
+      root, source: { base, tree },
       lane: request.lane, invocations: request.invocations, limits: request.limits, config: request.config,
       environment: new Bun.CryptoHasher("sha256", request.key).update(JSON.stringify(environment)).digest("hex"),
       engine: { root: realpathSync(request.engineRoot), inputs: inputIdentity(realpathSync(request.engineRoot), enginePaths(request.engineRoot)) },
       runtime: { versions: process.versions, platform: process.platform, arch: process.arch, release: release() },
       inputs: inputIdentity(root, request.policy.inputs), toolchain,
     };
-    return { source, binding: contentDigest(JSON.stringify(identity)), revision, scope };
+    const current = !dirty && revision === gitOutput(root, ["rev-parse", "@{upstream}"]);
+    return { source, binding: contentDigest(JSON.stringify(identity)), revision, scope, uncommitted: dirty !== "", current };
   } catch {
     return { source, reason: "verification inputs are missing, unsupported or unreadable" };
   }
@@ -98,8 +105,15 @@ function inputIdentity(root: string, paths: string[], allowLinks = false): Input
   return [...entries.values()];
 }
 
+// A tracked path deleted from the working tree is absent from the tree a commit
+// of that working tree records, so it is left out rather than refused.
 function trackedPaths(root: string): string[] {
-  return gitInput(root, ["ls-files", "--cached", "-z"]).split("\0").filter(Boolean);
+  return gitInput(root, ["ls-files", "--cached", "-z"]).split("\0").filter((path) => path && present(join(root, path)));
+}
+
+function present(path: string): boolean {
+  try { return lstatSync(path, { throwIfNoEntry: false }) !== undefined; }
+  catch (error) { if (hasErrorCode(error, "ENOTDIR")) return false; throw error; }
 }
 
 function gitInput(root: string, args: string[]): string {

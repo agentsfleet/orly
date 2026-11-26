@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { existsSync, symlinkSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-import { assertWritableInside, readJsonObject, RulesModel } from "./model";
+import { assertWritableInside, isObject, readJsonObject, RulesModel } from "./model";
 import { cleanupTemporaryDirectories, temporaryDirectory } from "./gates_test_support";
 
 const ROOT = resolve(import.meta.dir, "..");
@@ -34,6 +34,16 @@ describe("RulesModel", () => {
     const model = new RulesModel(ROOT, registry);
 
     expect(() => model.validate()).toThrow();
+  });
+
+  test.each([["", "blank"], [7, "a number"]])("rejects a pack owner that is %j (%s)", async (owner) => {
+    const source = await RulesModel.load(ROOT);
+    const registry = structuredClone(source.registry);
+    const packs = registry.packs;
+    const persona = isObject(packs) ? packs["persona.indy"] : undefined;
+    if (!isObject(packs) || !isObject(persona)) throw new Error("persona pack missing");
+    packs["persona.indy"] = { ...persona, owner };
+    expect(() => new RulesModel(source.root, registry).validate()).toThrow("pack persona.indy owner must be a non-empty string");
   });
 
   test("rejects missing mechanical rule fixtures", async () => {

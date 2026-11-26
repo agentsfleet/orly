@@ -25,7 +25,7 @@ test("documentation commits reuse a scoped lane through the CLI", async () => {
   expect(reused.output).toContain(`from ${originalRevision} for ${acceptedRevision}`);
   expect(reused.output).toContain("fixture report: 7 checks passed");
   expect(verificationCount(root)).toBe(1);
-  expect(completion(root)).toMatchObject({ format: 1, executed_revision: originalRevision, accepted_revision: acceptedRevision, executed_at: original.executed_at, origin: original.origin, scope: original.scope });
+  expect(completion(root)).toMatchObject({ format: 2, executed_revision: originalRevision, executed_uncommitted: false, accepted_revision: acceptedRevision, executed_at: original.executed_at, origin: original.origin, scope: original.scope });
   writeFileSync(join(root, "tracked-input.txt"), "changed input");
   commit(root);
   const changed = orly(root, ROOT, "gate", "pr", "--reuse-verification");

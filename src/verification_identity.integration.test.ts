@@ -1,7 +1,7 @@
 import { afterEach, expect, spyOn, test } from "bun:test";
 import * as fs from "node:fs";
 import { randomBytes, randomUUID } from "node:crypto";
-import { chmodSync, cpSync, mkdirSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
+import { chmodSync, cpSync, mkdirSync, realpathSync, symlinkSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 import { limitsFor } from "./command_limits";
@@ -74,13 +74,42 @@ test("declared ignored bytes are bound and missing or symlink inputs disable reu
   expect(verificationIdentity(request)).toHaveProperty("reason");
 });
 
-test("dirty and unpushed inputs do not produce reusable identity", async () => {
+test("an uncommitted tree binds the same evidence as the commit that records it", async () => {
   const request = await requestFixture();
   writeFileSync(join(request.root, "tracked-input.txt"), "changed");
-  expect(verificationIdentity(request)).toHaveProperty("reason");
+  const uncommitted = verificationIdentity(request);
+  expect(uncommitted).toMatchObject({ uncommitted: true, current: false });
   git(request.root, "add", ".");
   git(request.root, "commit", "-q", "-m", "test: unpushed input");
-  expect(verificationIdentity(request)).toHaveProperty("reason");
+  const unpushed = verificationIdentity(request);
+  expect(unpushed).toMatchObject({ uncommitted: false, current: false });
+  git(request.root, "push", "-q");
+  const pushed = verificationIdentity(request);
+  expect(pushed).toMatchObject({ uncommitted: false, current: true });
+  expect("binding" in pushed && pushed.binding).toBe("binding" in uncommitted && uncommitted.binding);
+  expect("binding" in unpushed && unpushed.binding).toBe("binding" in uncommitted && uncommitted.binding);
+});
+
+test("a different tree binds different evidence", async () => {
+  const request = await requestFixture();
+  writeFileSync(join(request.root, "tracked-input.txt"), "changed");
+  const first = binding(request);
+  writeFileSync(join(request.root, "README.md"), "another tracked edit\n");
+  expect(binding(request)).not.toBe(first);
+});
+
+test("untracked files leave the tree unbound", async () => {
+  const request = await requestFixture();
+  writeFileSync(join(request.root, "scratch.ts"), "export const unstaged = 1;\n");
+  expect(verificationIdentity(request)).toMatchObject({ reason: "untracked files are outside the tree; add or remove them" });
+});
+
+test("a tracked file deleted from the working tree binds as the commit that deletes it", async () => {
+  const request = await requestFixture();
+  unlinkSync(join(request.root, "README.md"));
+  const deleted = binding(request);
+  git(request.root, "commit", "-q", "-am", "test: delete a tracked file");
+  expect(binding(request)).toBe(deleted);
 });
 
 test("engine sources and executable bytes invalidate matching version output", async () => {

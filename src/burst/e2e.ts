@@ -5,13 +5,21 @@ import type { OsImage, Plan, VmSnapshot } from "./tir";
 import { messageOf, OrlyError } from "../model";
 import { machineDeadline, pause, until } from "./process";
 import { done, failed, ongoing } from "./progress";
+import { MAX_DEADLINE_MINUTES } from "./settings";
 import { E2eApi, E2eRequestFailed } from "./tir";
+import { MINUTE_MS, runBegan, runTail } from "./types";
 
 // TIR caps a key label at 50 characters. A run id ends in its 14-digit stamp
 // and 4-character suffix, which keep labels unique, so the ref part is cut.
 export const TIR_LABEL_LIMIT = 50;
 const LABEL_PREFIX = "orly-burst-";
 const RUN_ID_TAIL = 20;
+// A start script is named `obs-<run tail>-<lane>`, within TIR's 50
+// characters. One whose run began longer ago than any run may last, with
+// its staging before the deadline starts and its cleanup after, is an
+// orphan of a run that died, and a later run's teardown deletes it.
+const SCRIPT_PREFIX = "obs-";
+const ORPHAN_AGE_MS = MAX_DEADLINE_MINUTES * MINUTE_MS + 60 * MINUTE_MS;
 const DEFAULT_IMAGE = "Debian 13";
 // How long VM deletion, then the group's delete, are waited for before each
 // is reported for deletion by hand.
@@ -37,10 +45,13 @@ const RUPEES_PER_HOUR = 25;
 const RUPEES_PER_SNAPSHOT_MONTH = 200;
 
 // E2E Networks TIR virtual machines: whole Linux machines with their own
-// kernel, reached as root over SSH. TIR accepts only a public key already
-// saved in the account, so each run saves its key; each run also makes a
-// security group admitting SSH from the caller's address alone. Both go when
-// the run's VMs have. The client retries TIR's busy answers (tir.ts).
+// kernel, reached as root over SSH through the caller's tailnet. TIR accepts
+// only a public key already saved in the account, so each run saves its key;
+// each run also makes a security group that opens no SSH port. Each VM boots
+// a start script of its own, which joins it to the tailnet; TIR has no user
+// data, and a start script is how a VM runs a command before anyone can reach
+// it. The key, the group and the scripts go when the run's VMs have. The
+// client retries TIR's busy answers (tir.ts).
 export class E2eNodes implements CloudProvider {
   readonly name = "e2e";
   readonly user: string;
@@ -55,6 +66,9 @@ export class E2eNodes implements CloudProvider {
   readonly #statuses = new Map<string, string>();
   // VMs whose create request failed after it may have reached TIR.
   readonly #unconfirmed = new Set<string>();
+  // Each VM's start script, deleted once the VM is gone; finish deletes the
+  // rest by name.
+  readonly #scripts = new Map<string, string>();
 
   constructor(settings: BurstSettings, fetcher: Fetch) {
     this.#settings = settings;
@@ -85,27 +99,29 @@ export class E2eNodes implements CloudProvider {
     this.#label = name;
     await this.#api.addKey(name, run.publicKey, run.signal);
     this.#keyConfirmed = true;
-    this.#group = await this.#api.createSshGroup(name, run.caller, run.signal);
-    run.write(done(`${name} admits SSH from ${run.caller} only`));
+    this.#group = await this.#api.createGroup(name, run.signal);
+    run.write(done(`${name} opens no SSH port; the run's VMs are reached over the tailnet`));
   }
 
-  async create(run: BurstRun, job: Job): Promise<Machine> {
+  async create(run: BurstRun, job: Job, boot: string): Promise<Machine> {
     const plan = await this.#resolvePlan(run.signal);
     const source = job.image.snapshot ? await this.#snapshotSource(job.image.id, run.signal) : await this.#osImage(job.image.name, run.signal);
     const name = `orly-burst-${job.name}-${run.runId.slice(-4)}`;
+    const script = await this.#api.createStartScript(scriptPrefix(run.runId) + job.name, boot, run.signal);
     let id: string;
     try {
       id = await this.#api.createVm({
         name, kind: "vm", cluster_type: "tir-cluster", image_type: "pre-built", image_version_id: source.versionId,
-        sku_item_price_id: plan.priceId, disk_size_in_gb: DISK_GB, quantity: 1,
+        sku_item_price_id: plan.priceId, disk_size_in_gb: DISK_GB, quantity: 1, init_script_id_list: [Number(script)],
         public_key: [run.publicKey], security_group_id: Number(this.#group), ...(source.snapshotId ? { snapshot_id: Number(source.snapshotId) } : {}),
       }, run.signal);
     } catch (error) {
       // A request that failed after reaching TIR may still have made the VM;
-      // finish looks for it by name.
+      // finish looks for it by name, then deletes the script it held.
       if (!(error instanceof E2eRequestFailed && error.status < SERVER_ERROR)) this.#unconfirmed.add(name);
       throw error;
     }
+    this.#scripts.set(id, script);
     run.write(done(`lane=${job.name} VM ${id} (${plan.sku}, ${job.image.name}) created`));
     return { id, label: plan.sku, address: undefined };
   }
@@ -153,6 +169,10 @@ export class E2eNodes implements CloudProvider {
   // cancellation: it is what a cancellation runs.
   async remove(machine: Machine): Promise<void> {
     await this.#deleteVm(machine.id);
+    // A script whose delete fails stays listed, for finish to retry and report.
+    const script = this.#scripts.get(machine.id);
+    if (!script) return;
+    await this.#api.deleteStartScript(script).catch(goneIsDeleted).then(() => this.#scripts.delete(machine.id), () => undefined);
   }
 
   // Each VM's status is written once per change, so a status orly does not
@@ -187,6 +207,7 @@ export class E2eNodes implements CloudProvider {
     const label = this.#label;
     if (!label) return;
     if (this.#unconfirmed.size > 0) await this.#sweep(run);
+    await this.#deleteScripts(run);
     try {
       const pk = (await this.#api.keys()).find((key) => key.label === label)?.pk;
       if (pk) {
@@ -218,6 +239,24 @@ export class E2eNodes implements CloudProvider {
           .then(() => run.write(done(`deleted VM ${vm.id} (${name}), whose create reply was lost`)))
           .catch((error: unknown) => run.write(failed(`could not delete VM ${vm.id} (${name}): ${messageOf(error)}; delete it by hand`)));
       }
+    }
+  }
+
+  // A start script outlives its VM when the VM was never made, the create's
+  // reply was lost, or the delete failed; it holds a key already deleted.
+  // This run's are found by name, with any a dead run left behind.
+  async #deleteScripts(run: BurstRun): Promise<void> {
+    const listed = await this.#api.startScripts().catch((error: unknown) => {
+      run.write(failed(`could not list TIR start scripts: ${messageOf(error)}; delete any named ${scriptPrefix(run.runId)}* by hand`));
+      return [];
+    });
+    const mine = scriptPrefix(run.runId);
+    for (const script of listed.filter((candidate) => candidate.name.startsWith(mine) || orphaned(candidate.name))) {
+      await this.#api.deleteStartScript(script.id).catch(goneIsDeleted)
+        .then(() => run.write(done(`deleted TIR start script ${script.id} (${script.name})`)))
+        .catch((error: unknown) => run.write(error instanceof E2eRequestFailed && IN_USE.has(error.status)
+          ? ongoing(`TIR start script ${script.id} (${script.name}) is still used by a VM; it goes with that VM, or at a later run's teardown`)
+          : failed(`could not delete TIR start script ${script.id} (${script.name}): ${messageOf(error)}; delete it by hand`)));
     }
   }
 
@@ -260,6 +299,16 @@ function toSnapshot(snapshot: VmSnapshot): Snapshot {
   return { id: snapshot.id, name: snapshot.name, sizeGb: snapshot.sizeGb, parts: [], ready: snapshot.status === READY };
 }
 
+
+// A run id ends in `<14-digit stamp>-<4 hexadecimal characters>`.
+function scriptPrefix(runId: string): string {
+  return `${SCRIPT_PREFIX}${runTail(runId)}-`;
+}
+
+function orphaned(name: string): boolean {
+  const began = name.startsWith(SCRIPT_PREFIX) ? runBegan(name.slice(SCRIPT_PREFIX.length).split("-").slice(0, 2).join("-")) : undefined;
+  return began !== undefined && Date.now() - began > ORPHAN_AGE_MS;
+}
 
 export function tirLabel(runId: string): string {
   const tail = runId.slice(-RUN_ID_TAIL);

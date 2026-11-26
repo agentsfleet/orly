@@ -1,20 +1,23 @@
 import type { Environment } from "./settings";
 import type { StagedDirectory } from "./ssh";
+import type { AuthKey } from "./tailnet";
 import type { BurstRun, CloudProvider, Image, Job, LaneResult, Machine, Snapshot, SnapshotScope, Status } from "./types";
 
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 
-import { remoteScript } from "./job";
+import { bootScript, FORGET, remoteScript } from "./job";
 import { done, failed, ongoing } from "./progress";
-import { resolveSecrets } from "./process";
-import { archiveDirectories, forgetRunFiles, reachable, runOverSsh } from "./ssh";
-import { LANE_PREFIX, MINUTE_MS } from "./types";
+import { machineDeadline, resolveSecrets } from "./process";
+import { archiveDirectories, forgetRunFiles, leaveTailnet, reachable, runOverSsh } from "./ssh";
+import { LANE_PREFIX, MINUTE_MS, runTail } from "./types";
 import { messageOf, OrlyError } from "../model";
 
 // What only a lane receives: its secrets and its copied directories.
 type LaneInputs = { secrets: Environment; directories: readonly StagedDirectory[] };
 type NamedSnapshot = { snapshot: Snapshot; stamp: string; digest: string };
+// A machine on the tailnet, as `node`, at its tailnet address.
+type Joined = Machine & { node: string };
 
 const NO_INPUTS: LaneInputs = Object.freeze({ secrets: {}, directories: [] });
 const SNAPSHOT_JOB = "snapshot";
@@ -24,6 +27,8 @@ const KEEP = 1;
 // then 4 random ones, so two captures in one millisecond still differ.
 const SUFFIX_CHARS = 8;
 const IMAGE_DIGEST_CHARS = 4;
+// How long a warm-up machine is given to leave the tailnet before it is imaged.
+const LEAVE_MS = 2 * MINUTE_MS;
 
 // Every lane gets its own machine, all at once. Secrets are resolved here,
 // on the caller, before anything is rented. A lane's machine is deleted when
@@ -57,14 +62,15 @@ export async function cloudSnapshot(provider: CloudProvider, run: BurstRun): Pro
     requireActive(run);
     await provider.prepare(run);
     requireActive(run);
-    machine = await provider.create(run, job);
-    machine = await provider.ready(run, job, machine);
+    const joined = await start(provider, run, job, (started) => { machine = started; });
+    machine = joined;
     await reachable(run, job, machine, provider.user);
     const status = await runOverSsh(run, job, machine, provider.user, await script(run, job, NO_INPUTS), []);
     if (status !== 0) {
       run.write(failed(`the warm-up ended with exit=${status}; no snapshot was taken`));
       return undefined;
     }
+    machine = await leaveForCapture(provider, run, joined);
     return await provider.capture(run, job, machine, snapshotName(run.repo, image, new Date()));
   } finally {
     if (machine) await release(provider, run, machine);
@@ -111,8 +117,7 @@ async function cloudLane(provider: CloudProvider, run: BurstRun, job: Job, input
   let status: Status = "unlaunched";
   try {
     requireActive(run);
-    machine = await provider.create(run, job);
-    machine = await provider.ready(run, job, machine);
+    machine = await start(provider, run, job, (started) => { machine = started; });
     await reachable(run, job, machine, provider.user);
     status = await runOverSsh(run, job, machine, provider.user, await script(run, job, inputs), inputs.directories);
     if (status === "not_run") run.write(failed(`lane=${job.name} the machine or burst.setup failed before the lane started; see ${join(job.evidence, "run.log")}`));
@@ -124,6 +129,49 @@ async function cloudLane(provider: CloudProvider, run: BurstRun, job: Job, input
   }
   const minutes = machine ? Math.ceil((Date.now() - job.started) / MINUTE_MS) : 0;
   return { lane: job.name, provider: provider.name, machine: machine?.label ?? "none", minutes, cost: machine ? provider.cost(machine) : "none", status, evidence: job.evidence };
+}
+
+// A machine boots holding a key minted for it alone, joins the caller's
+// tailnet and is reached at its tailnet address. The key is deleted once the
+// machine has joined, or has failed to. `started` learns each stage of the
+// machine, so whatever ends the start, the caller still deletes it.
+async function start(provider: CloudProvider, run: BurstRun, job: Job, started: (machine: Machine) => void): Promise<Joined> {
+  const node = `orly-burst-${job.name}-${runTail(run.runId)}`;
+  const key = await run.tailnet.mint(node);
+  try {
+    const created = { ...await provider.create(run, job, bootScript(node, key.secret)), node };
+    started(created);
+    const running = await provider.ready(run, job, created);
+    started(running);
+    run.write(ongoing(`waiting for ${node} to join the tailnet`));
+    const address = await run.tailnet.joined(node, { deadline: machineDeadline(job), signal: run.signal, pollMs: run.settings.pollMs });
+    run.write(done(`${node} joined the tailnet at ${address}`));
+    const joined = { ...running, address, node };
+    started(joined);
+    return joined;
+  } finally {
+    await forgetKey(run, key, node);
+  }
+}
+
+async function forgetKey(run: BurstRun, key: AuthKey, node: string): Promise<void> {
+  try {
+    await run.tailnet.revoke(key);
+    run.write(done(`deleted the tailnet key ${key.id} of ${node}`));
+  } catch (error) {
+    run.write(failed(`could not delete the tailnet key ${key.id} of ${node}: ${messageOf(error)}; delete it in the Tailscale admin console`));
+  }
+}
+
+// A snapshot of a machine still on the tailnet would boot every later lane
+// as that node, so the warm-up leaves first, and is not imaged if it cannot.
+async function leaveForCapture(provider: CloudProvider, run: BurstRun, machine: Joined): Promise<Machine> {
+  const { node } = machine;
+  run.write(ongoing(`${node} leaves the tailnet before it is imaged`));
+  if (!await leaveTailnet(run, machine, provider.user, FORGET)) throw new OrlyError(`could not log ${node} out of the tailnet; no snapshot was taken`);
+  await run.tailnet.left(node, { deadline: Date.now() + LEAVE_MS, signal: run.signal, pollMs: run.settings.pollMs });
+  run.write(done(`${node} left the tailnet`));
+  return { ...machine, node: undefined };
 }
 
 function script(run: BurstRun, job: Job, inputs: LaneInputs): Promise<string> {
@@ -139,6 +187,14 @@ function script(run: BurstRun, job: Job, inputs: LaneInputs): Promise<string> {
 // A machine that outlives its run bills until someone deletes it, so a failed
 // delete is said loudly, with the identifier to delete by hand.
 async function release(provider: CloudProvider, run: BurstRun, machine: Machine): Promise<void> {
+  // The node is looked up afresh, so one that joined after the run stopped
+  // waiting for it is logged out too.
+  const node = machine.node;
+  const address = node ? await run.tailnet.find(node).catch(() => undefined) : undefined;
+  if (node && address) {
+    const left = await leaveTailnet(run, { ...machine, address }, provider.user).catch(() => false);
+    run.write(left ? done(`${node} is leaving the tailnet`) : failed(`${node} did not log out; as an ephemeral node it leaves the tailnet once offline, or remove it in the Tailscale admin console`));
+  }
   try {
     run.write(ongoing(`deleting ${provider.name} machine ${machine.id}`));
     await provider.remove(machine);

@@ -332,7 +332,9 @@ A missed budget is a design finding, and the threshold never loosens silently.
 
 Retain the original command, output, counts and run provenance when a result is reused. Live datastore and network observations remain fresh unless an explicit supported freshness policy exists.
 
-An optional `tracked_inputs` declaration permits cross-revision reuse only when it covers every tracked dependency and the command does not read Git history. Extra ignored dependencies still belong in `inputs` or the toolchain identity. Keep the full-worktree before/after guard; an unchanged subset does not excuse edits during a run.
+Reuse matches tracked content, never the revision, so a reused command reads no Git history. An optional `tracked_inputs` declaration narrows that content and must cover every tracked dependency.
+
+Extra ignored dependencies still belong in `inputs` or the toolchain identity. Keep the full-worktree before/after guard; an unchanged subset does not excuse edits during a run.
 
 ### TEST-CLAIM — A claim that tests pass names the command it ran and the counts it printed.
 - **Applies to:** done messages, Pull Request descriptions and Session Notes

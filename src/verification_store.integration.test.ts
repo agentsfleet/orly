@@ -9,7 +9,7 @@ import { beginAttempt, completeAttempt, previousPass, verificationState, type At
 
 const LANE = "verify.unit";
 const BINDING = contentDigest("fixture binding");
-const PROOF = { binding: BINDING, revision: "a".repeat(40), scope: null };
+const PROOF = { binding: BINDING, revision: "a".repeat(40), scope: null, uncommitted: false, current: true };
 const PASS = { ok: true, status: "passed" as const, detail: "fixture report: 7 checks passed" };
 afterEach(() => { cleanupTemporaryDirectories(); });
 
@@ -32,14 +32,16 @@ test("signed completion preserves private output and original execution time", (
 
 test("signed provenance rejects old formats and retains original age", () => {
   const { state, attempt } = fixture();
-  completeAttempt(attempt, PROOF, PASS);
+  completeAttempt(attempt, { ...PROOF, uncommitted: true, current: false }, PASS);
   const next = beginAttempt(state, LANE);
   const original = previousPass(next, BINDING, 3600000);
-  expect(original?.revision).toBe("a".repeat(40));
+  expect(original).toMatchObject({ revision: "a".repeat(40), uncommitted: true });
   completeAttempt(next, { ...PROOF, revision: "b".repeat(40) }, PASS, original);
   const record = JSON.parse(readFileSync(join(next.path, "complete.json"), "utf8"));
-  expect(record.payload).toMatchObject({ format: 1, executed_revision: "a".repeat(40), accepted_revision: "b".repeat(40), executed_at: original?.executedAt });
-  delete record.payload.format;
+  expect(record.payload).toMatchObject({ format: 2, executed_revision: "a".repeat(40), executed_uncommitted: true, accepted_revision: "b".repeat(40), executed_at: original?.executedAt });
+  // A revision-keyed record from an earlier release, validly signed, still runs fresh.
+  record.payload.format = 1;
+  delete record.payload.executed_uncommitted;
   record.signature = `hmac-sha256:${createHmac("sha256", next.key).update(JSON.stringify(record.payload)).digest("hex")}`;
   writeFileSync(join(next.path, "complete.json"), JSON.stringify(record));
   expect(previousPass(beginAttempt(state, LANE), BINDING, 3600000)).toBeUndefined();

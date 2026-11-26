@@ -1,9 +1,12 @@
-// E2E Networks TIR, in memory, as orly uses it, for the e2e tests, plus the
-// caller-address lookup. A VM runs after one status poll, and reads as
-// `terminating`, as TIR's does, for one poll while it stops. A snapshot is
-// pending for `savingLists` list calls, then `ready`, or `savedStatus`. A
-// group's delete fails `groupDeleteFailures` times.
-import { CALLER_ADDRESS, fields } from "./test_support";
+// E2E Networks TIR, in memory, as orly uses it, for the e2e tests; requests
+// to Tailscale's API go to the FakeTailscale it is given. A VM runs after one
+// status poll, when it runs its start scripts and so joins the tailnet, and
+// reads as `terminating`, as TIR's does, for one poll while it stops. A
+// snapshot is pending for `savingLists` list calls, then `ready`, or
+// `savedStatus`. A group's delete fails `groupDeleteFailures` times.
+import type { FakeTailscale } from "./fake_tailscale";
+
+import { fields } from "./test_support";
 import { TIR_LABEL_LIMIT } from "./e2e";
 import { isObject } from "../model";
 
@@ -28,6 +31,8 @@ export class FakeTir {
   readonly vms = new Map<string, FakeVm>();
   readonly keys = new Map<string, { pk: number; label: string; ssh_key: string }>();
   readonly groups = new Map<string, { id: number; name: string; rules: unknown }>();
+  readonly scripts = new Map<string, { id: number; name: string; init_script: string }>();
+  scriptStatus = 201;
   snapshots: FakeSnapshot[] = [];
   createStatus = 201;
   // The VM is made, but the reply to its create is a gateway timeout.
@@ -49,18 +54,18 @@ export class FakeTir {
   #saving = new Map<number, number>();
   #nextVm = 5001;
   #nextKey = 1;
-  // The caller's address after the run's first lookup, when its network changes mid-run.
-  callerMovesTo: string | undefined;
-  #addressLookups = 0;
+  #nextScript = 300;
+  readonly #tailnet: FakeTailscale;
 
-  // ky hands a Request; the caller-address lookup hands a URL string.
+  constructor(tailnet: FakeTailscale) {
+    this.#tailnet = tailnet;
+  }
+
+  // ky hands a Request; a test's own call may hand a URL string.
   fetch = async (input: string | URL | Request, init?: RequestInit): Promise<Response> => {
     const request = input instanceof Request ? input : new Request(input, init);
     const url = new URL(request.url);
-    if (url.host === "checkip.amazonaws.com") {
-      this.#addressLookups += 1;
-      return new Response(`${this.#addressLookups > 1 && this.callerMovesTo ? this.callerMovesTo : CALLER_ADDRESS}\n`);
-    }
+    if (url.host === "api.tailscale.com") return this.#tailnet.fetch(request);
     const method = request.method;
     const path = url.pathname.replace(PREFIX, "");
     const text = await request.text();
@@ -73,6 +78,12 @@ export class FakeTir {
 
   callsTo(method: string, pattern: RegExp): Call[] {
     return this.calls.filter((call) => call.method === method && pattern.test(call.path));
+  }
+
+  // A start script some other run, or a person, left in the project.
+  leftScript(name: string): void {
+    this.scripts.set(String(this.#nextScript), { id: this.#nextScript, name, init_script: "#!/bin/bash\n" });
+    this.#nextScript += 1;
   }
 
   snapshot(name: string, id: number, status = "ready"): void {
@@ -90,6 +101,9 @@ export class FakeTir {
     if (route === "POST /security_groups/") return this.lost(path, this.addGroup(body));
     if (route === "GET /security_groups/") return reply([...this.groups.values()].map((group) => ({ id: group.id, name: group.name })));
     if (route === "DELETE /security_groups/{id}/") return this.deleteGroup(id);
+    if (route === "POST /notebooks/init-script/") return this.lost(path, this.addScript(body));
+    if (route === "GET /notebooks/init-script/") return reply([...this.scripts.values()]);
+    if (route === "DELETE /notebooks/init-script/{id}/") return this.deleteScript(id);
     if (route === "POST /notebooks/") return this.create(body);
     if (route === "GET /notebooks/") return reply([...this.vms.values()].map((vm) => ({ id: Number(vm.id), name: vm.name, status: vm.status })));
     if (route === "GET /notebooks/{id}/") return this.poll(id);
@@ -163,6 +177,32 @@ export class FakeTir {
     return reply("Security Group deleted successfully", this.groups.delete(id) ? 200 : 404);
   }
 
+  // A refused script's errors quote the script back, as a validation error may.
+  private addScript(body: Record<string, unknown>): Response {
+    if (this.scriptStatus !== 201) return new Response(JSON.stringify({ code: this.scriptStatus, data: {}, message: "Failed", errors: { init_script: [String(body.init_script)] } }), { status: this.scriptStatus, headers: JSON_HEADERS });
+    const script = { id: this.#nextScript, name: String(body.name), init_script: String(body.init_script) };
+    this.#nextScript += 1;
+    this.scripts.set(String(script.id), script);
+    return reply(script, 201);
+  }
+
+  // A script a VM still uses is refused, as TIR does.
+  private deleteScript(id: string): Response {
+    if (!this.scripts.has(id)) return reply({}, 404);
+    if ([...this.vms.values()].some((vm) => this.#scriptsOf(vm).includes(Number(id)))) return reply("The init script is currently in use by one or more notebooks.", 400);
+    this.scripts.delete(id);
+    return reply("Init Script deleted successfully");
+  }
+
+  #scriptsOf(vm: FakeVm): number[] {
+    return Array.isArray(vm.body.init_script_id_list) ? vm.body.init_script_id_list.map(Number) : [];
+  }
+
+  // A booting VM runs its start scripts as root.
+  #boot(vm: FakeVm): void {
+    for (const id of this.#scriptsOf(vm)) this.#tailnet.join(this.scripts.get(String(id))?.init_script ?? "");
+  }
+
   private create(body: Record<string, unknown>): Response {
     if (this.createStatus !== 201) return reply({}, this.createStatus);
     const id = String(this.#nextVm);
@@ -182,7 +222,10 @@ export class FakeTir {
     if (!vm) return reply({}, 404);
     if (vm.status === "terminating") return reply({ id: Number(id), status: "terminating", public_ip: "" });
     vm.polls += 1;
-    if (vm.status === "waiting" && vm.polls > 1) vm.status = this.bootStatus;
+    if (vm.status === "waiting" && vm.polls > 1) {
+      vm.status = this.bootStatus;
+      if (vm.status === "ready") this.#boot(vm);
+    }
     else if (vm.status === "stopping") vm.status = "stopped";
     return reply({ id: Number(id), status: vm.status === "stopping" ? "terminating" : vm.status, public_ip: vm.status === "waiting" ? "" : vm.address });
   }

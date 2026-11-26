@@ -22,6 +22,16 @@
         "docs": {"type": "array", "items": {"$ref": "#/$defs/nonempty"}}
       }
     },
+    "coupled": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["when", "then"],
+        "properties": {
+          "when": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/input"}},
+          "then": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/input"}}
+        }
+      }
+    },
     "reuse": {
       "type": "object",
       "propertyNames": {"type": "string", "pattern": "^verify\\.", "not": {"enum": ["verify.integration", "verify.memory"]}},
@@ -84,6 +94,7 @@
   "$defs": {
     "trackedInput": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|/)(?:\\.{1,2}|\\.git)(?:/|$))(?!.*//)[^\\u0000\\\\*?\\[\\]{}]+$"},
     "nonempty": {"type": "string", "minLength": 1, "pattern": "^[^\\u0000]+$"},
+    "input": {"type": "string", "minLength": 1, "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:^|[/\\\\])(?:\\.\\.|\\.git)(?:[/\\\\]|$))[^\\u0000]+$"},
     "invocations": {"type": "array", "items": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/nonempty"}}}
   }
 }

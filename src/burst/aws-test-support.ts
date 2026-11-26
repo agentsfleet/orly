@@ -1,17 +1,19 @@
 // EC2, in memory, as orly's aws-spot provider uses it. aws-sdk-client-mock
 // answers every EC2Client in the process from here while a FakeEc2 is
-// installed; restoreEc2 removes it. Each launched instance gets its own
-// address, which the fake `ssh` then plays the machine at.
+// installed; restoreEc2 removes it. Each launched instance runs its user data
+// at once, joining the fake tailnet, whose address the fake `ssh` then plays
+// the machine at.
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
-  AuthorizeSecurityGroupIngressCommand, CreateImageCommand, CreateSecurityGroupCommand, DeleteKeyPairCommand, DeleteSecurityGroupCommand,
+  CreateImageCommand, CreateSecurityGroupCommand, DeleteKeyPairCommand, DeleteSecurityGroupCommand,
   DeleteSnapshotCommand, DeregisterImageCommand, DescribeImagesCommand, DescribeInstancesCommand, DescribeSecurityGroupsCommand, DescribeSpotPriceHistoryCommand,
   EC2Client, ImportKeyPairCommand, RunInstancesCommand, StopInstancesCommand, TerminateInstancesCommand,
 } from "@aws-sdk/client-ec2";
 import { mockClient } from "aws-sdk-client-mock";
 
-import { burstDependencies, burstEnvironment, burstRepository, callerAddress, fakeBin, REPOSITORY } from "./test_support";
+import { FakeTailscale } from "./fake_tailscale";
+import { burstDependencies, burstEnvironment, burstRepository, fakeBin, REPOSITORY } from "./test_support";
 
 // noCapacity: types with no capacity. refuse: the error every launch answers.
 // vanish: an instance is terminated before it answers. lostReply: the
@@ -26,7 +28,7 @@ type Call = { command: string; input: Record<string, unknown>; region: string };
 type Tagged = { TagSpecifications?: Array<{ Tags?: Array<{ Key?: string; Value?: string }> }> };
 
 const COMMANDS = {
-  AuthorizeSecurityGroupIngressCommand, CreateImageCommand, CreateSecurityGroupCommand, DeleteKeyPairCommand, DeleteSecurityGroupCommand,
+  CreateImageCommand, CreateSecurityGroupCommand, DeleteKeyPairCommand, DeleteSecurityGroupCommand,
   DeleteSnapshotCommand, DeregisterImageCommand, DescribeImagesCommand, DescribeInstancesCommand, DescribeSecurityGroupsCommand, DescribeSpotPriceHistoryCommand,
   ImportKeyPairCommand, RunInstancesCommand, StopInstancesCommand, TerminateInstancesCommand,
 };
@@ -42,7 +44,7 @@ export class FakeEc2 {
   groups: string[] = [];
   #nextInstance = 1;
 
-  constructor(readonly scenario: Ec2Scenario = {}) {
+  constructor(readonly scenario: Ec2Scenario = {}, readonly tailnet: FakeTailscale) {
     ec2Mock.reset();
     for (const [name, command] of Object.entries(COMMANDS)) {
       ec2Mock.on(command as never).callsFake(async (input: Record<string, unknown>, getClient: () => unknown) => {
@@ -98,6 +100,7 @@ export class FakeEc2 {
     const id = `i-${String(number).padStart(17, "0")}`;
     const run = tag(input, "orly-burst");
     this.instances.set(id, { id, type, state: this.scenario.vanish ? "terminated" : "running", address: `198.51.100.${number}`, run, spot: Boolean(input.InstanceMarketOptions), shutdown: String(input.InstanceInitiatedShutdownBehavior) });
+    if (!this.scenario.vanish) this.tailnet.join(Buffer.from(String(input.UserData ?? ""), "base64").toString());
     if (this.scenario.lostReply) throw named("RequestTimeout", "the connection closed before the reply");
     return { Instances: [{ InstanceId: id, Placement: { AvailabilityZone: "ap-south-1a" } }] };
   }
@@ -155,8 +158,9 @@ export function restoreEc2(): void {
 export async function awsRun(scenario: Ec2Scenario = {}, burstConfig: Record<string, unknown> = {}, extra: Record<string, string> = {}) {
   const root = burstRepository(burstConfig);
   const { bin, state } = fakeBin();
-  const ec2 = new FakeEc2(scenario);
-  return { root, state, ec2, ...burstDependencies(root, burstEnvironment(bin, state, extra), callerAddress) };
+  const tailnet = new FakeTailscale(state);
+  const ec2 = new FakeEc2(scenario, tailnet);
+  return { root, state, ec2, tailnet, ...burstDependencies(root, burstEnvironment(bin, state, extra), tailnet.fetch) };
 }
 
 export function machineScript(state: string, address: string): string {

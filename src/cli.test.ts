@@ -27,6 +27,8 @@ describe("orly command", () => {
     expect(result.exitCode).toBe(0);
     expect(output).toContain("orly gate");
     expect(output).toContain("orly override <CRITERION> --reason <REASON>");
+    expect(output).toContain("orly proof <TEST_FILE> --test <NAME> -- <COMMAND>...");
+    expect(output).toContain(`orly note "<QUOTE>" [--context "<TEXT>"] [--spec <PATH>]`);
     expect(output).not.toContain("orly adopt");
     expect(output).not.toContain("oracle-rules");
   });

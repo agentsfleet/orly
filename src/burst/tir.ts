@@ -19,6 +19,7 @@ type Body = Record<string, unknown>;
 // Instance created with `kind: "vm"`, a whole Linux machine reached as root.
 const BASE_URL = "https://api.e2enetworks.com/myaccount/api/v1/gpu/";
 const REQUEST_TIMEOUT_MS = 60_000;
+const WIREGUARD_PORT = 41641;
 // The image and plan catalogues are the largest answers; past this is not one.
 const MAX_RESPONSE_BYTES = 8 * 1024 * 1024;
 // TIR answers 429, a 5xx or nothing while it is busy. ky retries those for
@@ -32,8 +33,9 @@ const skusSchema = z.object({ data: z.object({ CPU: z.array(z.object({
 const imagesSchema = z.object({ data: z.array(z.object({ name: z.string(), versions: z.array(z.object({ image_version_id: z.number(), version: z.coerce.string() })).default([]) })) });
 const keysSchema = z.object({ data: z.array(z.object({ pk: identifier, label: z.string() })) });
 const vmsSchema = z.object({ data: z.array(z.object({ id: identifier, name: z.string() })), total_page_number: z.number().nullish() });
-const groupSchema = z.object({ data: z.object({ id: identifier }) });
-const groupsSchema = z.object({ data: z.array(z.object({ id: identifier, name: z.string() })) });
+// A security group's or a start script's create answers `data.id`; a list, each one's id and name.
+const createdOneSchema = z.object({ data: z.object({ id: identifier }) });
+const namedSchema = z.object({ data: z.array(z.object({ id: identifier, name: z.string() })) });
 // One VM answers `data.id`; a quantity of them answers `data.created`.
 const createdSchema = z.object({ data: z.union([z.object({ id: identifier }), z.object({ created: z.array(z.object({ id: identifier })).min(1) })]) });
 const vmSchema = z.object({ data: z.object({ status: z.string(), public_ip: z.string().nullish() }) });
@@ -92,19 +94,36 @@ export class E2eApi {
     await this.#request("DELETE", `/ssh_keys/${pk}/`, { project: false });
   }
 
-  // POST /security_groups/: a group whose one rule admits SSH from `address`.
-  async createSshGroup(name: string, address: string, signal?: AbortSignal): Promise<string> {
-    // TIR refuses a group without an outbound rule; the machine's own traffic,
-    // such as package installs, leaves through this one.
+  // POST /security_groups/: a group that opens no SSH port. TIR refuses a
+  // group without an inbound and an outbound rule, so the inbound one admits
+  // Tailscale's WireGuard port, which lets the caller connect directly rather
+  // than through a relay; the machine's own traffic leaves by the outbound one.
+  async createGroup(name: string, signal?: AbortSignal): Promise<string> {
     const rules = [
-      { rule_type: "inbound", protocol: "TCP", protocol_type: "CustomTCP", network_type: "manual", cidr_ip: address, cidr_subnet: 32, ports: [22], description: "SSH from the orly burst caller" },
+      { rule_type: "inbound", protocol: "UDP", protocol_type: "CustomUDP", network_type: "any", ports: [WIREGUARD_PORT], description: "Tailscale WireGuard for the orly burst machine" },
       { rule_type: "outbound", protocol: "All", protocol_type: "AllTraffic", network_type: "any", ports: [], description: "All traffic from the orly burst machine" },
     ];
-    return groupSchema.parse(await this.#request("POST", "/security_groups/", { signal, body: { name, description: "SSH for one orly burst run", rules } })).data.id;
+    return createdOneSchema.parse(await this.#request("POST", "/security_groups/", { signal, body: { name, description: "One orly burst run, reached over Tailscale", rules } })).data.id;
+  }
+
+  // POST /notebooks/init-script/: a start script, which a VM created with
+  // its identifier runs as root at boot. Its text holds a single-use key, so
+  // a refusal names its status only: TIR's errors may quote the text back.
+  async createStartScript(name: string, script: string, signal?: AbortSignal): Promise<string> {
+    return createdOneSchema.parse(await this.#request("POST", "/notebooks/init-script/", { signal, body: { name, init_script: script }, quiet: true })).data.id;
+  }
+
+  async startScripts(): Promise<Array<{ id: string; name: string }>> {
+    return namedSchema.parse(await this.#request("GET", "/notebooks/init-script/")).data;
+  }
+
+  // TIR refuses to delete a script a VM still uses.
+  async deleteStartScript(id: string): Promise<void> {
+    await this.#request("DELETE", `/notebooks/init-script/${id}/`);
   }
 
   async groups(): Promise<Array<{ id: string; name: string }>> {
-    return groupsSchema.parse(await this.#request("GET", "/security_groups/")).data;
+    return namedSchema.parse(await this.#request("GET", "/security_groups/")).data;
   }
 
   // DELETE /security_groups/{id}/; the `/rules/` path answers 405.
@@ -157,7 +176,7 @@ export class E2eApi {
     await this.#request("DELETE", `/notebooks/vm/snapshots/${id}/`, { signal });
   }
 
-  async #request(method: string, path: string, options: { signal?: AbortSignal | undefined; body?: Body; query?: Record<string, string>; project?: boolean } = {}): Promise<unknown> {
+  async #request(method: string, path: string, options: { signal?: AbortSignal | undefined; body?: Body; query?: Record<string, string>; project?: boolean; quiet?: boolean } = {}): Promise<unknown> {
     options.signal?.throwIfAborted();
     const searchParams = {
       ...(options.project === false ? {} : { project_id: this.#credentials.project }),
@@ -172,7 +191,7 @@ export class E2eApi {
       const text = await response.text();
       return text ? JSON.parse(text) : {};
     } catch (error) {
-      if (isHTTPError(error)) throw new E2eRequestFailed(`E2E TIR ${method} ${path} answered ${error.response.status}: ${errorMessage(error.data)}`, error.response.status);
+      if (isHTTPError(error)) throw new E2eRequestFailed(`E2E TIR ${method} ${path} answered ${error.response.status}${options.quiet ? "" : `: ${errorMessage(error.data)}`}`, error.response.status);
       throw error;
     }
   }

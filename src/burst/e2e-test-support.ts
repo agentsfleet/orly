@@ -3,6 +3,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
+import { FakeTailscale } from "./fake_tailscale";
 import { FakeTir } from "./fake_tir";
 import { burstDependencies, burstEnvironment, burstRepository, fakeBin, fields, REPOSITORY } from "./test_support";
 
@@ -19,13 +20,14 @@ export const VM = /^\/notebooks\/\d+\/$/;
 export function e2eRun(extra: Record<string, string> = {}, burstConfig: Record<string, unknown> = {}) {
   const root = burstRepository(burstConfig);
   const { bin, state } = fakeBin();
-  const api = new FakeTir();
+  const tailnet = new FakeTailscale(state);
+  const api = new FakeTir(tailnet);
   const env = burstEnvironment(bin, state, { ...CREDENTIALS, ...extra });
-  return { root, state, api, env, ...burstDependencies(root, env, api.fetch) };
+  return { root, state, api, tailnet, env, ...burstDependencies(root, env, api.fetch) };
 }
 
 export function machineScript(state: string): string {
-  const machine = [...new Bun.Glob("203.0.113.*").scanSync({ cwd: state, onlyFiles: false })][0] ?? "";
+  const machine = [...new Bun.Glob("100.64.*").scanSync({ cwd: state, onlyFiles: false })][0] ?? "";
   return readFileSync(join(state, machine, "job.sh"), "utf8");
 }
 

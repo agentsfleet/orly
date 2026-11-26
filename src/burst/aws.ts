@@ -3,7 +3,7 @@ import type { BurstSettings } from "./settings";
 import type { BurstRun, CloudProvider, Image, Job, Machine, Snapshot, SnapshotScope } from "./types";
 
 import {
-  _InstanceType as INSTANCE_TYPES, AuthorizeSecurityGroupIngressCommand, CreateImageCommand, CreateSecurityGroupCommand, DeleteKeyPairCommand, DeleteSecurityGroupCommand,
+  _InstanceType as INSTANCE_TYPES, CreateImageCommand, CreateSecurityGroupCommand, DeleteKeyPairCommand, DeleteSecurityGroupCommand,
   DeleteSnapshotCommand, DeregisterImageCommand, DescribeImagesCommand, DescribeInstancesCommand, DescribeSecurityGroupsCommand, DescribeSpotPriceHistoryCommand, EC2Client,
   ImportKeyPairCommand, RunInstancesCommand, StopInstancesCommand, TerminateInstancesCommand,
 } from "@aws-sdk/client-ec2";
@@ -42,8 +42,9 @@ const FAILED_IMAGE_STATES = new Set(["failed", "error", "invalid", "deregistered
 const SNAPSHOT_DOLLARS_PER_GB_MONTH = 0.05;
 
 // EC2 through the AWS SDK. Each run imports its public key and makes a
-// security group open to SSH from the caller's address alone; both go when
-// the run's instances have. A lane is a one-time Spot instance that
+// security group with no inbound rule, since the caller reaches its instances
+// over the tailnet each one joins from its user data; both go when the run's
+// instances have. A lane is a one-time Spot instance that
 // terminates when it shuts down, unless ORLY_BURST_MARKET says on-demand; a
 // snapshot warm-up is on demand, so it can stop to be imaged. The SDK retries
 // throttling and transient failures inside each call, so an error that
@@ -90,23 +91,20 @@ export class AwsSpot implements CloudProvider {
     this.#started = true;
     await this.#ec2.send(new ImportKeyPairCommand({ KeyName: name, PublicKeyMaterial: new TextEncoder().encode(run.publicKey), TagSpecifications: tagged("key-pair", run.runId) }), { abortSignal: run.signal })
       .catch(duplicateIsMade);
-    const group = await this.#ec2.send(new CreateSecurityGroupCommand({ GroupName: name, Description: `orly burst ${run.runId}: SSH from the caller only`, TagSpecifications: tagged("security-group", run.runId) }), { abortSignal: run.signal })
+    const group = await this.#ec2.send(new CreateSecurityGroupCommand({ GroupName: name, Description: `orly burst ${run.runId}: no inbound rule, reached over Tailscale`, TagSpecifications: tagged("security-group", run.runId) }), { abortSignal: run.signal })
       .catch(duplicateIsMade);
     this.#group = group?.GroupId ?? await this.#groupNamed(name);
-    await this.#ec2.send(new AuthorizeSecurityGroupIngressCommand({
-      GroupId: this.#group, IpPermissions: [{ IpProtocol: "tcp", FromPort: 22, ToPort: 22, IpRanges: [{ CidrIp: `${run.caller}/32` }] }],
-    }), { abortSignal: run.signal }).catch(duplicateIsMade);
-    run.write(done(`${name} admits SSH from ${run.caller} only`));
+    run.write(done(`${name} opens no inbound port; the run's instances are reached over the tailnet`));
   }
 
-  async create(run: BurstRun, job: Job): Promise<Machine> {
+  async create(run: BurstRun, job: Job, boot: string): Promise<Machine> {
     const spot = job.kind === "lane" && this.#settings.aws.market !== "on-demand";
     const root = await this.#rootDevice(job.image, run.signal);
     let refusal = "";
     for (const type of this.#settings.aws.types) {
       if (!isInstanceType(type)) throw new OrlyError(`burst.aws.instance_types names ${type}, which EC2 does not offer`);
       try {
-        const launched = await this.#ec2.send(this.#runInstances(run, job, type, spot, root), { abortSignal: run.signal });
+        const launched = await this.#ec2.send(this.#runInstances(run, job, type, spot, root, boot), { abortSignal: run.signal });
         const instance = launched.Instances?.[0];
         const id = instance?.InstanceId;
         if (!id) throw new OrlyError("run-instances answered no instance");
@@ -204,9 +202,12 @@ export class AwsSpot implements CloudProvider {
       .catch((error: unknown) => run.write(failed(`could not delete key pair ${name}: ${messageOf(error)}; delete it by hand`)));
   }
 
-  #runInstances(run: BurstRun, job: Job, type: _InstanceType, spot: boolean, root: string): RunInstancesCommand {
+  // cloud-init runs `boot` once, at the instance's first boot; a snapshot's
+  // instance is a new one, so it runs there too.
+  #runInstances(run: BurstRun, job: Job, type: _InstanceType, spot: boolean, root: string, boot: string): RunInstancesCommand {
     return new RunInstancesCommand({
       ImageId: job.image.id, InstanceType: type, MinCount: 1, MaxCount: 1, KeyName: runName(run), SecurityGroupIds: this.#group ? [this.#group] : [],
+      UserData: Buffer.from(boot).toString("base64"),
       ...(spot ? { InstanceMarketOptions: { MarketType: "spot", SpotOptions: { SpotInstanceType: "one-time", InstanceInterruptionBehavior: "terminate" } } } : {}),
       // A lane's machine is gone when it shuts down, on either market; only a
       // warm-up stops, so it can be imaged.

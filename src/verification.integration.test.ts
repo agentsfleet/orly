@@ -3,7 +3,7 @@ import { chmodSync, existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, wr
 import { join } from "node:path";
 
 import { contentDigest } from "./config";
-import { cleanupTemporaryDirectories, git, orly, ROOT } from "./gates_test_support";
+import { cleanupTemporaryDirectories, git, gitOutput, orly, ROOT } from "./gates_test_support";
 import { UNSCOPED_ENVIRONMENT } from "./git_env";
 import { recordOverride, runGate } from "./gates";
 import { RulesModel } from "./model";
@@ -128,10 +128,41 @@ test("tracked symlinks disable reuse while preserving fresh execution", async ()
   }
 });
 
-test("clean accept-dirty checks cannot publish reusable evidence", async () => {
+test("a run on an uncommitted tree is reused once that tree is committed and pushed", async () => {
   const { root } = await verificationFixture();
+  writeFileSync(join(root, "tracked-input.txt"), "edited before the commit");
+  const dirty = orly(root, ROOT, "gate", "pr", "--accept-dirty");
+  expect(dirty.code, dirty.output).toBe(0);
+  expect(dirty.output).toContain("evidence keyed to this tree, reusable once it is committed and pushed");
+  const parent = gitOutput(root, "rev-parse", "HEAD");
+  commitAndPush(root);
+  const reused = orly(root, ROOT, "gate", "pr", "--reuse-verification");
+  expect(reused.code, reused.output).toBe(0);
+  expect(reused.output).toContain(`from ${parent} with uncommitted changes for ${gitOutput(root, "rev-parse", "HEAD")}`);
+  expect(reused.output).toContain("fixture report: 7 checks passed");
+  expect(verificationCount(root)).toBe(1);
+});
+
+test("an uncommitted run never vouches for a different committed tree", async () => {
+  const { root } = await verificationFixture();
+  writeFileSync(join(root, "tracked-input.txt"), "edited before the commit");
   expect(orly(root, ROOT, "gate", "pr", "--accept-dirty").code).toBe(0);
-  expect(JSON.parse(readFileSync(join(attemptPaths(root)[0]!, "complete.json"), "utf8")).payload.binding).toBeNull();
+  writeFileSync(join(root, "README.md"), "edited after the run\n");
+  commitAndPush(root);
+  const next = orly(root, ROOT, "gate", "pr", "--reuse-verification");
+  expect(next.code, next.output).toBe(0);
+  expect(next.output).toContain("fresh run");
+  expect(verificationCount(root)).toBe(2);
+});
+
+test("an untracked file present during a run keeps it from being reused", async () => {
+  const { root } = await verificationFixture();
+  writeFileSync(join(root, "tracked-input.txt"), "edited before the commit");
+  writeFileSync(join(root, "scratch.txt"), "a file the command may have read");
+  const dirty = orly(root, ROOT, "gate", "pr", "--accept-dirty");
+  expect(dirty.output).toContain("reuse unavailable: untracked files are outside the tree; add or remove them");
+  rmSync(join(root, "scratch.txt"));
+  commitAndPush(root);
   const next = orly(root, ROOT, "gate", "pr", "--reuse-verification");
   expect(next.code, next.output).toBe(0);
   expect(next.output).toContain("fresh run");
@@ -273,3 +304,9 @@ test("interrupted_and_concurrent_attempts_never_select_an_old_pass", async () =>
     if (child && processAlive(child)) process.kill(-child, "SIGKILL");
   }
 }, 20000);
+
+function commitAndPush(root: string): void {
+  git(root, "add", ".");
+  git(root, "commit", "-q", "-m", "test: commit the verified tree");
+  git(root, "push", "-q");
+}

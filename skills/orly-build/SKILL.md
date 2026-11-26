@@ -25,15 +25,15 @@ it applies are the standards listed in `AGENTS.md`; tests follow
    with the spec's Intent stops the work. Keep the restatement for the Pull
    Request Session Notes.
 5. **Build each Section.** Read the standards for the files the Section touches.
-   Write a test per Dimension and a negative test per failure mode. Add an
-   integration test when the diff crosses a module boundary with real
-   input/output.
+   Write a test per Dimension and a negative test per failure mode.
+
+   Prove each new test fails: revert or mutate the code it covers, run
+   `orly proof <TEST_FILE> --test <NAME> -- <COMMAND>`, then restore the code.
+   An owner ruling goes into the spec with `orly note`.
 6. **Commit.** The pre-commit hook runs `orly gate work`; if hooks did not run,
    run it yourself. Mark the Section's Dimensions `DONE` in the same commit as
-   their code and tests. Never use `--no-verify`.
-7. **When stuck.** Use gstack `/investigate` for a failure you cannot explain,
-   and gstack `/qa` to exercise a user-facing path. Outside Claude Code their
-   names carry a `gstack-` prefix.
+   their code and tests.
+7. **When stuck.** Use gstack `/qa` to exercise a user-facing path.
 8. **Hand off.** When every Dimension is `DONE`, continue with `orly-ship`.
 
 ## Codex cloud tasks

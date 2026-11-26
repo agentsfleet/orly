@@ -4,6 +4,7 @@ import { join } from "node:path";
 
 import { burst } from "./index";
 import { UNSCOPED_ENVIRONMENT } from "../git_env";
+import { FakeTailscale } from "./fake_tailscale";
 import { FakeTir } from "./fake_tir";
 import { created, CREDENTIALS, e2eRun, LANES, machineScript, ONE_LANE } from "./e2e-test-support";
 import { burstDependencies, burstEnvironment, burstRepository, fakeBin } from "./test_support";
@@ -15,7 +16,7 @@ afterEach(cleanupTemporaryDirectories);
 describe("e2e cleanup, failures and what a warm machine is sent", () => {
   describe("what a warm machine is sent", () => {
     function sent(run: ReturnType<typeof e2eRun>): string | undefined {
-      const machine = [...new Bun.Glob("203.0.113.*").scanSync({ cwd: run.state, onlyFiles: false })][0] ?? "";
+      const machine = [...new Bun.Glob("100.64.*").scanSync({ cwd: run.state, onlyFiles: false })][0] ?? "";
       const bundle = join(run.state, machine, "repo.bundle");
       return existsSync(bundle) ? bundle : undefined;
     }
@@ -70,7 +71,7 @@ describe("e2e cleanup, failures and what a warm machine is sent", () => {
   test("a cancelled run deletes the VM it started and its key", async () => {
     const root = burstRepository();
     const { bin, state } = fakeBin();
-    const api = new FakeTir();
+    const api = new FakeTir(new FakeTailscale(state));
     const controller = new AbortController();
     await Bun.write(join(state, "scenario.json"), JSON.stringify({ sleepMs: 2_000 }));
     const { dependencies, output } = burstDependencies(root, burstEnvironment(bin, state, CREDENTIALS), api.fetch, controller.signal);

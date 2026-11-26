@@ -25,9 +25,10 @@ https://github.com/agentsfleet/orly/blob/main/docs/BURST.md
 ## Steps
 
 1. **List the lanes.** Run `orly burst`; pick only lanes it lists.
-2. **Pick the provider.** Use `aws-spot` or `e2e` where outbound SSH on port
-   22 works and the caller stays on one network for the run. From an
-   HTTP-only session, start the repository's burst workflow instead.
+2. **Pick the provider.** `aws-spot` or `e2e`. The caller must be on a
+   tailnet (`tailscale status` online); a network change mid-run is
+   reconnected. Where Tailscale cannot run, start the repository's burst
+   workflow instead.
 3. **Warm once.** Capture `orly burst snapshot --provider <P>` after setup
    changes, and prove a new provider with one capture before any lane.
    `orly burst snapshot --prune --provider <P>` keeps the newest one.
@@ -56,3 +57,6 @@ print the result lines and what was deleted.
 - AWS credentials come from the caller's `aws` configuration or the job's
   login step. E2E needs a TIR API token's `E2E_API_KEY`, `E2E_AUTH_TOKEN` and
   `E2E_PROJECT_ID`; MyAccount keys do not work.
+- Tailscale needs `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET`, an OAuth
+  trust credential whose only tag is `tag:orly-burst`. Never pair it with a
+  CI credential's tags.

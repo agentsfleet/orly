@@ -13,9 +13,9 @@ const FRONT_MATTER = /^---\n([\s\S]*?)\n---/;
 const MAX_DESCRIPTION = 1_024;
 const RETIRED_PAGE = ".orly/dispatch/write_rust.md";
 const RETIRED_BODY = "a page the previous release installed\n";
-// Every path this release deleted. A tracked file that still cites one points
-// a reader at nothing.
-const RETIRED_REFERENCE = /(?<![\w.-])(?:audits\/[a-z-]+\.(?:sh|ts|awk)|dispatch\/[a-z_]+\.(?:md|sh)|docs\/(?:TEMPLATE|DOCUMENTATION_RULES|LOGGING_STANDARD|REST_API_DESIGN_GUIDELINES|SCHEMA_CONVENTIONS|CHANGELOG_VOICE|EXECUTE_DOC_READS|VERIFY_TIERS|HARNESS_VERIFY_OUTPUT|JUDGMENTS)\.md|docs\/greptile-learnings)/;
+// Every path a release deleted. A tracked file that still cites one points a
+// reader at nothing, and review records no longer live in the tree.
+const RETIRED_REFERENCE = /(?<![\w.-])(?:audits\/[a-z-]+\.(?:sh|ts|awk)|dispatch\/[a-z_]+\.(?:md|sh)|docs\/(?:TEMPLATE|DOCUMENTATION_RULES|LOGGING_STANDARD|REST_API_DESIGN_GUIDELINES|SCHEMA_CONVENTIONS|CHANGELOG_VOICE|EXECUTE_DOC_READS|VERIFY_TIERS|HARNESS_VERIFY_OUTPUT|JUDGMENTS)\.md|docs\/greptile-learnings|docs\/v(?:\d+|\{P\})\/evidence\/)/;
 // History and the spec that records the removal may name the old paths.
 const HISTORY = /^(docs\/v\d+\/|docs\/CHANGELOG\.md$|evals\/release\/|src\/layout\.test\.ts$)/;
 

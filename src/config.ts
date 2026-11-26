@@ -5,7 +5,7 @@ import { assertWritableInside, hashContent, isObject, isString, JsonObject, obje
 import { git } from "./git_env";
 import { selectPacks, sniffCommands } from "./config_discovery";
 import { validateCommands, validateSurfaces } from "./validation";
-import { burstSchema, validateConfiguration, reusePoliciesSchema, type BurstConfig, type ReusePolicies } from "./config_validation";
+import { burstSchema, couplingsSchema, validateConfiguration, reusePoliciesSchema, type BurstConfig, type Coupling, type ReusePolicies } from "./config_validation";
 import { commandLimitsSchema, type LaneLimits } from "./command_limits";
 
 const ORACLE_DIRECTORY = ".orly";
@@ -33,6 +33,7 @@ export type RepoConfig = {
   packs: string[];
   commands: Record<string, string[][]>;
   surfaces: JsonObject | undefined;
+  coupled?: Coupling[];
   managed: string[];
   limits?: LaneLimits;
   reuse?: ReusePolicies;
@@ -83,6 +84,7 @@ export function parseConfig(value: JsonObject): RepoConfig {
     packs: stringArray(value[PACKS_FIELD] ?? [], `${CONFIG_PATH} ${PACKS_FIELD}`),
     commands: readCommands(value[COMMANDS_FIELD]),
     surfaces: isObject(value.surfaces) ? value.surfaces : undefined,
+    ...(value.coupled !== undefined ? { coupled: couplingsSchema.parse(value.coupled) } : {}),
     managed: stringArray(value[MANAGED_FIELD] ?? [], `${CONFIG_PATH} ${MANAGED_FIELD}`),
     ...(isObject(value.limits) ? { limits: Object.fromEntries(Object.entries(value.limits).map(([lane, limits]) => [lane, commandLimitsSchema.parse(limits)])) } : {}),
     ...(value.reuse !== undefined ? { reuse: reusePoliciesSchema.parse(value.reuse) } : {}),
@@ -153,6 +155,7 @@ export function serialiseConfig(config: RepoConfig): string {
     packs: config.packs,
     commands: config.commands,
     ...(config.surfaces ? { surfaces: config.surfaces } : {}),
+    ...(config.coupled ? { coupled: config.coupled } : {}),
     ...(config.limits ? { limits: config.limits } : {}),
     ...(config.reuse ? { reuse: config.reuse } : {}),
     ...(config.burst ? { burst: config.burst } : {}),

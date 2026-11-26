@@ -1,16 +1,14 @@
-import type { Outcome } from "./process";
 import type { Environment } from "./settings";
-import type { BurstRun, Fetch, Job, Machine, Status } from "./types";
+import type { BurstRun, Job, Machine, Status } from "./types";
 
 import { existsSync, readdirSync, rmSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 import { OrlyError } from "../model";
-import { BUNDLE, INPUTS, resultsScript, SETUP_FAILED, WORK } from "./job";
-import { captureProcess, machineDeadline, streamProcess, until } from "./process";
-import { done, ongoing } from "./progress";
+import { BUNDLE, followScript, INPUTS, JOB_EXIT, launchScript, LEAVE, NO_JOB, resultsScript, SETUP_FAILED, shellQuote, UPLOAD_CUT, WORK } from "./job";
+import { captureProcess, Lines, machineDeadline, pause, streamProcess, until } from "./process";
+import { done, failed, ongoing } from "./progress";
 import { bundleFor } from "./repository";
-import { IPV4 } from "./types";
 
 export type StagedDirectory = { name: string; archive: string };
 
@@ -25,12 +23,7 @@ const SSH_LOST = 255;
 const NO_RESULTS = 3;
 const COMMIT = /^[0-9a-f]{40}$/;
 const SHORT = 7;
-// Each provider's SSH rule admits only the caller's public IPv4, learnt here.
-const CALLER_ADDRESS_URL = "https://checkip.amazonaws.com";
-const CALLER_TIMEOUT_MS = 15_000;
-// A booting machine refuses SSH for a while, so the caller's address is
-// checked only after this many probes in a row have failed.
-const PROBES_BEFORE_ADDRESS_CHECK = 3;
+const EXIT_CODE = /^\d{1,3}$/;
 
 // The run's own key pair, made in the run's private directory. ssh-keygen
 // writes the private half with mode 0600; only the public half leaves this
@@ -51,41 +44,24 @@ export function forgetRunFiles(run: BurstRun): void {
 
 // A booting machine refuses connections for a while, so the first connect is
 // retried. A booted machine answers within minutes, so the wait is bounded
-// well inside the job's deadline, and it ends at once when the caller's
-// address has changed, since the run admits only the one it launched from.
-// A failure carries ssh's own last error.
+// well inside the job's deadline. A failure carries ssh's own last error.
 export async function reachable(run: BurstRun, job: Job, machine: Machine, user: string): Promise<void> {
   const target = machine.address ?? machine.id;
   run.write(ongoing(`waiting for SSH on ${target}`));
   let refusal = "";
-  let failures = 0;
   const probe = async () => {
     const tried = await captureProcess(sshArgs(run, machine, user, "true"), { env: run.settings.env, timeoutMs: PROBE_TIMEOUT_MS, signal: run.signal });
     if (tried.code === 0) return true;
     refusal = tried.stderr.trim().split("\n").at(-1) ?? "";
-    failures += 1;
-    const reason = failures >= PROBES_BEFORE_ADDRESS_CHECK ? await movedCaller(run.fetch, run.caller) : undefined;
-    if (reason) throw new LockedOut(reason);
     return undefined;
   };
   try {
     await until(`SSH to ${target}`, probe, { deadline: machineDeadline(job), signal: run.signal, pollMs: run.settings.pollMs });
   } catch (error) {
-    if (error instanceof LockedOut || !(error instanceof OrlyError) || !refusal) throw error;
+    if (!(error instanceof OrlyError) || !refusal) throw error;
     throw new OrlyError(`${error.message}: ${refusal}`);
   }
   run.write(done(`SSH on ${target} answers`));
-}
-
-class LockedOut extends OrlyError {}
-
-// A caller that changed network mid-run can never connect again, so the
-// reason is said instead of waited out. An address that cannot be learnt
-// changes nothing.
-async function movedCaller(fetcher: Fetch, admitted: string): Promise<string | undefined> {
-  const now = await callerAddress(fetcher).catch(() => undefined);
-  if (!now || now === admitted) return undefined;
-  return `this machine's address changed from ${admitted} to ${now}, and the run admits SSH from ${admitted} only; run it again from this network`;
 }
 
 // Each burst.directories variable must name a directory on this machine. It
@@ -103,11 +79,13 @@ export async function archiveDirectories(run: BurstRun, names: readonly string[]
   return staged;
 }
 
-// Stages the ref's bundle and any copied directories, runs the job script as
-// the session's standard input, streams its output with the job's name in
-// front, and brings the declared results back. The script carries a lane's
-// secrets, so it exists only as this process's memory and the remote shell's
-// input.
+// Stages the ref's bundle and any copied directories, starts the job script
+// detached on the machine, follows its log with the job's name in front, and
+// brings the declared results back. The job outlives any one session: a lost
+// one is reconnected, and the log resumes from the last byte received. Its
+// exit code is the one the machine wrote, never ssh's. The script carries a
+// lane's secrets, so it exists only as this process's memory, the session's
+// input and, until the job opens it, a file in the machine's memory.
 export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user: string, script: string, directories: readonly StagedDirectory[]): Promise<Status> {
   const base = await warmCommit(run, machine, user);
   const bundle = bundleFor(run.root, run.ref, run.commit, base, run.bundle);
@@ -117,22 +95,124 @@ export async function runOverSsh(run: BurstRun, job: Job, machine: Machine, user
     await stage(run, machine, user, `rm -rf ${INPUTS}/${name} && mkdir -p ${INPUTS}/${name} && tar -xzf - -C ${INPUTS}/${name}`, archive, name);
   }
   const log = Bun.file(join(job.evidence, "run.log")).writer();
-  let outcome: Outcome;
+  const lines = new Lines((line) => {
+    log.write(`${line}\n`);
+    run.write(`[${job.name}] ${line}`);
+  });
+  let status: Status;
   try {
-    outcome = await streamProcess(sshArgs(run, machine, user, asRoot(user, "bash -s")), {
-      env: run.settings.env, stdin: new Blob([script]), deadline: job.deadline, signal: run.signal,
-      lines: (line) => {
-        log.write(`${line}\n`);
-        run.write(`[${job.name}] ${line}`);
-      },
-    });
+    status = await new Session(run, job, machine, user).run(script, lines);
   } finally {
+    lines.end();
     await log.end();
   }
   if (!run.signal.aborted) await collect(run, job, machine, user);
-  if ("stopped" in outcome) return outcome.stopped;
-  if (outcome.code === SETUP_FAILED) return "not_run";
-  return outcome.code === SSH_LOST ? "interrupted" : outcome.code;
+  return status;
+}
+
+// A machine that joined the tailnet leaves it before it is deleted or
+// imaged, so its node goes at once instead of when the tailnet notices it
+// offline. Logout runs detached, since it ends the session it was sent over.
+// A warm-up about to be imaged sends FORGET instead, which also wipes its node.
+export async function leaveTailnet(run: BurstRun, machine: Machine, user: string, command = LEAVE): Promise<boolean> {
+  const sent = await captureProcess(sshArgs(run, machine, user, asRoot(user, command)), { env: run.settings.env, timeoutMs: PROBE_TIMEOUT_MS });
+  return sent.code === 0;
+}
+
+// One detached job on one machine, followed through as many SSH sessions as
+// it takes. A lost session is retried every poll interval for as long as a
+// booting machine is waited for, counted from the first failure since the
+// log last grew, and never past the job's deadline.
+class Session {
+  readonly #run: BurstRun;
+  readonly #job: Job;
+  readonly #machine: Machine;
+  readonly #user: string;
+  #lostAt: number | undefined;
+
+  constructor(run: BurstRun, job: Job, machine: Machine, user: string) {
+    this.#run = run;
+    this.#job = job;
+    this.#machine = machine;
+    this.#user = user;
+  }
+
+  async run(script: string, lines: Lines): Promise<Status> {
+    for (;;) {
+      const job = new Blob([script]);
+      const launched = await this.#capture(`bash -c ${shellQuote(launchScript(job.size))}`, STAGE_TIMEOUT_MS, job);
+      if (launched.code === 0) break;
+      if (launched.code !== SSH_LOST && launched.code !== UPLOAD_CUT) throw new OrlyError(`could not start the job on ${this.#machine.id}: ${launched.stderr.trim()}`);
+      const stop = await this.#lost(lines.bytes);
+      if (stop) return stop;
+    }
+    for (;;) {
+      const from = lines.bytes;
+      const outcome = await streamProcess(this.#ssh(`bash -c ${shellQuote(followScript(from))}`), {
+        env: this.#run.settings.env, deadline: this.#job.deadline, signal: this.#run.signal,
+        // ssh's complaint is said once per loss, not at every retry.
+        chunks: (chunk) => lines.take(chunk), lines: (line) => {
+          if (this.#lostAt === undefined) this.#run.write(`[${this.#job.name}] ${line}`);
+        },
+      });
+      if ("stopped" in outcome && outcome.stopped === "cancelled") return "cancelled";
+      if ("stopped" in outcome && outcome.stopped === "deadline") return this.#lostAt === undefined ? "deadline" : this.#giveUp(Date.now());
+      if (lines.bytes > from) this.#lostAt = undefined;
+      if ("code" in outcome && outcome.code === NO_JOB) {
+        this.#run.write(failed(`lane=${this.#job.name} ${this.#machine.id} holds no job any more; it may have restarted`));
+        return "interrupted";
+      }
+      if ("code" in outcome && outcome.code === 0) {
+        const code = await this.#exitCode();
+        if (code !== undefined) return code;
+      }
+      const stop = await this.#lost(lines.bytes);
+      if (stop) return stop;
+    }
+  }
+
+  // What the job wrote as its exit, undefined when the session to read it was
+  // lost, and interrupted when the job ended without writing one.
+  async #exitCode(): Promise<Status | undefined> {
+    const read = await this.#capture(`cat ${JOB_EXIT}`, PROBE_TIMEOUT_MS);
+    if (read.code === SSH_LOST) return undefined;
+    const code = read.stdout.trim();
+    if (read.code !== 0 || !EXIT_CODE.test(code)) {
+      this.#run.write(failed(`lane=${this.#job.name} the job on ${this.#machine.id} ended without an exit code`));
+      return "interrupted";
+    }
+    return Number(code) === SETUP_FAILED ? "not_run" : Number(code);
+  }
+
+  // Waits one poll interval before the next attempt, or says why there is none.
+  async #lost(offset: number): Promise<Status | undefined> {
+    const now = Date.now();
+    if (this.#run.signal.aborted) return "cancelled";
+    if (this.#lostAt === undefined) {
+      this.#lostAt = now;
+      this.#run.write(ongoing(`lane=${this.#job.name} lost its session to ${this.#target()}; reconnecting, the log resumes at byte ${offset}`));
+    }
+    if (now >= machineDeadline(this.#job, this.#lostAt)) return this.#giveUp(now);
+    await pause(this.#run.settings.pollMs, this.#run.signal);
+    return this.#run.signal.aborted ? "cancelled" : undefined;
+  }
+
+  #giveUp(now: number): Status {
+    this.#run.write(failed(`lane=${this.#job.name} could not reconnect to ${this.#target()} within ${Math.round((now - (this.#lostAt ?? now)) / 1000)}s`));
+    return "interrupted";
+  }
+
+  #target(): string {
+    return this.#machine.address ?? this.#machine.id;
+  }
+
+  #capture(command: string, timeoutMs: number, stdin?: Blob) {
+    return captureProcess(this.#ssh(command), { env: this.#run.settings.env, timeoutMs, signal: this.#run.signal, ...(stdin ? { stdin } : {}) });
+  }
+
+  #ssh(command: string): string[] {
+    return sshArgs(this.#run, this.#machine, this.#user, asRoot(this.#user, command));
+  }
 }
 
 // A fresh machine's host key is one nobody has seen, so the run trusts it on
@@ -143,13 +223,6 @@ function sshArgs(run: BurstRun, machine: Machine, user: string, command: string)
     "-o", "StrictHostKeyChecking=accept-new", "-o", `UserKnownHostsFile=${run.knownHosts}`,
     "-o", "ConnectTimeout=15", "-o", "ServerAliveInterval=30", "-o", "ServerAliveCountMax=4", "-o", "LogLevel=ERROR",
     `${user}@${machine.address ?? ""}`, command];
-}
-
-export async function callerAddress(fetcher: Fetch): Promise<string> {
-  const response = await fetcher(CALLER_ADDRESS_URL, { signal: AbortSignal.timeout(CALLER_TIMEOUT_MS) });
-  const address = (await response.text()).trim();
-  if (!response.ok || !IPV4.test(address)) throw new OrlyError(`could not learn this machine's public IPv4 address from ${CALLER_ADDRESS_URL}`);
-  return address;
 }
 
 // An upload of tens of megabytes over a slow link takes minutes, so it is
