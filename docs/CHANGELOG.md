@@ -2,13 +2,16 @@
 
 ## 0.70.0 (2026-11-22)
 
-Burst machines join the caller's tailnet, and a lane survives the caller changing network.
+Burst machines join the caller's tailnet, and a lane survives the caller changing network. `orly gate pr` reuses a run made before the commit, and checks coupled paths and new tests.
 
 - **Tailscale** — `orly burst` now requires the caller on a tailnet and a Tailscale OAuth trust credential in `TS_OAUTH_CLIENT_ID` and `TS_OAUTH_CLIENT_SECRET`, whose only tag is `tag:orly-burst`. Each machine joins with its own single-use key, deleted once it has joined.
 - **No public SSH** — No AWS or E2E security group opens port 22; SSH runs over the tailnet, and the caller-address check is gone.
 - **Detached lanes** — A lane runs detached on its machine. A lost session reconnects for up to 10 minutes, and the log resumes where it stopped. The lane's `exit=` is the code the machine wrote.
 - **E2E** — Each VM boots a TIR start script of its own, deleted with the VM.
-- **Upgrade** — Follow the Tailscale setup in [Burst lanes](BURST.md#one-time-setup-for-tailscale) before the next run, then run `bunx --bun @agentsfleet/orly@0.70.0 update` after this version is published.
+- **Reuse** — Evidence is keyed to tracked content, not the revision. A lane run before the commit is reused once that tree is committed and pushed.
+- **Gate** — `coupled` path groups in `.orly/orly.json` fail `gate pr` on a one-sided change. `gate pr` also names new tests that lack an `orly proof` record.
+- **Skills** — `orly-spec` runs the EGM reviewers itself, and `orly note` adds an owner's ruling, dated, to the active spec.
+- **Upgrade** — Follow the Tailscale setup in [Burst lanes](BURST.md#one-time-setup-for-tailscale) before the next run, then run `bunx --bun @agentsfleet/orly@0.70.0 update` after this version is published. Drop any `reuse` policy whose command reads Git history; evidence from earlier releases runs fresh.
 
 ## 0.60.4 (2026-11-20)
 

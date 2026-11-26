@@ -36,10 +36,13 @@ Declare the commands your repository already has in `.orly/orly.json`; at least 
 |---|---|
 | `gate work` | configuration and the `conform` command |
 | `gate verify` | documentation and the non-test `verify.*` commands |
-| `gate pr` | branch, clean pushed revision, documentation and every `verify.*` command |
+| `gate pr` | branch, clean pushed revision, documentation, coupled paths and every `verify.*` command |
 
 The default `gate` runs `work` then `pr`, with fast verification once. Checks run fresh unless reviewed policies explicitly permit evidence reuse.
 Only the owner records an override.
+
+`orly proof` records that a new test failed with its change reverted, and `gate pr` names new tests without such a record.
+`orly note` adds an owner's ruling, dated, to the active spec.
 
 [Architecture](docs/ORLY_ARCHITECTURE.md) covers limits, opt-in evidence reuse and overrides.
 
