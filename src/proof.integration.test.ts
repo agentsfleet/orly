@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { join } from "node:path";
 
 import { runGate } from "./gates";
-import { cleanupTemporaryDirectories, git, modelFor, newRepository, orly, ROOT } from "./gates_test_support";
+import { cleanupTemporaryDirectories, git, gitOutput, modelFor, newRepository, orly, ROOT } from "./gates_test_support";
 import { newTests } from "./proof";
 import { verificationState } from "./verification_store";
 
@@ -113,7 +113,8 @@ test("an altered proof record proves nothing", async () => {
   const [name] = readdirSync(directory);
   const path = join(directory, name ?? "");
   const record = JSON.parse(readFileSync(path, "utf8"));
-  record.payload.test = REFUSES;
+  // The name and file still match, so only the signature can refuse it.
+  record.payload.failing_line = "forged";
   writeFileSync(path, JSON.stringify(record));
   expect(proven(root, model)?.detail).toStartWith("reported, not enforced: 2 of 2 new test(s)");
 });
@@ -162,7 +163,7 @@ test("new tests are read from added declarations in each supported language", as
   }
   git(root, "add", ".");
   git(root, "commit", "-q", "-m", "test: add declarations");
-  const base = Bun.spawnSync(["git", "rev-parse", "HEAD^"], { cwd: root }).stdout.toString().trim();
+  const base = gitOutput(root, "rev-parse", "HEAD^");
   expect(newTests(root, base, Object.keys(added).sort())).toEqual([
     { file: "pkg/store_test.go", test: "TestStoresOneRow" },
     { file: "src/kept.test.ts", test: "adds %d to %d" },

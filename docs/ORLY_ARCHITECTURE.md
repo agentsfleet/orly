@@ -40,7 +40,7 @@ Every criterion reads an exit code or a file. Prerequisite failures block comman
 - **The docs gate follows the diff.** A change under `surfaces.user` with no change under `surfaces.docs` is red; tests and specs never count.
 - **`docs.language`** rejects mechanical language findings in changed Markdown and MDX paragraphs, and template slots left in a changed spec.
 - **Coupled paths change together.** A branch that changes a path under a `coupled` group's `when` prefix and none under its `then` prefixes fails `paths.coupled`.
-- **New tests carry fail-before proofs.** `tests.proven` names each new TypeScript, JavaScript, Rust, Go or Python test without one, and never fails the gate.
+- **New tests carry fail-before proofs.** `tests.proven` counts new tests without one and names up to three. It reads TypeScript, JavaScript, Rust, Go and Python, and never fails the gate.
 - **A worktree is its repository.** Commands run in the worktree, which resolves to its primary checkout through Git's shared object store.
 
 `burst.*` lanes rent machines by the hour, so no gate runs them; `orly burst` runs them on request ([Burst lanes](BURST.md)).
@@ -133,7 +133,7 @@ Rules live in `standards/`, one page per standard, and packs select standards th
 Each rule has an identifier, a statement, and the fields Applies to, Checked by, Bad, Good and Why.
 
 Three skills carry the steps: `orly-spec`, `orly-build` and `orly-ship`, plus `orly-burst` for paid lanes.
-EGM's review skill refuses model invocation, so `orly-spec` dispatches EGM's reviewers itself, stage by stage, each with no conversation.
+The Elephant-Goldfish Model (EGM) review skill refuses model invocation, so `orly-spec` dispatches its reviewers itself, stage by stage, each with no conversation.
 `orly-standards-reviewer` judges a diff against the standards with no session history, and reports only findings tied to a rule and a changed line.
 
 Skills announce their stage and state, then report the outcome and next action. After publishing, `orly-ship` proposes evidenced lessons and asks for any approval still needed.
@@ -147,5 +147,5 @@ A rule change edits its standard; a new rule takes a new identifier, and `orly v
 Every commit runs `orly gate work`, which runs `orly verify`, and a push runs gitleaks.
 CI runs `make audit`, `make install-evals` and the unit suite with coverage on every pull request.
 
-`orly doctor` checks that every agent runtime on the machine has gstack and the Elephant-Goldfish Model (EGM), and prints the install command for a missing one.
+`orly doctor` checks that every agent runtime on the machine has gstack and EGM, and prints the install command for a missing one.
 A machine with no agent runtime, such as a CI runner, skips that check. Orly collects no usage telemetry.

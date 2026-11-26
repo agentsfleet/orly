@@ -4,7 +4,7 @@
 **Milestone:** M18
 **Workstream:** 001
 **Date:** Nov 26, 2026
-**Status:** IN_PROGRESS
+**Status:** DONE
 **Priority:** P2, harness tooling; every consumer's agent pays for reruns and missed couplings
 **Categories:** CLI, DOCS, GOV, SKILL
 **Batch:** B1, folded into the open 0.70.0 Pull Request #90 at the owner's request
@@ -45,7 +45,7 @@ orly-spec step 6 -> stages 5..9 -> egm:* reviewers, no context -> evidence file 
 1. `src/verification_identity.ts` — the identity that binds evidence.
 2. `src/criteria.ts` — where `docs.updated` shows a branch-diff criterion.
 3. `src/verification_store.ts` — signed private records beneath Git metadata.
-4. `~/.claude/plugins/cache/egm/egm/0.1.0/skills/egm_review/SKILL.md` — the five review stages and direct dispatch.
+4. `https://github.com/google/elephant-goldfish-model` — `skills/egm_review/SKILL.md` names the five review stages and allows direct dispatch: 5 zoom-out, 6 comprehension, 7 design with structural and style, 8 zoom-out again, 9 implementation readiness with codebase details and style.
 5. `docs/v2/done/M17_001_P1_CLI_DOCS_GOV_SKILL_SCOPED_VERIFICATION_REUSE.md` — the invariants reuse keeps.
 
 ## Files Changed (blast radius)
@@ -59,7 +59,8 @@ orly-spec step 6 -> stages 5..9 -> egm:* reviewers, no context -> evidence file 
 | `src/proof.ts`, `src/note.ts` | CREATE | Test declarations, proofs, notes |
 | `src/cli.ts`, `src/cli_help.ts` | EDIT | `orly proof`, `orly note`, help |
 | `src/model.ts`, `registry.json` | EDIT | A persona pack names its owner |
-| `src/*.test.ts` touched above, `src/coupled_paths.test.ts`, `src/proof.test.ts`, `src/note.test.ts` | EDIT, CREATE | Proof of each Dimension |
+| `src/*.test.ts` touched above, `src/coupled_paths.integration.test.ts`, `src/proof.integration.test.ts`, `src/note.integration.test.ts` | EDIT, CREATE | Proof of each Dimension |
+| `docs/v2/evidence/M18_REDUCTION_REVIEW.md`, `SOUL.md`, `AGENTS.md`, `src/burst/*.ts` named there | CREATE, EDIT | The owner's reduction review and its one-form cuts |
 | `skills/orly-spec/SKILL.md`, `skills/orly-build/SKILL.md`, `skills/orly-ship/SKILL.md` | EDIT | EGM review, proof and note steps |
 | `README.md`, `docs/ORLY_ARCHITECTURE.md`, `llms.txt`, `docs/CHANGELOG.md`, `standards/tests.md` | EDIT | Behaviour as shipped |
 
@@ -88,49 +89,49 @@ orly-spec step 6 -> stages 5..9 -> egm:* reviewers, no context -> evidence file 
 
 The binding holds the merge base and a digest of every tracked path's mode and working-tree bytes, or of `tracked_inputs`, never the revision. A run records evidence when no untracked file is present; reuse still needs a clean tree at the pushed revision. Records move to format 2 with `executed_uncommitted`, so a revision-keyed record runs fresh. **Implementation default:** `--accept-dirty` publishes evidence, because content binding makes the flag irrelevant to what evidence proves.
 
-- **Dimension 1.1** — an uncommitted edit, its commit and its push bind one value → Test `an uncommitted tree binds the same evidence as the commit that records it` (integration): three identities, one binding, `current` only after the push
-- **Dimension 1.2** — a run before the commit is reused after it → Test `a run on an uncommitted tree is reused once that tree is committed and pushed` (e2e): count stays 1, provenance names the parent revision `with uncommitted changes`
-- **Dimension 1.3** — a different committed tree runs fresh → Test `an uncommitted run never vouches for a different committed tree` (e2e): count 2
-- **Dimension 1.4** — an untracked file during the run blocks its reuse → Test `an untracked file present during a run keeps it from being reused` (e2e): count 2 after the file is removed and the tree committed
-- **Dimension 1.5** — an unstaged deletion binds as the commit that deletes → Test `a tracked file deleted from the working tree binds as the commit that deletes it` (integration)
+- **Dimension 1.1** — DONE — an uncommitted edit, its commit and its push bind one value → Test `an uncommitted tree binds the same evidence as the commit that records it` (integration): three identities, one binding, `current` only after the push
+- **Dimension 1.2** — DONE — a run before the commit is reused after it → Test `a run on an uncommitted tree is reused once that tree is committed and pushed` (e2e): count stays 1, provenance names the parent revision `with uncommitted changes`
+- **Dimension 1.3** — DONE — a different committed tree runs fresh → Test `an uncommitted run never vouches for a different committed tree` (e2e): count 2
+- **Dimension 1.4** — DONE — an untracked file during the run blocks its reuse → Test `an untracked file present during a run keeps it from being reused` (e2e): count 2 after the file is removed and the tree committed
+- **Dimension 1.5** — DONE — an unstaged deletion binds as the commit that deletes → Test `a tracked file deleted from the working tree binds as the commit that deletes it` (integration): `README.md` removed, then committed with `-a`, gives one binding
 
 ### §2 — Coupled paths
 
 `coupled` is a list of `{when, then}` prefix groups, validated by `couplingsSchema` and the profile schema. `paths.coupled` in `gate pr` fails when a branch path matches a `when` prefix and none matches its `then`; the detail names both sides. **Implementation default:** one way and pr-only, like `docs.updated`, because a version may move alone and a Section in progress may push one side first.
 
-- **Dimension 2.1** — the failing fixture → Test `a wire change without its version change fails and names both sides` (integration)
-- **Dimension 2.2** — the passing fixture → Test `a wire change that moves its version passes` (integration)
-- **Dimension 2.3** — malformed groups are refused by both readers → Test `both configuration readers reject invalid coupled value []` and its siblings (unit)
+- **Dimension 2.1** — DONE — the failing fixture → Test `a wire change without its version change fails and names both sides` (integration): `src/wire/frame.ts` changed alone gives `failed` and a detail naming `src/wire/` and `protocol/VERSION`
+- **Dimension 2.2** — DONE — the passing fixture → Test `a wire change that moves its version passes` (integration): both changed gives `passed`, "1 coupled path group(s) changed together or not at all"
+- **Dimension 2.3** — DONE — malformed groups are refused by both readers → Test `both configuration readers reject invalid coupled value []` and its siblings (unit): `[]`, a missing `then`, `../VERSION`, `.git/HEAD` and an unknown key each throw naming `coupled`
 
 ### §3 — The spec skill runs the EGM review
 
 `skills/orly-spec/SKILL.md` step 6 dispatches `egm:egm-*` reviewers stage by stage with no conversation, writes findings to `docs/v{P}/evidence/M{N}_{WS}_EGM_REVIEW.md`, and resolves them as `egm-resolve` does. `orly doctor` keeps its EGM check.
 
-- **Dimension 3.1** — installed skills pass their own prose gate → Test `fresh installation passes its own prose gate and still checks skill edits` (integration)
+- **Dimension 3.1** — DONE — installed skills pass their own prose gate → Test `fresh installation passes its own prose gate and still checks skill edits` (integration): a fresh install's `docs.language` detail is "changed documentation prose is clean"
 
 ### §4 — Fail-before proofs
 
 `orly proof` refuses a name the file does not declare, a passing command, a run without a verdict, and a failure whose output never reports the test failing. It stores the command, the failing line and the code diff from HEAD, signed, under the evidence directory. `tests.proven` reads new declarations from the lines the branch adds in TypeScript, JavaScript, Rust, Go and Python. **Implementation default:** a missing proof is reported and never fails the gate, because the record is private to one worktree and a verdict must not depend on private local history.
 
-- **Dimension 4.1** — a reverted change that fails the test is recorded and counted → Test `a test that fails with its change reverted is recorded, and the pr gate counts it` (e2e)
-- **Dimension 4.2** — a passing run is refused → Test `a test that passes with its change reverted is refused and records nothing` (e2e)
-- **Dimension 4.3** — another test's failure is refused → Test `a failure of another test is refused, even when the name says failed` (e2e)
-- **Dimension 4.4** — an altered record proves nothing → Test `an altered proof record proves nothing` (integration)
-- **Dimension 4.5** — declarations per language → Test `new tests are read from added declarations in each supported language` (integration)
+- **Dimension 4.1** — DONE — a reverted change that fails the test is recorded and counted → Test `a test that fails with its change reverted is recorded, and the pr gate counts it` (e2e): a flipped comparator gives exit 0, a record whose `mutation` holds the flipped line, and "1 of 2" unproven
+- **Dimension 4.2** — DONE — a passing run is refused → Test `a test that passes with its change reverted is refused and records nothing` (e2e): exit 1, "the command passed", no record
+- **Dimension 4.3** — DONE — another test's failure is refused → Test `a failure of another test is refused, even when the name says failed` (e2e): a verbose runner's `... ok` line for the named test gives exit 1, no record
+- **Dimension 4.4** — DONE — an altered record proves nothing → Test `an altered proof record proves nothing` (integration): a changed `failing_line` gives "2 of 2" unproven
+- **Dimension 4.5** — DONE — declarations per language → Test `new tests are read from added declarations in each supported language` (integration): seven declarations across `.go`, `.ts`, `.rs` and `.py`, and none from a body-only change or a non-test file
 
 ### §5 — Owner notes
 
 `orly note` appends `- > Owner (<name>, <MMM DD, YYYY HH:MM>): "<quote>" — context: <text>` after the last line of Discovery, outside code fences. The name is the `owner` of a selected persona pack. **Implementation default:** the time is kept, because SPEC-DEFER's form carries `HH:MM`.
 
-- **Dimension 5.1** — placement before the next section → Test `a note lands dated at the end of Discovery, before the next section` (e2e)
-- **Dimension 5.2** — ambiguity is refused → Test `a --spec path chooses among several active specs, which are otherwise refused` (e2e)
-- **Dimension 5.3** — no owner is never invented → Test `a repository whose packs name no owner is refused, never given an invented name` (e2e)
+- **Dimension 5.1** — DONE — placement before the next section → Test `a note lands dated at the end of Discovery, before the next section` (e2e): the line follows the fenced block and precedes `## Appendix`
+- **Dimension 5.2** — DONE — ambiguity is refused → Test `a --spec path chooses among several active specs, which are otherwise refused` (e2e): two active specs give "2 specs are active", and `--spec` writes only the named one
+- **Dimension 5.3** — DONE — no owner is never invented → Test `a repository whose packs name no owner is refused, never given an invented name` (e2e): empty `packs` gives exit 1, "no selected pack names an owner", and no line written
 
 ### §6 — Documentation
 
 Help, README, the architecture page, `llms.txt`, TEST-LANE and the 0.70.0 entry describe what shipped.
 
-- **Dimension 6.1** — help names both new commands → Test `uses the concise public command surface` (e2e)
+- **Dimension 6.1** — DONE — help names both new commands → Test `uses the concise public command surface` (e2e): `--help` contains both usage lines
 
 ## Interfaces
 
@@ -159,15 +160,15 @@ N/A: no product or operator signal changes; orly collects no telemetry.
 
 | # | Criterion | Verify | Expected | Priority | Graded |
 |---|---|---|---|---|---|
-| R1 | Tree-keyed reuse (§1) | `bun test src/verification.integration.test.ts src/verification_identity.integration.test.ts src/verification-scoped.integration.test.ts src/verification_store.integration.test.ts` | 0 fail | P0 | |
-| R2 | Coupled paths (§2) | `bun test src/coupled_paths.test.ts src/config_validation.test.ts` | 0 fail | P0 | |
-| R3 | Proofs (§4) | `bun test src/proof.test.ts` | 0 fail | P0 | |
-| R4 | Notes (§5) | `bun test src/note.test.ts src/model.test.ts` | 0 fail | P1 | |
-| R5 | Skills pass their prose gate (§3) | `bun test src/doc_changes.integration.test.ts` | 0 fail | P1 | |
-| S1 | Conform | `make conform` | exit 0 | P0 | |
-| S2 | Types | `bun run typecheck` | exit 0 | P0 | |
-| S3 | Unit | `bun test src` | exit 0 | P0 | |
-| S4 | No secrets | `gitleaks detect --redact --no-banner` | exit 0 | P0 | |
+| R1 | Tree-keyed reuse (§1) | `bun test src/verification.integration.test.ts src/verification_identity.integration.test.ts src/verification-scoped.integration.test.ts src/verification_store.integration.test.ts` | 0 fail | P0 | ✅ 61 pass, 0 fail (4 files) |
+| R2 | Coupled paths (§2) | `bun test src/coupled_paths.integration.test.ts src/config_validation.test.ts` | 0 fail | P0 | ✅ 61 pass, 0 fail (2 files) |
+| R3 | Proofs (§4) | `bun test src/proof.integration.test.ts` | 0 fail | P0 | ✅ 16 pass, 0 fail |
+| R4 | Notes (§5) | `bun test src/note.integration.test.ts src/model.test.ts` | 0 fail | P1 | ✅ 22 pass, 0 fail |
+| R5 | Skills pass their prose gate (§3) | `bun test src/doc_changes.integration.test.ts` | 0 fail | P1 | ✅ 19 pass, 0 fail |
+| S1 | Conform | `make conform` | exit 0 | P0 | ✅ exit 0, `standards.catalogue`, `generated.root.current` and `packs.sources.current` green |
+| S2 | Types | `bun run typecheck` | exit 0 | P0 | final `orly gate pr` run, Pull Request #90 Session notes 1 |
+| S3 | Unit | `bun test src` | exit 0 | P0 | final `orly gate pr` run, Pull Request #90 Session notes 1 |
+| S4 | No secrets | `gitleaks detect --redact --no-banner` | exit 0 | P0 | ✅ exit 0, 692 commits scanned, no leaks found |
 
 ## Dead Code Sweep
 
@@ -202,7 +203,9 @@ N/A: no files deleted. The `Completion` type folds into the shared signature hel
 ## Discovery (consult log)
 
 - **Consults** — base `origin/main` at `bb741d6`; branch `feat/burst-tailnet` at `3979189`. The owner approved items 1, 3, 6, 7 and 8 and named this Pull Request and version.
-- **Model reviews** — none: the items came approved, and the reduction review reports separately.
+- **Model reviews** — none of the spec: the owner approved the items. Claude Opus 5.5 (`claude-opus-5-5`) ran three fresh-context reviews. The standards review found 13: 12 fixed, and CL-BUDGET is open for the owner, since two approved changes share one version. The rule-text reduction review found 30, with 5 applied and 25 proposed. The code reduction review found 22, with 9 applied and 13 proposed. Both are in `docs/v2/evidence/M18_REDUCTION_REVIEW.md`.
+- **Proofs** — `orly proof` recorded a fail-before proof for each of the 33 new test declarations, run by an unmutated copy of the engine. Its first run found three defects, fixed in `fix(proof)`: a mutated `src/proof.ts` also mutated the recording tool, a multi-line `test.each` table went unread, and bun prints no passing lines off a terminal, which made one test vacuous.
+- **CL-BUDGET** — the 0.70.0 entry carries eight bullets, over the five-bullet budget, because the owner put both changes in one version.
 - **Open blockers** — none.
 - **Deferrals and transfers** — none.
 - > Owner (Indy, Nov 26, 2026 16:21): "Yes i agree on 1, 3, 6 - have the skill do egm-review, 7, 8 and push it in the existing PR with 0.70 in orly." — context: approves the five improvements this spec builds, in Pull Request #90 at 0.70.0
