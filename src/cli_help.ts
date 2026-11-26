@@ -12,8 +12,9 @@ Gates (working tree unchanged; required checks must pass or carry an owner overr
               state, so a commit hook's own dirty tree never blocks it
       verify  does the work hold up? configuration, docs language, and the
               non-test verify.* set; Sections in progress may be pushed
-      pr      can this ship? branch, tree, pushed, configuration, docs, and
-              every declared verify.* command
+      pr      can this ship? branch, tree, pushed, configuration, docs,
+              coupled paths, and every declared verify.* command; it also
+              reports new tests that carry no fail-before proof
   orly override <CRITERION> --reason <REASON>
                                     empty commit with an Orly-Override trailer
   Commands default to 30 minutes and 64 mebibytes of combined output each.
@@ -22,11 +23,27 @@ Gates (working tree unchanged; required checks must pass or carry an owner overr
   Prerequisite failures block commands; a command failure leaves later groups not_run.
   Results distinguish passed, failed, blocked, cancelled, skipped and not_run.
   Reuse is off by default. A reviewed reuse.<verify-command> policy must declare
-  hermetic: true, max_age_ms, toolchain probes and any extra input paths.
-  Optional tracked_inputs selects tracked dependencies for cross-revision reuse;
-  omit it to keep exact-revision evidence. Full-source mutation checks stay fresh.
+  hermetic: true, max_age_ms, toolchain probes and any extra input paths; a
+  hermetic command reads no Git history. Evidence is keyed to tracked content:
+  a run before the commit (gate pr --accept-dirty) or the push (gate verify) is
+  reused once that same tree is committed, clean and pushed. Optional
+  tracked_inputs narrows the content to the tracked paths it names. An
+  untracked file during the run, or any later change, forces a fresh run.
   Invalid prior completion runs fresh; lock or start-marker failures block commands.
   Private attempt history stays beneath Git metadata.
+  coupled: [{"when": [<PREFIX>...], "then": [<PREFIX>...]}] in .orly/orly.json
+  makes gate pr fail a branch that changes a path under when and none under then.
+
+Records (the agent writes them; the pr gate reads them):
+  orly proof <TEST_FILE> --test <NAME> -- <COMMAND>...
+                                    with the code a new test covers reverted or
+                                    mutated, run COMMAND, and keep the record
+                                    only when it fails and an output line reports
+                                    NAME failing. gate pr names new TypeScript,
+                                    JavaScript, Rust, Go and Python tests without one
+  orly note "<QUOTE>" [--context "<TEXT>"] [--spec <PATH>]
+                                    append the owner's verbatim words, dated, to
+                                    the Discovery section of the one active spec
 
 Install (the repository is the unit — no checkout of this package required):
   orly init [--force] [--no-hooks] [--with <PACK>] [--dry-run] [--json]

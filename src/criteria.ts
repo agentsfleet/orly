@@ -4,10 +4,12 @@ import { gitOutput } from "./git_env";
 import { scanChangedDocuments } from "./doc_changes";
 import { JsonObject, messageOf } from "./model";
 import { NOT_INSTALLED, readConfigSync, RepoConfig } from "./config";
-import { classifyBranch, DEFAULT_BRANCHES, SurfaceReport } from "./surfaces";
+import { classifyBranch, couplingGaps, DEFAULT_BRANCHES, defaultMergeBase, SurfaceReport } from "./surfaces";
 import { commandSetupErrors } from "./validation";
 import { limitsFor } from "./command_limits";
 import { runVerification } from "./verification";
+import { hasProof } from "./verification_store";
+import { newTests } from "./proof";
 
 
 type CommandTier = typeof CONFORM_TIER | typeof FAST_TIER | typeof ALL_TIER;
@@ -25,6 +27,8 @@ const GIT_PUSHED = "git.pushed";
 const REPO_CONFIG = "repo.config";
 const DOCS_UPDATED = "docs.updated";
 const DOCS_LANGUAGE = "docs.language";
+const PATHS_COUPLED = "paths.coupled";
+const TESTS_PROVEN = "tests.proven";
 // How many findings a report names before it stops listing them. A criterion
 // line is a summary, not a linter dump.
 const NAMED_FINDINGS = 3;
@@ -52,7 +56,7 @@ export function criteriaFor(gate: string, context: CriterionContext): Criterion[
     return [
       gitBranch(), gitTree(), gitPushed(),
       criterion("git.base", (inner) => { report(inner, resolvedConfig(inner)?.surfaces); return { ok: true, detail: "branch diff is available" }; }),
-      repositoryConfig(), docsLanguage(), docsUpdated(), ...commandCriteria(context, ALL_TIER),
+      repositoryConfig(), docsLanguage(), docsUpdated(), pathsCoupled(), testsProven(), ...commandCriteria(context, ALL_TIER),
     ];
   }
   return [];
@@ -147,6 +151,33 @@ function docsUpdated(): Criterion {
       ok: false,
       detail: `${surfaces.userSurface.length} user-surface file(s) changed (first: ${surfaces.userSurface[0] ?? ""}) with no docs change — update the docs page, or record: orly override ${DOCS_UPDATED} --reason <REASON>`,
     };
+  });
+}
+
+// A boundary check like docs.updated: a Section in progress may push one side
+// before the other, so only the pr gate asks for both.
+function pathsCoupled(): Criterion {
+  return criterion(PATHS_COUPLED, (context) => {
+    const config = resolvedConfig(context);
+    if (!config?.coupled) return { ok: true, detail: "no coupled paths declared in .orly/orly.json" };
+    const gaps = couplingGaps(config.coupled, report(context, config.surfaces).changed);
+    if (gaps.length === 0) return { ok: true, detail: `${config.coupled.length} coupled path group(s) changed together or not at all` };
+    return { ok: false, detail: `${gaps.join(DETAIL_SEPARATOR)}; change both sides, or record: orly override ${PATHS_COUPLED} --reason <REASON>` };
+  });
+}
+
+// Reported, never enforced: a proof lives beneath one worktree's Git metadata,
+// so another clone or CI holds none, and private local history may change how
+// much work a gate repeats but never its verdict.
+function testsProven(): Criterion {
+  return criterion(TESTS_PROVEN, (context) => {
+    const changed = report(context, resolvedConfig(context)?.surfaces).changed;
+    const tests = newTests(context.root, defaultMergeBase(context.root), changed);
+    if (tests.length === 0) return { ok: true, detail: "no new test declarations on this branch" };
+    const unproven = tests.filter(({ file, test }) => !hasProof(context.root, file, test));
+    if (unproven.length === 0) return { ok: true, detail: `${tests.length} new test(s), each with a fail-before proof` };
+    const named = unproven.slice(0, NAMED_FINDINGS).map(({ file, test }) => `${file} › ${test}`).join(DETAIL_SEPARATOR);
+    return { ok: true, detail: `reported, not enforced: ${unproven.length} of ${tests.length} new test(s) have no fail-before proof; record one with orly proof: ${named}` };
   });
 }
 

@@ -6,6 +6,7 @@
   ],
   "packs": {
     "persona.indy": {
+      "owner": "Indy",
       "extensions": [],
       "managed_files": []
     },

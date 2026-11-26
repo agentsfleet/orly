@@ -27,6 +27,9 @@ for (const [field, value] of [
   ["burst", { e2e: { location: "Mumbai" } }], ["burst", { e2e: { region: "Chennai" } }], ["burst", { aws: { instance_types: [] } }],
   ["burst", { aws: { image: "ubuntu" } }], ["burst", { aws: { region: "Mumbai" } }],
   ["burst", { lanes: {} }], ["burst", { directories: ["TOOLBOX_DIR", "TOOLBOX_DIR"] }], ["burst", { directories: ["1DIR"] }],
+  ["coupled", []], ["coupled", {}], ["coupled", [{ when: ["src/wire/"] }]], ["coupled", [{ when: [], then: ["VERSION"] }]],
+  ["coupled", [{ when: ["src/wire/"], then: ["../VERSION"] }]], ["coupled", [{ when: [".git/HEAD"], then: ["VERSION"] }]],
+  ["coupled", [{ when: ["src/wire/"], then: ["VERSION"], why: "unknown key" }]], ["coupled", [{ when: [""], then: ["VERSION"] }]],
 ] as Array<[string, unknown]>) {
   test(`both configuration readers reject invalid ${field} value ${JSON.stringify(value)}`, async () => {
     const root = mkdtempSync(join(tmpdir(), "orly-config-validation-"));
@@ -47,6 +50,13 @@ test("a burst object survives a rewrite exactly, with no fields it did not have"
   const config = parseConfig({ ...BASE, commands: { ...BASE.commands, "burst.acceptance": [["make", "acceptance"]] }, burst });
 
   expect(JSON.parse(serialiseConfig(config)).burst).toEqual(burst);
+  expect(parseConfig(JSON.parse(serialiseConfig(config)))).toEqual(config);
+});
+
+test("coupled path groups survive a rewrite exactly", () => {
+  const coupled = [{ when: ["src/wire/"], then: ["src/wire/VERSION", "docs/protocol.md"] }];
+  const config = parseConfig({ ...BASE, coupled });
+  expect(JSON.parse(serialiseConfig(config)).coupled).toEqual(coupled);
   expect(parseConfig(JSON.parse(serialiseConfig(config)))).toEqual(config);
 });
 

@@ -131,6 +131,8 @@ export class RulesModel {
       return;
     }
     if (!Array.isArray(value.extensions)) errors.push(`pack ${name} extensions must be an array`);
+    // The name `orly note` writes into a spec's Discovery as the owner's.
+    if (value.owner !== undefined && !(isString(value.owner) && value.owner.trim())) errors.push(`pack ${name} owner must be a non-empty string`);
     if (!Array.isArray(value.managed_files)) {
       errors.push(`pack ${name} managed_files must be an array`);
       return;

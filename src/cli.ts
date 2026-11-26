@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
-import { existsSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { existsSync, realpathSync } from "node:fs";
+import { isAbsolute, join, relative, resolve } from "node:path";
 
 import { burst } from "./burst/index";
 import { printHelp } from "./cli_help";
@@ -10,6 +10,8 @@ import { GateReport, isGateName, recordOverride, runGate, runGates } from "./gat
 import { agentRuntimes, defaultHomes, helperSources, missingHelpers } from "./helpers";
 import { install, InstallResult } from "./install";
 import { isString, messageOf, OrlyError, readJsonObject, RulesModel } from "./model";
+import { appendNote } from "./note";
+import { recordProof } from "./proof";
 import { Renderer } from "./render";
 import { verifyRuleset } from "./verify";
 import { commandSetupErrors } from "./validation";
@@ -39,6 +41,12 @@ const GATE_ERRORS = {
   reuse: "[ORLY-GATE-002] --reuse-verification requires the named pr gate",
 } as const;
 const INSTALL_OPTIONS_ERROR = "[ORLY-INSTALL-001] install accepts only --force, --no-hooks, --with <PACK>, --dry-run and --json";
+const TEST_FLAG = "--test";
+const CONTEXT_FLAG = "--context";
+const SPEC_FLAG = "--spec";
+const COMMAND_SEPARATOR = "--";
+const PROOF_USAGE = "[ORLY-PROOF-001] usage: orly proof <TEST_FILE> --test <NAME> -- <COMMAND>...";
+const NOTE_USAGE = "[ORLY-NOTE-001] usage: orly note \"<QUOTE>\" [--context \"<TEXT>\"] [--spec <PATH>]";
 
 const { root, arguments: commandArguments } = parseRoot(Bun.argv.slice(2));
 process.exit(await execute(root, commandArguments));
@@ -71,6 +79,8 @@ async function run(model: RulesModel, args: string[]): Promise<number> {
   if (command === "gate") return gate(model, rest);
   if (command === "override") return override(rest);
   if (command === "burst") return burstCommand(rest);
+  if (command === "proof") return proof(rest);
+  if (command === "note") return note(model, rest);
   throw new OrlyError(`unknown command: ${command}`);
 }
 
@@ -107,6 +117,37 @@ async function burstCommand(args: string[]): Promise<number> {
   } finally {
     for (const signal of BURST_SIGNALS) process.off(signal, cancel);
   }
+}
+
+// The agent reverts or mutates the code a new test covers; orly runs the
+// command and keeps what it saw only when that test is reported failing.
+function proof(args: string[]): number {
+  const separator = args.indexOf(COMMAND_SEPARATOR);
+  const command = separator < 0 ? [] : args.slice(separator + 1);
+  const { values, positional } = options(separator < 0 ? args : args.slice(0, separator), [TEST_FLAG], PROOF_USAGE);
+  const test = values.get(TEST_FLAG);
+  if (positional.length !== 1 || !test || command.length === 0) throw new OrlyError(PROOF_USAGE);
+  const root = projectRoot();
+  const file = repositoryPath(root, positional[0] ?? "");
+  const recorded = recordProof(root, file, test, command);
+  console.log(`${PASS_GLYPH} fail-before proof recorded for ${file} › ${test}`);
+  console.log(`   ${recorded.failing_line}`);
+  console.log(`   ran ${recorded.revision.slice(0, 12)}${recorded.mutation ? " with the code changes shown by git diff HEAD" : " with its code unchanged"}`);
+  return 0;
+}
+
+async function note(model: RulesModel, args: string[]): Promise<number> {
+  const { values, positional } = options(args, [CONTEXT_FLAG, SPEC_FLAG], NOTE_USAGE);
+  if (positional.length !== 1) throw new OrlyError(NOTE_USAGE);
+  const root = projectRoot();
+  const spec = values.get(SPEC_FLAG);
+  const context = values.get(CONTEXT_FLAG);
+  const written = await appendNote(model, root, {
+    quote: positional[0] ?? "", now: new Date(),
+    ...(context === undefined ? {} : { context }), ...(spec === undefined ? {} : { spec: repositoryPath(root, spec) }),
+  });
+  console.log(`${PASS_GLYPH} noted in ${written.spec} Discovery:\n${written.line}`);
+  return 0;
 }
 
 function override(args: string[]): number {
@@ -262,6 +303,27 @@ function parseRoot(args: string[]): { root: string; arguments: string[] } {
   const value = args[index + 1];
   if (!value) throw new OrlyError("--root requires a path");
   return { root: resolve(value), arguments: args.filter((_, position) => position !== index && position !== index + 1) };
+}
+
+// Each named flag takes one value and appears at most once; anything else
+// that starts with a dash is refused with the command's usage.
+function options(args: string[], flags: string[], usage: string): { values: Map<string, string>; positional: string[] } {
+  const values = new Map<string, string>();
+  const positional: string[] = [];
+  for (let index = 0; index < args.length; index++) {
+    const argument = args[index] ?? "";
+    if (!argument.startsWith("-")) { positional.push(argument); continue; }
+    const value = args[++index];
+    if (!flags.includes(argument) || values.has(argument) || value === undefined || value.startsWith("-")) throw new OrlyError(usage);
+    values.set(argument, value);
+  }
+  return { values, positional };
+}
+
+function repositoryPath(root: string, path: string): string {
+  const inside = relative(realpathSync(root), resolve(realpathSync(process.cwd()), path));
+  if (!inside || inside.startsWith("..") || isAbsolute(inside)) throw new OrlyError(`${path} is outside this repository`);
+  return inside;
 }
 
 function requireNoArguments(args: string[], usage: string): void {

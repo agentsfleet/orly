@@ -58,6 +58,10 @@ export const burstSchema = z.object({
   aws: awsPlacement.optional(),
 }).strict();
 export type BurstConfig = z.infer<typeof burstSchema>;
+// A change under any `when` prefix needs a change under a `then` prefix on the
+// same branch, such as a wire format and the protocol version that names it.
+export const couplingsSchema = z.array(z.object({ when: z.array(input).min(1), then: z.array(input).min(1) }).strict()).min(1);
+export type Coupling = z.infer<typeof couplingsSchema>[number];
 export const reusePoliciesSchema = z.record(nonempty, z.object({
   hermetic: z.literal(true), max_age_ms: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   toolchain: z.array(z.array(nonempty).min(1)).min(1), inputs: z.array(input).default([]),
@@ -70,6 +74,7 @@ const configurationSchema = z.object({
   packs: z.array(nonempty).optional(),
   commands: z.unknown().optional(),
   surfaces: z.unknown().optional(),
+  coupled: couplingsSchema.optional(),
   managed: z.array(nonempty).optional(),
   limits: z.record(nonempty, commandLimitsSchema).optional(),
   reuse: reusePoliciesSchema.optional(),
