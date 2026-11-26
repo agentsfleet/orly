@@ -53,7 +53,8 @@ and its shape in `.orly/standards/spec-template.md`.
 
    The prompt asks for each finding's severity (Blocker, Major or Nit), lines
    and reason. Without the `egm:` agent types, start a general-purpose subagent
-   that reads `<EGM root>/agents/<persona>.md` first. With no subagent tool, stop.
+   that first reads the file in `<EGM root>/agents/` whose frontmatter `name`
+   is the type. With no subagent tool, stop.
 
    Write each stage's deduplicated findings as table rows in
    `docs/v{P}/evidence/M{N}_{WS}_EGM_REVIEW.md`. Resolve them as `egm-resolve`

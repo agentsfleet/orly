@@ -22,7 +22,6 @@ const ENVIRONMENT_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 // 1Password names a vault and an item with spaces allowed, never a control
 // character; `op read` resolves the reference on the caller.
 const OP_REFERENCE = /^op:\/\/[^/\u0000-\u001f]+\/[^/\u0000-\u001f]+\/[^\u0000-\u001f]+$/;
-// The token `op` itself reads, which no declared secret may overwrite.
 // orly's own credentials, which a lane's secret must never name: a value
 // already in the caller's environment is sent to the machine as it is.
 const OWN_CREDENTIALS = /^(?:OP_SERVICE_ACCOUNT_TOKEN$|TS_OAUTH_|E2E_|AWS_)/;

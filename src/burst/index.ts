@@ -136,7 +136,7 @@ async function stage(dependencies: BurstDependencies, settings: BurstSettings, r
   const bundle = await bundleRef(root, ref, directory);
   const commit = (await git(root, ["rev-parse", "--verify", `${ref}^{commit}`])).stdout.trim();
   const { key, publicKey } = await newKeyPair(directory, `orly-burst-${runId}`, settings.env);
-  return { ...io, root, config, settings, fetch: dependencies.fetch, ref, repo, runId, runDirectory: directory, commit, bundle, key, publicKey, knownHosts: join(directory, "known_hosts"), tailnet };
+  return { ...io, root, config, settings, ref, repo, runId, runDirectory: directory, commit, bundle, key, publicKey, knownHosts: join(directory, "known_hosts"), tailnet };
 }
 
 function requireDeclared(config: RepoConfig, lanes: string[]): void {

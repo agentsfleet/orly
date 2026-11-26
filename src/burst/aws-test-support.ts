@@ -44,7 +44,7 @@ export class FakeEc2 {
   groups: string[] = [];
   #nextInstance = 1;
 
-  constructor(readonly scenario: Ec2Scenario = {}, readonly tailnet?: FakeTailscale) {
+  constructor(readonly scenario: Ec2Scenario = {}, readonly tailnet: FakeTailscale) {
     ec2Mock.reset();
     for (const [name, command] of Object.entries(COMMANDS)) {
       ec2Mock.on(command as never).callsFake(async (input: Record<string, unknown>, getClient: () => unknown) => {
@@ -100,7 +100,7 @@ export class FakeEc2 {
     const id = `i-${String(number).padStart(17, "0")}`;
     const run = tag(input, "orly-burst");
     this.instances.set(id, { id, type, state: this.scenario.vanish ? "terminated" : "running", address: `198.51.100.${number}`, run, spot: Boolean(input.InstanceMarketOptions), shutdown: String(input.InstanceInitiatedShutdownBehavior) });
-    if (!this.scenario.vanish) this.tailnet?.join(Buffer.from(String(input.UserData ?? ""), "base64").toString());
+    if (!this.scenario.vanish) this.tailnet.join(Buffer.from(String(input.UserData ?? ""), "base64").toString());
     if (this.scenario.lostReply) throw named("RequestTimeout", "the connection closed before the reply");
     return { Instances: [{ InstanceId: id, Placement: { AvailabilityZone: "ap-south-1a" } }] };
   }

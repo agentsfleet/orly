@@ -29,7 +29,6 @@ export type BurstRun = Io & {
   root: string;
   config: RepoConfig;
   settings: BurstSettings;
-  fetch: Fetch;
   ref: string;
   commit: string;
   repo: string;

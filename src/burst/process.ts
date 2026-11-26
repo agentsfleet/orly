@@ -9,7 +9,7 @@ import { OrlyError } from "../model";
 type Stopped = "deadline" | "cancelled";
 // A child killed by a signal it was not sent by orly has no exit code: it was
 // interrupted, which is never a lane's own answer.
-export type Outcome = { code: number } | { stopped: Stopped | "interrupted" };
+type Outcome = { code: number } | { stopped: Stopped | "interrupted" };
 export type Captured = { code: number; stdout: string; stderr: string };
 type StreamOptions = {
   env: Environment;

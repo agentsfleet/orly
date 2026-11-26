@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { CONFIG_PATH, readConfigSync } from "./config";
 import { isObject, isString, OrlyError } from "./model";
 
-export type NoteRequest = { quote: string; context?: string; spec?: string; now: Date };
+type NoteRequest = { quote: string; context?: string; spec?: string; now: Date };
 
 const ACTIVE_SPECS = "docs/v*/active/*.md";
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];

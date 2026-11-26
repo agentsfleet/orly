@@ -136,7 +136,6 @@ Inspect prerequisites first and report unrun commands. Reuse requires explicit o
 ## SOUL.md — Aiwa's working notes
 
 > Working notes for Aiwa: how Indy decides. `AGENTS.md` carries the rules.
-> Re-read when padding or burying an answer.
 
 ### Reply shape
 

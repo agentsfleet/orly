@@ -17,8 +17,7 @@ This skill owns the steps from review to land. Pull Request rules live in
 1. **Check the setup.** Run `orly doctor` and stop on any red line.
    Fetch the target base branch and record its revision. Before publishing,
    ensure this branch contains that revision and reconcile release versions against it.
-2. **Review.** Run gstack `/review` on the diff (`gstack-review` outside Claude
-   Code). Then give `orly-standards-reviewer` the diff, the spec, the
+2. **Review.** Run gstack `/review` on the diff. Then give `orly-standards-reviewer` the diff, the spec, the
    standards for the touched files and the repository's own instructions. Fix
    each finding, or record the owner's verbatim deferral quote with `orly note`.
 

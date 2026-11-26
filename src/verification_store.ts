@@ -46,7 +46,7 @@ export function verificationState(root: string): string {
 }
 
 // One signed record per test, replaced by the next proof of the same test.
-export function saveProof(root: string, proof: Proof): string {
+export function saveProof(root: string, proof: Proof): void {
   const state = verificationState(root);
   const parent = join(state, PROOFS);
   privateDirectory(parent);
@@ -56,7 +56,6 @@ export function saveProof(root: string, proof: Proof): string {
   writeDurable(temporary, JSON.stringify({ payload, signature: signature(payload, signingKey(state)) }));
   renameSync(temporary, path);
   syncDirectory(parent);
-  return path;
 }
 
 // Reading creates nothing: a repository that never recorded a proof keeps no

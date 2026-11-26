@@ -305,9 +305,9 @@ function scriptPrefix(runId: string): string {
   return `${SCRIPT_PREFIX}${runTail(runId)}-`;
 }
 
-function orphaned(name: string, now = Date.now()): boolean {
+function orphaned(name: string): boolean {
   const began = name.startsWith(SCRIPT_PREFIX) ? runBegan(name.slice(SCRIPT_PREFIX.length).split("-").slice(0, 2).join("-")) : undefined;
-  return began !== undefined && now - began > ORPHAN_AGE_MS;
+  return began !== undefined && Date.now() - began > ORPHAN_AGE_MS;
 }
 
 export function tirLabel(runId: string): string {

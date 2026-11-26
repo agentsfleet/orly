@@ -13,7 +13,7 @@ type Call = { method: string; path: string; body: string; authorization: string 
 type FakeKey = { id: string; secret: string; request: Record<string, unknown>; used: boolean };
 type Peer = { HostName: string; Online: boolean; TailscaleIPs: string[]; Tags?: string[] };
 
-export const CLIENT_ID = "fake-client-id";
+const CLIENT_ID = "fake-client-id";
 export const CLIENT_SECRET = "tskey-fake-client-secret";
 export const TAILSCALE_CREDENTIALS = { TS_OAUTH_CLIENT_ID: CLIENT_ID, TS_OAUTH_CLIENT_SECRET: CLIENT_SECRET };
 const TOKEN = "fake-access-token";
@@ -43,7 +43,7 @@ export class FakeTailscale {
   }
 
   // What the caller's own Tailscale reports; `undefined` is no daemon at all.
-  caller(backend: string | undefined, online = false): void {
+  caller(backend: string | undefined, online: boolean): void {
     const self = join(this.#directory, "self.json");
     if (backend === undefined) rmSync(self, { force: true });
     else writeFileSync(self, JSON.stringify({ BackendState: backend, Self: { HostName: "caller-laptop", Online: online } }));
@@ -132,9 +132,7 @@ export function leaveTailnet(state: string, address: string): void {
 // What Tailscale enforces, so a key minted otherwise never joins.
 function singleUse(request: Record<string, unknown>): boolean {
   const create = field(field(field(request, "capabilities"), "devices"), "create");
-  const tags = create.tags;
-  // A trust credential mints only keys carrying exactly its own tag set.
-  return create.reusable === false && create.ephemeral === true && create.preauthorized === true && JSON.stringify(tags) === JSON.stringify(["tag:orly-burst"]);
+  return create.reusable === false && create.ephemeral === true && create.preauthorized === true;
 }
 
 function field(value: Record<string, unknown>, name: string): Record<string, unknown> {

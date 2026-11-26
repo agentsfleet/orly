@@ -1,16 +1,13 @@
-import type { Verdict } from "./criteria_support";
-
 import { lstatSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { DEFAULT_COMMAND_LIMITS } from "./command_limits";
 import { runCommand } from "./command_runner";
-import { git, gitOutput } from "./git_env";
+import { gitOutput } from "./git_env";
 import { OrlyError } from "./model";
 import { saveProof, type Proof } from "./verification_store";
 
 type Language = { name: string; file: RegExp; declarations: (lines: string[]) => string[] };
-export type DeclaredTest = { file: string; test: string };
+type DeclaredTest = { file: string; test: string };
 
 const UTF8 = "utf8";
 const NEWLINE = /\r?\n/;
@@ -44,7 +41,7 @@ export function recordProof(root: string, file: string, test: string, command: s
   if (!declared.includes(test)) throw new OrlyError(`${file} declares no test named "${test}"; name it exactly as its declaration does`);
   const prefix = test.split(PLACEHOLDER)[0]?.trim() ?? "";
   if (!prefix) throw new OrlyError(`"${test}" starts with a placeholder, so no output line can be matched to it`);
-  const result: Verdict = runCommand(root, command, DEFAULT_COMMAND_LIMITS);
+  const result = runCommand(root, command);
   if (result.status === "passed") throw new OrlyError("the command passed, so the test did not fail; revert or mutate the code it covers, then rerun orly proof");
   if (result.status !== "failed") throw new OrlyError(`the command reached no verdict (${result.status}): ${result.detail.split(NEWLINE)[0] ?? ""}`);
   const failing = result.detail.split(NEWLINE).filter((line) => line.includes(prefix) && FAIL_MARK.test(line.replace(prefix, ""))).at(-1);
@@ -58,14 +55,13 @@ export function recordProof(root: string, file: string, test: string, command: s
 // A changed body under an unchanged declaration is not seen.
 export function newTests(root: string, base: string, changed: string[]): DeclaredTest[] {
   return changed.filter((file) => languageOf(file) !== undefined).flatMap((file) => {
-    const patch = git(root, ["diff", "--no-ext-diff", "--no-color", "--unified=0", `${base}..HEAD`, "--", file]);
-    if (patch.exitCode !== 0) throw new Error(`[ORLY-GIT-001] the diff of ${file} could not be read`);
-    const added = patch.stdout.toString().split(NEWLINE).filter((line) => line.startsWith("+") && !line.startsWith("+++")).map((line) => line.slice(1));
+    const patch = gitOutput(root, ["diff", "--no-ext-diff", "--no-color", "--unified=0", `${base}..HEAD`, "--", file], true);
+    const added = patch.split(NEWLINE).filter((line) => line.startsWith("+") && !line.startsWith("+++")).map((line) => line.slice(1));
     return [...new Set(languageOf(file)?.declarations(added))].map((test) => ({ file, test }));
   });
 }
 
-export function supportedLanguages(): string {
+function supportedLanguages(): string {
   return LANGUAGES.map((language) => language.name).join(", ");
 }
 
