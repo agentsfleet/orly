@@ -68,12 +68,12 @@ test("a test that passes with its change reverted is refused and records nothing
   expect(proofRecords(root)).toEqual([]);
 });
 
-// The name holds the word "failed", so the passing line must not be mistaken
-// for the failing one when another test is what broke.
+// A verbose runner, as cargo is, prints a line for the passing test too. Its
+// name holds the word "failed", so that line must not pass for the failing one.
 test("a failure of another test is refused, even when the name says failed", async () => {
   const { root } = await proofRepository();
-  writeFileSync(join(root, SOURCE), CORRECT.replace("b - a", "a - b"));
-  const result = orly(root, ROOT, "proof", TESTS, "--test", REFUSES, ...RUN_TESTS);
+  const verbose = `console.log("test ${REFUSES} ... ok"); console.log("test ${SORTS} ... FAILED"); process.exit(1);`;
+  const result = orly(root, ROOT, "proof", TESTS, "--test", REFUSES, "--", process.execPath, "-e", verbose);
   expect(result.code).toBe(1);
   expect(result.output).toContain(`no output line reports "${REFUSES}" failing; a build error or another test failed instead`);
   expect(proofRecords(root)).toEqual([]);
@@ -151,7 +151,7 @@ test("new tests are read from added declarations in each supported language", as
   git(root, "commit", "-q", "-m", "test: base");
   const added: Record<string, string> = {
     "src/lib.rs": "pub fn helper() {}\n#[cfg(test)]\nmod tests {\n    #[tokio::test]\n    #[ignore = \"needs a database\"]\n    async fn stores_one_row() {}\n    fn not_a_test() {}\n}\n",
-    "src/kept.test.ts": `test("kept", () => {\n  expect(2).toBe(2);\n});\ntest.each([1, 2])("doubles %d", (n) => { expect(n * 2).toBeGreaterThan(n); });\nit.skip('waits', () => {});\n`,
+    "src/kept.test.ts": `test("kept", () => {\n  expect(2).toBe(2);\n});\ntest.each([\n  [1, 2],\n])("adds %d to %d", (a, b) => { expect(a + b).toBe(3); });\ntest.each([1, 2])("doubles %d", (n) => { expect(n * 2).toBeGreaterThan(n); });\nit.skip('waits', () => {});\n`,
     "pkg/store_test.go": "package pkg\nfunc TestStoresOneRow(t *testing.T) {}\nfunc helper() {}\n",
     "tests/test_store.py": "def test_stores_one_row():\n    pass\nasync def test_reads_back():\n    pass\n",
     "src/runner.ts": `test("not in a test file", () => {});\n`,
@@ -165,6 +165,7 @@ test("new tests are read from added declarations in each supported language", as
   const base = Bun.spawnSync(["git", "rev-parse", "HEAD^"], { cwd: root }).stdout.toString().trim();
   expect(newTests(root, base, Object.keys(added).sort())).toEqual([
     { file: "pkg/store_test.go", test: "TestStoresOneRow" },
+    { file: "src/kept.test.ts", test: "adds %d to %d" },
     { file: "src/kept.test.ts", test: "doubles %d" },
     { file: "src/kept.test.ts", test: "waits" },
     { file: "src/lib.rs", test: "stores_one_row" },

@@ -15,14 +15,16 @@ export type DeclaredTest = { file: string; test: string };
 const UTF8 = "utf8";
 const NEWLINE = /\r?\n/;
 const TEST_PATH = /(^|\/)tests?\/|\.test\.|_test\.|\.spec\./;
-// `test("name")`, `it.each([…])("name")` and their modifiers, on one line.
-const SCRIPT_TEST = /^\s*(?:test|it)(?:\.\w+(?:\([^()]*\))?)*\(\s*(["'`])((?:\\.|(?!\1).)*)\1/;
+// `test("name")`, `it.each([…])("name")` and their modifiers, on one line,
+// or the `])("name"` line that closes a table spread over several lines.
+const SCRIPT_TEST = /^\s*(?:(?:test|it)(?:\.\w+(?:\([^()]*\))?)*|\]\))\(\s*(["'`])((?:\\.|(?!\1).)*)\1/;
 const RUST_TEST_ATTRIBUTE = /^\s*#\[(?:[\w:]+::)?test\b/;
 const RUST_FUNCTION = /^\s*(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?fn\s+(\w+)/;
 const GO_TEST = /^func\s+(Test\w*)\s*\(/;
 const PYTHON_TEST = /^\s*(?:async\s+)?def\s+(test\w*)\s*\(/;
 // The verdict word a runner prints beside a failing test's name: bun's
 // `(fail)`, cargo's `FAILED`, go's `--- FAIL:`, pytest's `FAILED`, or a cross.
+// Runners print the verdict after the assertion detail, so the last line wins.
 const FAIL_MARK = /\bfail(?:ed|ure|s)?\b|✗|✕|×/i;
 // A parameterised name prints with its placeholders filled, so only the text
 // before the first placeholder is looked for.
@@ -45,7 +47,7 @@ export function recordProof(root: string, file: string, test: string, command: s
   const result: Verdict = runCommand(root, command, DEFAULT_COMMAND_LIMITS);
   if (result.status === "passed") throw new OrlyError("the command passed, so the test did not fail; revert or mutate the code it covers, then rerun orly proof");
   if (result.status !== "failed") throw new OrlyError(`the command reached no verdict (${result.status}): ${result.detail.split(NEWLINE)[0] ?? ""}`);
-  const failing = result.detail.split(NEWLINE).find((line) => line.includes(prefix) && FAIL_MARK.test(line.replace(prefix, "")));
+  const failing = result.detail.split(NEWLINE).filter((line) => line.includes(prefix) && FAIL_MARK.test(line.replace(prefix, ""))).at(-1);
   if (failing === undefined) throw new OrlyError(`the command failed, but no output line reports "${prefix}" failing; a build error or another test failed instead`);
   const proof = { file, test, command, failing_line: failing.trim(), mutation: mutation(root), revision: gitOutput(root, ["rev-parse", "HEAD"]), recorded_at: Date.now() };
   saveProof(root, proof);
