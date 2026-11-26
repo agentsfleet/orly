@@ -74,7 +74,7 @@ ship -> publish PR -> summarize evidenced lessons -> ask owner -> approved sourc
 | `core/operating-model.md`, `SOUL.md`, generated `AGENTS.md` | EDIT | Stage start, outcome and next action |
 | `skills/orly-ship/SKILL.md` | EDIT | Evidence-backed learning proposal and owner approval |
 | `README.md`, `docs/ORLY_ARCHITECTURE.md`, `docs/architecture/installation.md`, `standards/tests.md`, `src/cli_help.ts`, `llms.txt` | EDIT | Actual behavior, constraints and upgrade instructions |
-| `docs/v2/evidence/M17_REPOSITORY_REVIEW.md` | CREATE | Review inventory, findings, dispositions and measurements |
+| The repository review record | CREATE | Review inventory, findings, dispositions and measurements; removed on Nov 26, 2026 at the owner's direction, and Git history keeps it |
 | `package.json`, `.orly/orly.json` | EDIT | 0.50.0 version sources |
 | `docs/CHANGELOG.md` | EDIT | User-visible 0.50.0 changes and upgrade requirements |
 
@@ -248,4 +248,4 @@ All Dimensions are done. The repaired pushed gate at `414e270` passed every crit
 Packed installation passed all 24 cases. Final review and the gate for this documentation closure are recorded separately in the PR.
 
 The size failure was repaired without raising the limit. The two process failures reproduce at the exact base and pass under normal orphan reaping.
-[Repository review evidence](../evidence/M17_REPOSITORY_REVIEW.md) records the tests, environment diagnosis and review findings.
+A repository review record held the tests, environment diagnosis and review findings until Nov 26, 2026, when the owner ruled review records out of the tree; Git history keeps it.

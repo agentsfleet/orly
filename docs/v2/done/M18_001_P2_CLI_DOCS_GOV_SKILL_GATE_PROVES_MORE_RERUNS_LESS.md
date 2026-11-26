@@ -60,7 +60,9 @@ orly-spec step 6 -> stages 5..9 -> egm:* reviewers, no context -> evidence file 
 | `src/cli.ts`, `src/cli_help.ts` | EDIT | `orly proof`, `orly note`, help |
 | `src/model.ts`, `registry.json` | EDIT | A persona pack names its owner |
 | `src/*.test.ts` touched above, `src/coupled_paths.integration.test.ts`, `src/proof.integration.test.ts`, `src/note.integration.test.ts` | EDIT, CREATE | Proof of each Dimension |
-| `docs/v2/evidence/M18_REDUCTION_REVIEW.md`, `SOUL.md`, `AGENTS.md`, `src/burst/*.ts` named there | CREATE, EDIT | The owner's reduction review and its one-form cuts |
+| `SOUL.md`, `AGENTS.md`, the skills and `src/burst/*.ts` | EDIT | The owner's reduction review's one-form cuts |
+| Both review records in the evidence folder | DELETE | The owner ruled review records out of the tree |
+| `src/layout.test.ts` | EDIT | A retired evidence path cited anywhere outside history fails |
 | `skills/orly-spec/SKILL.md`, `skills/orly-build/SKILL.md`, `skills/orly-ship/SKILL.md` | EDIT | EGM review, proof and note steps |
 | `README.md`, `docs/ORLY_ARCHITECTURE.md`, `llms.txt`, `docs/CHANGELOG.md`, `standards/tests.md` | EDIT | Behaviour as shipped |
 
@@ -105,9 +107,10 @@ The binding holds the merge base and a digest of every tracked path's mode and w
 
 ### §3 — The spec skill runs the EGM review
 
-`skills/orly-spec/SKILL.md` step 6 dispatches `egm:egm-*` reviewers stage by stage with no conversation, writes findings to `docs/v{P}/evidence/M{N}_{WS}_EGM_REVIEW.md`, and resolves them as `egm-resolve` does. `orly doctor` keeps its EGM check.
+`skills/orly-spec/SKILL.md` step 6 dispatches `egm:egm-*` reviewers stage by stage with no conversation and resolves their findings as `egm-resolve` does. It writes no review file: accepted findings change the spec, and Discovery records rulings and declined findings with their reasons. `orly doctor` keeps its EGM check.
 
 - **Dimension 3.1** — DONE — installed skills pass their own prose gate → Test `fresh installation passes its own prose gate and still checks skill edits` (integration): a fresh install's `docs.language` detail is "changed documentation prose is clean"
+- **Dimension 3.2** — DONE — no tracked file outside history cites an evidence path → Test `no reference to a retired file` (unit): an evidence-folder path left in a skill makes the citing list non-empty
 
 ### §4 — Fail-before proofs
 
@@ -203,10 +206,12 @@ N/A: no files deleted. The `Completion` type folds into the shared signature hel
 ## Discovery (consult log)
 
 - **Consults** — base `origin/main` at `bb741d6`; branch `feat/burst-tailnet` at `3979189`. The owner approved items 1, 3, 6, 7 and 8 and named this Pull Request and version.
-- **Model reviews** — none of the spec: the owner approved the items. Claude Opus 5.5 (`claude-opus-5-5`) ran three fresh-context reviews. The standards review found 13: 12 fixed, and CL-BUDGET is open for the owner, since two approved changes share one version. The rule-text reduction review found 30, with 5 applied and 25 proposed. The code reduction review found 22, with 9 applied and 13 proposed. Both are in `docs/v2/evidence/M18_REDUCTION_REVIEW.md`.
+- **Model reviews** — none of the spec: the owner approved the items. Claude Opus 5.5 (`claude-opus-5-5`) ran three fresh-context reviews. The standards review found 13: 12 fixed, and CL-BUDGET stands on the owner's ruling below. The rule-text reduction review found 30, with 5 applied and 25 proposed. The code reduction review found 22, with 9 applied and 13 proposed. The owner ruled review records out of the tree, so the proposals went to him in the session report and their file was deleted.
 - **Proofs** — `orly proof` recorded a fail-before proof for each of the 33 new test declarations, run by an unmutated copy of the engine. Its first run found three defects, fixed in `fix(proof)`: a mutated `src/proof.ts` also mutated the recording tool, a multi-line `test.each` table went unread, and bun prints no passing lines off a terminal, which made one test vacuous.
-- **CL-BUDGET** — the 0.70.0 entry carries eight bullets, over the five-bullet budget, because the owner put both changes in one version.
+- **CL-BUDGET** — the 0.70.0 entry carries ten bullets, over the five-bullet budget, because the owner kept both changes in one version; his ruling is quoted below.
 - **Open blockers** — none.
 - **Deferrals and transfers** — none.
 - > Owner (Indy, Nov 26, 2026 16:21): "Yes i agree on 1, 3, 6 - have the skill do egm-review, 7, 8 and push it in the existing PR with 0.70 in orly." — context: approves the five improvements this spec builds, in Pull Request #90 at 0.70.0
-- > Owner (Indy, Nov 26, 2026 16:22): "In orly i recommend you to check the code files in the PR and other to see if we could reduce and make the skill to be more deterministic including the AGENTS.md and others" — context: the reduction review, reported in docs/v2/evidence/; only meaning-preserving cuts apply without sign-off
+- > Owner (Indy, Nov 26, 2026 16:22): "In orly i recommend you to check the code files in the PR and other to see if we could reduce and make the skill to be more deterministic including the AGENTS.md and others" — context: the reduction review; only meaning-preserving cuts apply without sign-off, and the rest go to him as proposals
+- > Owner (Indy, Nov 26, 2026 16:54): "Dont keep adding more documents so i prefer you delete docs/v2/evidence/* in orly and ensure you suggest review and clean up the docs to be deterministic the md files in orly" — context: both review records deleted; orly-spec writes no review file; the Markdown cleanup plan went to him as a proposal
+- > Owner (Indy, Nov 26, 2026 16:54): "1. keep it at 0.70.0" — context: CL-BUDGET: both changes stay in the one 0.70.0 entry, past the five-bullet budget

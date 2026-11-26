@@ -12,7 +12,7 @@ Burst machines join the caller's tailnet, and a lane survives the caller changin
 - **Coupled paths** — `coupled` path groups in `.orly/orly.json` fail `gate pr` on a one-sided change.
 - **Proofs** — `orly proof` records that a new test failed with its change reverted, and `gate pr` names new tests without such a record.
 - **Notes** — `orly note` adds an owner's ruling, dated, to the active spec.
-- **Spec review** — `orly-spec` runs the Elephant-Goldfish Model (EGM) reviewers itself.
+- **Spec review** — `orly-spec` runs the Elephant-Goldfish Model (EGM) reviewers itself and applies their accepted findings to the spec.
 - **Upgrade** — Follow the Tailscale setup in [Burst lanes](BURST.md#one-time-setup-for-tailscale) before the next run, then run `bunx --bun @agentsfleet/orly@0.70.0 update` after this version is published. Drop any `reuse` policy whose command reads Git history; evidence from earlier releases runs fresh.
 
 ## 0.60.4 (2026-11-20)

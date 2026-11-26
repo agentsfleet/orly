@@ -56,14 +56,16 @@ and its shape in `.orly/standards/spec-template.md`.
    that first reads the file in `<EGM root>/agents/` whose frontmatter `name`
    is the type. With no subagent tool, stop.
 
-   Write each stage's deduplicated findings as table rows in
-   `docs/v{P}/evidence/M{N}_{WS}_EGM_REVIEW.md`. Resolve them as `egm-resolve`
-   does: PROPOSE FIX with the exact edit, or CONTEST with the code or rule that
-   answers it.
+   Write no review file, in the repository or out of it; the findings stay in
+   the session. Resolve them as `egm-resolve` does: PROPOSE FIX with the exact
+   edit, or CONTEST with the code or rule that answers it.
 
-   Apply the fixes after stages 7 and 9, before the next stage, and rerun a
-   stage at most once. Scope and design calls go to the owner. Discovery
-   records the model, its version, the finding counts and their dispositions.
+   Apply accepted fixes to the spec after stages 7 and 9, before the next
+   stage, and rerun a stage at most once. Scope and design calls go to the
+   owner, and `orly note` records each ruling.
+
+   Discovery records the model, its version, the finding counts, and each
+   contested finding with the reason it was declined.
 7. **Land.** Cut `docs/m{N}-<slug>-spec` from the fetched `origin/main`,
    commit the spec, push, and open a docs-only Pull Request. The default
    branch requires pull requests.

@@ -134,6 +134,8 @@ Each rule has an identifier, a statement, and the fields Applies to, Checked by,
 
 Three skills carry the steps: `orly-spec`, `orly-build` and `orly-ship`, plus `orly-burst` for paid lanes.
 The Elephant-Goldfish Model (EGM) review skill refuses model invocation, so `orly-spec` dispatches its reviewers itself, stage by stage, each with no conversation.
+Accepted findings change the spec, and Discovery keeps the owner's rulings; no review file enters the repository.
+
 `orly-standards-reviewer` judges a diff against the standards with no session history, and reports only findings tied to a rule and a changed line.
 
 Skills announce their stage and state, then report the outcome and next action. After publishing, `orly-ship` proposes evidenced lessons and asks for any approval still needed.
