@@ -20,7 +20,7 @@ This skill owns the steps from review to land. Pull Request rules live in
 2. **Review.** Run gstack `/review` on the diff (`gstack-review` outside Claude
    Code). Then give `orly-standards-reviewer` the diff, the spec, the
    standards for the touched files and the repository's own instructions. Fix
-   each finding, or record the owner's verbatim deferral quote.
+   each finding, or record the owner's verbatim deferral quote with `orly note`.
 
    Record each review's name, reviewed revision, findings and limits separately
    in the PR's Review section. A partial gstack review is not done; another
@@ -46,6 +46,9 @@ This skill owns the steps from review to land. Pull Request rules live in
    hermetic policy, `--reuse-verification` may reuse valid matching completion
    evidence; keep the original run, counts and provenance in the Pull
    Request. Every required criterion passes or carries an owner-recorded override.
+
+   Copy the `tests.proven` line, which names new tests without a fail-before
+   proof, into the Make section.
 7. **Publish for review.** An authorized request to open a PR targets
    ready-for-review unless the owner explicitly requests a draft. Open it with
    a body that follows the PR standard. If this stream already has a draft,

@@ -28,6 +28,10 @@ it applies are the standards listed in `AGENTS.md`; tests follow
    Write a test per Dimension and a negative test per failure mode. Add an
    integration test when the diff crosses a module boundary with real
    input/output.
+
+   Prove each new test fails: revert or mutate the code it covers, run
+   `orly proof <TEST_FILE> --test <NAME> -- <COMMAND>`, then restore the code.
+   An owner ruling goes into the spec with `orly note`.
 6. **Commit.** The pre-commit hook runs `orly gate work`; if hooks did not run,
    run it yourself. Mark the Section's Dimensions `DONE` in the same commit as
    their code and tests. Never use `--no-verify`.
